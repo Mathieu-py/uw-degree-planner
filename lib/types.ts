@@ -49,7 +49,6 @@ export interface FilterState {
   hasSeatsAvailable: boolean;
   completedCourses: string[];
   hideUnmetPrereqs: boolean;
-  ratingAndThreshold: { easy: number; useful: number } | null;
   minUseful: number | null;
   minEasy: number | null;
 }

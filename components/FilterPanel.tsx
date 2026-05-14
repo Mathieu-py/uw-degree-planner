@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   DEFAULT_FILTER_STATE,
   FILTER_STORAGE_KEY,
@@ -114,10 +114,6 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
           value={state.minEasy}
           onChange={(minEasy) => patch({ minEasy })}
         />
-        <ThresholdPair
-          value={state.ratingAndThreshold}
-          onChange={(ratingAndThreshold) => patch({ ratingAndThreshold })}
-        />
       </Section>
 
       <Section title="Toggles">
@@ -210,83 +206,37 @@ function RangeSlider({
   value: number | null;
   onChange: (next: number | null) => void;
 }) {
-  const pct = Math.round((value ?? 0) * 100);
+  const committedPct = Math.round((value ?? 0) * 100);
+  const [draftPct, setDraftPct] = useState(committedPct);
+
+  // Pick up external URL/state changes (Reset button, shared link).
+  useEffect(() => {
+    setDraftPct(committedPct);
+  }, [committedPct]);
+
+  function commit() {
+    if (draftPct === committedPct) return;
+    onChange(draftPct === 0 ? null : draftPct / 100);
+  }
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
         <span>{label}</span>
-        <span className="tabular-nums">{value == null ? "off" : `${pct}%`}</span>
+        <span className="tabular-nums">{draftPct === 0 ? "off" : `${draftPct}%`}</span>
       </div>
       <input
         type="range"
         min={0}
         max={100}
-        value={pct}
-        onChange={(e) => {
-          const n = Number(e.target.value);
-          onChange(n === 0 ? null : n / 100);
-        }}
+        value={draftPct}
+        onChange={(e) => setDraftPct(Number(e.target.value))}
+        onPointerUp={commit}
+        onKeyUp={commit}
+        onBlur={commit}
         className="accent-zinc-950 dark:accent-zinc-50"
       />
     </div>
-  );
-}
-
-function ThresholdPair({
-  value,
-  onChange,
-}: {
-  value: FilterState["ratingAndThreshold"];
-  onChange: (next: FilterState["ratingAndThreshold"]) => void;
-}) {
-  const enabled = value != null;
-  return (
-    <div className="flex flex-col gap-1 mt-1">
-      <Toggle
-        label="Drop courses below BOTH thresholds"
-        checked={enabled}
-        onChange={(on) => onChange(on ? { easy: 0.4, useful: 0.5 } : null)}
-      />
-      {enabled && (
-        <div className="flex gap-2 pl-5">
-          <NumberField
-            label="Easy ≥"
-            value={value.easy}
-            onChange={(easy) => onChange({ ...value, easy })}
-          />
-          <NumberField
-            label="Useful ≥"
-            value={value.useful}
-            onChange={(useful) => onChange({ ...value, useful })}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function NumberField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (next: number) => void;
-}) {
-  return (
-    <label className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
-      <span>{label}</span>
-      <input
-        type="number"
-        min={0}
-        max={1}
-        step={0.05}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-16 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-1.5 py-0.5 text-xs tabular-nums"
-      />
-    </label>
   );
 }
 

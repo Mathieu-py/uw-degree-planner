@@ -2,7 +2,7 @@
  * FilterState ↔ URL codec. Empty querystring decodes to DEFAULT_FILTER_STATE
  * (full catalog); encoding omits any field at its default so shared URLs
  * stay short and "no params" round-trips cleanly. Keys are abbreviated (exc,
- * lv, done, minU, rat, …) so a typical filtered view fits on one line.
+ * lv, done, minU, …) so a typical filtered view fits on one line.
  *
  * Invariant: prefix arrays are uppercase and course codes are lowercase at
  * every state boundary (decode normalises, UI controls add normalised). The
@@ -20,7 +20,6 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   hasSeatsAvailable: false,
   completedCourses: [],
   hideUnmetPrereqs: false,
-  ratingAndThreshold: null,
   minUseful: null,
   minEasy: null,
 };
@@ -64,15 +63,6 @@ export function decodeFilterState(params: RawParams): FilterState {
   ];
   const completedCourses = splitList(read(params, "done")).map((s) => s.toLowerCase());
 
-  const ratRaw = read(params, "rat");
-  let ratingAndThreshold: FilterState["ratingAndThreshold"] = null;
-  if (ratRaw) {
-    const [easy, useful] = ratRaw.split(",").map(Number);
-    if (Number.isFinite(easy) && Number.isFinite(useful)) {
-      ratingAndThreshold = { easy, useful };
-    }
-  }
-
   return {
     excludePrefixes,
     includePrefixes,
@@ -80,7 +70,6 @@ export function decodeFilterState(params: RawParams): FilterState {
     hasSeatsAvailable: parseBool(read(params, "seats")),
     completedCourses,
     hideUnmetPrereqs: parseBool(read(params, "up")),
-    ratingAndThreshold,
     minUseful: parseFloatOrNull(read(params, "minU")),
     minEasy: parseFloatOrNull(read(params, "minE")),
   };
@@ -102,9 +91,6 @@ export function encodeFilterState(state: FilterState): URLSearchParams {
     out.set("done", state.completedCourses.join(","));
   }
   if (state.hideUnmetPrereqs) out.set("up", "1");
-  if (state.ratingAndThreshold) {
-    out.set("rat", `${state.ratingAndThreshold.easy},${state.ratingAndThreshold.useful}`);
-  }
   if (state.minUseful != null) out.set("minU", String(state.minUseful));
   if (state.minEasy != null) out.set("minE", String(state.minEasy));
   return out;

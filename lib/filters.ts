@@ -21,17 +21,6 @@ export function passesPrefixExclusion(
   return !excludePrefixes.includes(course.prefix);
 }
 
-export function passesRatingAndThreshold(
-  course: Course,
-  threshold: { easy: number; useful: number } | null,
-): boolean {
-  if (!threshold) return true;
-  const easy = course.rating?.easy;
-  const useful = course.rating?.useful;
-  if (easy == null || useful == null) return true;
-  return !(easy < threshold.easy && useful < threshold.useful);
-}
-
 export function passesMinUsefulFilter(
   course: Course,
   minUseful: number | null,
@@ -89,7 +78,6 @@ export function applyFilters(
       passesIncludePrefixes(c, s.includePrefixes) &&
       passesLevelFilter(c, s.levels) &&
       passesSeatsFilter(c, s.hasSeatsAvailable) &&
-      passesRatingAndThreshold(c, s.ratingAndThreshold) &&
       passesMinUsefulFilter(c, s.minUseful) &&
       passesMinEasyFilter(c, s.minEasy),
   );

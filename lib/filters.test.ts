@@ -3,7 +3,6 @@ import {
   enrichCourse,
   passesLevelFilter,
   passesPrefixExclusion,
-  passesRatingAndThreshold,
   passesSeatsFilter,
 } from "./filters";
 import type { UWFlowCourse } from "./types";
@@ -50,26 +49,6 @@ describe("passesPrefixExclusion", () => {
   it("passes other prefixes", () => {
     const c = makeCourse({ code: "fr101" });
     expect(passesPrefixExclusion(c, ["GER"])).toBe(true);
-  });
-});
-
-describe("passesRatingAndThreshold", () => {
-  const threshold = { easy: 0.4, useful: 0.5 };
-  it("drops when both below thresholds", () => {
-    const c = makeCourse({
-      rating: { easy: 0.3, useful: 0.3, liked: 0.5, filled_count: 5 },
-    });
-    expect(passesRatingAndThreshold(c, threshold)).toBe(false);
-  });
-  it("keeps when easy is below but useful is high", () => {
-    const c = makeCourse({
-      rating: { easy: 0.2, useful: 0.9, liked: 0.5, filled_count: 5 },
-    });
-    expect(passesRatingAndThreshold(c, threshold)).toBe(true);
-  });
-  it("keeps when ratings are null", () => {
-    const c = makeCourse({ rating: null });
-    expect(passesRatingAndThreshold(c, threshold)).toBe(true);
   });
 });
 
