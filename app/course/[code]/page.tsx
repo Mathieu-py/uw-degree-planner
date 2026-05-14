@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { loadCourseByCode } from "@/lib/data";
-import { SYDE_M1_DEFAULTS } from "@/lib/filters";
-import { formatCourseCode, formatPercent } from "@/lib/format";
-import { termLabel } from "@/lib/terms";
+import { loadCourseByCode } from "~/models/courses";
+import { SYDE_M1_DEFAULTS } from "~/utils/filters";
+import { formatCourseCode, formatPercent } from "~/utils/format";
+import { termLabel } from "~/utils/terms";
 
 interface PageParams {
   code: string;

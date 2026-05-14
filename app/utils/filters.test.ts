@@ -10,7 +10,7 @@ import {
   passesSeatsFilter,
   passesWLUFilter,
 } from "./filters";
-import type { UWFlowCourse } from "./types";
+import type { UWFlowCourse } from "~/types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}) {
   const base: UWFlowCourse = {

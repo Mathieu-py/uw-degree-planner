@@ -8,8 +8,8 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
-import { enrichCourse } from "./filters";
-import type { Course, TermId, UWFlowCourse } from "./types";
+import { enrichCourse } from "~/utils/filters";
+import type { Course, TermId, UWFlowCourse } from "~/types";
 
 interface CoursesFile {
   termId: number;

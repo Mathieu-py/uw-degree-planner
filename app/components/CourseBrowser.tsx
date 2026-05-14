@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { Course } from "@/lib/types";
-import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
+import type { Course } from "~/types";
+import { formatCourseCode, formatPercent, truncate } from "~/utils/format";
 
 type SortKey = "code" | "name" | "useful" | "easy" | "liked" | "reviews" | "seats";
 type SortDir = "asc" | "desc";
