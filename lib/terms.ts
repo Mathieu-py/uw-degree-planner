@@ -1,18 +1,9 @@
 import type { TermId } from "./types";
 
 /**
- * UWaterloo term IDs follow the format `1<YY><N>` where N is:
- *   1 = Winter, 5 = Spring, 9 = Fall
- * So 1261 = Spring 2026 (year 26, term digit 5? Actually...)
- *
- * Empirically observed in UWFlow:
- *   1255 = Spring 2025
- *   1259 = Fall 2025
- *   1261 = Winter 2026     <-- but our legacy script calls this "Spring 2026"
- *   1265 = Spring 2026
- *
- * Until we confirm the formula, treat term IDs as opaque tokens with a
- * human label looked up from this table.
+ * UWFlow term IDs look like `1<YY><digit>` (1261, 1265, …) but the digit's
+ * meaning isn't stable across what we've observed, so we treat IDs as
+ * opaque and pin season/year via this hand-maintained table.
  */
 export type TermSeason = "Winter" | "Spring" | "Fall";
 

@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "eslint",
     "fetch-courses": "tsx scripts/fetch-uwflow.ts",
-    "regression": "tsx scripts/check-regression.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

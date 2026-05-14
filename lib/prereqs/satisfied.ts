@@ -1,8 +1,7 @@
 /**
- * Layer 3: evaluate a parsed prereq AST against a student's state and
- * return whether they're eligible. Non-course nodes (level / raw program
- * text) are treated as "uncertain" — they don't fail the check, but they
- * are surfaced so the UI can ask the user to verify them manually.
+ * Walk a prereq AST against a student's completed set. Course nodes give
+ * definite pass/fail; level and raw-text nodes resolve to "uncertain" so
+ * the UI can ask the student to verify them rather than wrongly failing.
  */
 
 import type { PrereqNode } from "./parse";
@@ -81,6 +80,10 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       };
     }
     case "or": {
+      // If any child is definitely satisfied, the OR is satisfied (no asterisk).
+      // Otherwise, if any child is uncertain (raw text / unknown level), we
+      // bias toward "satisfied + uncertain" rather than failing — the student
+      // may still meet the requirement via a route we can't evaluate.
       const child = node.children.map((c) => walk(c, state));
       const anySatisfied = child.some((c) => c.satisfied && !c.uncertain);
       if (anySatisfied) {
@@ -97,10 +100,7 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
   }
 }
 
-/**
- * Compare UWaterloo year-letter levels ("1A" < "1B" < "2A" < ... < "4B" < "5A").
- * Returns negative if a < b, 0 if equal, positive if a > b.
- */
+/** UWaterloo year-letter levels: "1A" < "1B" < "2A" < ... < "4B" < "5A". */
 function compareLevel(a: string, b: string): number {
   const score = (lvl: string) => {
     const m = lvl.match(/^(\d+)([A-Z])?$/);

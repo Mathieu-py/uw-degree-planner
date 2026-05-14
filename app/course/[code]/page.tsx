@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadCourseByCode } from "@/lib/data";
-import { SYDE_M1_DEFAULTS } from "@/lib/filters";
 import { formatCourseCode, formatPercent } from "@/lib/format";
+import { seatsAvailable } from "@/lib/sort";
 import { termLabel } from "@/lib/terms";
+
+const TERM = 1261;
 
 interface PageParams {
   code: string;
@@ -13,7 +15,7 @@ export async function generateMetadata(props: {
   params: Promise<PageParams>;
 }) {
   const { code } = await props.params;
-  const course = await loadCourseByCode(SYDE_M1_DEFAULTS.term, code);
+  const course = await loadCourseByCode(TERM, code);
   if (!course) return { title: "Course not found · UW Elective Finder" };
   return {
     title: `${formatCourseCode(course.code)} — ${course.name} · UW Elective Finder`,
@@ -25,14 +27,11 @@ export default async function CoursePage(props: {
   params: Promise<PageParams>;
 }) {
   const { code } = await props.params;
-  const course = await loadCourseByCode(SYDE_M1_DEFAULTS.term, code);
+  const course = await loadCourseByCode(TERM, code);
   if (!course) notFound();
 
   const rating = course.rating;
-  const totalSeats = course.sections.reduce(
-    (s, sec) => s + Math.max(0, sec.enrollment_capacity - sec.enrollment_total),
-    0,
-  );
+  const totalSeats = seatsAvailable(course) ?? 0;
 
   return (
     <div className="mx-auto max-w-3xl w-full px-6 py-10 flex flex-col gap-8">
@@ -45,7 +44,7 @@ export default async function CoursePage(props: {
 
       <header className="flex flex-col gap-2">
         <span className="font-mono text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          {formatCourseCode(course.code)} · {termLabel(SYDE_M1_DEFAULTS.term)}
+          {formatCourseCode(course.code)} · {termLabel(TERM)}
         </span>
         <h1 className="text-3xl font-semibold tracking-tight">{course.name}</h1>
       </header>
@@ -78,7 +77,7 @@ export default async function CoursePage(props: {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          Sections in {termLabel(SYDE_M1_DEFAULTS.term)}
+          Sections in {termLabel(TERM)}
         </h2>
         {course.sections.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">

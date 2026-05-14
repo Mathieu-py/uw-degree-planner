@@ -1,7 +1,7 @@
 /**
- * Layer 2: parse a UWFlow free-text prereq string into a boolean AST so a
- * caller can check "did this user complete what's required?" — instead of
- * the substring heuristic in passesPrereqSubstringFilter.
+ * UWFlow prereq text → boolean AST. The grammar is reverse-engineered from
+ * the prose; anything that doesn't match becomes a RAW node so satisfied.ts
+ * can surface it as "uncertain" rather than failing the user.
  *
  * Grammar (precedence, lowest → highest):
  *   expression := and_clause (";" and_clause)*
@@ -11,12 +11,7 @@
  *              |  "one of" COURSE ("," COURSE)*       (OR over the list)
  *              |  "(" expression ")"
  *              |  RAW_TEXT                            (level/program/etc.)
- *
- * Anything we don't recognize becomes a RAW node — satisfied.ts treats
- * those as uncertain (doesn't fail, but surfaces them for display).
  */
-
-import { normalizeCourseCode } from "./extract";
 
 export type PrereqNode =
   | { kind: "course"; code: string }
@@ -76,7 +71,7 @@ function tokenize(input: string): Token[] {
       continue;
     }
     if (ch === "/") {
-      // Equivalent-course slash (e.g. "AFM382/AFM481") — treat as OR.
+      // "AFM382/AFM481" — slash between equivalent courses.
       tokens.push({ kind: "OR" });
       i++;
       continue;
@@ -101,7 +96,7 @@ function tokenize(input: string): Token[] {
     if (courseMatch) {
       tokens.push({
         kind: "COURSE",
-        code: normalizeCourseCode(`${courseMatch[1]}${courseMatch[2]}`),
+        code: `${courseMatch[1]}${courseMatch[2]}`.toLowerCase(),
       });
       i += courseMatch[0].length;
       continue;
@@ -208,31 +203,26 @@ class Parser {
     }
     if (tok.kind === "RAW") {
       this.consume();
-      // Sometimes RAW text contains an embedded course code (e.g. "Prereq: MATH116");
-      // we already extract those at tokenize time, so this is non-course text.
       return { kind: "raw", text: tok.text };
     }
-    // Skip stray punctuation / unknown.
     if (tok.kind !== "END") this.consume();
     return { kind: "raw", text: "" };
   }
 
   /**
-   * Inside "one of A, B, (C or D)", each comma-separated item can itself
-   * be a parenthesized expression — recurse via parsePrimary.
+   * "one of A, B, (C or D)" — each comma-separated item may itself be a
+   * parenthesized expression, so recurse via parsePrimary for LPAREN.
    */
   private parseOneOfItem(): PrereqNode | null {
     const tok = this.peek();
     if (tok.kind === "COMMA" || tok.kind === "END" || tok.kind === "SEMI") {
       return null;
     }
-    // Inside "one of", allow a parenthesized or grouped expression.
     if (tok.kind === "LPAREN") return this.parsePrimary();
     if (tok.kind === "COURSE") {
       this.consume();
       return { kind: "course", code: tok.code };
     }
-    // Fall through: treat as raw single token to keep going.
     if (tok.kind === "RAW") {
       this.consume();
       return { kind: "raw", text: tok.text };

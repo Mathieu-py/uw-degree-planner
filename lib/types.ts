@@ -43,7 +43,6 @@ export type TermId = number;
  * URL search params encode it for shareable views.
  */
 export interface FilterState {
-  term: TermId;
   excludePrefixes: string[];
   includePrefixes: string[];
   levels: number[];
@@ -53,9 +52,4 @@ export interface FilterState {
   ratingAndThreshold: { easy: number; useful: number } | null;
   minUseful: number | null;
   minEasy: number | null;
-  excludeWLU: boolean;
-  excludeAncientMedieval: boolean;
-  excludeEnvKeywords: boolean;
-  excludeEssayHeavy: boolean;
-  allowPsych101Exception: boolean;
 }

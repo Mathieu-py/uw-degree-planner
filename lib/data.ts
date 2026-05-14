@@ -1,7 +1,7 @@
 /**
- * Server-only data loader. Reads the committed UWFlow snapshot JSON,
- * enriches each row with derived fields, and memoises across requests
- * via React's cache() so subsequent server components share the result.
+ * Server-only loader for the committed UWFlow snapshot. Wrapped in React's
+ * cache() so a single request that hits multiple server components (page,
+ * metadata, etc.) reads and parses the JSON only once.
  */
 
 import "server-only";

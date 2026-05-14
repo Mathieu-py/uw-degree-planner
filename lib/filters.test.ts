@@ -1,14 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   enrichCourse,
-  passesAncientMedievalFilter,
-  passesEnvKeywordFilter,
-  passesEssayHeavyFilter,
   passesLevelFilter,
   passesPrefixExclusion,
   passesRatingAndThreshold,
   passesSeatsFilter,
-  passesWLUFilter,
 } from "./filters";
 import type { UWFlowCourse } from "./types";
 
@@ -54,48 +50,6 @@ describe("passesPrefixExclusion", () => {
   it("passes other prefixes", () => {
     const c = makeCourse({ code: "fr101" });
     expect(passesPrefixExclusion(c, ["GER"])).toBe(true);
-  });
-});
-
-describe("passesEssayHeavyFilter", () => {
-  it("rejects PHIL by default", () => {
-    const c = makeCourse({ code: "phil101" });
-    expect(passesEssayHeavyFilter(c, false)).toBe(false);
-  });
-  it("allows psych101 exception", () => {
-    const c = makeCourse({ code: "psych101" });
-    expect(passesEssayHeavyFilter(c, true)).toBe(true);
-    expect(passesEssayHeavyFilter(c, false)).toBe(false);
-  });
-});
-
-describe("passesAncientMedievalFilter", () => {
-  it.each([
-    ["Ancient Greek Philosophy", false],
-    ["Medieval Studies", false],
-    ["Modern Calculus", true],
-  ])("%s → %s", (name, expected) => {
-    const c = makeCourse({ name });
-    expect(passesAncientMedievalFilter(c)).toBe(expected);
-  });
-});
-
-describe("passesWLUFilter", () => {
-  it("rejects WLU mention in name", () => {
-    const c = makeCourse({ name: "WLU Joint Program" });
-    expect(passesWLUFilter(c)).toBe(false);
-  });
-  it("rejects codes ending in w", () => {
-    const c = makeCourse({ code: "comm100w" });
-    expect(passesWLUFilter(c)).toBe(false);
-  });
-});
-
-describe("passesEnvKeywordFilter", () => {
-  it("rejects environment/climate/sustainability in name", () => {
-    expect(passesEnvKeywordFilter(makeCourse({ name: "Climate Action" }))).toBe(false);
-    expect(passesEnvKeywordFilter(makeCourse({ name: "Sustainability 101" }))).toBe(false);
-    expect(passesEnvKeywordFilter(makeCourse({ name: "Environmental Law" }))).toBe(false);
   });
 });
 
