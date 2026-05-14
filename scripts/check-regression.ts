@@ -1,16 +1,8 @@
 /**
- * Regression check: applies SYDE_M1_DEFAULTS to the *committed* snapshot at
+ * Regression check: applies SYDE_M1_DEFAULTS to the committed snapshot at
  * data/courses.1261.json and confirms the result matches a hand-curated
- * baseline of 27 codes.
- *
- * Note on the baseline: this is *not* the exact set in _legacy/course-list.md.
- * That file was generated against an older live snapshot; UWFlow's catalog
- * has since shifted (some courses lost sections, others gained seats). The
- * three diverging courses (dutch271, ae392, geoe224 dropped; cive392,
- * asl101r, bet210 added) all changed in upstream data, not in filter logic.
- *
- * When the snapshot is re-fetched and committed, this baseline may need
- * regenerating. To re-derive: pnpm exec tsx scripts/list-syde-defaults.ts
+ * baseline of 27 codes. Re-run after each pnpm fetch-courses to catch
+ * filter regressions caused by upstream catalog drift.
  */
 
 import { readFile } from "node:fs/promises";

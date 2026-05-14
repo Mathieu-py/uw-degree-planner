@@ -93,11 +93,11 @@ export function passesMinEasyFilter(
 }
 
 /**
- * Mirrors the original fetch-courses.js prereq logic exactly — substring
- * lookup against the lowercased prereq string. Replaced by a real AST
- * parser in M2 (lib/prereqs/satisfied.ts).
+ * First-pass prereq check: substring match against the lowercased prereq
+ * string. Imprecise (treats "or" as "and"); replaced by lib/prereqs/satisfied.ts
+ * once the AST parser lands.
  */
-export function passesPrereqLegacyFilter(
+export function passesPrereqSubstringFilter(
   course: Course,
   completedCourses: ReadonlyArray<string>,
 ): boolean {
@@ -157,7 +157,7 @@ export function applyFilters(
     if (!passesRatingAndThreshold(c, state.ratingAndThreshold)) return false;
     if (!passesMinUsefulFilter(c, state.minUseful)) return false;
     if (!passesMinEasyFilter(c, state.minEasy)) return false;
-    if (state.hideUnmetPrereqs && !passesPrereqLegacyFilter(c, state.completedCourses)) {
+    if (state.hideUnmetPrereqs && !passesPrereqSubstringFilter(c, state.completedCourses)) {
       return false;
     }
     if (!passesLevelFilter(c, state.levels)) return false;
@@ -167,8 +167,9 @@ export function applyFilters(
 }
 
 /**
- * SYDE defaults — must reproduce the 27 courses in _legacy/course-list.md
- * for the M1 regression test. Don't change without re-validating.
+ * SYDE defaults — the regression baseline (27 codes in
+ * scripts/check-regression.ts) pins this exact filter result against the
+ * committed snapshot. Don't change without re-running pnpm regression.
  */
 export const SYDE_M1_DEFAULTS: FilterState = {
   term: 1261,
