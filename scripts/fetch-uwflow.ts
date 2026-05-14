@@ -9,7 +9,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { UWFlowCourse } from "~/types";
+import type { UWFlowCourse } from "../lib/types";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 

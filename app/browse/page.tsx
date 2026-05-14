@@ -1,7 +1,7 @@
-import { CourseBrowser } from "~/components/CourseBrowser";
-import { loadTerm } from "~/models/courses";
-import { applyFilters, SYDE_M1_DEFAULTS } from "~/utils/filters";
-import { termLabel } from "~/utils/terms";
+import { CourseBrowser } from "@/components/CourseBrowser";
+import { loadTerm } from "@/lib/data";
+import { applyFilters, SYDE_M1_DEFAULTS } from "@/lib/filters";
+import { termLabel } from "@/lib/terms";
 
 export const metadata = {
   title: "Browse electives · UW Elective Finder",

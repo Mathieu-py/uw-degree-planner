@@ -7,8 +7,8 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { applyFilters, enrichCourse, SYDE_M1_DEFAULTS } from "~/utils/filters";
-import type { UWFlowCourse } from "~/types";
+import { applyFilters, enrichCourse, SYDE_M1_DEFAULTS } from "../lib/filters";
+import type { UWFlowCourse } from "../lib/types";
 
 interface CoursesFile {
   termId: number;

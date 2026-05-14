@@ -7,7 +7,7 @@ import {
   SOCIAL_PREFIXES,
   SYDE_OVERLAP_PREFIXES,
 } from "./prefixes";
-import type { Course, FilterState, UWFlowCourse } from "~/types";
+import type { Course, FilterState, UWFlowCourse } from "./types";
 
 const LEVEL_RE = /\d+/;
 const PREFIX_RE = /^[A-Z]+/;

@@ -1,4 +1,4 @@
-import type { TermId } from "~/types";
+import type { TermId } from "./types";
 
 /**
  * UWaterloo term IDs follow the format `1<YY><N>` where N is:
