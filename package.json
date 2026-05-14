@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "fetch-courses": "tsx scripts/fetch-uwflow.ts",
-    "regression": "tsx scripts/check-regression.ts"
+    "regression": "tsx scripts/check-regression.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "next": "16.2.6",
@@ -26,6 +28,7 @@
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
