@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FilterPanel } from "./FilterPanel";
+import { Pagination } from "./Pagination";
 import type { BrowseRow } from "@/lib/browse";
 import { seatsAvailable } from "@/lib/filters";
 import { BROWSE_QS_STORAGE_KEY } from "@/lib/filterState";
@@ -13,6 +14,7 @@ import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import {
   DEFAULT_SORT_DIR,
   DEFAULT_SORT_KEY,
+  PAGE_SIZE,
   type SortDir,
   type SortKey,
 } from "@/lib/sort";
@@ -23,6 +25,7 @@ interface Props {
   state: FilterState;
   sortKey: SortKey;
   sortDir: SortDir;
+  page: number;
   totalCount: number;
   allCourseCodes: string[];
   knownPrefixes: string[];
@@ -33,6 +36,7 @@ export function CourseBrowser({
   state,
   sortKey,
   sortDir,
+  page,
   totalCount,
   allCourseCodes,
   knownPrefixes,
@@ -51,6 +55,20 @@ export function CourseBrowser({
 
   const isSearching = query.trim().length > 0;
 
+  const totalPages = Math.max(1, Math.ceil(searched.length / PAGE_SIZE));
+  const displayPage = Math.min(Math.max(1, page), totalPages);
+  const startIdx = (displayPage - 1) * PAGE_SIZE;
+  const pageRows = searched.slice(startIdx, startIdx + PAGE_SIZE);
+
+  function setPageInUrl(n: number) {
+    const params = new URLSearchParams(window.location.search);
+    if (n <= 1) params.delete("p");
+    else params.set("p", String(n));
+    const qs = params.toString();
+    safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
   function setPresentation(next: { s?: SortKey; d?: SortDir }) {
     const params = new URLSearchParams(window.location.search);
     const nextKey = next.s ?? sortKey;
@@ -61,6 +79,8 @@ export function CourseBrowser({
 
     if (nextDir === DEFAULT_SORT_DIR) params.delete("d");
     else params.set("d", nextDir);
+
+    params.delete("p");
 
     const qs = params.toString();
     safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
@@ -120,7 +140,7 @@ export function CourseBrowser({
               </tr>
             </thead>
             <tbody>
-              {searched.map((r) => (
+              {pageRows.map((r) => (
                 <CourseRow key={r.course.id} row={r} />
               ))}
               {searched.length === 0 && (
@@ -137,6 +157,13 @@ export function CourseBrowser({
           </table>
         </div>
 
+        {totalPages > 1 && (
+          <Pagination
+            page={displayPage}
+            totalPages={totalPages}
+            onChange={setPageInUrl}
+          />
+        )}
       </div>
     </div>
   );

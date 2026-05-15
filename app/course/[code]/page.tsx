@@ -52,7 +52,7 @@ export default async function CoursePage(props: {
           <Stat label="Useful" value={formatPercent(rating.useful)} />
           <Stat label="Easy" value={formatPercent(rating.easy)} />
           <Stat label="Liked" value={formatPercent(rating.liked)} />
-          <Stat label="Reviews" value={rating.filled_count?.toString() ?? "0"} />
+          <Stat label="Reviews" value={rating.filled_count.toString()} />
         </section>
       )}
 
