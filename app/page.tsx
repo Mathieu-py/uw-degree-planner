@@ -18,7 +18,7 @@ export default function Home() {
         <p className="text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 max-w-2xl">
           Sort and filter ~10,000 UWaterloo courses by usefulness, easiness,
           prerequisites you&apos;ve already done, and available seats — sourced
-          from UWFlow ratings and refreshed nightly.
+          from UWFlow ratings.
         </p>
       </div>
 

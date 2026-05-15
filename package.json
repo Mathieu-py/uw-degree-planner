@@ -1,7 +1,7 @@
 {
   "name": "uw-elective-finder",
   "version": "0.1.0",
-  "description": "Browse and filter UWaterloo elective courses with Claude-powered natural-language search.",
+  "description": "Browse and filter UWaterloo elective courses by usefulness, easiness, prerequisites, and available seats, using UWFlow ratings.",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "eslint",
     "fetch-courses": "tsx scripts/fetch-uwflow.ts",
-    "regression": "tsx scripts/check-regression.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -30,5 +29,10 @@
     "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.10"
+    }
   }
 }

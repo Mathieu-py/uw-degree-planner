@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UW Elective Finder
 
-## Getting Started
+Browse and filter ~10,000 UWaterloo courses by usefulness, easiness, prerequisites, and available seats — sourced from UWFlow ratings.
 
-First, run the development server:
+Built with Next.js 16, React 19, and Tailwind v4.
+
+## Getting started
+
+Install dependencies and run the dev server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev              # start the dev server
+pnpm build            # production build
+pnpm start            # run the production build
+pnpm lint             # eslint
+pnpm test             # vitest (single run)
+pnpm test:watch       # vitest in watch mode
+pnpm fetch-courses    # refresh data/ from UWFlow
+```
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
+- `app/` — routes (`/`, `/browse`, `/course/[code]`)
+- `components/` — UI components (`CourseBrowser`, `FilterPanel`, …)
+- `lib/` — filter logic, prereq parsing, types, tests
+- `scripts/fetch-uwflow.ts` — pulls course data from the UWFlow GraphQL API into `data/`
+- `data/` — cached course JSON, keyed by UW term code
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data source
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Course ratings, metadata, and section/seat counts come from [UWFlow](https://uwflow.com) via their public GraphQL endpoint. The snapshot in `data/` is committed; refresh it manually with `pnpm fetch-courses`.
 
-## Deploy on Vercel
+## Notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project targets Next.js 16, which has breaking changes vs. earlier versions. When in doubt, check `node_modules/next/dist/docs/` before relying on older patterns.

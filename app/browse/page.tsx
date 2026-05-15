@@ -1,46 +1,54 @@
 import { CourseBrowser } from "@/components/CourseBrowser";
+import { buildBrowseRows } from "@/lib/browse";
 import { loadTerm } from "@/lib/data";
-import { applyFilters, SYDE_M1_DEFAULTS } from "@/lib/filters";
-import { termLabel } from "@/lib/terms";
+import { decodeFilterState } from "@/lib/filterState";
+import { compareCourses, parseSortDir, parseSortKey } from "@/lib/sort";
+import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
 export const metadata = {
   title: "Browse electives · UW Elective Finder",
 };
 
-export default async function BrowsePage() {
-  const all = await loadTerm(SYDE_M1_DEFAULTS.term);
-  const filtered = applyFilters(all, SYDE_M1_DEFAULTS);
+export default async function BrowsePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const state = decodeFilterState(params);
+  const sortKey = parseSortKey(params.s);
+  const sortDir = parseSortDir(params.d);
+
+  const all = await loadTerm(TERM);
+  const rows = buildBrowseRows(all, state);
+  rows.sort((a, b) => compareCourses(a.course, b.course, sortKey, sortDir));
+
+  const allCourseCodes = all.map((c) => c.code).sort();
+  const knownPrefixes = [...new Set(all.map((c) => c.prefix))].sort();
 
   return (
-    <div className="mx-auto max-w-6xl w-full px-6 py-10 flex flex-col gap-8">
+    <div className="mx-auto max-w-6xl w-full px-6 py-10 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          {termLabel(SYDE_M1_DEFAULTS.term)}
+          {termLabel(TERM)}
         </span>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Electives for Systems Design Engineering
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Browse electives</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
-          Filtered from {all.length.toLocaleString()} courses. Excludes SYDE-overlap
-          subjects, language/art/social-studies departments, essay-heavy classes,
-          and anything with no seats. Sort and search below.
+          {all.length.toLocaleString()} courses in the catalog. Configure the filters
+          on the left to match your program; the URL stays in sync so you can share or
+          bookmark any view.
         </p>
-        <details className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-          <summary className="cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 select-none">
-            Why these courses? (filter details)
-          </summary>
-          <ul className="mt-2 space-y-1 list-disc list-inside">
-            <li>100–300 level only, with available seats in {termLabel(SYDE_M1_DEFAULTS.term)}.</li>
-            <li>Excludes SYDE-overlapping prefixes (PHYS, CS, ME, MSE, INTEG, MNS, SYDE, ECE, MATH, MTHEL).</li>
-            <li>Excludes language, art, social-studies, music/geography/kin/chem/bio, essay-heavy, and health/environment prefixes.</li>
-            <li>Drops courses where easiness &lt; 40% <em>and</em> usefulness &lt; 50%.</li>
-            <li>Keeps only courses whose listed prereqs are met by MATH 116 / 117 (legacy substring check; real AST parser lands in M2).</li>
-            <li>Custom programs and personalized prereq checks come in milestone&nbsp;2.</li>
-          </ul>
-        </details>
       </div>
 
-      <CourseBrowser courses={filtered} />
+      <CourseBrowser
+        rows={rows}
+        state={state}
+        sortKey={sortKey}
+        sortDir={sortDir}
+        totalCount={all.length}
+        allCourseCodes={allCourseCodes}
+        knownPrefixes={knownPrefixes}
+      />
     </div>
   );
 }
