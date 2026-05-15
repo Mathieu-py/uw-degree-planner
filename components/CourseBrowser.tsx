@@ -4,32 +4,25 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FilterPanel } from "./FilterPanel";
-import { FILTER_STORAGE_KEY } from "@/lib/filterState";
+import type { BrowseRow } from "@/lib/browse";
+import { seatsAvailable } from "@/lib/filters";
+import { BROWSE_QS_STORAGE_KEY } from "@/lib/filterState";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import {
   DEFAULT_SORT_DIR,
   DEFAULT_SORT_KEY,
-  seatsAvailable,
   type SortDir,
   type SortKey,
 } from "@/lib/sort";
-import type { Course, FilterState } from "@/lib/types";
-
-export interface BrowseRow {
-  course: Course;
-  eligibility: EligibilityResult | null;
-}
+import type { FilterState } from "@/lib/types";
 
 interface Props {
   rows: BrowseRow[];
   state: FilterState;
   sortKey: SortKey;
   sortDir: SortDir;
-  showAll: boolean;
-  filteredCount: number;
   totalCount: number;
-  defaultLimit: number;
   allCourseCodes: string[];
   knownPrefixes: string[];
 }
@@ -39,10 +32,7 @@ export function CourseBrowser({
   state,
   sortKey,
   sortDir,
-  showAll,
-  filteredCount,
   totalCount,
-  defaultLimit,
   allCourseCodes,
   knownPrefixes,
 }: Props) {
@@ -50,7 +40,7 @@ export function CourseBrowser({
   const pathname = usePathname();
   const [query, setQuery] = useState("");
 
-  const visibleRows = useMemo(() => {
+  const searched = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (q.length === 0) return rows;
     return rows.filter(
@@ -58,11 +48,12 @@ export function CourseBrowser({
     );
   }, [rows, query]);
 
-  function setPresentation(next: { s?: SortKey; d?: SortDir; all?: boolean }) {
+  const isSearching = query.trim().length > 0;
+
+  function setPresentation(next: { s?: SortKey; d?: SortDir }) {
     const params = new URLSearchParams(window.location.search);
     const nextKey = next.s ?? sortKey;
     const nextDir = next.d ?? sortDir;
-    const nextAll = next.all ?? showAll;
 
     if (nextKey === DEFAULT_SORT_KEY) params.delete("s");
     else params.set("s", nextKey);
@@ -70,11 +61,8 @@ export function CourseBrowser({
     if (nextDir === DEFAULT_SORT_DIR) params.delete("d");
     else params.set("d", nextDir);
 
-    if (nextAll) params.set("all", "1");
-    else params.delete("all");
-
     const qs = params.toString();
-    window.localStorage.setItem(FILTER_STORAGE_KEY, qs);
+    window.localStorage.setItem(BROWSE_QS_STORAGE_KEY, qs);
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
@@ -85,8 +73,6 @@ export function CourseBrowser({
       setPresentation({ s: key, d: key === "code" || key === "name" ? "asc" : "desc" });
     }
   }
-
-  const isCapped = !showAll && filteredCount > defaultLimit;
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -113,19 +99,10 @@ export function CourseBrowser({
 
         <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
           <span>
-            {isCapped
-              ? `Showing top ${rows.length.toLocaleString()} of ${filteredCount.toLocaleString()} matches`
-              : `${visibleRows.length.toLocaleString()} of ${totalCount.toLocaleString()} courses`}
+            {isSearching
+              ? `${searched.length.toLocaleString()} of ${rows.length.toLocaleString()} matches`
+              : `${rows.length.toLocaleString()} of ${totalCount.toLocaleString()} courses`}
           </span>
-          {filteredCount > defaultLimit && (
-            <button
-              type="button"
-              onClick={() => setPresentation({ all: !showAll })}
-              className="underline-offset-2 hover:underline hover:text-zinc-950 dark:hover:text-zinc-50"
-            >
-              {showAll ? `Show top ${defaultLimit}` : `Show all ${filteredCount.toLocaleString()}`}
-            </button>
-          )}
         </div>
 
         <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-800">
@@ -142,10 +119,10 @@ export function CourseBrowser({
               </tr>
             </thead>
             <tbody>
-              {visibleRows.map((r) => (
+              {searched.map((r) => (
                 <CourseRow key={r.course.id} row={r} />
               ))}
-              {visibleRows.length === 0 && (
+              {searched.length === 0 && (
                 <tr>
                   <td
                     colSpan={7}
@@ -159,17 +136,6 @@ export function CourseBrowser({
           </table>
         </div>
 
-        {isCapped && visibleRows.length === rows.length && (
-          <div className="flex justify-center pt-2">
-            <button
-              type="button"
-              onClick={() => setPresentation({ all: true })}
-              className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
-            >
-              Show all {filteredCount.toLocaleString()} matches
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -187,13 +153,13 @@ function RestorePill() {
   useEffect(() => {
     const currentSearch = window.location.search;
     if (currentSearch === "") {
-      const saved = window.localStorage.getItem(FILTER_STORAGE_KEY);
+      const saved = window.localStorage.getItem(BROWSE_QS_STORAGE_KEY);
       if (saved && saved !== "") {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is unavailable during SSR; this is a one-time mount-only hydration read.
         setSavedQuery(saved);
       }
     } else {
-      window.localStorage.setItem(FILTER_STORAGE_KEY, currentSearch.replace(/^\?/, ""));
+      window.localStorage.setItem(BROWSE_QS_STORAGE_KEY, currentSearch.replace(/^\?/, ""));
     }
   }, []);
 
@@ -217,7 +183,7 @@ function RestorePill() {
         <button
           type="button"
           onClick={() => {
-            window.localStorage.removeItem(FILTER_STORAGE_KEY);
+            window.localStorage.removeItem(BROWSE_QS_STORAGE_KEY);
             setSavedQuery(null);
           }}
           className="rounded text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 px-2 py-1"

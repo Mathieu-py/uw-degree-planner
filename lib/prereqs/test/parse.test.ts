@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePrereqs, type PrereqNode } from "./parse";
+import { parsePrereqs, type PrereqNode } from "../parse";
 
 function courses(node: PrereqNode | null): string[] {
   if (!node) return [];

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FILTER_STATE, decodeFilterState, encodeFilterState } from "./filterState";
-import type { FilterState } from "./types";
+import {
+  DEFAULT_FILTER_STATE,
+  decodeFilterState,
+  encodeFilterState,
+  mergeFilterStateIntoParams,
+} from "../filterState";
+import type { FilterState } from "../types";
 
 function roundTrip(state: FilterState): FilterState {
   return decodeFilterState(new URLSearchParams(encodeFilterState(state).toString()));
@@ -66,6 +71,49 @@ describe("encodeFilterState", () => {
     expect(encodeFilterState(state).get("exc")).toBe("PHIL,ENGL");
   });
 
+});
+
+describe("mergeFilterStateIntoParams", () => {
+  it("preserves sort params (s, d) when filters change", () => {
+    const current = new URLSearchParams("s=easy&d=asc&exc=PHIL");
+    const next: FilterState = { ...DEFAULT_FILTER_STATE, excludePrefixes: ["ENGL"] };
+    const merged = mergeFilterStateIntoParams(current, next);
+    expect(merged.get("s")).toBe("easy");
+    expect(merged.get("d")).toBe("asc");
+    expect(merged.get("exc")).toBe("ENGL");
+  });
+
+  it("clears filter keys that fall back to default", () => {
+    const current = new URLSearchParams("s=easy&exc=PHIL&minU=0.5&seats=1");
+    const merged = mergeFilterStateIntoParams(current, DEFAULT_FILTER_STATE);
+    expect(merged.get("s")).toBe("easy");
+    expect(merged.has("exc")).toBe(false);
+    expect(merged.has("minU")).toBe(false);
+    expect(merged.has("seats")).toBe(false);
+  });
+
+  it("does not mutate the input params", () => {
+    const current = new URLSearchParams("s=easy&exc=PHIL");
+    const before = current.toString();
+    mergeFilterStateIntoParams(current, { ...DEFAULT_FILTER_STATE, excludePrefixes: ["ENGL"] });
+    expect(current.toString()).toBe(before);
+  });
+
+  it("writes every filter key on a fully-populated state", () => {
+    const state: FilterState = {
+      excludePrefixes: ["PHIL"],
+      includePrefixes: ["MATH"],
+      levels: [200],
+      hasSeatsAvailable: true,
+      completedCourses: ["math116"],
+      hideUnmetPrereqs: true,
+      minUseful: 0.6,
+      minEasy: 0.3,
+    };
+    const merged = mergeFilterStateIntoParams(new URLSearchParams("s=code"), state);
+    expect(merged.get("s")).toBe("code");
+    expect(decodeFilterState(merged)).toEqual(state);
+  });
 });
 
 describe("round trip", () => {

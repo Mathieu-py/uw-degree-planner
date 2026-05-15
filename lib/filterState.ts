@@ -11,7 +11,13 @@
 
 import type { FilterState } from "./types";
 
-export const FILTER_STORAGE_KEY = "uwfinder.filterUrl";
+export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
+
+// URL keys owned by FilterState. Used by mergeFilterStateIntoParams to
+// overwrite filter slots without disturbing sort params (s, d).
+const FILTER_PARAM_KEYS = [
+  "exc", "inc", "lv", "seats", "done", "up", "minU", "minE",
+] as const;
 
 export const DEFAULT_FILTER_STATE: FilterState = {
   excludePrefixes: [],
@@ -73,6 +79,22 @@ export function decodeFilterState(params: RawParams): FilterState {
     minUseful: parseFloatOrNull(read(params, "minU")),
     minEasy: parseFloatOrNull(read(params, "minE")),
   };
+}
+
+/**
+ * Overwrite the filter slots of an existing querystring with `state`,
+ * leaving non-filter keys (currently the sort params `s` and `d`) untouched.
+ * Use this when committing filter changes from the UI so a user's chosen
+ * sort order survives a filter toggle.
+ */
+export function mergeFilterStateIntoParams(
+  current: URLSearchParams,
+  state: FilterState,
+): URLSearchParams {
+  const out = new URLSearchParams(current);
+  for (const key of FILTER_PARAM_KEYS) out.delete(key);
+  for (const [k, v] of encodeFilterState(state)) out.set(k, v);
+  return out;
 }
 
 export function encodeFilterState(state: FilterState): URLSearchParams {

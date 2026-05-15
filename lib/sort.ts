@@ -1,10 +1,11 @@
 /**
- * Sort + cap state for the browse table. Kept out of FilterState because it's
+ * Sort state for the browse table. Kept out of FilterState because it's
  * presentation, not filtering, but encoded into the same URL alongside it.
  *
- * URL keys:  s = sort column, d = direction, all = "1" disables the cap.
+ * URL keys:  s = sort column, d = direction.
  */
 
+import { seatsAvailable } from "./filters";
 import type { Course } from "./types";
 
 export type SortKey = "code" | "name" | "useful" | "easy" | "liked" | "reviews" | "seats";
@@ -16,7 +17,6 @@ const SORT_KEYS: ReadonlySet<SortKey> = new Set([
 
 export const DEFAULT_SORT_KEY: SortKey = "useful";
 export const DEFAULT_SORT_DIR: SortDir = "desc";
-export const DEFAULT_LIMIT = 100;
 
 const NUMERIC: Record<Exclude<SortKey, "code" | "name">, (c: Course) => number> = {
   useful: (c) => c.rating?.useful ?? -1,
@@ -28,10 +28,23 @@ const NUMERIC: Record<Exclude<SortKey, "code" | "name">, (c: Course) => number> 
 
 export function compareCourses(a: Course, b: Course, key: SortKey, dir: SortDir): number {
   const mul = dir === "asc" ? 1 : -1;
-  if (key === "code") return a.code.localeCompare(b.code) * mul;
-  if (key === "name") return a.name.localeCompare(b.name) * mul;
-  const extract = NUMERIC[key];
-  return (extract(a) - extract(b)) * mul;
+  switch (key) {
+    case "code":
+      return a.code.localeCompare(b.code) * mul;
+    case "name":
+      return a.name.localeCompare(b.name) * mul;
+    case "useful":
+    case "easy":
+    case "liked":
+    case "reviews":
+    case "seats":
+      return (NUMERIC[key](a) - NUMERIC[key](b)) * mul;
+    default: {
+      // Exhaustiveness guard: adding a new SortKey forces this to fail at compile time.
+      const _exhaustive: never = key;
+      return _exhaustive;
+    }
+  }
 }
 
 export function parseSortKey(raw: string | string[] | undefined): SortKey {
@@ -42,17 +55,4 @@ export function parseSortKey(raw: string | string[] | undefined): SortKey {
 export function parseSortDir(raw: string | string[] | undefined): SortDir {
   const v = Array.isArray(raw) ? raw[0] : raw;
   return v === "asc" ? "asc" : "desc";
-}
-
-export function parseShowAll(raw: string | string[] | undefined): boolean {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v === "1";
-}
-
-export function seatsAvailable(course: Course): number | null {
-  if (course.sections.length === 0) return null;
-  return course.sections.reduce(
-    (sum, s) => sum + Math.max(0, s.enrollment_capacity - s.enrollment_total),
-    0,
-  );
 }

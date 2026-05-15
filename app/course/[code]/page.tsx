@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadCourseByCode } from "@/lib/data";
+import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent } from "@/lib/format";
-import { seatsAvailable } from "@/lib/sort";
 import { termLabel } from "@/lib/terms";
 
 const TERM = 1261;

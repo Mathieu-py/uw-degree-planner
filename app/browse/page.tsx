@@ -1,16 +1,8 @@
-import { CourseBrowser, type BrowseRow } from "@/components/CourseBrowser";
+import { CourseBrowser } from "@/components/CourseBrowser";
+import { buildBrowseRows } from "@/lib/browse";
 import { loadTerm } from "@/lib/data";
-import { applyFilters } from "@/lib/filters";
 import { decodeFilterState } from "@/lib/filterState";
-import { parsePrereqs } from "@/lib/prereqs/parse";
-import { evaluate } from "@/lib/prereqs/satisfied";
-import {
-  compareCourses,
-  DEFAULT_LIMIT,
-  parseShowAll,
-  parseSortDir,
-  parseSortKey,
-} from "@/lib/sort";
+import { compareCourses, parseSortDir, parseSortKey } from "@/lib/sort";
 import { termLabel } from "@/lib/terms";
 
 const TERM = 1261;
@@ -28,26 +20,10 @@ export default async function BrowsePage({
   const state = decodeFilterState(params);
   const sortKey = parseSortKey(params.s);
   const sortDir = parseSortDir(params.d);
-  const showAll = parseShowAll(params.all);
 
   const all = await loadTerm(TERM);
-  const filtered = applyFilters(all, state);
-
-  const completed = new Set(state.completedCourses);
-  const checkEligibility = state.completedCourses.length > 0;
-  const allMatching: BrowseRow[] = filtered
-    .map((c) => ({
-      course: c,
-      eligibility: checkEligibility
-        ? evaluate(parsePrereqs(c.prereqs), { completed })
-        : null,
-    }))
-    .filter((r) => !state.hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
-
-  allMatching.sort((a, b) => compareCourses(a.course, b.course, sortKey, sortDir));
-
-  const filteredCount = allMatching.length;
-  const rows = showAll ? allMatching : allMatching.slice(0, DEFAULT_LIMIT);
+  const rows = buildBrowseRows(all, state);
+  rows.sort((a, b) => compareCourses(a.course, b.course, sortKey, sortDir));
 
   const allCourseCodes = all.map((c) => c.code).sort();
   const knownPrefixes = [...new Set(all.map((c) => c.prefix))].sort();
@@ -71,10 +47,7 @@ export default async function BrowsePage({
         state={state}
         sortKey={sortKey}
         sortDir={sortDir}
-        showAll={showAll}
-        filteredCount={filteredCount}
         totalCount={all.length}
-        defaultLimit={DEFAULT_LIMIT}
         allCourseCodes={allCourseCodes}
         knownPrefixes={knownPrefixes}
       />

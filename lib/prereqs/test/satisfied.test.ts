@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parsePrereqs } from "./parse";
-import { evaluate } from "./satisfied";
+import { parsePrereqs } from "../parse";
+import { evaluate } from "../satisfied";
 
 function user(completed: string[], level?: string) {
   return { completed: new Set(completed), level };

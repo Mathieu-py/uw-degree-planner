@@ -3,6 +3,19 @@ import type { Course, FilterState, UWFlowCourse } from "./types";
 const LEVEL_RE = /\d+/;
 const PREFIX_RE = /^[A-Z]+/;
 
+/**
+ * Sum of remaining capacity across all sections, or null when the course has
+ * no scheduled sections (distinct from "0 seats open"). Lives here because it
+ * derives from the same enrollment data as `enrichCourse`'s `hasSeats`.
+ */
+export function seatsAvailable(course: Course): number | null {
+  if (course.sections.length === 0) return null;
+  return course.sections.reduce(
+    (sum, s) => sum + Math.max(0, s.enrollment_capacity - s.enrollment_total),
+    0,
+  );
+}
+
 export function enrichCourse(raw: UWFlowCourse): Course {
   const upper = raw.code.toUpperCase();
   const prefix = upper.match(PREFIX_RE)?.[0] ?? "";
