@@ -62,7 +62,7 @@ export function parseSortDir(raw: string | string[] | undefined): SortDir {
 
 export function parsePage(raw: string | string[] | undefined): number {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (!v) return DEFAULT_PAGE;
+  if (!v || !/^\d+$/.test(v)) return DEFAULT_PAGE;
   const n = parseInt(v, 10);
-  return Number.isFinite(n) && n >= 1 ? n : DEFAULT_PAGE;
+  return n >= 1 ? n : DEFAULT_PAGE;
 }

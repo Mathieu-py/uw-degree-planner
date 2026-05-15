@@ -99,6 +99,9 @@ describe("parsePage", () => {
     expect(parsePage("abc")).toBe(1);
     expect(parsePage("0")).toBe(1);
     expect(parsePage("-3")).toBe(1);
+    expect(parsePage("2.5")).toBe(1);
+    expect(parsePage("10abc")).toBe(1);
+    expect(parsePage("1e3")).toBe(1);
   });
   it("returns the parsed positive integer", () => {
     expect(parsePage("5")).toBe(5);

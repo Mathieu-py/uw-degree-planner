@@ -55,13 +55,16 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
     [pathname, router],
   );
 
-  function patch(p: Partial<FilterState>) {
-    // URL is source of truth. Reading the prop would lose changes made by a
-    // prior click in the same transition (router.replace is async).
+  // URL is source of truth. Reading the prop would lose changes made by a
+  // prior click in the same transition (router.replace is async). The updater
+  // form lets callers derive the next state from the live one — required for
+  // toggles like level chips where the input depends on the current value.
+  function patch(p: Partial<FilterState> | ((live: FilterState) => Partial<FilterState>)) {
     const live = typeof window !== "undefined"
       ? decodeFilterState(new URLSearchParams(window.location.search))
       : state;
-    commit({ ...live, ...p });
+    const delta = typeof p === "function" ? p(live) : p;
+    commit({ ...live, ...delta });
   }
 
   return (
@@ -87,7 +90,7 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
               <Chip
                 key={lvl}
                 active={active}
-                onClick={() => patch({ levels: toggleLevel(state.levels, lvl) })}
+                onClick={() => patch((live) => ({ levels: toggleLevel(live.levels, lvl) }))}
               >
                 {lvl}
               </Chip>
