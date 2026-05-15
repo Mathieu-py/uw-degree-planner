@@ -43,7 +43,9 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
       const current = typeof window !== "undefined"
         ? new URLSearchParams(window.location.search)
         : new URLSearchParams();
-      const qs = mergeFilterStateIntoParams(current, next).toString();
+      const merged = mergeFilterStateIntoParams(current, next);
+      merged.delete("p");
+      const qs = merged.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
       startTransition(() => {

@@ -12,6 +12,11 @@ export function CompletedCoursesInput({ value, allCourseCodes, onChange }: Props
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const knownCodes = useMemo(() => new Set(allCourseCodes), [allCourseCodes]);
+  const suggestions = useMemo(() => {
+    const q = input.trim().toLowerCase();
+    if (q.length === 0) return [];
+    return allCourseCodes.filter((c) => c.startsWith(q)).slice(0, 20);
+  }, [input, allCourseCodes]);
   const datalistId = useId();
   const errorId = `${datalistId}-error`;
 
@@ -91,7 +96,7 @@ export function CompletedCoursesInput({ value, allCourseCodes, onChange }: Props
         </p>
       )}
       <datalist id={datalistId}>
-        {allCourseCodes.map((c) => (
+        {suggestions.map((c) => (
           <option key={c} value={c} />
         ))}
       </datalist>

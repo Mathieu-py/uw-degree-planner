@@ -18,6 +18,9 @@ const SORT_KEYS: ReadonlySet<SortKey> = new Set([
 export const DEFAULT_SORT_KEY: SortKey = "useful";
 export const DEFAULT_SORT_DIR: SortDir = "desc";
 
+export const PAGE_SIZE = 50;
+export const DEFAULT_PAGE = 1;
+
 const NUMERIC: Record<Exclude<SortKey, "code" | "name">, (c: Course) => number> = {
   useful: (c) => c.rating?.useful ?? -1,
   easy: (c) => c.rating?.easy ?? -1,
@@ -55,4 +58,11 @@ export function parseSortKey(raw: string | string[] | undefined): SortKey {
 export function parseSortDir(raw: string | string[] | undefined): SortDir {
   const v = Array.isArray(raw) ? raw[0] : raw;
   return v === "asc" ? "asc" : "desc";
+}
+
+export function parsePage(raw: string | string[] | undefined): number {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (!v) return DEFAULT_PAGE;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n >= 1 ? n : DEFAULT_PAGE;
 }

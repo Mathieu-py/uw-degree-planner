@@ -2,7 +2,7 @@ import { CourseBrowser } from "@/components/CourseBrowser";
 import { buildBrowseRows } from "@/lib/browse";
 import { loadTerm } from "@/lib/data";
 import { decodeFilterState } from "@/lib/filterState";
-import { compareCourses, parseSortDir, parseSortKey } from "@/lib/sort";
+import { compareCourses, parsePage, parseSortDir, parseSortKey } from "@/lib/sort";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
 export const metadata = {
@@ -18,6 +18,7 @@ export default async function BrowsePage({
   const state = decodeFilterState(params);
   const sortKey = parseSortKey(params.s);
   const sortDir = parseSortDir(params.d);
+  const page = parsePage(params.p);
 
   const all = await loadTerm(TERM);
   const rows = buildBrowseRows(all, state);
@@ -45,6 +46,7 @@ export default async function BrowsePage({
         state={state}
         sortKey={sortKey}
         sortDir={sortDir}
+        page={page}
         totalCount={all.length}
         allCourseCodes={allCourseCodes}
         knownPrefixes={knownPrefixes}

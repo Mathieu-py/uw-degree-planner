@@ -3,6 +3,7 @@ import {
   DEFAULT_SORT_DIR,
   DEFAULT_SORT_KEY,
   compareCourses,
+  parsePage,
   parseSortDir,
   parseSortKey,
 } from "../sort";
@@ -88,6 +89,23 @@ describe("parseSortDir", () => {
   it("returns 'asc' when explicitly set", () => {
     expect(parseSortDir("asc")).toBe("asc");
     expect(parseSortDir(["asc"])).toBe("asc");
+  });
+});
+
+describe("parsePage", () => {
+  it("defaults to 1 when missing or invalid", () => {
+    expect(parsePage(undefined)).toBe(1);
+    expect(parsePage("")).toBe(1);
+    expect(parsePage("abc")).toBe(1);
+    expect(parsePage("0")).toBe(1);
+    expect(parsePage("-3")).toBe(1);
+  });
+  it("returns the parsed positive integer", () => {
+    expect(parsePage("5")).toBe(5);
+    expect(parsePage("42")).toBe(42);
+  });
+  it("takes the first element of an array param", () => {
+    expect(parsePage(["7", "9"])).toBe(7);
   });
 });
 
