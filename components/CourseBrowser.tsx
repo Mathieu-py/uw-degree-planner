@@ -282,9 +282,7 @@ function RatingCell({ value }: { value: number | null | undefined }) {
   return (
     <td className="px-4 py-3 text-right">
       <div className="inline-flex items-center gap-2 justify-end min-w-[64px]">
-        <span className="h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
-          <span className={`block h-full ${color}`} style={{ width: `${pct}%` }} />
-        </span>
+        <span className={`h-2 w-2 rounded-full ${color}`} />
         <span className="tabular-nums text-xs font-medium w-9 text-right">
           {formatPercent(value)}
         </span>
