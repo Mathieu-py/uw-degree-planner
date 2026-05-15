@@ -25,3 +25,6 @@ export const KNOWN_TERMS: TermInfo[] = [
 export function termLabel(id: TermId): string {
   return KNOWN_TERMS.find((t) => t.id === id)?.label ?? `Term ${id}`;
 }
+
+/** Term the browse/course routes are pinned to until a term picker exists. */
+export const PINNED_TERM: TermId = 1261;

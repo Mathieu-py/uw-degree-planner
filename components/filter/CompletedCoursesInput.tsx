@@ -13,6 +13,7 @@ export function CompletedCoursesInput({ value, allCourseCodes, onChange }: Props
   const [error, setError] = useState<string | null>(null);
   const knownCodes = useMemo(() => new Set(allCourseCodes), [allCourseCodes]);
   const datalistId = useId();
+  const errorId = `${datalistId}-error`;
 
   function add() {
     const code = input.trim().toLowerCase();
@@ -85,7 +86,9 @@ export function CompletedCoursesInput({ value, allCourseCodes, onChange }: Props
         </button>
       </div>
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
+        <p id={errorId} role="alert" className="text-xs text-rose-600 dark:text-rose-400">
+          {error}
+        </p>
       )}
       <datalist id={datalistId}>
         {allCourseCodes.map((c) => (

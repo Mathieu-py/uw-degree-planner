@@ -47,10 +47,21 @@ function splitList(raw: string | undefined): string[] {
   return [...new Set(parts)];
 }
 
-function parseFloatOrNull(raw: string | undefined): number | null {
+// Levels accepted from the URL. Mirrors the four buttons in FilterPanel; any
+// other integer (e.g. ?lv=500) is dropped so a hand-edited URL can't smuggle
+// in a bucket the UI has no way to clear.
+const SUPPORTED_LEVELS = new Set([100, 200, 300, 400]);
+
+// Ratings are stored as 0..1. A URL with minU=2 would silently filter out
+// every course; clamping keeps the threshold inside the slider's range so the
+// UI and the data stay in sync.
+function parseRatingOrNull(raw: string | undefined): number | null {
   if (raw == null || raw === "") return null;
   const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
+  if (!Number.isFinite(n)) return null;
+  if (n <= 0) return null;
+  if (n >= 1) return 1;
+  return n;
 }
 
 function parseBool(raw: string | undefined): boolean {
@@ -63,8 +74,9 @@ export function decodeFilterState(params: RawParams): FilterState {
   const levels = [
     ...new Set(
       splitList(read(params, "lv"))
+        .filter((s) => /^\d+$/.test(s))
         .map((s) => parseInt(s, 10))
-        .filter((n) => Number.isFinite(n)),
+        .filter((n) => SUPPORTED_LEVELS.has(n)),
     ),
   ];
   const completedCourses = splitList(read(params, "done")).map((s) => s.toLowerCase());
@@ -76,8 +88,8 @@ export function decodeFilterState(params: RawParams): FilterState {
     hasSeatsAvailable: parseBool(read(params, "seats")),
     completedCourses,
     hideUnmetPrereqs: parseBool(read(params, "up")),
-    minUseful: parseFloatOrNull(read(params, "minU")),
-    minEasy: parseFloatOrNull(read(params, "minE")),
+    minUseful: parseRatingOrNull(read(params, "minU")),
+    minEasy: parseRatingOrNull(read(params, "minE")),
   };
 }
 

@@ -3,9 +3,7 @@ import { notFound } from "next/navigation";
 import { loadCourseByCode } from "@/lib/data";
 import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent } from "@/lib/format";
-import { termLabel } from "@/lib/terms";
-
-const TERM = 1261;
+import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
 interface PageParams {
   code: string;

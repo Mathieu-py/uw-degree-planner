@@ -39,6 +39,40 @@ describe("decodeFilterState", () => {
     expect(state.levels).toEqual([100, 200, 400]);
   });
 
+  it("rejects non-integer level tokens", () => {
+    const state = decodeFilterState(new URLSearchParams("lv=200x,3.5,100"));
+    expect(state.levels).toEqual([100]);
+  });
+
+  it("drops level values outside the supported {100,200,300,400} buckets", () => {
+    const state = decodeFilterState(new URLSearchParams("lv=50,100,500,250,400"));
+    expect(state.levels).toEqual([100, 400]);
+  });
+
+  it("clamps minUseful/minEasy above 1 to 1", () => {
+    const state = decodeFilterState(new URLSearchParams("minU=2&minE=99"));
+    expect(state.minUseful).toBe(1);
+    expect(state.minEasy).toBe(1);
+  });
+
+  it("treats negative minUseful/minEasy as unset (null)", () => {
+    const state = decodeFilterState(new URLSearchParams("minU=-0.5&minE=-1"));
+    expect(state.minUseful).toBeNull();
+    expect(state.minEasy).toBeNull();
+  });
+
+  it("treats non-finite minUseful/minEasy as unset (null)", () => {
+    const state = decodeFilterState(new URLSearchParams("minU=NaN&minE=Infinity"));
+    expect(state.minUseful).toBeNull();
+    expect(state.minEasy).toBeNull();
+  });
+
+  it("preserves valid decimal minUseful/minEasy inside (0,1)", () => {
+    const state = decodeFilterState(new URLSearchParams("minU=0.42&minE=0.7"));
+    expect(state.minUseful).toBe(0.42);
+    expect(state.minEasy).toBe(0.7);
+  });
+
   it("dedupes list values", () => {
     const state = decodeFilterState(
       new URLSearchParams("lv=100,100,200&exc=PHIL,PHIL,ENGL&done=cs115,cs115"),

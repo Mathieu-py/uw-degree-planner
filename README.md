@@ -37,7 +37,7 @@ pnpm fetch-courses    # refresh data/ from UWFlow
 
 ## Data source
 
-Course ratings and metadata come from [UWFlow](https://uwflow.com) via their public GraphQL endpoint. Schedule/seat data falls back to the UW Open Data API.
+Course ratings, metadata, and section/seat counts come from [UWFlow](https://uwflow.com) via their public GraphQL endpoint. The snapshot in `data/` is committed; refresh it manually with `pnpm fetch-courses`.
 
 ## Notes
 

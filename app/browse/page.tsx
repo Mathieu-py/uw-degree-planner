@@ -3,9 +3,7 @@ import { buildBrowseRows } from "@/lib/browse";
 import { loadTerm } from "@/lib/data";
 import { decodeFilterState } from "@/lib/filterState";
 import { compareCourses, parseSortDir, parseSortKey } from "@/lib/sort";
-import { termLabel } from "@/lib/terms";
-
-const TERM = 1261;
+import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
 export const metadata = {
   title: "Browse electives · UW Elective Finder",

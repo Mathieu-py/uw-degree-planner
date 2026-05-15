@@ -8,8 +8,10 @@ import { PrefixPicker } from "./filter/PrefixPicker";
 import {
   BROWSE_QS_STORAGE_KEY,
   DEFAULT_FILTER_STATE,
+  decodeFilterState,
   mergeFilterStateIntoParams,
 } from "@/lib/filterState";
+import { safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
 
 interface Props {
@@ -43,9 +45,7 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
         : new URLSearchParams();
       const qs = mergeFilterStateIntoParams(current, next).toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(BROWSE_QS_STORAGE_KEY, qs);
-      }
+      safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
       startTransition(() => {
         router.replace(url, { scroll: false });
       });
@@ -54,7 +54,12 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
   );
 
   function patch(p: Partial<FilterState>) {
-    commit({ ...state, ...p });
+    // URL is source of truth. Reading the prop would lose changes made by a
+    // prior click in the same transition (router.replace is async).
+    const live = typeof window !== "undefined"
+      ? decodeFilterState(new URLSearchParams(window.location.search))
+      : state;
+    commit({ ...live, ...p });
   }
 
   return (
@@ -130,7 +135,7 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
           onChange={(hasSeatsAvailable) => patch({ hasSeatsAvailable })}
         />
         <Toggle
-          label="Hide unmet prereqs (substring check)"
+          label="Hide unmet prereqs"
           checked={state.hideUnmetPrereqs}
           onChange={(hideUnmetPrereqs) => patch({ hideUnmetPrereqs })}
         />

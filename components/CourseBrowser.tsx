@@ -8,6 +8,7 @@ import type { BrowseRow } from "@/lib/browse";
 import { seatsAvailable } from "@/lib/filters";
 import { BROWSE_QS_STORAGE_KEY } from "@/lib/filterState";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import {
   DEFAULT_SORT_DIR,
@@ -62,7 +63,7 @@ export function CourseBrowser({
     else params.set("d", nextDir);
 
     const qs = params.toString();
-    window.localStorage.setItem(BROWSE_QS_STORAGE_KEY, qs);
+    safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
@@ -153,13 +154,13 @@ function RestorePill() {
   useEffect(() => {
     const currentSearch = window.location.search;
     if (currentSearch === "") {
-      const saved = window.localStorage.getItem(BROWSE_QS_STORAGE_KEY);
+      const saved = safeGetItem(BROWSE_QS_STORAGE_KEY);
       if (saved && saved !== "") {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is unavailable during SSR; this is a one-time mount-only hydration read.
         setSavedQuery(saved);
       }
     } else {
-      window.localStorage.setItem(BROWSE_QS_STORAGE_KEY, currentSearch.replace(/^\?/, ""));
+      safeSetItem(BROWSE_QS_STORAGE_KEY, currentSearch.replace(/^\?/, ""));
     }
   }, []);
 
@@ -183,7 +184,7 @@ function RestorePill() {
         <button
           type="button"
           onClick={() => {
-            window.localStorage.removeItem(BROWSE_QS_STORAGE_KEY);
+            safeRemoveItem(BROWSE_QS_STORAGE_KEY);
             setSavedQuery(null);
           }}
           className="rounded text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 px-2 py-1"
@@ -258,14 +259,16 @@ function EligibilityBadge({ result }: { result: EligibilityResult }) {
       </span>
     );
   }
+  const missingCount = result.missingCourses.length;
   const missing = result.missingCourses.slice(0, 2).map(formatCourseCode).join(", ");
-  const extra = result.missingCourses.length > 2 ? ` +${result.missingCourses.length - 2}` : "";
+  const extra = missingCount > 2 ? ` +${missingCount - 2}` : "";
+  const label = missingCount === 0 ? "Missing requirements" : `Missing ${missing}${extra}`;
   return (
     <span
       className="inline-flex items-center rounded-full bg-rose-100 text-rose-900 dark:bg-rose-900/40 dark:text-rose-200 px-1.5 py-0.5 text-[10px] font-medium"
       title={result.missingCourses.map(formatCourseCode).join(", ")}
     >
-      Missing {missing}{extra}
+      {label}
     </span>
   );
 }

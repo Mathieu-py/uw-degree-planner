@@ -9,19 +9,13 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
 import { enrichCourse } from "./filters";
-import type { Course, TermId, UWFlowCourse } from "./types";
-
-interface CoursesFile {
-  termId: number;
-  fetchedAt: string;
-  courseCount: number;
-  courses: UWFlowCourse[];
-}
+import type { Course, TermId } from "./types";
+import { validateCoursesFile } from "./validation";
 
 export const loadTerm = cache(async (termId: TermId): Promise<Course[]> => {
   const file = path.resolve(process.cwd(), "data", `courses.${termId}.json`);
   const raw = await readFile(file, "utf-8");
-  const parsed = JSON.parse(raw) as CoursesFile;
+  const parsed = validateCoursesFile(JSON.parse(raw));
   return parsed.courses.map(enrichCourse);
 });
 
