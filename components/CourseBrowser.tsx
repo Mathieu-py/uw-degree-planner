@@ -127,7 +127,16 @@ export function CourseBrowser({
         </div>
 
         <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-800">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col className="w-24" />
+              <col />
+              <col className="w-24" />
+              <col className="w-24" />
+              <col className="w-24" />
+              <col className="w-20" />
+              <col className="w-24" />
+            </colgroup>
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-left">
                 <Th label="Code" col="code" current={sortKey} dir={sortDir} onSort={onSort} />
@@ -237,15 +246,10 @@ function CourseRow({ row }: { row: BrowseRow }) {
           {formatCourseCode(course.code)}
         </Link>
       </td>
-      <td className="px-4 py-3 min-w-[220px]">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">{course.name}</span>
-            {eligibility && <EligibilityBadge result={eligibility} />}
-          </div>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {truncate(course.description, 110)}
-          </span>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2 min-w-0 min-h-10">
+          <span className="font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 min-w-0">{course.name}</span>
+          {eligibility && <EligibilityBadge result={eligibility} />}
         </div>
       </td>
       <RatingCell value={course.rating?.useful} />
@@ -270,7 +274,7 @@ function CourseRow({ row }: { row: BrowseRow }) {
 function EligibilityBadge({ result }: { result: EligibilityResult }) {
   if (result.satisfied && !result.uncertain) {
     return (
-      <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200 px-1.5 py-0.5 text-[10px] font-medium">
+      <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200 px-1.5 py-0.5 text-[10px] font-medium">
         Eligible
       </span>
     );
@@ -279,7 +283,7 @@ function EligibilityBadge({ result }: { result: EligibilityResult }) {
     const hint = result.rawRequirements[0] ?? "manual check";
     return (
       <span
-        className="inline-flex items-center rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 px-1.5 py-0.5 text-[10px] font-medium"
+        className="inline-flex shrink-0 items-center rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 px-1.5 py-0.5 text-[10px] font-medium"
         title={result.rawRequirements.join(" · ")}
       >
         Check: {truncate(hint, 30)}
@@ -292,7 +296,7 @@ function EligibilityBadge({ result }: { result: EligibilityResult }) {
   const label = missingCount === 0 ? "Missing requirements" : `Missing ${missing}${extra}`;
   return (
     <span
-      className="inline-flex items-center rounded-full bg-rose-100 text-rose-900 dark:bg-rose-900/40 dark:text-rose-200 px-1.5 py-0.5 text-[10px] font-medium"
+      className="inline-flex shrink-0 items-center rounded-full bg-rose-100 text-rose-900 dark:bg-rose-900/40 dark:text-rose-200 px-1.5 py-0.5 text-[10px] font-medium"
       title={result.missingCourses.map(formatCourseCode).join(", ")}
     >
       {label}
