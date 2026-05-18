@@ -237,17 +237,24 @@ function CourseRow({ row }: { row: BrowseRow }) {
   const reviews = course.rating?.filled_count ?? 0;
   const seats = seatsAvailable(course);
   return (
-    <tr className="border-b last:border-0 border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/30 transition-colors">
+    <tr className="relative border-b last:border-0 border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/30 transition-colors">
       <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
         <Link
           href={`/course/${course.code}`}
-          className="text-zinc-950 dark:text-zinc-50 hover:underline"
+          tabIndex={-1}
+          className="absolute inset-0"
+        >
+          <span className="sr-only">View {formatCourseCode(course.code)}</span>
+        </Link>
+        <Link
+          href={`/course/${course.code}`}
+          className="relative text-zinc-950 dark:text-zinc-50 hover:underline"
         >
           {formatCourseCode(course.code)}
         </Link>
       </td>
       <td className="px-4 py-3">
-        <div className="flex items-center gap-2 min-w-0 min-h-10">
+        <div className="relative flex items-center gap-2 min-w-0 min-h-10">
           <span className="font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 min-w-0">{course.name}</span>
           {eligibility && <EligibilityBadge result={eligibility} />}
         </div>

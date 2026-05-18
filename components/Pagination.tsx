@@ -8,7 +8,6 @@ export function Pagination({ page, totalPages, onChange }: Props) {
   const items = paginationWindow(page, totalPages);
   return (
     <nav
-      aria-label="Pagination"
       className="flex flex-wrap items-center justify-center gap-1 text-xs"
     >
       <PageButton
@@ -21,14 +20,12 @@ export function Pagination({ page, totalPages, onChange }: Props) {
           <span
             key={`gap-${i}`}
             className="px-2 py-1 text-zinc-400 dark:text-zinc-600"
-            aria-hidden="true"
           >
             …
           </span>
         ) : it === page ? (
           <span
             key={it}
-            aria-current="page"
             className="rounded border border-zinc-950 dark:border-zinc-50 bg-zinc-950 dark:bg-zinc-50 px-2 py-1 font-medium tabular-nums text-white dark:text-zinc-950"
           >
             {it}
