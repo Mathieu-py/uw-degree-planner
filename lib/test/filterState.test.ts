@@ -88,6 +88,26 @@ describe("decodeFilterState", () => {
     expect(decodeFilterState(new URLSearchParams("seats=true")).hasSeatsAvailable).toBe(false);
     expect(decodeFilterState(new URLSearchParams("up=1")).hideUnmetPrereqs).toBe(true);
   });
+
+  it("accepts a known program id and normalises casing", () => {
+    expect(decodeFilterState(new URLSearchParams("prog=syde")).programId).toBe("syde");
+    expect(decodeFilterState(new URLSearchParams("prog=SYDE")).programId).toBe("syde");
+  });
+
+  it("drops unknown program ids to null", () => {
+    expect(decodeFilterState(new URLSearchParams("prog=phys")).programId).toBeNull();
+    expect(decodeFilterState(new URLSearchParams("prog=")).programId).toBeNull();
+  });
+
+  it("accepts a valid term letter and normalises casing", () => {
+    expect(decodeFilterState(new URLSearchParams("term=3A")).currentTerm).toBe("3A");
+    expect(decodeFilterState(new URLSearchParams("term=3a")).currentTerm).toBe("3A");
+  });
+
+  it("drops invalid term values to null", () => {
+    expect(decodeFilterState(new URLSearchParams("term=5A")).currentTerm).toBeNull();
+    expect(decodeFilterState(new URLSearchParams("term=foo")).currentTerm).toBeNull();
+  });
 });
 
 describe("encodeFilterState", () => {
@@ -143,10 +163,20 @@ describe("mergeFilterStateIntoParams", () => {
       hideUnmetPrereqs: true,
       minUseful: 0.6,
       minEasy: 0.3,
+      programId: "syde",
+      currentTerm: "3A",
     };
     const merged = mergeFilterStateIntoParams(new URLSearchParams("s=code"), state);
     expect(merged.get("s")).toBe("code");
     expect(decodeFilterState(merged)).toEqual(state);
+  });
+
+  it("clears prog and term when they fall back to null", () => {
+    const current = new URLSearchParams("prog=syde&term=3A&exc=PHIL");
+    const merged = mergeFilterStateIntoParams(current, DEFAULT_FILTER_STATE);
+    expect(merged.has("prog")).toBe(false);
+    expect(merged.has("term")).toBe(false);
+    expect(merged.has("exc")).toBe(false);
   });
 });
 
@@ -165,6 +195,8 @@ describe("round trip", () => {
       hideUnmetPrereqs: true,
       minUseful: 0.6,
       minEasy: 0.3,
+      programId: "syde",
+      currentTerm: "3A",
     };
     expect(roundTrip(state)).toEqual(state);
   });

@@ -9,6 +9,7 @@
  * encoder trusts this and does not re-normalise.
  */
 
+import { isKnownProgram, isTermLetter } from "./programs";
 import type { FilterState } from "./types";
 
 export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
@@ -16,7 +17,7 @@ export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
 // URL keys owned by FilterState. Used by mergeFilterStateIntoParams to
 // overwrite filter slots without disturbing sort params (s, d).
 const FILTER_PARAM_KEYS = [
-  "exc", "inc", "lv", "seats", "done", "up", "minU", "minE",
+  "exc", "inc", "lv", "seats", "done", "up", "minU", "minE", "prog", "term",
 ] as const;
 
 export const DEFAULT_FILTER_STATE: FilterState = {
@@ -28,6 +29,8 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   hideUnmetPrereqs: false,
   minUseful: null,
   minEasy: null,
+  programId: null,
+  currentTerm: null,
 };
 
 type RawParams = URLSearchParams | Record<string, string | string[] | undefined>;
@@ -81,6 +84,12 @@ export function decodeFilterState(params: RawParams): FilterState {
   ];
   const completedCourses = splitList(read(params, "done")).map((s) => s.toLowerCase());
 
+  const rawProg = read(params, "prog")?.toLowerCase();
+  const programId = rawProg && isKnownProgram(rawProg) ? rawProg : null;
+
+  const rawTerm = read(params, "term")?.toUpperCase();
+  const currentTerm = isTermLetter(rawTerm) ? rawTerm : null;
+
   return {
     excludePrefixes,
     includePrefixes,
@@ -90,6 +99,8 @@ export function decodeFilterState(params: RawParams): FilterState {
     hideUnmetPrereqs: parseBool(read(params, "up")),
     minUseful: parseRatingOrNull(read(params, "minU")),
     minEasy: parseRatingOrNull(read(params, "minE")),
+    programId,
+    currentTerm,
   };
 }
 
@@ -127,5 +138,7 @@ export function encodeFilterState(state: FilterState): URLSearchParams {
   if (state.hideUnmetPrereqs) out.set("up", "1");
   if (state.minUseful != null) out.set("minU", String(state.minUseful));
   if (state.minEasy != null) out.set("minE", String(state.minEasy));
+  if (state.programId) out.set("prog", state.programId);
+  if (state.currentTerm) out.set("term", state.currentTerm);
   return out;
 }

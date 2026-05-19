@@ -11,6 +11,13 @@ import {
   decodeFilterState,
   mergeFilterStateIntoParams,
 } from "@/lib/filterState";
+import {
+  PROGRAMS,
+  TERM_LETTERS,
+  type TermLetter,
+  inferCompleted,
+  isTermLetter,
+} from "@/lib/programs";
 import { safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
 
@@ -146,6 +153,10 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
         />
       </Section>
 
+      <Section title="Seed from program">
+        <ProgramSeeder state={state} patch={patch} />
+      </Section>
+
       <Section title="Completed courses">
         <CompletedCoursesInput
           value={state.completedCourses}
@@ -154,6 +165,86 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
         />
       </Section>
     </aside>
+  );
+}
+
+function ProgramSeeder({
+  state,
+  patch,
+}: {
+  state: FilterState;
+  patch: (p: Partial<FilterState>) => void;
+}) {
+  const sortedPrograms = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
+    a.name.localeCompare(b.name),
+  );
+  const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
+  const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
+  const canSeed = state.programId != null && term != null;
+
+  function onSeed() {
+    if (!state.programId || !term) return;
+    const seed = inferCompleted(state.programId, term);
+    if (state.completedCourses.length > 0) {
+      const programName = PROGRAMS[state.programId]?.name ?? state.programId;
+      const ok = window.confirm(
+        `Replace your ${state.completedCourses.length} completed courses with ${seed.length} from ${programName} (terms before ${term})?`,
+      );
+      if (!ok) return;
+    }
+    patch({ completedCourses: seed });
+  }
+
+  const selectClass =
+    "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">Program</span>
+        <select
+          value={state.programId ?? ""}
+          onChange={(e) => patch({ programId: e.target.value || null })}
+          className={selectClass}
+        >
+          <option value="">Select a program…</option>
+          {sortedPrograms.map(([id, p]) => (
+            <option key={id} value={id}>{p.name}</option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">Current term</span>
+        <select
+          value={term ?? ""}
+          onChange={(e) =>
+            patch({ currentTerm: isTermLetter(e.target.value) ? e.target.value : null })
+          }
+          className={selectClass}
+        >
+          <option value="">Select a term…</option>
+          {TERM_LETTERS.map((t: TermLetter) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      </label>
+
+      <button
+        type="button"
+        onClick={onSeed}
+        disabled={!canSeed}
+        className="rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs disabled:opacity-40 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+      >
+        Seed completed courses
+      </button>
+
+      {selectedProgram && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          Sourced from UW calendar (as of {selectedProgram.asOf}).
+        </p>
+      )}
+    </div>
   );
 }
 
