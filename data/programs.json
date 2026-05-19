@@ -1,0 +1,77 @@
+{
+  "syde": {
+    "name": "Systems Design Engineering",
+    "asOf": "2026-05-19",
+    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Systems-Design-Engineering.html",
+    "terms": {
+      "1A": ["syde101", "syde111", "syde113", "syde121", "syde161", "syde181"],
+      "1B": ["syde102", "syde112", "syde114", "syde162", "syde192", "syde223"],
+      "2A": ["syde182", "syde201", "syde211", "syde261", "syde263", "syde283", "syde285"],
+      "2B": ["syde202", "syde212", "syde252", "syde262", "syde286", "syde292"],
+      "3A": ["syde301", "syde311", "syde351", "syde361", "syde381", "syde383"],
+      "3B": ["syde302", "syde312", "syde352", "syde362"],
+      "4A": ["syde401", "syde411", "syde461"],
+      "4B": ["syde402", "syde462"]
+    }
+  },
+  "cs": {
+    "name": "Computer Science (BCS)",
+    "asOf": "2026-05-19",
+    "source": "cs.uwaterloo.ca/sites/default/files/uploads/documents/2024-2025-bcs.pdf (recommended sequence; CS is flexible)",
+    "terms": {
+      "1A": ["cs135", "math135", "math137"],
+      "1B": ["cs136", "cs136l", "math136", "math138"],
+      "2A": ["cs240", "cs241", "math239", "stat230"],
+      "2B": ["cs245", "cs246", "cs251", "stat231"],
+      "3A": ["cs341"],
+      "3B": ["cs350"],
+      "4A": [],
+      "4B": []
+    }
+  },
+  "ece": {
+    "name": "Electrical Engineering",
+    "asOf": "2026-05-19",
+    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Electrical-Engineering.html",
+    "terms": {
+      "1A": ["commst192", "ece105", "ece150", "ece190", "ece198", "math115", "math117"],
+      "1B": ["ece102", "ece106", "ece108", "ece124", "ece140", "ece192", "math119"],
+      "2A": ["ece109", "ece201", "ece204", "ece205", "ece222", "ece240", "ece250"],
+      "2B": ["ece202", "ece203", "ece206", "ece207", "ece231", "ece260", "ece298"],
+      "3A": ["ece301", "ece318", "ece340", "ece375", "ece380"],
+      "3B": ["ece302", "ece307"],
+      "4A": ["ece401", "ece498a"],
+      "4B": ["ece402", "ece498b"]
+    }
+  },
+  "se": {
+    "name": "Software Engineering",
+    "asOf": "2026-05-19",
+    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Software-Engineering.html",
+    "terms": {
+      "1A": ["cs137", "ece105", "math115", "math117", "math135", "se101"],
+      "1B": ["cs138", "ece106", "ece124", "ece140", "math119", "se102"],
+      "2A": ["che102", "cs241", "ece222", "se201", "se212", "stat206"],
+      "2B": ["cs240", "cs247", "cs348", "ece192", "math239", "se202"],
+      "3A": ["cs341", "cs349", "math213", "se301", "se350", "se465"],
+      "3B": ["cs343", "ece358", "se302", "se380", "se390", "se464"],
+      "4A": ["se401", "se463", "se490"],
+      "4B": ["se402", "se491"]
+    }
+  },
+  "mte": {
+    "name": "Mechatronics Engineering",
+    "asOf": "2026-05-19",
+    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Mechatronics-Engineering.html",
+    "terms": {
+      "1A": ["che102", "math115", "math116", "mte100", "mte121"],
+      "1B": ["math118", "mte100b", "mte111", "mte119", "mte120", "mte140"],
+      "2A": ["mte200a", "mte201", "mte202", "mte219", "mte262", "syde182"],
+      "2B": ["mte200b", "mte203", "mte204", "mte220", "mte241", "syde252"],
+      "3A": ["mte300a", "mte309", "mte320", "mte321", "mte325", "syde351"],
+      "3B": ["mte300b", "me351", "mte322", "mte360", "mte380", "msci261"],
+      "4A": ["ece484", "mte400a", "mte481"],
+      "4B": ["mte400b", "mte482"]
+    }
+  }
+}
