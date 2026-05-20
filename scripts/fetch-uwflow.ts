@@ -95,7 +95,8 @@ async function main() {
       continue;
     }
     process.stdout.write(`Fetching term ${term}... `);
-    const courses = await fetchTerm(term);
+    const raw = await fetchTerm(term);
+    const courses = raw.filter((c) => !/xxx$/i.test(c.code));
     const out = await writeSnapshot(term, courses);
     console.log(`${courses.length} courses → ${path.relative(process.cwd(), out)}`);
   }
