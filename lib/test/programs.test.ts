@@ -43,6 +43,26 @@ describe("inferCompleted", () => {
     expect(seeded).toEqual(sorted);
     expect(new Set(seeded).size).toBe(seeded.length);
   });
+
+  it("cs 4B seed includes 3A and 3B courses but no 4xx-level CS courses", () => {
+    const seeded = inferCompleted("cs", "4B");
+    expect(seeded).toContain("cs341");
+    expect(seeded).toContain("cs350");
+    expect(seeded.some((c) => c.startsWith("cs4"))).toBe(false);
+  });
+});
+
+describe("programs.json schema integrity", () => {
+  it("all programs have all 8 term arrays", () => {
+    for (const [id, prog] of Object.entries(PROGRAMS)) {
+      for (const term of TERM_LETTERS) {
+        expect(
+          Array.isArray(prog.terms[term]),
+          `${id}.terms.${term} should be an array`,
+        ).toBe(true);
+      }
+    }
+  });
 });
 
 describe("isTermLetter", () => {

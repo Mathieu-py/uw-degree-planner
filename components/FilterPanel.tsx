@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Chip } from "./filter/Chip";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { PrefixPicker } from "./filter/PrefixPicker";
@@ -31,6 +31,10 @@ interface Props {
 
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
 
+const SORTED_PROGRAMS = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
+  a.name.localeCompare(b.name),
+);
+
 // state.levels === [] means "all four buckets". Selecting all four (or none) collapses back to [].
 function toggleLevel(current: readonly number[], lvl: number): number[] {
   const expanded = current.length === 0 ? [...LEVEL_BUCKETS] : current;
@@ -51,6 +55,11 @@ export function FilterPanel({
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
+
+  const completedCoursesRef = useRef(completedCourses);
+  useEffect(() => {
+    completedCoursesRef.current = completedCourses;
+  }, [completedCourses]);
 
   const commit = useCallback(
     (next: FilterState) => {
@@ -88,7 +97,7 @@ export function FilterPanel({
     if (delta.programId !== undefined || delta.currentTerm !== undefined) {
       onCompletedChange(
         rebaseCompletedCourses(
-          { ...live, completedCourses },
+          { ...live, completedCourses: completedCoursesRef.current },
           next.programId,
           next.currentTerm,
         ),
@@ -106,7 +115,7 @@ export function FilterPanel({
         </h2>
         <button
           type="button"
-          onClick={() => commit(DEFAULT_FILTER_STATE)}
+          onClick={() => patch(DEFAULT_FILTER_STATE)}
           className="text-xs text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 underline-offset-2 hover:underline"
         >
           Reset
@@ -199,9 +208,6 @@ function ProgramSeeder({
   state: FilterState;
   patch: (p: Partial<FilterState>) => void;
 }) {
-  const sortedPrograms = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
-    a.name.localeCompare(b.name),
-  );
   const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
   const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
 
@@ -218,7 +224,7 @@ function ProgramSeeder({
           className={selectClass}
         >
           <option value="">Select a program…</option>
-          {sortedPrograms.map(([id, p]) => (
+          {SORTED_PROGRAMS.map(([id, p]) => (
             <option key={id} value={id}>{p.name}</option>
           ))}
         </select>

@@ -8,9 +8,19 @@
  */
 
 import { applyFilters } from "./filters";
-import { parsePrereqs } from "./prereqs/parse";
+import { parsePrereqs, type PrereqNode } from "./prereqs/parse";
 import { evaluate, type EligibilityResult } from "./prereqs/satisfied";
 import type { Course, FilterState } from "./types";
+
+const prereqCache = new Map<string, PrereqNode | null>();
+
+function cachedParsePrereqs(text: string | null | undefined): PrereqNode | null {
+  const key = text ?? "";
+  if (prereqCache.has(key)) return prereqCache.get(key) ?? null;
+  const parsed = parsePrereqs(text);
+  prereqCache.set(key, parsed);
+  return parsed;
+}
 
 export interface BrowseRow {
   course: Course;
@@ -43,7 +53,7 @@ export function attachEligibility(
   return rows
     .map<BrowseRow>((r) => ({
       course: r.course,
-      eligibility: evaluate(parsePrereqs(r.course.prereqs), { completed: completedSet }),
+      eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), { completed: completedSet }),
     }))
     .filter((r) => !hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
 }
