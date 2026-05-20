@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   applyFilters,
   enrichCourse,
-  passesIncludePrefixes,
   passesLevelFilter,
   passesMinEasyFilter,
   passesMinUsefulFilter,
@@ -79,17 +78,6 @@ describe("passesPrefixExclusion", () => {
   });
   it("empty exclusion list passes everything", () => {
     expect(passesPrefixExclusion(makeCourse({ code: "fr101" }), [])).toBe(true);
-  });
-});
-
-describe("passesIncludePrefixes", () => {
-  it("empty whitelist passes everything (rule disabled)", () => {
-    const c = makeCourse({ code: "fr101" });
-    expect(passesIncludePrefixes(c, [])).toBe(true);
-  });
-  it("only listed prefixes pass when whitelist is set", () => {
-    expect(passesIncludePrefixes(makeCourse({ code: "math116" }), ["MATH", "CS"])).toBe(true);
-    expect(passesIncludePrefixes(makeCourse({ code: "fr101" }), ["MATH", "CS"])).toBe(false);
   });
 });
 
@@ -226,14 +214,6 @@ describe("applyFilters", () => {
       hasSeatsAvailable: true,
     });
     expect(result.map((c) => c.code)).toEqual(["math116", "cs486"]);
-  });
-
-  it("include whitelist narrows to listed prefixes only", () => {
-    const result = applyFilters(all, {
-      ...DEFAULT_FILTER_STATE,
-      includePrefixes: ["MATH"],
-    });
-    expect(result.map((c) => c.code)).toEqual(["math116"]);
   });
 
   it("combines level + minUseful thresholds", () => {

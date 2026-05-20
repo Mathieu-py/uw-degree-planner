@@ -18,12 +18,11 @@ export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
 // URL keys owned by FilterState. Used by mergeFilterStateIntoParams to
 // overwrite filter slots without disturbing sort params (s, d).
 const FILTER_PARAM_KEYS = [
-  "exc", "inc", "lv", "seats", "up", "minU", "minE", "prog", "term",
+  "exc", "lv", "seats", "up", "minU", "minE", "prog", "term",
 ] as const;
 
 export const DEFAULT_FILTER_STATE: FilterState = {
   excludePrefixes: [],
-  includePrefixes: [],
   levels: [],
   hasSeatsAvailable: false,
   completedCourses: [],
@@ -74,7 +73,6 @@ function parseBool(raw: string | undefined): boolean {
 
 export function decodeFilterState(params: RawParams): FilterState {
   const excludePrefixes = splitList(read(params, "exc")).map((s) => s.toUpperCase());
-  const includePrefixes = splitList(read(params, "inc")).map((s) => s.toUpperCase());
   const levels = [
     ...new Set(
       splitList(read(params, "lv"))
@@ -91,7 +89,6 @@ export function decodeFilterState(params: RawParams): FilterState {
 
   return {
     excludePrefixes,
-    includePrefixes,
     levels,
     hasSeatsAvailable: parseBool(read(params, "seats")),
     completedCourses: [],
@@ -123,9 +120,6 @@ export function encodeFilterState(state: FilterState): URLSearchParams {
   const out = new URLSearchParams();
   if (state.excludePrefixes.length > 0) {
     out.set("exc", state.excludePrefixes.join(","));
-  }
-  if (state.includePrefixes.length > 0) {
-    out.set("inc", state.includePrefixes.join(","));
   }
   if (state.levels.length > 0) {
     out.set("lv", state.levels.join(","));
