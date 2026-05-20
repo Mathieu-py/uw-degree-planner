@@ -71,10 +71,12 @@ export function CourseBrowser({
   );
 
   const searched = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase().replace(/\s+/g, "");
     if (q.length === 0) return effectiveRows;
     return effectiveRows.filter(
-      (r) => r.course.code.toLowerCase().includes(q) || r.course.name.toLowerCase().includes(q),
+      (r) =>
+        r.course.code.toLowerCase().replace(/\s+/g, "").includes(q) ||
+        r.course.name.toLowerCase().includes(q),
     );
   }, [effectiveRows, query]);
 
