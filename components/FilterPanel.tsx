@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { Chip } from "./filter/Chip";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { PrefixPicker } from "./filter/PrefixPicker";
+import { rebaseCompletedCourses } from "@/lib/completedCourses";
 import {
   BROWSE_QS_STORAGE_KEY,
   DEFAULT_FILTER_STATE,
@@ -15,7 +16,6 @@ import {
   PROGRAMS,
   TERM_LETTERS,
   type TermLetter,
-  inferCompleted,
   isTermLetter,
 } from "@/lib/programs";
 import { safeSetItem } from "@/lib/storage";
@@ -23,6 +23,8 @@ import type { FilterState } from "@/lib/types";
 
 interface Props {
   state: FilterState;
+  completedCourses: string[];
+  onCompletedChange: (next: string[]) => void;
   allCourseCodes: string[];
   knownPrefixes: string[];
 }
@@ -39,7 +41,13 @@ function toggleLevel(current: readonly number[], lvl: number): number[] {
   return [...next].sort((a, b) => a - b);
 }
 
-export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
+export function FilterPanel({
+  state,
+  completedCourses,
+  onCompletedChange,
+  allCourseCodes,
+  knownPrefixes,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
@@ -71,7 +79,23 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
       ? decodeFilterState(new URLSearchParams(window.location.search))
       : state;
     const delta = typeof p === "function" ? p(live) : p;
-    commit({ ...live, ...delta });
+    const next = { ...live, ...delta };
+
+    // Prog/term changes shift the inferred baseline; rebase the user's list
+    // through the new baseline so the table updates immediately. Source the
+    // live list from the prop (localStorage-backed) — `live.completedCourses`
+    // from the URL decoder is always [].
+    if (delta.programId !== undefined || delta.currentTerm !== undefined) {
+      onCompletedChange(
+        rebaseCompletedCourses(
+          { ...live, completedCourses },
+          next.programId,
+          next.currentTerm,
+        ),
+      );
+    }
+
+    commit(next);
   }
 
   return (
@@ -153,15 +177,15 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
         />
       </Section>
 
-      <Section title="Seed from program">
+      <Section title="Program & term">
         <ProgramSeeder state={state} patch={patch} />
       </Section>
 
       <Section title="Completed courses">
         <CompletedCoursesInput
-          value={state.completedCourses}
+          value={completedCourses}
           allCourseCodes={allCourseCodes}
-          onChange={(completedCourses) => patch({ completedCourses })}
+          onChange={onCompletedChange}
         />
       </Section>
     </aside>
@@ -180,20 +204,6 @@ function ProgramSeeder({
   );
   const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
   const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
-  const canSeed = state.programId != null && term != null;
-
-  function onSeed() {
-    if (!state.programId || !term) return;
-    const seed = inferCompleted(state.programId, term);
-    if (state.completedCourses.length > 0) {
-      const programName = PROGRAMS[state.programId]?.name ?? state.programId;
-      const ok = window.confirm(
-        `Replace your ${state.completedCourses.length} completed courses with ${seed.length} from ${programName} (terms before ${term})?`,
-      );
-      if (!ok) return;
-    }
-    patch({ completedCourses: seed });
-  }
 
   const selectClass =
     "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
@@ -229,15 +239,6 @@ function ProgramSeeder({
           ))}
         </select>
       </label>
-
-      <button
-        type="button"
-        onClick={onSeed}
-        disabled={!canSeed}
-        className="rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs disabled:opacity-40 hover:bg-zinc-100 dark:hover:bg-zinc-900"
-      >
-        Seed completed courses
-      </button>
 
       {selectedProgram && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">

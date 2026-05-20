@@ -22,16 +22,14 @@ describe("decodeFilterState", () => {
   });
 
   it("accepts Next.js-style searchParams records", () => {
-    const state = decodeFilterState({ exc: "PHIL,ENGL", minU: "0.6", done: "math115,cs115" });
+    const state = decodeFilterState({ exc: "PHIL,ENGL", minU: "0.6" });
     expect(state.excludePrefixes).toEqual(["PHIL", "ENGL"]);
     expect(state.minUseful).toBe(0.6);
-    expect(state.completedCourses).toEqual(["math115", "cs115"]);
   });
 
-  it("normalises prefix casing to upper and course codes to lower", () => {
-    const state = decodeFilterState(new URLSearchParams("exc=phil,engl&done=MATH115,CS115"));
+  it("normalises prefix casing to upper", () => {
+    const state = decodeFilterState(new URLSearchParams("exc=phil,engl"));
     expect(state.excludePrefixes).toEqual(["PHIL", "ENGL"]);
-    expect(state.completedCourses).toEqual(["math115", "cs115"]);
   });
 
   it("parses levels as integers", () => {
@@ -75,11 +73,16 @@ describe("decodeFilterState", () => {
 
   it("dedupes list values", () => {
     const state = decodeFilterState(
-      new URLSearchParams("lv=100,100,200&exc=PHIL,PHIL,ENGL&done=cs115,cs115"),
+      new URLSearchParams("lv=100,100,200&exc=PHIL,PHIL,ENGL"),
     );
     expect(state.levels).toEqual([100, 200]);
     expect(state.excludePrefixes).toEqual(["PHIL", "ENGL"]);
-    expect(state.completedCourses).toEqual(["cs115"]);
+  });
+
+  it("always returns empty completedCourses (profile data lives in localStorage, not URL)", () => {
+    expect(decodeFilterState(new URLSearchParams("prog=syde&term=3A")).completedCourses).toEqual([]);
+    expect(decodeFilterState(new URLSearchParams("donePlus=cs115")).completedCourses).toEqual([]);
+    expect(decodeFilterState(new URLSearchParams("doneMinus=syde101")).completedCourses).toEqual([]);
   });
 
   it("decodes booleans from 1, ignores other values", () => {
@@ -125,6 +128,18 @@ describe("encodeFilterState", () => {
     expect(encodeFilterState(state).get("exc")).toBe("PHIL,ENGL");
   });
 
+  it("never emits completedCourses to the URL (profile data lives in localStorage)", () => {
+    const state: FilterState = {
+      ...DEFAULT_FILTER_STATE,
+      programId: "syde",
+      currentTerm: "3A",
+      completedCourses: ["cs115", "math116", "math117"],
+    };
+    const params = encodeFilterState(state);
+    expect(params.has("donePlus")).toBe(false);
+    expect(params.has("doneMinus")).toBe(false);
+    expect([...params.keys()].sort()).toEqual(["prog", "term"]);
+  });
 });
 
 describe("mergeFilterStateIntoParams", () => {
@@ -153,7 +168,7 @@ describe("mergeFilterStateIntoParams", () => {
     expect(current.toString()).toBe(before);
   });
 
-  it("writes every filter key on a fully-populated state", () => {
+  it("writes every URL-resident filter key on a fully-populated state", () => {
     const state: FilterState = {
       excludePrefixes: ["PHIL"],
       includePrefixes: ["MATH"],
@@ -168,7 +183,8 @@ describe("mergeFilterStateIntoParams", () => {
     };
     const merged = mergeFilterStateIntoParams(new URLSearchParams("s=code"), state);
     expect(merged.get("s")).toBe("code");
-    expect(decodeFilterState(merged)).toEqual(state);
+    const decoded = decodeFilterState(merged);
+    expect(decoded).toEqual({ ...state, completedCourses: [] });
   });
 
   it("clears prog and term when they fall back to null", () => {
@@ -185,31 +201,19 @@ describe("round trip", () => {
     expect(roundTrip(DEFAULT_FILTER_STATE)).toEqual(DEFAULT_FILTER_STATE);
   });
 
-  it("preserves a fully-populated state across every URL key", () => {
+  it("preserves every URL-resident field but drops completedCourses", () => {
     const state: FilterState = {
       excludePrefixes: ["PHIL", "ENGL", "ARTS"],
       includePrefixes: ["MATH", "CS"],
       levels: [100, 200, 300],
       hasSeatsAvailable: true,
-      completedCourses: ["math116", "math117", "cs115"],
+      completedCourses: ["cs115", "math116", "math117"],
       hideUnmetPrereqs: true,
       minUseful: 0.6,
       minEasy: 0.3,
       programId: "syde",
       currentTerm: "3A",
     };
-    expect(roundTrip(state)).toEqual(state);
-  });
-
-  it("preserves a mixed user-shaped state", () => {
-    const state: FilterState = {
-      ...DEFAULT_FILTER_STATE,
-      excludePrefixes: ["PHIL", "ENGL"],
-      levels: [200, 300],
-      minUseful: 0.6,
-      hasSeatsAvailable: true,
-      completedCourses: ["math115", "cs115"],
-    };
-    expect(roundTrip(state)).toEqual(state);
+    expect(roundTrip(state)).toEqual({ ...state, completedCourses: [] });
   });
 });

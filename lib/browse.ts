@@ -22,14 +22,28 @@ export function buildBrowseRows(
   state: FilterState,
 ): BrowseRow[] {
   const filtered = applyFilters(courses, state);
-  const completed = new Set(state.completedCourses);
-  const checkEligibility = state.completedCourses.length > 0;
-  return filtered
-    .map<BrowseRow>((course) => ({
-      course,
-      eligibility: checkEligibility
-        ? evaluate(parsePrereqs(course.prereqs), { completed })
-        : null,
+  const baseRows: BrowseRow[] = filtered.map((course) => ({ course, eligibility: null }));
+  return attachEligibility(baseRows, state.completedCourses, state.hideUnmetPrereqs);
+}
+
+/**
+ * Annotate rows with eligibility against `completed` and optionally drop rows
+ * with unmet prereqs. Empty `completed` short-circuits — eligibility stays
+ * null and hideUnmetPrereqs becomes a no-op (an unknown eligibility is not
+ * "unmet"). Called server-side via buildBrowseRows with an empty list, and
+ * re-run client-side by CourseBrowser once localStorage hydrates.
+ */
+export function attachEligibility(
+  rows: BrowseRow[],
+  completed: string[],
+  hideUnmetPrereqs: boolean,
+): BrowseRow[] {
+  if (completed.length === 0) return rows;
+  const completedSet = new Set(completed);
+  return rows
+    .map<BrowseRow>((r) => ({
+      course: r.course,
+      eligibility: evaluate(parsePrereqs(r.course.prereqs), { completed: completedSet }),
     }))
-    .filter((r) => !state.hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
+    .filter((r) => !hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
 }
