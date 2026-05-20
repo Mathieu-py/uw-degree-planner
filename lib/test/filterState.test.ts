@@ -171,7 +171,6 @@ describe("mergeFilterStateIntoParams", () => {
   it("writes every URL-resident filter key on a fully-populated state", () => {
     const state: FilterState = {
       excludePrefixes: ["PHIL"],
-      includePrefixes: ["MATH"],
       levels: [200],
       hasSeatsAvailable: true,
       completedCourses: ["math116"],
@@ -204,7 +203,6 @@ describe("round trip", () => {
   it("preserves every URL-resident field but drops completedCourses", () => {
     const state: FilterState = {
       excludePrefixes: ["PHIL", "ENGL", "ARTS"],
-      includePrefixes: ["MATH", "CS"],
       levels: [100, 200, 300],
       hasSeatsAvailable: true,
       completedCourses: ["cs115", "math116", "math117"],

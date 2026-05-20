@@ -68,14 +68,6 @@ export function passesSeatsFilter(
   return course.hasSeats;
 }
 
-export function passesIncludePrefixes(
-  course: Course,
-  includePrefixes: ReadonlyArray<string>,
-): boolean {
-  if (includePrefixes.length === 0) return true;
-  return includePrefixes.includes(course.prefix);
-}
-
 /**
  * Each predicate self-gates on its slice of FilterState (false / empty array
  * / null threshold all mean "rule disabled, course passes"), so this is a
@@ -88,7 +80,6 @@ export function applyFilters(
   return courses.filter(
     (c) =>
       passesPrefixExclusion(c, s.excludePrefixes) &&
-      passesIncludePrefixes(c, s.includePrefixes) &&
       passesLevelFilter(c, s.levels) &&
       passesSeatsFilter(c, s.hasSeatsAvailable) &&
       passesMinUsefulFilter(c, s.minUseful) &&

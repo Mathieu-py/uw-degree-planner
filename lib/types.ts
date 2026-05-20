@@ -48,7 +48,6 @@ export type TermId = number;
  */
 export interface FilterState {
   excludePrefixes: string[];
-  includePrefixes: string[];
   levels: number[];
   hasSeatsAvailable: boolean;
   completedCourses: string[];

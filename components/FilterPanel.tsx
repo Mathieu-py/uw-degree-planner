@@ -151,15 +151,6 @@ export function FilterPanel({
         />
       </Section>
 
-      <Section title="Include only">
-        <PrefixPicker
-          selected={state.includePrefixes}
-          known={knownPrefixes}
-          onChange={(includePrefixes) => patch({ includePrefixes })}
-          emptyLabel="Include all prefixes"
-        />
-      </Section>
-
       <Section title="Ratings">
         <RangeSlider
           label="Min usefulness"
