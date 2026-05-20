@@ -41,6 +41,10 @@ export type TermId = number;
 /**
  * Active set of filters. Every UI control writes through to this shape;
  * URL search params encode it for shareable views.
+ *
+ * `programId` and `currentTerm` are not used by lib/filters — they're the
+ * selection state for the "Seed from program" control, persisted to the URL
+ * so a seeded view is shareable.
  */
 export interface FilterState {
   excludePrefixes: string[];
@@ -51,4 +55,6 @@ export interface FilterState {
   hideUnmetPrereqs: boolean;
   minUseful: number | null;
   minEasy: number | null;
+  programId: string | null;
+  currentTerm: string | null;
 }

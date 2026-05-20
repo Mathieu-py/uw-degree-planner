@@ -5,11 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FilterPanel } from "./FilterPanel";
 import { Pagination } from "./Pagination";
-import type { BrowseRow } from "@/lib/browse";
+import { attachEligibility, type BrowseRow } from "@/lib/browse";
+import { loadCompletedCourses, saveCompletedCourses } from "@/lib/completedCourses";
 import { seatsAvailable } from "@/lib/filters";
 import { BROWSE_QS_STORAGE_KEY } from "@/lib/filterState";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
-import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import {
   DEFAULT_SORT_DIR,
@@ -18,6 +18,7 @@ import {
   type SortDir,
   type SortKey,
 } from "@/lib/sort";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
 
 interface Props {
@@ -44,14 +45,38 @@ export function CourseBrowser({
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const [completedCourses, setCompletedCourses] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate from localStorage exactly once on mount. The server-rendered HTML
+  // assumes completedCourses=[] (it's not on the URL); we layer the user's
+  // profile in here.
+  useEffect(() => {
+    setCompletedCourses(loadCompletedCourses());
+    setHydrated(true);
+  }, []);
+
+  // Persist edits. Gated on `hydrated` so the initial [] state doesn't
+  // overwrite a stored list before the read completes.
+  useEffect(() => {
+    if (!hydrated) return;
+    saveCompletedCourses(completedCourses);
+  }, [hydrated, completedCourses]);
+
+  // Re-derive eligibility client-side once a non-empty completed list arrives.
+  // Empty list short-circuits, so this is effectively a no-op on first paint.
+  const effectiveRows = useMemo(
+    () => attachEligibility(rows, completedCourses, state.hideUnmetPrereqs),
+    [rows, completedCourses, state.hideUnmetPrereqs],
+  );
 
   const searched = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (q.length === 0) return rows;
-    return rows.filter(
+    if (q.length === 0) return effectiveRows;
+    return effectiveRows.filter(
       (r) => r.course.code.toLowerCase().includes(q) || r.course.name.toLowerCase().includes(q),
     );
-  }, [rows, query]);
+  }, [effectiveRows, query]);
 
   const isSearching = query.trim().length > 0;
 
@@ -100,6 +125,8 @@ export function CourseBrowser({
       <div className="lg:w-72 lg:shrink-0 lg:sticky lg:top-6 lg:self-start">
         <FilterPanel
           state={state}
+          completedCourses={completedCourses}
+          onCompletedChange={setCompletedCourses}
           allCourseCodes={allCourseCodes}
           knownPrefixes={knownPrefixes}
         />
@@ -121,8 +148,8 @@ export function CourseBrowser({
         <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
           <span>
             {isSearching
-              ? `${searched.length.toLocaleString()} of ${rows.length.toLocaleString()} matches`
-              : `${rows.length.toLocaleString()} of ${totalCount.toLocaleString()} courses`}
+              ? `${searched.length.toLocaleString()} of ${effectiveRows.length.toLocaleString()} matches`
+              : `${effectiveRows.length.toLocaleString()} of ${totalCount.toLocaleString()} courses`}
           </span>
         </div>
 

@@ -1,14 +1,16 @@
 /**
- * FilterState ↔ URL codec. Empty querystring decodes to DEFAULT_FILTER_STATE
- * (full catalog); encoding omits any field at its default so shared URLs
- * stay short and "no params" round-trips cleanly. Keys are abbreviated (exc,
- * lv, done, minU, …) so a typical filtered view fits on one line.
+ * FilterState ↔ URL codec. Empty querystring decodes to DEFAULT_FILTER_STATE;
+ * encoding omits any field at its default so shared URLs stay short and "no
+ * params" round-trips cleanly. Keys are abbreviated (exc, lv, minU, …) so a
+ * typical filtered view fits on one line. `completedCourses` is profile data
+ * (persisted in localStorage by CourseBrowser) and is intentionally not
+ * URL-encoded — a shared link reflects the sender's view, not their profile.
  *
- * Invariant: prefix arrays are uppercase and course codes are lowercase at
- * every state boundary (decode normalises, UI controls add normalised). The
- * encoder trusts this and does not re-normalise.
+ * Invariant: prefix arrays are uppercase at every state boundary (decode
+ * normalises, UI controls add normalised). The encoder trusts this.
  */
 
+import { isKnownProgram, isTermLetter } from "./programs";
 import type { FilterState } from "./types";
 
 export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
@@ -16,7 +18,7 @@ export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
 // URL keys owned by FilterState. Used by mergeFilterStateIntoParams to
 // overwrite filter slots without disturbing sort params (s, d).
 const FILTER_PARAM_KEYS = [
-  "exc", "inc", "lv", "seats", "done", "up", "minU", "minE",
+  "exc", "inc", "lv", "seats", "up", "minU", "minE", "prog", "term",
 ] as const;
 
 export const DEFAULT_FILTER_STATE: FilterState = {
@@ -28,6 +30,8 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   hideUnmetPrereqs: false,
   minUseful: null,
   minEasy: null,
+  programId: null,
+  currentTerm: null,
 };
 
 type RawParams = URLSearchParams | Record<string, string | string[] | undefined>;
@@ -79,17 +83,23 @@ export function decodeFilterState(params: RawParams): FilterState {
         .filter((n) => SUPPORTED_LEVELS.has(n)),
     ),
   ];
-  const completedCourses = splitList(read(params, "done")).map((s) => s.toLowerCase());
+  const rawProg = read(params, "prog")?.toLowerCase();
+  const programId = rawProg && isKnownProgram(rawProg) ? rawProg : null;
+
+  const rawTerm = read(params, "term")?.toUpperCase();
+  const currentTerm = isTermLetter(rawTerm) ? rawTerm : null;
 
   return {
     excludePrefixes,
     includePrefixes,
     levels,
     hasSeatsAvailable: parseBool(read(params, "seats")),
-    completedCourses,
+    completedCourses: [],
     hideUnmetPrereqs: parseBool(read(params, "up")),
     minUseful: parseRatingOrNull(read(params, "minU")),
     minEasy: parseRatingOrNull(read(params, "minE")),
+    programId,
+    currentTerm,
   };
 }
 
@@ -121,11 +131,10 @@ export function encodeFilterState(state: FilterState): URLSearchParams {
     out.set("lv", state.levels.join(","));
   }
   if (state.hasSeatsAvailable) out.set("seats", "1");
-  if (state.completedCourses.length > 0) {
-    out.set("done", state.completedCourses.join(","));
-  }
   if (state.hideUnmetPrereqs) out.set("up", "1");
   if (state.minUseful != null) out.set("minU", String(state.minUseful));
   if (state.minEasy != null) out.set("minE", String(state.minEasy));
+  if (state.programId) out.set("prog", state.programId);
+  if (state.currentTerm) out.set("term", state.currentTerm);
   return out;
 }

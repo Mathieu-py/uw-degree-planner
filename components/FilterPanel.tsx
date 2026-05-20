@@ -1,26 +1,39 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Chip } from "./filter/Chip";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { PrefixPicker } from "./filter/PrefixPicker";
+import { rebaseCompletedCourses } from "@/lib/completedCourses";
 import {
   BROWSE_QS_STORAGE_KEY,
   DEFAULT_FILTER_STATE,
   decodeFilterState,
   mergeFilterStateIntoParams,
 } from "@/lib/filterState";
+import {
+  PROGRAMS,
+  TERM_LETTERS,
+  type TermLetter,
+  isTermLetter,
+} from "@/lib/programs";
 import { safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
 
 interface Props {
   state: FilterState;
+  completedCourses: string[];
+  onCompletedChange: (next: string[]) => void;
   allCourseCodes: string[];
   knownPrefixes: string[];
 }
 
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
+
+const SORTED_PROGRAMS = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
+  a.name.localeCompare(b.name),
+);
 
 // state.levels === [] means "all four buckets". Selecting all four (or none) collapses back to [].
 function toggleLevel(current: readonly number[], lvl: number): number[] {
@@ -32,10 +45,21 @@ function toggleLevel(current: readonly number[], lvl: number): number[] {
   return [...next].sort((a, b) => a - b);
 }
 
-export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
+export function FilterPanel({
+  state,
+  completedCourses,
+  onCompletedChange,
+  allCourseCodes,
+  knownPrefixes,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
+
+  const completedCoursesRef = useRef(completedCourses);
+  useEffect(() => {
+    completedCoursesRef.current = completedCourses;
+  }, [completedCourses]);
 
   const commit = useCallback(
     (next: FilterState) => {
@@ -64,7 +88,23 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
       ? decodeFilterState(new URLSearchParams(window.location.search))
       : state;
     const delta = typeof p === "function" ? p(live) : p;
-    commit({ ...live, ...delta });
+    const next = { ...live, ...delta };
+
+    // Prog/term changes shift the inferred baseline; rebase the user's list
+    // through the new baseline so the table updates immediately. Source the
+    // live list from the prop (localStorage-backed) — `live.completedCourses`
+    // from the URL decoder is always [].
+    if (delta.programId !== undefined || delta.currentTerm !== undefined) {
+      onCompletedChange(
+        rebaseCompletedCourses(
+          { ...live, completedCourses: completedCoursesRef.current },
+          next.programId,
+          next.currentTerm,
+        ),
+      );
+    }
+
+    commit(next);
   }
 
   return (
@@ -75,7 +115,7 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
         </h2>
         <button
           type="button"
-          onClick={() => commit(DEFAULT_FILTER_STATE)}
+          onClick={() => patch(DEFAULT_FILTER_STATE)}
           className="text-xs text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 underline-offset-2 hover:underline"
         >
           Reset
@@ -146,14 +186,72 @@ export function FilterPanel({ state, allCourseCodes, knownPrefixes }: Props) {
         />
       </Section>
 
+      <Section title="Program & term">
+        <ProgramSeeder state={state} patch={patch} />
+      </Section>
+
       <Section title="Completed courses">
         <CompletedCoursesInput
-          value={state.completedCourses}
+          value={completedCourses}
           allCourseCodes={allCourseCodes}
-          onChange={(completedCourses) => patch({ completedCourses })}
+          onChange={onCompletedChange}
         />
       </Section>
     </aside>
+  );
+}
+
+function ProgramSeeder({
+  state,
+  patch,
+}: {
+  state: FilterState;
+  patch: (p: Partial<FilterState>) => void;
+}) {
+  const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
+  const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
+
+  const selectClass =
+    "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">Program</span>
+        <select
+          value={state.programId ?? ""}
+          onChange={(e) => patch({ programId: e.target.value || null })}
+          className={selectClass}
+        >
+          <option value="">Select a program…</option>
+          {SORTED_PROGRAMS.map(([id, p]) => (
+            <option key={id} value={id}>{p.name}</option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">Current term</span>
+        <select
+          value={term ?? ""}
+          onChange={(e) =>
+            patch({ currentTerm: isTermLetter(e.target.value) ? e.target.value : null })
+          }
+          className={selectClass}
+        >
+          <option value="">Select a term…</option>
+          {TERM_LETTERS.map((t: TermLetter) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      </label>
+
+      {selectedProgram && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          Sourced from UW calendar (as of {selectedProgram.asOf}).
+        </p>
+      )}
+    </div>
   );
 }
 

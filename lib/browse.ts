@@ -8,9 +8,19 @@
  */
 
 import { applyFilters } from "./filters";
-import { parsePrereqs } from "./prereqs/parse";
+import { parsePrereqs, type PrereqNode } from "./prereqs/parse";
 import { evaluate, type EligibilityResult } from "./prereqs/satisfied";
 import type { Course, FilterState } from "./types";
+
+const prereqCache = new Map<string, PrereqNode | null>();
+
+function cachedParsePrereqs(text: string | null | undefined): PrereqNode | null {
+  const key = text ?? "";
+  if (prereqCache.has(key)) return prereqCache.get(key) ?? null;
+  const parsed = parsePrereqs(text);
+  prereqCache.set(key, parsed);
+  return parsed;
+}
 
 export interface BrowseRow {
   course: Course;
@@ -22,14 +32,28 @@ export function buildBrowseRows(
   state: FilterState,
 ): BrowseRow[] {
   const filtered = applyFilters(courses, state);
-  const completed = new Set(state.completedCourses);
-  const checkEligibility = state.completedCourses.length > 0;
-  return filtered
-    .map<BrowseRow>((course) => ({
-      course,
-      eligibility: checkEligibility
-        ? evaluate(parsePrereqs(course.prereqs), { completed })
-        : null,
+  const baseRows: BrowseRow[] = filtered.map((course) => ({ course, eligibility: null }));
+  return attachEligibility(baseRows, state.completedCourses, state.hideUnmetPrereqs);
+}
+
+/**
+ * Annotate rows with eligibility against `completed` and optionally drop rows
+ * with unmet prereqs. Empty `completed` short-circuits — eligibility stays
+ * null and hideUnmetPrereqs becomes a no-op (an unknown eligibility is not
+ * "unmet"). Called server-side via buildBrowseRows with an empty list, and
+ * re-run client-side by CourseBrowser once localStorage hydrates.
+ */
+export function attachEligibility(
+  rows: BrowseRow[],
+  completed: string[],
+  hideUnmetPrereqs: boolean,
+): BrowseRow[] {
+  if (completed.length === 0) return rows;
+  const completedSet = new Set(completed);
+  return rows
+    .map<BrowseRow>((r) => ({
+      course: r.course,
+      eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), { completed: completedSet }),
     }))
-    .filter((r) => !state.hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
+    .filter((r) => !hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
 }
