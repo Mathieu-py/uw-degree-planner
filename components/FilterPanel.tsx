@@ -217,7 +217,7 @@ export function FilterPanel({
           onClick={() => setTranscriptModalOpen(true)}
           className="self-start rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
         >
-          ↗ Paste transcript
+          ↗ Upload transcript (PDF)
         </button>
       </Section>
 

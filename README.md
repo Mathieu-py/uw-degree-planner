@@ -47,6 +47,10 @@ If the calendar is republished with a new catalog id, the scraper will return 40
 
 Only programs whose calendar entry defines a per-term required-course list (currently 16 — 14 Engineering majors plus Architectural Studies and Medical Sciences) are emitted to `data/programs.json`. Programs with a flexible / sub-plan curriculum (most of Math, Arts, Science, AHS, Environment) are dropped — the current parser can't extract their required courses, and a parser refactor is tracked in [issue #15](https://github.com/Mathieu-py/uw-elective-finder/issues/15). Until that lands, those students use the transcript-import flow instead of program seeding.
 
+## Transcript import
+
+In `/browse`, the **Upload transcript (PDF)** button opens a modal that accepts a Quest unofficial-transcript PDF. The PDF is parsed entirely in the browser — text never leaves the client. The parser auto-detects the student's program and current term, and pre-populates `completedCourses` from the graded rows. To export the transcript: Quest → Student Center → *Other Academic…* → *Transcript: View Unofficial* → save as PDF.
+
 ## Notes
 
 This project targets Next.js 16, which has breaking changes vs. earlier versions. When in doubt, check `node_modules/next/dist/docs/` before relying on older patterns.
