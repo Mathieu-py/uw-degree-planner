@@ -39,21 +39,27 @@ export interface Course extends UWFlowCourse {
 export type TermId = number;
 
 /**
- * Active set of filters. Every UI control writes through to this shape;
- * URL search params encode it for shareable views.
- *
- * `programId` and `currentTerm` are not used by lib/filters — they're the
- * selection state for the "Seed from program" control, persisted to the URL
- * so a seeded view is shareable.
+ * Filter predicates that act on a Course in isolation. URL-encoded for
+ * shareable views. `hideUnmetPrereqs` is a presentation toggle — an empty
+ * `completedCourses` (see StudentPassage) makes it a no-op.
  */
-export interface FilterState {
+export interface PureFilters {
   excludePrefixes: string[];
   levels: number[];
   hasSeatsAvailable: boolean;
-  completedCourses: string[];
   hideUnmetPrereqs: boolean;
   minUseful: number | null;
   minEasy: number | null;
+}
+
+/**
+ * The student's academic context: which program they're in, which term they're
+ * planning for, and which courses they've completed. `programId`/`currentTerm`
+ * are URL-encoded so a seeded view is shareable; `completedCourses` is profile
+ * data persisted in localStorage and never written to the URL.
+ */
+export interface StudentPassage {
   programId: string | null;
   currentTerm: string | null;
+  completedCourses: string[];
 }

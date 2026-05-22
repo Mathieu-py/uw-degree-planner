@@ -21,13 +21,14 @@ import {
   type SortKey,
 } from "@/lib/sort";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
-import type { FilterState } from "@/lib/types";
+import type { PureFilters, StudentPassage } from "@/lib/types";
 import { FilterPanel } from "./FilterPanel";
 import { Pagination } from "./Pagination";
 
 interface Props {
   rows: BrowseRow[];
-  state: FilterState;
+  filters: PureFilters;
+  passage: StudentPassage;
   sortKey: SortKey;
   sortDir: SortDir;
   page: number;
@@ -38,7 +39,8 @@ interface Props {
 
 export function CourseBrowser({
   rows,
-  state,
+  filters,
+  passage,
   sortKey,
   sortDir,
   page,
@@ -70,8 +72,8 @@ export function CourseBrowser({
   // Re-derive eligibility client-side once a non-empty completed list arrives.
   // Empty list short-circuits, so this is effectively a no-op on first paint.
   const effectiveRows = useMemo(
-    () => attachEligibility(rows, completedCourses, state.hideUnmetPrereqs),
-    [rows, completedCourses, state.hideUnmetPrereqs],
+    () => attachEligibility(rows, completedCourses, filters.hideUnmetPrereqs),
+    [rows, completedCourses, filters.hideUnmetPrereqs],
   );
 
   const searched = useMemo(() => {
@@ -127,7 +129,8 @@ export function CourseBrowser({
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="lg:w-72 lg:shrink-0 lg:sticky lg:top-6 lg:self-start">
         <FilterPanel
-          state={state}
+          filters={filters}
+          passage={passage}
           completedCourses={completedCourses}
           onCompletedChange={setCompletedCourses}
           allCourseCodes={allCourseCodes}

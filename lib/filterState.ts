@@ -1,43 +1,51 @@
 /**
- * FilterState ↔ URL codec. Empty querystring decodes to DEFAULT_FILTER_STATE;
+ * URL codec for the two halves of catalog state: PureFilters (filter chips)
+ * and StudentPassage (program seed). Empty querystring decodes to defaults;
  * encoding omits any field at its default so shared URLs stay short and "no
  * params" round-trips cleanly. Keys are abbreviated (exc, lv, minU, …) so a
- * typical filtered view fits on one line. `completedCourses` is profile data
- * (persisted in localStorage by CourseBrowser) and is intentionally not
- * URL-encoded — a shared link reflects the sender's view, not their profile.
+ * typical filtered view fits on one line.
+ *
+ * `completedCourses` belongs to StudentPassage but is profile data (persisted
+ * in localStorage by CourseBrowser) and intentionally not URL-encoded — a
+ * shared link reflects the sender's view, not their profile. The decoder for
+ * StudentPassage therefore always returns an empty list; the encoder ignores
+ * it. localStorage is the source of truth.
+ *
+ * Each merger deletes only its own key set, so a commit to one half can
+ * never lose a concurrent commit to the other half (or sort params s, d, p).
  *
  * Invariant: prefix arrays are uppercase at every state boundary (decode
  * normalises, UI controls add normalised). The encoder trusts this.
  */
 
 import { isKnownProgram, isTermLetter } from "./programs";
-import type { FilterState } from "./types";
+import type { PureFilters, StudentPassage } from "./types";
 
 export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
 
-// URL keys owned by FilterState. Used by mergeFilterStateIntoParams to
-// overwrite filter slots without disturbing sort params (s, d).
-const FILTER_PARAM_KEYS = [
+const PURE_FILTER_PARAM_KEYS = [
   "exc",
   "lv",
   "seats",
   "up",
   "minU",
   "minE",
-  "prog",
-  "term",
 ] as const;
+const PASSAGE_PARAM_KEYS = ["prog", "term"] as const;
 
-export const DEFAULT_FILTER_STATE: FilterState = {
+export const DEFAULT_PURE_FILTERS: PureFilters = {
   excludePrefixes: [],
   levels: [],
   hasSeatsAvailable: false,
-  completedCourses: [],
   hideUnmetPrereqs: false,
   minUseful: null,
   minEasy: null,
+};
+
+export const DEFAULT_STUDENT_PASSAGE: StudentPassage = {
   programId: null,
   currentTerm: null,
+  completedCourses: [],
 };
 
 type RawParams =
@@ -83,10 +91,10 @@ function parseBool(raw: string | undefined): boolean {
   return raw === "1";
 }
 
-export function decodeFilterState(params: RawParams): FilterState {
-  const excludePrefixes = splitList(read(params, "exc")).map((s) =>
-    s.toUpperCase(),
-  );
+export function decodePureFilters(params: RawParams): PureFilters {
+  const excludePrefixes = [
+    ...new Set(splitList(read(params, "exc")).map((s) => s.toUpperCase())),
+  ];
   const levels = [
     ...new Set(
       splitList(read(params, "lv"))
@@ -95,6 +103,17 @@ export function decodeFilterState(params: RawParams): FilterState {
         .filter((n) => SUPPORTED_LEVELS.has(n)),
     ),
   ];
+  return {
+    excludePrefixes,
+    levels,
+    hasSeatsAvailable: parseBool(read(params, "seats")),
+    hideUnmetPrereqs: parseBool(read(params, "up")),
+    minUseful: parseRatingOrNull(read(params, "minU")),
+    minEasy: parseRatingOrNull(read(params, "minE")),
+  };
+}
+
+export function decodeStudentPassage(params: RawParams): StudentPassage {
   const rawProg = read(params, "prog")?.toLowerCase();
   const programId = rawProg && isKnownProgram(rawProg) ? rawProg : null;
 
@@ -102,35 +121,13 @@ export function decodeFilterState(params: RawParams): FilterState {
   const currentTerm = isTermLetter(rawTerm) ? rawTerm : null;
 
   return {
-    excludePrefixes,
-    levels,
-    hasSeatsAvailable: parseBool(read(params, "seats")),
-    completedCourses: [],
-    hideUnmetPrereqs: parseBool(read(params, "up")),
-    minUseful: parseRatingOrNull(read(params, "minU")),
-    minEasy: parseRatingOrNull(read(params, "minE")),
     programId,
     currentTerm,
+    completedCourses: [],
   };
 }
 
-/**
- * Overwrite the filter slots of an existing querystring with `state`,
- * leaving non-filter keys (currently the sort params `s` and `d`) untouched.
- * Use this when committing filter changes from the UI so a user's chosen
- * sort order survives a filter toggle.
- */
-export function mergeFilterStateIntoParams(
-  current: URLSearchParams,
-  state: FilterState,
-): URLSearchParams {
-  const out = new URLSearchParams(current);
-  for (const key of FILTER_PARAM_KEYS) out.delete(key);
-  for (const [k, v] of encodeFilterState(state)) out.set(k, v);
-  return out;
-}
-
-export function encodeFilterState(state: FilterState): URLSearchParams {
+export function encodePureFilters(state: PureFilters): URLSearchParams {
   const out = new URLSearchParams();
   if (state.excludePrefixes.length > 0) {
     out.set("exc", state.excludePrefixes.join(","));
@@ -142,7 +139,40 @@ export function encodeFilterState(state: FilterState): URLSearchParams {
   if (state.hideUnmetPrereqs) out.set("up", "1");
   if (state.minUseful != null) out.set("minU", String(state.minUseful));
   if (state.minEasy != null) out.set("minE", String(state.minEasy));
+  return out;
+}
+
+export function encodeStudentPassage(state: StudentPassage): URLSearchParams {
+  const out = new URLSearchParams();
   if (state.programId) out.set("prog", state.programId);
   if (state.currentTerm) out.set("term", state.currentTerm);
+  return out;
+}
+
+/**
+ * Overwrite the pure-filter slots of an existing querystring, leaving every
+ * other key (passage params, sort params s/d, page p) untouched.
+ */
+export function mergePureFiltersIntoParams(
+  current: URLSearchParams,
+  state: PureFilters,
+): URLSearchParams {
+  const out = new URLSearchParams(current);
+  for (const key of PURE_FILTER_PARAM_KEYS) out.delete(key);
+  for (const [k, v] of encodePureFilters(state)) out.set(k, v);
+  return out;
+}
+
+/**
+ * Overwrite the passage slots of an existing querystring, leaving every other
+ * key (pure-filter params, sort params s/d, page p) untouched.
+ */
+export function mergeStudentPassageIntoParams(
+  current: URLSearchParams,
+  state: StudentPassage,
+): URLSearchParams {
+  const out = new URLSearchParams(current);
+  for (const key of PASSAGE_PARAM_KEYS) out.delete(key);
+  for (const [k, v] of encodeStudentPassage(state)) out.set(k, v);
   return out;
 }

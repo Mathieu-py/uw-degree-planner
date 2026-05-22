@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attachEligibility, type BrowseRow, buildBrowseRows } from "../browse";
-import { DEFAULT_FILTER_STATE } from "../filterState";
+import { DEFAULT_PURE_FILTERS } from "../filterState";
 import { enrichCourse } from "../filters";
 import type { Course, UWFlowCourse } from "../types";
 
@@ -25,7 +25,7 @@ describe("buildBrowseRows", () => {
       makeCourse({ code: "math116", prereqs: "MATH 115" }),
       makeCourse({ id: 2, code: "phil110", prereqs: null }),
     ];
-    const rows = buildBrowseRows(courses, DEFAULT_FILTER_STATE);
+    const rows = buildBrowseRows(courses, DEFAULT_PURE_FILTERS, []);
     expect(rows.map((r) => r.course.code)).toEqual(["math116", "phil110"]);
     expect(rows.every((r) => r.eligibility === null)).toBe(true);
   });
@@ -35,10 +35,7 @@ describe("buildBrowseRows", () => {
       makeCourse({ id: 1, code: "cs136", prereqs: "CS 115" }),
       makeCourse({ id: 2, code: "cs486", prereqs: "CS 341" }),
     ];
-    const rows = buildBrowseRows(courses, {
-      ...DEFAULT_FILTER_STATE,
-      completedCourses: ["cs115"],
-    });
+    const rows = buildBrowseRows(courses, DEFAULT_PURE_FILTERS, ["cs115"]);
     expect(rows[0].eligibility?.satisfied).toBe(true);
     expect(rows[1].eligibility?.satisfied).toBe(false);
     expect(rows[1].eligibility?.missingCourses).toEqual(["cs341"]);
@@ -49,11 +46,11 @@ describe("buildBrowseRows", () => {
       makeCourse({ id: 1, code: "cs136", prereqs: "CS 115" }),
       makeCourse({ id: 2, code: "cs486", prereqs: "CS 341" }),
     ];
-    const rows = buildBrowseRows(courses, {
-      ...DEFAULT_FILTER_STATE,
-      completedCourses: ["cs115"],
-      hideUnmetPrereqs: true,
-    });
+    const rows = buildBrowseRows(
+      courses,
+      { ...DEFAULT_PURE_FILTERS, hideUnmetPrereqs: true },
+      ["cs115"],
+    );
     expect(rows.map((r) => r.course.code)).toEqual(["cs136"]);
   });
 
@@ -62,10 +59,11 @@ describe("buildBrowseRows", () => {
       makeCourse({ id: 1, code: "cs136", prereqs: "CS 115" }),
       makeCourse({ id: 2, code: "cs486", prereqs: "CS 341" }),
     ];
-    const rows = buildBrowseRows(courses, {
-      ...DEFAULT_FILTER_STATE,
-      hideUnmetPrereqs: true,
-    });
+    const rows = buildBrowseRows(
+      courses,
+      { ...DEFAULT_PURE_FILTERS, hideUnmetPrereqs: true },
+      [],
+    );
     expect(rows.map((r) => r.course.code)).toEqual(["cs136", "cs486"]);
     expect(rows.every((r) => r.eligibility === null)).toBe(true);
   });
@@ -78,24 +76,25 @@ describe("buildBrowseRows", () => {
         prereqs: "Permission of the instructor",
       }),
     ];
-    const rows = buildBrowseRows(courses, {
-      ...DEFAULT_FILTER_STATE,
-      completedCourses: ["cs115"],
-      hideUnmetPrereqs: true,
-    });
+    const rows = buildBrowseRows(
+      courses,
+      { ...DEFAULT_PURE_FILTERS, hideUnmetPrereqs: true },
+      ["cs115"],
+    );
     expect(rows).toHaveLength(1);
     expect(rows[0].eligibility?.uncertain).toBe(true);
   });
 
-  it("applies FilterState predicates before eligibility", () => {
+  it("applies pure-filter predicates before eligibility", () => {
     const courses = [
       makeCourse({ id: 1, code: "math116" }),
       makeCourse({ id: 2, code: "phil110" }),
     ];
-    const rows = buildBrowseRows(courses, {
-      ...DEFAULT_FILTER_STATE,
-      excludePrefixes: ["PHIL"],
-    });
+    const rows = buildBrowseRows(
+      courses,
+      { ...DEFAULT_PURE_FILTERS, excludePrefixes: ["PHIL"] },
+      [],
+    );
     expect(rows.map((r) => r.course.code)).toEqual(["math116"]);
   });
 });

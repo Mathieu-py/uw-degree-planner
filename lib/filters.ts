@@ -1,4 +1,4 @@
-import type { Course, FilterState, UWFlowCourse } from "./types";
+import type { Course, PureFilters, UWFlowCourse } from "./types";
 
 const LEVEL_RE = /\d+/;
 const PREFIX_RE = /^[A-Z]+/;
@@ -69,13 +69,13 @@ export function passesSeatsFilter(
 }
 
 /**
- * Each predicate self-gates on its slice of FilterState (false / empty array
+ * Each predicate self-gates on its slice of PureFilters (false / empty array
  * / null threshold all mean "rule disabled, course passes"), so this is a
  * flat AND-chain with no outer toggle logic.
  */
 export function applyFilters(
   courses: ReadonlyArray<Course>,
-  s: FilterState,
+  s: PureFilters,
 ): Course[] {
   return courses.filter(
     (c) =>
