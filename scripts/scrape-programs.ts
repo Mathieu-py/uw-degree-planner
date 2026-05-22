@@ -78,7 +78,7 @@ async function main() {
     process.stdout.write(`${idx} ${slug}... `);
     try {
       const detail = await fetchJson<ProgramDetail>(
-        `${API_BASE}/program/${CATALOG_ID}/${p.pid}`,
+        `${API_BASE}/program/${CATALOG_ID}/${encodeURIComponent(p.pid)}`,
       );
       const { terms, warnings } = parseRequiredCoursesTermByTerm(
         detail.requiredCoursesTermByTerm ?? "",
@@ -95,7 +95,7 @@ async function main() {
       out[slug] = {
         name: p.title,
         asOf: today,
-        source: `${VIEW_BASE}/${p.pid}`,
+        source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
         terms,
       };
       console.log(hasAny ? "ok" : "(no term data)");
