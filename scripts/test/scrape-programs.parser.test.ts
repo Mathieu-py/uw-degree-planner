@@ -5,43 +5,42 @@ import {
   buildConflictCounts,
   buildProgramSlug,
   normalizeCourseCode,
-  parseRequiredCoursesTermByTerm,
+  parseProgramRequirements,
 } from "../scrape-programs.parser";
 
 const fixture = (name: string) =>
   readFileSync(path.join(__dirname, "fixtures", `${name}.html`), "utf-8");
 
-describe("parseRequiredCoursesTermByTerm — empty input", () => {
-  it("returns all 8 terms with empty arrays for empty HTML", () => {
-    const { terms, warnings } = parseRequiredCoursesTermByTerm("");
-    expect(Object.keys(terms).sort()).toEqual([
-      "1A",
-      "1B",
-      "2A",
-      "2B",
-      "3A",
-      "3B",
-      "4A",
-      "4B",
-    ]);
-    for (const arr of Object.values(terms)) expect(arr).toEqual([]);
-    expect(warnings).toEqual([]);
+describe("parseProgramRequirements — empty input", () => {
+  it("returns kind:'empty' when no fields are present", () => {
+    const r = parseProgramRequirements({});
+    expect(r.kind).toBe("empty");
+    expect(r.warnings).toEqual([]);
   });
 
-  it("returns empty terms for whitespace-only HTML", () => {
-    const { terms } = parseRequiredCoursesTermByTerm("   \n   ");
-    for (const arr of Object.values(terms)) expect(arr).toEqual([]);
+  it("returns kind:'empty' for whitespace-only fields", () => {
+    const r = parseProgramRequirements({
+      requiredCoursesTermByTerm: "   \n   ",
+      requirements: "",
+      courseRequirementsNoUnits: "  ",
+    });
+    expect(r.kind).toBe("empty");
   });
 });
 
-describe("parseRequiredCoursesTermByTerm — SYDE fixture", () => {
-  const { terms, warnings } = parseRequiredCoursesTermByTerm(
-    fixture("syde"),
+describe("parseProgramRequirements — engineering (SYDE fixture)", () => {
+  const r = parseProgramRequirements(
+    { requiredCoursesTermByTerm: fixture("syde") },
     "syde",
   );
 
+  it("returns kind:'engineering' when requiredCoursesTermByTerm is present", () => {
+    expect(r.kind).toBe("engineering");
+  });
+
   it("extracts 1A required courses", () => {
-    expect(terms["1A"]).toEqual([
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    expect(r.terms["1A"]).toEqual([
       "math115",
       "math117",
       "syde101",
@@ -52,38 +51,46 @@ describe("parseRequiredCoursesTermByTerm — SYDE fixture", () => {
   });
 
   it("extracts 1B required courses including syde101l (with letter suffix)", () => {
-    expect(terms["1B"]).toContain("syde101l");
-    expect(terms["1B"]).toContain("math119");
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    expect(r.terms["1B"]).toContain("syde101l");
+    expect(r.terms["1B"]).toContain("math119");
   });
 
   it("populates all 8 terms (Engineering programs have term-by-term data)", () => {
+    if (r.kind !== "engineering") throw new Error("expected engineering");
     for (const t of ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"] as const) {
-      expect(terms[t].length).toBeGreaterThan(0);
+      expect(r.terms[t].length).toBeGreaterThan(0);
     }
   });
 
   it("does not include elective-slot text as course codes", () => {
-    const all = Object.values(terms).flat();
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    const all = Object.values(r.terms).flat();
     for (const code of all) {
       expect(code).toMatch(/^[a-z]{2,8}\d{3}[a-z]?$/);
     }
   });
 
-  it("emits no OR warnings for SYDE (engineering schedules are all 'Complete all')", () => {
-    expect(warnings).toEqual([]);
+  it("emits no warnings for SYDE (all rules are recognized)", () => {
+    expect(r.warnings).toEqual([]);
   });
 });
 
-describe("parseRequiredCoursesTermByTerm — Computer Engineering fixture", () => {
-  const { terms } = parseRequiredCoursesTermByTerm(fixture("cpe"), "cpe");
+describe("parseProgramRequirements — engineering (Computer Engineering fixture)", () => {
+  const r = parseProgramRequirements(
+    { requiredCoursesTermByTerm: fixture("cpe") },
+    "cpe",
+  );
 
   it("extracts ECE 1A courses", () => {
-    expect(terms["1A"]).toContain("ece105");
-    expect(terms["1A"]).toContain("ece150");
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    expect(r.terms["1A"]).toContain("ece105");
+    expect(r.terms["1A"]).toContain("ece150");
   });
 
   it("output is sorted and deduped per term", () => {
-    for (const codes of Object.values(terms)) {
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    for (const codes of Object.values(r.terms)) {
       const sorted = [...codes].sort();
       expect(codes).toEqual(sorted);
       expect(new Set(codes).size).toBe(codes.length);
@@ -91,8 +98,8 @@ describe("parseRequiredCoursesTermByTerm — Computer Engineering fixture", () =
   });
 });
 
-describe("parseRequiredCoursesTermByTerm — OR-group skip + warning", () => {
-  it("logs a warning and skips courses for 'Complete 1 of the following' rules", () => {
+describe("parseProgramRequirements — engineering 'Complete N of' → ChoiceGroup", () => {
+  it("captures 'Complete 1 of the following' as a ChoiceGroup, not a warning", () => {
     const html = `
       <section>
         <header><h2 data-testid="grouping-label"><span>1A Term</span></h2></header>
@@ -101,7 +108,7 @@ describe("parseRequiredCoursesTermByTerm — OR-group skip + warning", () => {
             Complete all the following:
             <a href="#">MATH115</a>
           </div>
-          <div data-test="ruleView-A-result">
+          <div data-test="ruleView-B-result">
             Complete 1 of the following:
             <a href="#">CS115</a>
             <a href="#">CS135</a>
@@ -109,22 +116,138 @@ describe("parseRequiredCoursesTermByTerm — OR-group skip + warning", () => {
           </div>
         </div>
       </section>`;
-    const { terms, warnings } = parseRequiredCoursesTermByTerm(html, "test");
-    expect(terms["1A"]).toEqual(["math115"]);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain("OR group skipped");
-    expect(warnings[0]).toContain("test 1A");
+    const r = parseProgramRequirements(
+      { requiredCoursesTermByTerm: html },
+      "test",
+    );
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    expect(r.terms["1A"]).toEqual(["math115"]);
+    expect(r.choiceGroupsByTerm["1A"]).toEqual([
+      {
+        description: "Complete 1 of the following",
+        selectCount: 1,
+        options: ["cs115", "cs135", "cs145"],
+      },
+    ]);
+    expect(r.warnings).toEqual([]);
   });
 
-  it("skips 'Complete N approved electives' silently (no warning)", () => {
+  it("silently skips 'Complete N approved electives' (no warning, no code)", () => {
     const html = `
       <section>
         <header><h2 data-testid="grouping-label"><span>4A Term</span></h2></header>
         <div data-test="ruleView-A-result">Complete 3 approved electives</div>
       </section>`;
-    const { terms, warnings } = parseRequiredCoursesTermByTerm(html, "test");
-    expect(terms["4A"]).toEqual([]);
-    expect(warnings).toEqual([]);
+    const r = parseProgramRequirements(
+      { requiredCoursesTermByTerm: html },
+      "test",
+    );
+    if (r.kind !== "engineering") throw new Error("expected engineering");
+    expect(r.terms["4A"]).toEqual([]);
+    expect(r.choiceGroupsByTerm["4A"]).toEqual([]);
+    expect(r.warnings).toEqual([]);
+  });
+});
+
+describe("parseProgramRequirements — flexible programs", () => {
+  it("biology: extracts flat required courses from the 'requirements' field", () => {
+    const r = parseProgramRequirements(
+      { requirements: fixture("biology") },
+      "biology",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(r.requiredCourses).toContain("biol130");
+    expect(r.requiredCourses).toContain("chem120");
+    expect(r.requiredCourses.length).toBeGreaterThanOrEqual(19);
+    // Biology has a couple of "Complete 1 of" choices (intro physics,
+    // communications) alongside its required core.
+    expect(r.choiceGroups.length).toBeGreaterThanOrEqual(1);
+    for (const g of r.choiceGroups) {
+      expect(g.selectCount).toBe(1);
+      expect(g.options.length).toBeGreaterThan(1);
+    }
+  });
+
+  it("pure-math: extracts flat required courses from courseRequirementsNoUnits", () => {
+    const r = parseProgramRequirements(
+      { courseRequirementsNoUnits: fixture("pure-math") },
+      "pure-math",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(r.requiredCourses.length).toBeGreaterThanOrEqual(5);
+    for (const code of r.requiredCourses) {
+      expect(code).toMatch(/^[a-z]{2,8}\d{3,4}[a-z]?$/);
+    }
+  });
+
+  it("cs-bcs: extracts ChoiceGroups for each 'Complete 1 of'", () => {
+    const r = parseProgramRequirements(
+      { courseRequirementsNoUnits: fixture("cs-bcs") },
+      "cs-bcs",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    // CS136L/CS341/CS350 are in the top-level "Complete all the following".
+    expect(r.requiredCourses).toContain("cs136l");
+    expect(r.requiredCourses).toContain("cs341");
+    expect(r.requiredCourses).toContain("cs350");
+    // Intro CS variant — CS115/CS135/CS145 — must come through as a ChoiceGroup.
+    const intro = r.choiceGroups.find(
+      (g) => g.options.includes("cs135") && g.options.includes("cs115"),
+    );
+    expect(intro?.options).toEqual(["cs115", "cs135", "cs145"]);
+    expect(intro?.selectCount).toBe(1);
+    // Plenty of nested choice groups in CS BCS.
+    expect(r.choiceGroups.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("cs-bcs: choiceGroups are sorted by first option for diff stability", () => {
+    const r = parseProgramRequirements(
+      { courseRequirementsNoUnits: fixture("cs-bcs") },
+      "cs-bcs",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const firsts = r.choiceGroups.map((g) => g.options[0]);
+    expect(firsts).toEqual([...firsts].sort());
+  });
+
+  it("history: silently skips 'Complete X additional units' prose", () => {
+    const r = parseProgramRequirements(
+      { courseRequirementsNoUnits: fixture("history") },
+      "history",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(r.warnings).toEqual([]);
+    // Should have many choice groups (the B.1, B.2, B.3 style suffixes).
+    expect(r.choiceGroups.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("parseProgramRequirements — field-selection precedence", () => {
+  it("requiredCoursesTermByTerm wins over requirements", () => {
+    const r = parseProgramRequirements({
+      requiredCoursesTermByTerm: fixture("syde"),
+      requirements: fixture("biology"),
+    });
+    expect(r.kind).toBe("engineering");
+  });
+
+  it("requirements wins over courseRequirementsNoUnits", () => {
+    const r = parseProgramRequirements({
+      requirements: fixture("biology"),
+      courseRequirementsNoUnits: fixture("cs-bcs"),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(r.requiredCourses).toContain("biol130");
+    expect(r.requiredCourses).not.toContain("cs136l");
+  });
+
+  it("falls through to courseRequirementsNoUnits when the others are empty", () => {
+    const r = parseProgramRequirements({
+      requiredCoursesTermByTerm: "",
+      requirements: "",
+      courseRequirementsNoUnits: fixture("pure-math"),
+    });
+    expect(r.kind).toBe("flexible");
   });
 });
 
@@ -144,12 +267,11 @@ describe("normalizeCourseCode", () => {
     expect(normalizeCourseCode("")).toBeNull();
     expect(normalizeCourseCode("CS")).toBeNull();
   });
-});
 
-describe("normalizeCourseCode — 4-digit course numbers", () => {
   it("handles a 4-digit course number (e.g. SYDE 1000)", () => {
     expect(normalizeCourseCode("SYDE 1000")).toBe("syde1000");
   });
+
   it("handles a 4-digit code with trailing letter (e.g. SYDE 1000L)", () => {
     expect(normalizeCourseCode("SYDE1000L")).toBe("syde1000l");
   });

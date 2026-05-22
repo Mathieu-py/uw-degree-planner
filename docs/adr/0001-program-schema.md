@@ -32,7 +32,7 @@ export type TermLetter = "1A"|"1B"|"2A"|"2B"|"3A"|"3B"|"4A"|"4B";
 export interface ChoiceGroup {
   description?: string;       // human-readable label, e.g. "Intro CS variant"
   selectCount?: number;       // N in "Complete N of"; default 1
-  alternatives: string[];     // course codes (lowercase, canonical)
+  options: string[];          // course codes (lowercase, canonical)
 }
 
 export interface ElectiveCategory {

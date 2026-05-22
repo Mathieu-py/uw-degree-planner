@@ -151,6 +151,45 @@ describe("rebaseCompletedCourses", () => {
     expect(rebased).toEqual(["econ101"]);
   });
 
+  it("seeds full requiredCourses when switching to a flexible program with null term", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { PROGRAMS } = await import("../programs");
+    const biology = PROGRAMS["h-biology"];
+    if (biology?.kind !== "flexible")
+      throw new Error("expected h-biology to be flexible after scrape");
+
+    const rebased = rebaseCompletedCourses(
+      { programId: null, currentTerm: null, completedCourses: [] },
+      "h-biology",
+      null,
+    );
+    expect(rebased).toEqual([...biology.requiredCourses].sort());
+  });
+
+  it("preserves extras when rebasing between engineering and flexible programs", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { inferCompleted, PROGRAMS } = await import("../programs");
+    if (PROGRAMS["h-biology"]?.kind !== "flexible") return;
+
+    const oldList = [
+      ...inferCompleted("systems-design-engineering", "2A"),
+      "extra101",
+    ];
+    const rebased = rebaseCompletedCourses(
+      {
+        programId: "systems-design-engineering",
+        currentTerm: "2A",
+        completedCourses: oldList,
+      },
+      "h-biology",
+      null,
+    );
+    expect(rebased).toContain("extra101");
+    for (const c of PROGRAMS["h-biology"].requiredCourses) {
+      expect(rebased).toContain(c);
+    }
+  });
+
   it("no-op rebase (same prog/term) returns the same effective list", async () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
