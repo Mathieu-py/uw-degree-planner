@@ -25,6 +25,7 @@ import type { Program } from "../lib/programs";
 import {
   buildConflictCounts,
   buildProgramSlug,
+  parseElectives,
   parseProgramRequirements,
 } from "./scrape-programs.parser";
 
@@ -55,6 +56,8 @@ interface ProgramDetail extends ProgramListEntry {
   requiredCoursesTermByTerm?: string;
   requirements?: string;
   courseRequirementsNoUnits?: string;
+  graduationRequirements?: string;
+  courseListsNew?: string;
 }
 
 async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
@@ -159,6 +162,12 @@ async function main() {
         console.log("skipped (no data)");
       } else {
         allWarnings.push(...result.warnings);
+        const electivesResult = parseElectives(detail, slug);
+        allWarnings.push(...electivesResult.warnings);
+        const electivesField =
+          electivesResult.electives.length > 0
+            ? { electives: electivesResult.electives }
+            : {};
         const base = {
           name: p.title,
           asOf: today,
@@ -173,6 +182,7 @@ async function main() {
             ...base,
             terms: result.terms,
             ...(hasCG ? { choiceGroupsByTerm: result.choiceGroupsByTerm } : {}),
+            ...electivesField,
           };
         } else {
           out[slug] = {
@@ -182,6 +192,7 @@ async function main() {
             ...(result.choiceGroups.length > 0
               ? { choiceGroups: result.choiceGroups }
               : {}),
+            ...electivesField,
           };
         }
         withData++;

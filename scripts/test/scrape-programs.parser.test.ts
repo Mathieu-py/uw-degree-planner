@@ -5,6 +5,7 @@ import {
   buildConflictCounts,
   buildProgramSlug,
   normalizeCourseCode,
+  parseElectives,
   parseProgramRequirements,
 } from "../scrape-programs.parser";
 
@@ -325,5 +326,169 @@ describe("buildProgramSlug + buildConflictCounts", () => {
     expect(
       buildProgramSlug("H-Accounting & Financial Management", counts),
     ).toBe("accounting-and-financial-management");
+  });
+});
+
+describe("parseElectives — empty input", () => {
+  it("returns empty arrays when no fields are present", () => {
+    const r = parseElectives({});
+    expect(r.electives).toEqual([]);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("returns empty arrays for whitespace-only fields", () => {
+    const r = parseElectives({
+      graduationRequirements: "  \n  ",
+      courseListsNew: "",
+    });
+    expect(r.electives).toEqual([]);
+  });
+});
+
+describe("parseElectives — graduationRequirements (Climate fixture)", () => {
+  const r = parseElectives(
+    { graduationRequirements: fixture("climate-grad-reqs") },
+    "climate",
+  );
+
+  it("extracts the non-required unit buckets", () => {
+    expect(r.electives).toEqual([
+      { description: "2.0 units of approved courses", unitRequirement: 2.0 },
+      { description: "6.0 units of elective courses", unitRequirement: 6.0 },
+    ]);
+  });
+
+  it("filters out the 'required courses' bucket", () => {
+    expect(
+      r.electives.find((e) => /required/i.test(e.description)),
+    ).toBeUndefined();
+  });
+});
+
+describe("parseElectives — graduationRequirements (Biology fixture)", () => {
+  const r = parseElectives(
+    { graduationRequirements: fixture("biology-grad-reqs") },
+    "biology",
+  );
+
+  it("captures the elective-courses bucket", () => {
+    expect(r.electives).toContainEqual({
+      description: "5.5 units of elective courses",
+      unitRequirement: 5.5,
+    });
+  });
+
+  it("does not match 'X.Y additional <subj> units' phrasing", () => {
+    expect(
+      r.electives.find((e) => /BIOL/i.test(e.description)),
+    ).toBeUndefined();
+  });
+
+  it("filters out the required-courses bucket", () => {
+    expect(
+      r.electives.find((e) => /required/i.test(e.description)),
+    ).toBeUndefined();
+  });
+});
+
+describe("parseElectives — courseListsNew (Climate fixture)", () => {
+  const r = parseElectives(
+    { courseListsNew: fixture("climate-course-lists") },
+    "climate",
+  );
+
+  it("emits one entry per section using the <h2> as description", () => {
+    expect(r.electives).toHaveLength(1);
+    expect(r.electives[0].description).toBe("Approved Courses List");
+  });
+
+  it("extracts the unit requirement from the 'Complete X.Y units' rule", () => {
+    expect(r.electives[0].unitRequirement).toBe(2.0);
+  });
+
+  it("collects all course codes from <a> tags into approvedCourses", () => {
+    expect(r.electives[0].approvedCourses).toEqual([
+      "biol462",
+      "earth444",
+      "envs459",
+      "ers484",
+      "geog402",
+      "geog403",
+      "geog404",
+      "geog407",
+      "geog408",
+      "geog420",
+      "geog457",
+      "geog490b",
+    ]);
+  });
+});
+
+describe("parseElectives — both fields (Climate)", () => {
+  const r = parseElectives(
+    {
+      graduationRequirements: fixture("climate-grad-reqs"),
+      courseListsNew: fixture("climate-course-lists"),
+    },
+    "climate",
+  );
+
+  it("merges the courseListsNew entry into the matching gradReqs bucket", () => {
+    expect(r.electives).toHaveLength(2);
+  });
+
+  it("keeps the gradReqs prose as the description and attaches approvedCourses", () => {
+    const approved = r.electives.find((e) => e.unitRequirement === 2.0);
+    expect(approved?.description).toBe("2.0 units of approved courses");
+    expect(approved?.approvedCourses).toEqual([
+      "biol462",
+      "earth444",
+      "envs459",
+      "ers484",
+      "geog402",
+      "geog403",
+      "geog404",
+      "geog407",
+      "geog408",
+      "geog420",
+      "geog457",
+      "geog490b",
+    ]);
+  });
+
+  it("leaves the elective-courses bucket untouched (no courseList match)", () => {
+    const elective = r.electives.find((e) => e.unitRequirement === 6.0);
+    expect(elective).toEqual({
+      description: "6.0 units of elective courses",
+      unitRequirement: 6.0,
+    });
+  });
+
+  it("does not emit a standalone 'Approved Courses List' entry after merging", () => {
+    expect(
+      r.electives.find((e) => e.description === "Approved Courses List"),
+    ).toBeUndefined();
+  });
+});
+
+describe("parseElectives — courseListsNew without matching gradReqs bucket", () => {
+  it("appends the courseList entry standalone when no unitRequirement matches", () => {
+    // gradReqs only has a 5.5-unit bucket; courseLists has a 2.0-unit section.
+    // No unit match → courseList entry should appear standalone.
+    const r = parseElectives(
+      {
+        graduationRequirements: fixture("biology-grad-reqs"),
+        courseListsNew: fixture("climate-course-lists"),
+      },
+      "mixed",
+    );
+    const fromGradReqs = r.electives.find((e) => e.unitRequirement === 5.5);
+    expect(fromGradReqs).toBeDefined();
+    expect(fromGradReqs?.approvedCourses).toBeUndefined();
+    const fromCourseLists = r.electives.find(
+      (e) => e.description === "Approved Courses List",
+    );
+    expect(fromCourseLists?.unitRequirement).toBe(2.0);
+    expect(fromCourseLists?.approvedCourses).toContain("biol462");
   });
 });
