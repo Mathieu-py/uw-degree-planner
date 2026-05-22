@@ -22,7 +22,11 @@ interface PdfTextItem {
 }
 
 export async function extractTextFromPdf(file: File): Promise<string> {
-  if (file.type && file.type !== "application/pdf") {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (
+    (file.type && file.type !== "application/pdf") ||
+    (ext !== undefined && ext !== "pdf")
+  ) {
     throw new Error("Not a PDF file. Upload a Quest unofficial transcript PDF.");
   }
   if (file.size > MAX_FILE_BYTES) {

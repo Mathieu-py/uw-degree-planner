@@ -74,7 +74,7 @@ function parseTermLetter(headerText: string): TermLetter | null {
 
 export function normalizeCourseCode(raw: string): string | null {
   const cleaned = raw.replace(/\s+/g, "").toUpperCase();
-  const m = cleaned.match(/^([A-Z]{2,8})(\d{3}[A-Z]?)$/);
+  const m = cleaned.match(/^([A-Z]{2,8})(\d{3,4}[A-Z]?)$/);
   return m ? (m[1] + m[2]).toLowerCase() : null;
 }
 

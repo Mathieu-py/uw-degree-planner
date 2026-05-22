@@ -146,6 +146,15 @@ describe("normalizeCourseCode", () => {
   });
 });
 
+describe("normalizeCourseCode — 4-digit course numbers", () => {
+  it("handles a 4-digit course number (e.g. SYDE 1000)", () => {
+    expect(normalizeCourseCode("SYDE 1000")).toBe("syde1000");
+  });
+  it("handles a 4-digit code with trailing letter (e.g. SYDE 1000L)", () => {
+    expect(normalizeCourseCode("SYDE1000L")).toBe("syde1000l");
+  });
+});
+
 describe("buildProgramSlug + buildConflictCounts", () => {
   it("strips H- prefix when slug is unique", () => {
     const counts = buildConflictCounts([
