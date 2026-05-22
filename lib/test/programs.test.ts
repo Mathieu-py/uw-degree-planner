@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  flattenChoiceGroups,
+  getChoiceGroupsByTerm,
+  getExcludedCourses,
   getRequiredCourses,
+  getSubjectPools,
   getTermSchedule,
   inferCompleted,
   isKnownProgram,
   isTermLetter,
   PROGRAMS,
+  type Program,
+  type RuleNode,
+  requiredCoursesIn,
   TERM_LETTERS,
 } from "../programs";
 
@@ -27,7 +34,10 @@ describe("inferCompleted (engineering)", () => {
     const syde = PROGRAMS["systems-design-engineering"];
     if (syde.kind !== "engineering")
       throw new Error("SYDE should be engineering");
-    const expected = new Set([...syde.terms["1A"], ...syde.terms["1B"]]);
+    const expected = new Set([
+      ...requiredCoursesIn(syde.terms["1A"]),
+      ...requiredCoursesIn(syde.terms["1B"]),
+    ]);
     expect(new Set(seeded)).toEqual(expected);
   });
 
@@ -60,7 +70,7 @@ describe("inferCompleted (flexible)", () => {
       if (program.kind !== "flexible") throw new Error("expected flexible");
       const withNull = inferCompleted(id, null);
       const with2A = inferCompleted(id, "2A");
-      expect(withNull).toEqual([...program.requiredCourses].sort());
+      expect(withNull).toEqual(requiredCoursesIn(program.rules));
       expect(with2A).toEqual(withNull);
     },
   );
@@ -76,31 +86,30 @@ describe("programs.json schema integrity", () => {
     }
   });
 
-  it("engineering programs have all 8 term arrays", () => {
+  it("engineering programs have all 8 term rule trees", () => {
     for (const [id, prog] of Object.entries(PROGRAMS)) {
       if (prog.kind !== "engineering") continue;
       for (const term of TERM_LETTERS) {
         expect(
-          Array.isArray(prog.terms[term]),
-          `${id}.terms.${term} should be an array`,
-        ).toBe(true);
+          prog.terms[term]?.kind,
+          `${id}.terms.${term} should be a RuleNode`,
+        ).toBeDefined();
       }
     }
   });
 
   it("every program has at least some captured data (required courses or choice groups)", () => {
-    // A program with empty terms / empty requiredCourses but populated
-    // choiceGroups is still valid — see e.g. 3g-mathematics, which is
-    // entirely choice-driven. The scraper drops only programs that yield
-    // none of the three.
+    // A program with empty required courses but populated choice groups is
+    // still valid — see e.g. 3g-mathematics, which is entirely choice-driven.
+    // The scraper drops only programs that yield neither.
     for (const [id, prog] of Object.entries(PROGRAMS)) {
       const hasRequired = getRequiredCourses(prog).length > 0;
       const hasChoices =
         prog.kind === "engineering"
-          ? Object.values(prog.choiceGroupsByTerm ?? {}).some(
+          ? Object.values(getChoiceGroupsByTerm(prog) ?? {}).some(
               (arr) => arr.length > 0,
             )
-          : (prog.choiceGroups?.length ?? 0) > 0;
+          : flattenChoiceGroups(prog.rules).length > 0;
       expect(
         hasRequired || hasChoices,
         `${id} should have required courses or choice groups`,
@@ -125,11 +134,16 @@ describe("getRequiredCourses / getTermSchedule", () => {
     if (flex) expect(getTermSchedule(flex)).toBeNull();
   });
 
-  it("getTermSchedule returns the terms record for engineering", () => {
+  it("getTermSchedule returns a record of per-term flat course lists for engineering", () => {
     const syde = PROGRAMS["systems-design-engineering"];
-    expect(getTermSchedule(syde)).toBe(
-      syde.kind === "engineering" ? syde.terms : null,
-    );
+    if (syde.kind !== "engineering")
+      throw new Error("SYDE should be engineering");
+    const schedule = getTermSchedule(syde);
+    expect(schedule).not.toBeNull();
+    if (schedule === null) return;
+    for (const t of TERM_LETTERS) {
+      expect(schedule[t]).toEqual(requiredCoursesIn(syde.terms[t]));
+    }
   });
 });
 
@@ -164,5 +178,252 @@ describe("isKnownProgram", () => {
   it("rejects unknown ids", () => {
     expect(isKnownProgram("phys")).toBe(false);
     expect(isKnownProgram("SYSTEMS-DESIGN-ENGINEERING")).toBe(false);
+  });
+});
+
+const flexible = (rules: RuleNode): Program => ({
+  kind: "flexible",
+  name: "test",
+  asOf: "2026-05-22",
+  rules,
+});
+
+describe("requiredCoursesIn — functionally-mandatory pick promotion", () => {
+  it("promotes pick(1,1) over a single one-course leaf to required", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [{ kind: "courses", courses: ["cs100"] }],
+    };
+    expect(requiredCoursesIn(node)).toEqual(["cs100"]);
+  });
+
+  it("does NOT promote pick(1,1) when the leaf carries multiple options", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [{ kind: "courses", courses: ["cs115", "cs135"] }],
+    };
+    expect(requiredCoursesIn(node)).toEqual([]);
+  });
+
+  it("does NOT promote pick(2,2) when total unique options exceed selectMin", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 2,
+      selectMax: 2,
+      children: [{ kind: "courses", courses: ["a100", "b100", "c100"] }],
+    };
+    expect(requiredCoursesIn(node)).toEqual([]);
+  });
+
+  it("promotes pick(N,N) when total unique options exactly equal selectMin across split leaves", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 3,
+      selectMax: 3,
+      children: [
+        { kind: "courses", courses: ["x100", "y100"] },
+        { kind: "courses", courses: ["z100"] },
+      ],
+    };
+    expect(requiredCoursesIn(node)).toEqual(["x100", "y100", "z100"]);
+  });
+
+  it("does NOT promote pick(1,1) when a non-courses child is present", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [
+        { kind: "courses", courses: ["cs100"] },
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs101"] }] },
+      ],
+    };
+    expect(requiredCoursesIn(node)).toEqual([]);
+  });
+
+  it("does NOT promote a Choose-any pick (selectMin undefined)", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      children: [{ kind: "courses", courses: ["cs100"] }],
+    };
+    expect(requiredCoursesIn(node)).toEqual([]);
+  });
+});
+
+describe("flattenChoiceGroups — selectMin/selectMax preservation", () => {
+  it("preserves selectMax-only picks ('Complete no more than N')", () => {
+    const groups = flattenChoiceGroups({
+      kind: "pick",
+      description: "Complete no more than 2",
+      selectMax: 2,
+      children: [{ kind: "courses", courses: ["cs100", "cs101", "cs102"] }],
+    });
+    expect(groups).toEqual([
+      {
+        description: "Complete no more than 2",
+        selectMax: 2,
+        options: ["cs100", "cs101", "cs102"],
+      },
+    ]);
+  });
+
+  it("preserves both-undefined picks ('Choose any')", () => {
+    const groups = flattenChoiceGroups({
+      kind: "pick",
+      description: "Choose any",
+      children: [{ kind: "courses", courses: ["cs100", "cs101"] }],
+    });
+    expect(groups).toEqual([
+      { description: "Choose any", options: ["cs100", "cs101"] },
+    ]);
+    expect(groups[0].selectMin).toBeUndefined();
+    expect(groups[0].selectMax).toBeUndefined();
+  });
+
+  it("preserves selectMin=selectMax=N picks ('Complete N of')", () => {
+    const groups = flattenChoiceGroups({
+      kind: "pick",
+      description: "Complete 2 of the following",
+      selectMin: 2,
+      selectMax: 2,
+      children: [{ kind: "courses", courses: ["cs100", "cs101", "cs102"] }],
+    });
+    expect(groups[0].selectMin).toBe(2);
+    expect(groups[0].selectMax).toBe(2);
+  });
+
+  // Documenting test: when a `pick` has mixed children (some `courses`,
+  // some nested non-`courses`), the legacy ChoiceGroup view *cannot*
+  // represent the parent's bound across the heterogeneous children. The
+  // implementation recurses into each child; nested `pick`s flatten
+  // normally, but `courses` siblings have no parent group to attach to
+  // and are silently dropped from the flat view. RuleNode-aware consumers
+  // (variant-picker modal) see the full structure; ChoiceGroup-only
+  // consumers do not.
+  it("silently drops `courses` siblings when a pick has mixed children", () => {
+    const groups = flattenChoiceGroups({
+      kind: "pick",
+      description: "Complete 2 of the following",
+      selectMin: 2,
+      selectMax: 2,
+      children: [
+        { kind: "courses", courses: ["orphan100"] },
+        {
+          kind: "pick",
+          description: "nested",
+          selectMin: 1,
+          selectMax: 1,
+          children: [{ kind: "courses", courses: ["nested100", "nested101"] }],
+        },
+      ],
+    });
+    expect(groups).toEqual([
+      {
+        description: "nested",
+        selectMin: 1,
+        selectMax: 1,
+        options: ["nested100", "nested101"],
+      },
+    ]);
+    expect(groups.some((g) => g.options.includes("orphan100"))).toBe(false);
+  });
+});
+
+describe("getSubjectPools", () => {
+  it("returns every subjectPool node in DFS order", () => {
+    const program = flexible({
+      kind: "all",
+      children: [
+        {
+          kind: "subjectPool",
+          description: "Complete 2 additional STAT",
+          selectCount: 2,
+          subjectCodes: ["STAT"],
+          minLevel: 300,
+        },
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [{ kind: "courses", courses: ["cs100"] }],
+        },
+        {
+          kind: "subjectPool",
+          description: "Complete 1 additional PMATH",
+          selectCount: 1,
+          subjectCodes: ["PMATH"],
+        },
+      ],
+    });
+    const pools = getSubjectPools(program);
+    expect(pools).toHaveLength(2);
+    expect(pools.map((p) => p.subjectCodes)).toEqual([["STAT"], ["PMATH"]]);
+    expect(pools[0].minLevel).toBe(300);
+  });
+
+  it("walks into nested pick/all children", () => {
+    const program = flexible({
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [
+            {
+              kind: "subjectPool",
+              description: "nested",
+              selectCount: 1,
+              subjectCodes: ["CS"],
+            },
+          ],
+        },
+      ],
+    });
+    expect(getSubjectPools(program)).toHaveLength(1);
+  });
+
+  it("returns [] when no subjectPool nodes are present", () => {
+    const program = flexible({ kind: "courses", courses: ["cs100"] });
+    expect(getSubjectPools(program)).toEqual([]);
+  });
+});
+
+describe("getExcludedCourses", () => {
+  it("returns courses from excluded nodes, deduped and sorted", () => {
+    const program = flexible({
+      kind: "all",
+      children: [
+        { kind: "courses", courses: ["cs100"] },
+        { kind: "excluded", courses: ["chem266", "chem266l"] },
+        { kind: "excluded", courses: ["chem266", "chem267"] },
+      ],
+    });
+    expect(getExcludedCourses(program)).toEqual([
+      "chem266",
+      "chem266l",
+      "chem267",
+    ]);
+  });
+
+  it("returns [] when no excluded nodes are present", () => {
+    const program = flexible({ kind: "courses", courses: ["cs100"] });
+    expect(getExcludedCourses(program)).toEqual([]);
+  });
+
+  it("does not surface excluded courses through getRequiredCourses", () => {
+    const program = flexible({
+      kind: "all",
+      children: [
+        { kind: "courses", courses: ["cs100"] },
+        { kind: "excluded", courses: ["chem266"] },
+      ],
+    });
+    expect(getRequiredCourses(program)).toEqual(["cs100"]);
+    expect(getExcludedCourses(program)).toEqual(["chem266"]);
   });
 });

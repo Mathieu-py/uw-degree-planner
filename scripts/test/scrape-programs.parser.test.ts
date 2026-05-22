@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import type { RuleNode } from "../../lib/programs";
+import {
+  flattenChoiceGroups,
+  requiredCoursesIn,
+  walkRule,
+} from "../../lib/programs";
 import {
   buildConflictCounts,
   buildProgramSlug,
@@ -11,6 +17,18 @@ import {
 
 const fixture = (name: string) =>
   readFileSync(path.join(__dirname, "fixtures", `${name}.html`), "utf-8");
+
+/** Find the first node matching a predicate via DFS pre-order. */
+const findNode = (
+  root: RuleNode,
+  pred: (n: RuleNode) => boolean,
+): RuleNode | undefined => {
+  let found: RuleNode | undefined;
+  walkRule(root, (n) => {
+    if (found === undefined && pred(n)) found = n;
+  });
+  return found;
+};
 
 describe("parseProgramRequirements — empty input", () => {
   it("returns kind:'empty' when no fields are present", () => {
@@ -49,7 +67,7 @@ describe("parseProgramRequirements — engineering (SYDE fixture)", () => {
 
   it("extracts 1A required courses", () => {
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    expect(r.terms["1A"]).toEqual([
+    expect(requiredCoursesIn(r.terms["1A"])).toEqual([
       "math115",
       "math117",
       "syde101",
@@ -61,20 +79,23 @@ describe("parseProgramRequirements — engineering (SYDE fixture)", () => {
 
   it("extracts 1B required courses including syde101l (with letter suffix)", () => {
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    expect(r.terms["1B"]).toContain("syde101l");
-    expect(r.terms["1B"]).toContain("math119");
+    const term1B = requiredCoursesIn(r.terms["1B"]);
+    expect(term1B).toContain("syde101l");
+    expect(term1B).toContain("math119");
   });
 
   it("populates all 8 terms (Engineering programs have term-by-term data)", () => {
     if (r.kind !== "engineering") throw new Error("expected engineering");
     for (const t of ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"] as const) {
-      expect(r.terms[t].length).toBeGreaterThan(0);
+      expect(requiredCoursesIn(r.terms[t]).length).toBeGreaterThan(0);
     }
   });
 
   it("does not include elective-slot text as course codes", () => {
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    const all = Object.values(r.terms).flat();
+    const all = (
+      ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"] as const
+    ).flatMap((t) => requiredCoursesIn(r.terms[t]));
     for (const code of all) {
       expect(code).toMatch(/^[a-z]{2,8}\d{3}[a-z]?$/);
     }
@@ -93,13 +114,15 @@ describe("parseProgramRequirements — engineering (Computer Engineering fixture
 
   it("extracts ECE 1A courses", () => {
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    expect(r.terms["1A"]).toContain("ece105");
-    expect(r.terms["1A"]).toContain("ece150");
+    const term1A = requiredCoursesIn(r.terms["1A"]);
+    expect(term1A).toContain("ece105");
+    expect(term1A).toContain("ece150");
   });
 
   it("output is sorted and deduped per term", () => {
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    for (const codes of Object.values(r.terms)) {
+    for (const t of ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"] as const) {
+      const codes = requiredCoursesIn(r.terms[t]);
       const sorted = [...codes].sort();
       expect(codes).toEqual(sorted);
       expect(new Set(codes).size).toBe(codes.length);
@@ -107,34 +130,36 @@ describe("parseProgramRequirements — engineering (Computer Engineering fixture
   });
 });
 
-describe("parseProgramRequirements — engineering 'Complete N of' → ChoiceGroup", () => {
-  it("captures 'Complete 1 of the following' as a ChoiceGroup, not a warning", () => {
+describe("parseProgramRequirements — engineering 'Complete N of' → pick node", () => {
+  it("captures 'Complete 1 of the following' as a pick node, not a warning", () => {
     const html = `
       <section>
         <header><h2 data-testid="grouping-label"><span>1A Term</span></h2></header>
-        <div>
-          <div data-test="ruleView-A-result">
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">
             Complete all the following:
             <a href="#">MATH115</a>
-          </div>
-          <div data-test="ruleView-B-result">
+          </div></li>
+          <li data-test="ruleView-B"><div data-test="ruleView-B-result">
             Complete 1 of the following:
             <a href="#">CS115</a>
             <a href="#">CS135</a>
             <a href="#">CS145</a>
-          </div>
-        </div>
+          </div></li>
+        </ul></div></div>
       </section>`;
     const r = parseProgramRequirements(
       { requiredCoursesTermByTerm: html },
       "test",
     );
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    expect(r.terms["1A"]).toEqual(["math115"]);
-    expect(r.choiceGroupsByTerm["1A"]).toEqual([
+    expect(requiredCoursesIn(r.terms["1A"])).toEqual(["math115"]);
+    const groups = flattenChoiceGroups(r.terms["1A"]);
+    expect(groups).toEqual([
       {
         description: "Complete 1 of the following",
-        selectCount: 1,
+        selectMin: 1,
+        selectMax: 1,
         options: ["cs115", "cs135", "cs145"],
       },
     ]);
@@ -145,15 +170,17 @@ describe("parseProgramRequirements — engineering 'Complete N of' → ChoiceGro
     const html = `
       <section>
         <header><h2 data-testid="grouping-label"><span>4A Term</span></h2></header>
-        <div data-test="ruleView-A-result">Complete 3 approved electives</div>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">Complete 3 approved electives</div></li>
+        </ul></div></div>
       </section>`;
     const r = parseProgramRequirements(
       { requiredCoursesTermByTerm: html },
       "test",
     );
     if (r.kind !== "engineering") throw new Error("expected engineering");
-    expect(r.terms["4A"]).toEqual([]);
-    expect(r.choiceGroupsByTerm["4A"]).toEqual([]);
+    expect(requiredCoursesIn(r.terms["4A"])).toEqual([]);
+    expect(flattenChoiceGroups(r.terms["4A"])).toEqual([]);
     expect(r.warnings).toEqual([]);
   });
 });
@@ -165,14 +192,17 @@ describe("parseProgramRequirements — flexible programs", () => {
       "biology",
     );
     if (r.kind !== "flexible") throw new Error("expected flexible");
-    expect(r.requiredCourses).toContain("biol130");
-    expect(r.requiredCourses).toContain("chem120");
-    expect(r.requiredCourses.length).toBeGreaterThanOrEqual(19);
+    const required = requiredCoursesIn(r.rules);
+    expect(required).toContain("biol130");
+    expect(required).toContain("chem120");
+    expect(required.length).toBeGreaterThanOrEqual(19);
     // Biology has a couple of "Complete 1 of" choices (intro physics,
     // communications) alongside its required core.
-    expect(r.choiceGroups.length).toBeGreaterThanOrEqual(1);
-    for (const g of r.choiceGroups) {
-      expect(g.selectCount).toBe(1);
+    const groups = flattenChoiceGroups(r.rules);
+    expect(groups.length).toBeGreaterThanOrEqual(1);
+    for (const g of groups) {
+      expect(g.selectMin).toBe(1);
+      expect(g.selectMax).toBe(1);
       expect(g.options.length).toBeGreaterThan(1);
     }
   });
@@ -183,43 +213,36 @@ describe("parseProgramRequirements — flexible programs", () => {
       "pure-math",
     );
     if (r.kind !== "flexible") throw new Error("expected flexible");
-    expect(r.requiredCourses.length).toBeGreaterThanOrEqual(5);
-    for (const code of r.requiredCourses) {
+    const required = requiredCoursesIn(r.rules);
+    expect(required.length).toBeGreaterThanOrEqual(5);
+    for (const code of required) {
       expect(code).toMatch(/^[a-z]{2,8}\d{3,4}[a-z]?$/);
     }
   });
 
-  it("cs-bcs: extracts ChoiceGroups for each 'Complete 1 of'", () => {
+  it("cs-bcs: extracts pick nodes for each 'Complete 1 of'", () => {
     const r = parseProgramRequirements(
       { courseRequirementsNoUnits: fixture("cs-bcs") },
       "cs-bcs",
     );
     if (r.kind !== "flexible") throw new Error("expected flexible");
+    const required = requiredCoursesIn(r.rules);
     // CS136L/CS341/CS350 are in the top-level "Complete all the following".
-    expect(r.requiredCourses).toContain("cs136l");
-    expect(r.requiredCourses).toContain("cs341");
-    expect(r.requiredCourses).toContain("cs350");
-    // Intro CS variant — CS115/CS135/CS145 — must come through as a ChoiceGroup.
-    const intro = r.choiceGroups.find(
+    expect(required).toContain("cs136l");
+    expect(required).toContain("cs341");
+    expect(required).toContain("cs350");
+    const groups = flattenChoiceGroups(r.rules);
+    // Intro CS variant — CS115/CS135/CS145 — must come through as a pick.
+    const intro = groups.find(
       (g) => g.options.includes("cs135") && g.options.includes("cs115"),
     );
     expect(intro?.options).toEqual(["cs115", "cs135", "cs145"]);
-    expect(intro?.selectCount).toBe(1);
-    // Plenty of nested choice groups in CS BCS.
-    expect(r.choiceGroups.length).toBeGreaterThanOrEqual(5);
+    expect(intro?.selectMin).toBe(1);
+    expect(intro?.selectMax).toBe(1);
+    expect(groups.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("cs-bcs: choiceGroups are sorted by first option for diff stability", () => {
-    const r = parseProgramRequirements(
-      { courseRequirementsNoUnits: fixture("cs-bcs") },
-      "cs-bcs",
-    );
-    if (r.kind !== "flexible") throw new Error("expected flexible");
-    const firsts = r.choiceGroups.map((g) => g.options[0]);
-    expect(firsts).toEqual([...firsts].sort());
-  });
-
-  it("history: silently skips 'Complete X additional units' prose", () => {
+  it("history: silently skips unrecognized prose", () => {
     const r = parseProgramRequirements(
       { courseRequirementsNoUnits: fixture("history") },
       "history",
@@ -227,7 +250,266 @@ describe("parseProgramRequirements — flexible programs", () => {
     if (r.kind !== "flexible") throw new Error("expected flexible");
     expect(r.warnings).toEqual([]);
     // Should have many choice groups (the B.1, B.2, B.3 style suffixes).
-    expect(r.choiceGroups.length).toBeGreaterThanOrEqual(3);
+    expect(flattenChoiceGroups(r.rules).length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("parseProgramRequirements — bounded picks (Combinatorics fixture)", () => {
+  const r = parseProgramRequirements(
+    { courseRequirementsNoUnits: fixture("combinatorics") },
+    "combinatorics",
+  );
+
+  it("captures 'Choose any of the following' as an unbounded pick", () => {
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const chooseAny = findNode(
+      r.rules,
+      (n) =>
+        n.kind === "pick" && n.description === "Choose any of the following",
+    );
+    expect(chooseAny).toBeDefined();
+    if (chooseAny?.kind !== "pick") throw new Error("expected pick");
+    expect(chooseAny.selectMin).toBeUndefined();
+    expect(chooseAny.selectMax).toBeUndefined();
+    expect(chooseAny.children).toEqual([
+      { kind: "courses", courses: ["cs462", "cs466", "cs487"] },
+    ]);
+  });
+
+  it("captures every 'Complete no more than N' rule with selectMax", () => {
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const noMoreThan: RuleNode[] = [];
+    walkRule(r.rules, (n) => {
+      if (
+        n.kind === "pick" &&
+        n.description !== undefined &&
+        /^Complete no more than \d+ from the following$/.test(n.description)
+      ) {
+        noMoreThan.push(n);
+      }
+    });
+    expect(noMoreThan.length).toBe(5);
+    for (const n of noMoreThan) {
+      if (n.kind !== "pick") throw new Error("expected pick");
+      expect(n.selectMax).toBe(1);
+      expect(n.selectMin).toBeUndefined();
+    }
+  });
+
+  it("nests siblings under the 'Complete N courses from the following choices' meta-parent", () => {
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const parent = findNode(
+      r.rules,
+      (n) =>
+        n.kind === "pick" &&
+        n.description !== undefined &&
+        /^Complete 3 courses from the following choices$/.test(n.description),
+    );
+    expect(parent).toBeDefined();
+    if (parent?.kind !== "pick") throw new Error("expected pick parent");
+    expect(parent.selectMin).toBe(3);
+    expect(parent.selectMax).toBe(3);
+    // 1 unbounded "Choose any" + 5 "Complete no more than 1" = 6 children.
+    expect(parent.children.length).toBe(6);
+    const unbounded = parent.children.filter(
+      (c) =>
+        c.kind === "pick" &&
+        c.selectMin === undefined &&
+        c.selectMax === undefined,
+    );
+    const bounded = parent.children.filter(
+      (c) => c.kind === "pick" && c.selectMax === 1,
+    );
+    expect(unbounded.length).toBe(1);
+    expect(bounded.length).toBe(5);
+  });
+
+  it("does not leak rule-derived codes into requiredCourses", () => {
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const required = requiredCoursesIn(r.rules);
+    for (const code of ["cs462", "cs466", "cs487"]) {
+      expect(required).not.toContain(code);
+    }
+  });
+
+  it("captures subject-pool rules F, G, H", () => {
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pools: RuleNode[] = [];
+    walkRule(r.rules, (n) => {
+      if (n.kind === "subjectPool") pools.push(n);
+    });
+    // Combinatorics rules F (1 additional), G (2 additional with exclusion),
+    // H (3 additional). Order from the fixture.
+    expect(pools.length).toBeGreaterThanOrEqual(3);
+    const counts = pools
+      .map((p) => (p.kind === "subjectPool" ? p.selectCount : 0))
+      .sort();
+    expect(counts).toContain(1);
+    expect(counts).toContain(2);
+    expect(counts).toContain(3);
+    const withExclusion = pools.find(
+      (p) => p.kind === "subjectPool" && p.exclusions !== undefined,
+    );
+    expect(withExclusion).toBeDefined();
+    if (withExclusion?.kind === "subjectPool") {
+      expect(withExclusion.exclusions?.[0]).toMatch(/cross-listed with a CO/);
+    }
+  });
+
+  it("does not warn about the new rule prefixes", () => {
+    expect(
+      r.warnings.find(
+        (w) =>
+          /Choose any of the following/.test(w) ||
+          /Complete no more than/.test(w) ||
+          /Complete \d+ courses from the following choices/.test(w) ||
+          /Complete \d+ additional/.test(w),
+      ),
+    ).toBeUndefined();
+  });
+});
+
+describe("'Complete no more than N' with N > 1", () => {
+  it("captures selectMax: 3 (only N: 1 appears in real fixtures today)", () => {
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">
+            Complete no more than 3 from the following:
+            <a href="#">CS100</a>
+            <a href="#">CS101</a>
+            <a href="#">CS102</a>
+            <a href="#">CS103</a>
+          </div></li>
+        </ul></div></div>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(
+      r.rules,
+      (n) =>
+        n.kind === "pick" &&
+        n.description !== undefined &&
+        /Complete no more than 3 from the following/.test(n.description),
+    );
+    expect(node).toBeDefined();
+    if (node?.kind !== "pick") throw new Error("expected pick");
+    expect(node.selectMax).toBe(3);
+    expect(node.selectMin).toBeUndefined();
+    const groups = flattenChoiceGroups(r.rules);
+    const group = groups.find((g) => g.selectMax === 3);
+    expect(group?.options).toEqual(["cs100", "cs101", "cs102", "cs103"]);
+  });
+});
+
+describe("subject-pool parsing — synthetic variants", () => {
+  const wrapSection = (ruleHtml: string) => `
+    <section>
+      <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+      <div><div><ul><li><span>Complete all of the following</span>
+        <ul><li data-test="ruleView-X"><div data-test="ruleView-X-result">${ruleHtml}</div></li></ul>
+      </li></ul></div></div>
+    </section>`;
+
+  it("single-subject with level: 'Complete 2 additional STAT courses at the 300-level'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2 additional STAT courses at the 300-level</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    expect(pool).toBeDefined();
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(2);
+    expect(pool.subjectCodes).toEqual(["STAT"]);
+    expect(pool.minLevel).toBe(300);
+    expect(pool.maxLevel).toBeUndefined();
+  });
+
+  it("multi-subject with level range: 'Complete 2 additional courses at the 300- or 400-level from: …; excluding …'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, CS, MATBUS, MATH, PMATH, STAT; excluding courses cross-listed with a CO course</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(2);
+    expect(pool.minLevel).toBe(300);
+    expect(pool.maxLevel).toBe(400);
+    expect(pool.subjectCodes).toEqual([
+      "ACTSC",
+      "AMATH",
+      "CS",
+      "MATBUS",
+      "MATH",
+      "PMATH",
+      "STAT",
+    ]);
+    expect(pool.exclusions?.length).toBe(1);
+  });
+
+  it("multi-subject without level: 'Complete 3 additional courses from: ACTSC, AMATH, …'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 3 additional courses from: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(3);
+    expect(pool.minLevel).toBeUndefined();
+    expect(pool.subjectCodes).toContain("ACTSC");
+    expect(pool.subjectCodes).toContain("STAT");
+  });
+});
+
+describe("parseProgramRequirements — excluded-courses rule", () => {
+  const wrapSection = (ruleHtml: string) => `
+    <section>
+      <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+      <div><div><ul><li><span>Complete all of the following</span>
+        <ul><li data-test="ruleView-X"><div data-test="ruleView-X-result">${ruleHtml}</div></li></ul>
+      </li></ul></div></div>
+    </section>`;
+
+  it("captures 'The following cannot be used towards this academic plan' as an excluded node", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        `The following cannot be used towards this academic plan: <a href="#">CHEM266</a> <a href="#">CHEM266L</a> <a href="#">CHEM267</a>`,
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const excluded = findNode(r.rules, (n) => n.kind === "excluded");
+    expect(excluded).toBeDefined();
+    if (excluded?.kind !== "excluded") throw new Error("expected excluded");
+    expect(excluded.courses).toEqual(["chem266", "chem266l", "chem267"]);
+  });
+
+  it("does not surface excluded courses as required", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        `The following cannot be used towards this academic plan: <a href="#">CHEM266</a>`,
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(requiredCoursesIn(r.rules)).not.toContain("chem266");
+  });
+
+  it("skips an excluded-prose rule with no course links (defensive null)", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        `The following cannot be used towards this academic plan`,
+      ),
+    });
+    if (r.kind === "empty") return;
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const excluded = findNode(r.rules, (n) => n.kind === "excluded");
+    expect(excluded).toBeUndefined();
   });
 });
 
@@ -246,8 +528,9 @@ describe("parseProgramRequirements — field-selection precedence", () => {
       courseRequirementsNoUnits: fixture("cs-bcs"),
     });
     if (r.kind !== "flexible") throw new Error("expected flexible");
-    expect(r.requiredCourses).toContain("biol130");
-    expect(r.requiredCourses).not.toContain("cs136l");
+    const required = requiredCoursesIn(r.rules);
+    expect(required).toContain("biol130");
+    expect(required).not.toContain("cs136l");
   });
 
   it("falls through to courseRequirementsNoUnits when the others are empty", () => {

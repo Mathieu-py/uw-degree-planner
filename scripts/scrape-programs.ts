@@ -174,24 +174,17 @@ async function main() {
           source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
         };
         if (result.kind === "engineering") {
-          const hasCG = Object.values(result.choiceGroupsByTerm).some(
-            (arr) => arr.length > 0,
-          );
           out[slug] = {
             kind: "engineering",
             ...base,
             terms: result.terms,
-            ...(hasCG ? { choiceGroupsByTerm: result.choiceGroupsByTerm } : {}),
             ...electivesField,
           };
         } else {
           out[slug] = {
             kind: "flexible",
             ...base,
-            requiredCourses: result.requiredCourses,
-            ...(result.choiceGroups.length > 0
-              ? { choiceGroups: result.choiceGroups }
-              : {}),
+            rules: result.rules,
             ...electivesField,
           };
         }

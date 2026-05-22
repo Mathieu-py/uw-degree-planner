@@ -153,7 +153,7 @@ describe("rebaseCompletedCourses", () => {
 
   it("seeds full requiredCourses when switching to a flexible program with null term", async () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { PROGRAMS } = await import("../programs");
+    const { PROGRAMS, getRequiredCourses } = await import("../programs");
     const biology = PROGRAMS["h-biology"];
     if (biology?.kind !== "flexible")
       throw new Error("expected h-biology to be flexible after scrape");
@@ -163,13 +163,16 @@ describe("rebaseCompletedCourses", () => {
       "h-biology",
       null,
     );
-    expect(rebased).toEqual([...biology.requiredCourses].sort());
+    expect(rebased).toEqual(getRequiredCourses(biology));
   });
 
   it("preserves extras when rebasing between engineering and flexible programs", async () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted, PROGRAMS } = await import("../programs");
-    if (PROGRAMS["h-biology"]?.kind !== "flexible") return;
+    const { inferCompleted, PROGRAMS, getRequiredCourses } = await import(
+      "../programs"
+    );
+    const biology = PROGRAMS["h-biology"];
+    if (biology?.kind !== "flexible") return;
 
     const oldList = [
       ...inferCompleted("systems-design-engineering", "2A"),
@@ -185,7 +188,7 @@ describe("rebaseCompletedCourses", () => {
       null,
     );
     expect(rebased).toContain("extra101");
-    for (const c of PROGRAMS["h-biology"].requiredCourses) {
+    for (const c of getRequiredCourses(biology)) {
       expect(rebased).toContain(c);
     }
   });
