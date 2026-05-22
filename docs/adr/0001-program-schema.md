@@ -131,7 +131,7 @@ Electives are NOT scraped or filled by #30. The field exists in v1 so the future
 - `specializations` — needs a separate scrape pass against specialization pids (different ID format; endpoint behavior unverified).
 - `electives` — needs new parser logic for the "X units of …" prose and the `courseListsNew` field.
 - Variant-picker modal UX — depends on `choiceGroups*` being populated by #30 first.
-- Student-passage `FilterState` extensions (`specializationId`, `choiceGroupSelections`, `systemOfStudy`) — depends on the schema fields being populated.
+- `StudentPassage` extensions (`specializationId`, `choiceGroupSelections`, `systemOfStudy`) — depends on the schema fields being populated.
 
 ## Parser changes ([`scripts/scrape-programs.parser.ts`](../../scripts/scrape-programs.parser.ts)) — for #30
 
@@ -192,7 +192,7 @@ Each item below becomes a follow-up issue after #29 merges. They're not blockers
 - **Variant-picker modal UX.** Students pick which variant they took for each ChoiceGroup. Triggered from ProgramSeeder; requires `choiceGroups*` data from #30 to render anything.
 - **Specialization scraping.** Fetch specialization detail pages and fill `Specialization[]` on each parent program. Specialization pids use a 32-char hex format (e.g. `69b1aec70cdb8bf7a71689de`) vs program pids (`B1MVgkCRi2`) — endpoint shape needs verification before scope is final.
 - **Elective category extraction.** Parse "X units of …" prose and `courseListsNew` into `ElectiveCategory[]`. Enables future elective-aware search.
-- **Student-passage FilterState extensions.** Add `specializationId`, `choiceGroupSelections`, `systemOfStudy` to FilterState. Persist to URL codec + localStorage. Composes with [#32](https://github.com/Mathieu-py/uw-elective-finder/issues/32) (double-degree multi-program tracking).
+- **`StudentPassage` extensions.** Add `specializationId`, `choiceGroupSelections`, `systemOfStudy` to `StudentPassage`. Persist to URL codec + localStorage. Composes with [#32](https://github.com/Mathieu-py/uw-elective-finder/issues/32) (double-degree multi-program tracking).
 
 **Independent / not affected by this ADR.**
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FILTER_STATE } from "../filterState";
+import { DEFAULT_PURE_FILTERS } from "../filterState";
 import {
   applyFilters,
   enrichCourse,
@@ -213,12 +213,12 @@ describe("applyFilters", () => {
   const all = [mathCourse, philCourse, csCourse];
 
   it("returns every course when state is the default", () => {
-    expect(applyFilters(all, DEFAULT_FILTER_STATE)).toEqual(all);
+    expect(applyFilters(all, DEFAULT_PURE_FILTERS)).toEqual(all);
   });
 
   it("AND-chains the predicates: exclude PHIL + require seats", () => {
     const result = applyFilters(all, {
-      ...DEFAULT_FILTER_STATE,
+      ...DEFAULT_PURE_FILTERS,
       excludePrefixes: ["PHIL"],
       hasSeatsAvailable: true,
     });
@@ -227,7 +227,7 @@ describe("applyFilters", () => {
 
   it("combines level + minUseful thresholds", () => {
     const result = applyFilters(all, {
-      ...DEFAULT_FILTER_STATE,
+      ...DEFAULT_PURE_FILTERS,
       levels: [400],
       minUseful: 0.5,
     });
@@ -236,7 +236,7 @@ describe("applyFilters", () => {
 
   it("returns empty when filters exclude every course", () => {
     const result = applyFilters(all, {
-      ...DEFAULT_FILTER_STATE,
+      ...DEFAULT_PURE_FILTERS,
       excludePrefixes: ["MATH", "PHIL", "CS"],
     });
     expect(result).toEqual([]);

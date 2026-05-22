@@ -1,7 +1,8 @@
 /**
- * High-level transform for the browse page: takes the raw course list and
- * a FilterState, returns the sorted-and-filtered rows the UI consumes,
- * with eligibility computed when the user has supplied completed courses.
+ * High-level transform for the browse page: takes the raw course list, the
+ * PureFilters slice, and the completed-courses list, returns the
+ * sorted-and-filtered rows the UI consumes, with eligibility computed when
+ * the user has supplied completed courses.
  *
  * Kept separate from `filters.ts` because eligibility evaluation is
  * expensive (prereq parsing + tree walk) and only the browse view needs it.
@@ -10,7 +11,7 @@
 import { applyFilters } from "./filters";
 import { type PrereqNode, parsePrereqs } from "./prereqs/parse";
 import { type EligibilityResult, evaluate } from "./prereqs/satisfied";
-import type { Course, FilterState } from "./types";
+import type { Course, PureFilters } from "./types";
 
 const prereqCache = new Map<string, PrereqNode | null>();
 
@@ -31,17 +32,18 @@ export interface BrowseRow {
 
 export function buildBrowseRows(
   courses: ReadonlyArray<Course>,
-  state: FilterState,
+  filters: PureFilters,
+  completedCourses: string[],
 ): BrowseRow[] {
-  const filtered = applyFilters(courses, state);
+  const filtered = applyFilters(courses, filters);
   const baseRows: BrowseRow[] = filtered.map((course) => ({
     course,
     eligibility: null,
   }));
   return attachEligibility(
     baseRows,
-    state.completedCourses,
-    state.hideUnmetPrereqs,
+    completedCourses,
+    filters.hideUnmetPrereqs,
   );
 }
 

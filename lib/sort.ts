@@ -1,6 +1,7 @@
 /**
- * Sort state for the browse table. Kept out of FilterState because it's
- * presentation, not filtering, but encoded into the same URL alongside it.
+ * Sort state for the browse table. Kept out of PureFilters / StudentPassage
+ * because it's presentation, not filtering, but encoded into the same URL
+ * alongside them.
  *
  * URL keys:  s = sort column, d = direction.
  */

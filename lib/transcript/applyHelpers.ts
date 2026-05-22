@@ -1,5 +1,5 @@
 import type { TermLetter } from "../programs";
-import type { FilterState } from "../types";
+import type { StudentPassage } from "../types";
 import type { ParsedCourse, TranscriptParseResult } from "./types";
 
 export interface Categorized {
@@ -74,18 +74,14 @@ export function buildImportPayload(
 }
 
 /**
- * Merge a transcript-import payload into the live FilterState. The transcript
- * IS the source of truth — completedCourses is replaced wholesale, and
- * programId / currentTerm are overwritten. Other filter fields are preserved.
- *
- * Returns a new object; never mutates `live`.
+ * Build a new StudentPassage from a transcript-import payload. The transcript
+ * IS the source of truth — every passage field is replaced. Pure filters
+ * (catalog view chips) are a separate slice and untouched at the call site.
  */
-export function applyTranscriptToFilterState(
-  live: FilterState,
+export function applyTranscriptToStudentPassage(
   payload: TranscriptImportPayload,
-): FilterState {
+): StudentPassage {
   return {
-    ...live,
     programId: payload.programId,
     currentTerm: payload.currentTerm,
     completedCourses: payload.codes,

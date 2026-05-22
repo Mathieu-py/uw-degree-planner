@@ -1,7 +1,7 @@
 import { CourseBrowser } from "@/components/CourseBrowser";
 import { buildBrowseRows } from "@/lib/browse";
 import { loadTerm } from "@/lib/data";
-import { decodeFilterState } from "@/lib/filterState";
+import { decodePureFilters, decodeStudentPassage } from "@/lib/filterState";
 import {
   compareCourses,
   parsePage,
@@ -20,13 +20,14 @@ export default async function BrowsePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const state = decodeFilterState(params);
+  const filters = decodePureFilters(params);
+  const passage = decodeStudentPassage(params);
   const sortKey = parseSortKey(params.s);
   const sortDir = parseSortDir(params.d);
   const page = parsePage(params.p);
 
   const all = await loadTerm(TERM);
-  const rows = buildBrowseRows(all, state);
+  const rows = buildBrowseRows(all, filters, passage.completedCourses);
   rows.sort((a, b) => compareCourses(a.course, b.course, sortKey, sortDir));
 
   const allCourseCodes = all.map((c) => c.code).sort();
@@ -50,7 +51,8 @@ export default async function BrowsePage({
 
       <CourseBrowser
         rows={rows}
-        state={state}
+        filters={filters}
+        passage={passage}
         sortKey={sortKey}
         sortDir={sortDir}
         page={page}

@@ -10,6 +10,7 @@
 
 import { inferCompleted, isTermLetter } from "./programs";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "./storage";
+import type { StudentPassage } from "./types";
 
 export const COMPLETED_STORAGE_KEY = "uwfinder.completedCourses";
 
@@ -44,11 +45,7 @@ export function saveCompletedCourses(courses: string[]): void {
  * the list is preserved (everything counts as an extra).
  */
 export function rebaseCompletedCourses(
-  previous: {
-    programId: string | null;
-    currentTerm: string | null;
-    completedCourses: string[];
-  },
+  previous: StudentPassage,
   nextProgramId: string | null,
   nextCurrentTerm: string | null,
 ): string[] {
