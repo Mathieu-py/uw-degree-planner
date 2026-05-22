@@ -1,0 +1,29 @@
+{
+  "slug": "h-kinesiology",
+  "name": "Kinesiology (Bachelor of Science - Honours)",
+  "code": "H-Kinesiology",
+  "pid": "B14jyJC0jn",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B14jyJC0jn",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": false,
+    "requirements": 6639,
+    "courseListsNew": false,
+    "specializationsList": 241,
+    "graduationRequirements": 294,
+    "additionalConstraints": false
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}

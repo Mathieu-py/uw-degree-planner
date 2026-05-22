@@ -1,0 +1,29 @@
+{
+  "slug": "jh-actuarial-science",
+  "name": "Actuarial Science (Joint Honours)",
+  "code": "JH-Actuarial Science",
+  "pid": "ryHykRAi3",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryHykRAi3",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": 3784,
+    "requirements": false,
+    "courseListsNew": false,
+    "specializationsList": false,
+    "graduationRequirements": 381,
+    "additionalConstraints": 358
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}

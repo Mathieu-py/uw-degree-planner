@@ -1,0 +1,29 @@
+{
+  "slug": "h-history",
+  "name": "History (Bachelor of Arts - Honours)",
+  "code": "H-History",
+  "pid": "B1MVgkCRi2",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1MVgkCRi2",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": 14807,
+    "requirements": false,
+    "courseListsNew": false,
+    "specializationsList": 489,
+    "graduationRequirements": 171,
+    "additionalConstraints": 449
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}

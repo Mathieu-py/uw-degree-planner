@@ -1,0 +1,29 @@
+{
+  "slug": "climate-and-environmental-change",
+  "name": "Climate and Environmental Change (Bachelor of Science - Honours)",
+  "code": "H-Climate & Environmental Change",
+  "pid": "B1zHkkCAo2",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1zHkkCAo2",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": false,
+    "requirements": 9532,
+    "courseListsNew": 3138,
+    "specializationsList": 711,
+    "graduationRequirements": 1640,
+    "additionalConstraints": 188
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}

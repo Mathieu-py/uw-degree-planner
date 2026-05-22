@@ -1,0 +1,29 @@
+{
+  "slug": "h-computer-science-bcs",
+  "name": "Computer Science (Bachelor of Computer Science - Honours)",
+  "code": "H-Computer Science (BCS)",
+  "pid": "SJPJkCAih",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJPJkCAih",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": 12388,
+    "requirements": false,
+    "courseListsNew": false,
+    "specializationsList": 1005,
+    "graduationRequirements": 275,
+    "additionalConstraints": 816
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}
