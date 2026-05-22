@@ -1,5 +1,9 @@
 import * as cheerio from "cheerio";
-import type { ChoiceGroup, TermLetter } from "../lib/programs";
+import type {
+  ChoiceGroup,
+  ElectiveCategory,
+  TermLetter,
+} from "../lib/programs";
 import { isTermLetter, TERM_LETTERS } from "../lib/programs";
 
 export function normalizeCourseCode(raw: string): string | null {
@@ -27,6 +31,16 @@ interface ProgramDetailFields {
   requiredCoursesTermByTerm?: string;
   requirements?: string;
   courseRequirementsNoUnits?: string;
+}
+
+interface ElectivesDetailFields {
+  graduationRequirements?: string;
+  courseListsNew?: string;
+}
+
+export interface ParseElectivesResult {
+  electives: ElectiveCategory[];
+  warnings: string[];
 }
 
 interface ExtractedRules {
@@ -222,6 +236,153 @@ function extractRules(
 function parseTermLetter(headerText: string): TermLetter | null {
   const m = headerText.match(/\b(\d[AB])\b/);
   return m && isTermLetter(m[1]) ? m[1] : null;
+}
+
+// "5.5 units of elective courses", "2.0 units of approved courses".
+const UNITS_OF_RE = /(\d+(?:\.\d+)?)\s*units?\s+of\s+([^.<]+)/i;
+const REQUIRED_COURSES_RE = /required\s+courses?/i;
+const COMPLETE_N_UNITS_RE = /Complete\s+(\d+(?:\.\d+)?)\s*units?/i;
+
+/**
+ * Parse a Kuali program detail into `ElectiveCategory[]`.
+ *
+ * Two sources, emitted independently (no fuzzy matching between them):
+ *   1. `graduationRequirements` — HTML prose with a bucket list like
+ *      `<li>2.0 units of approved courses.</li>`. Yields entries with
+ *      `description` + `unitRequirement`, no `approvedCourses`.
+ *   2. `courseListsNew` — structured HTML (same `ruleView-*-result` shape as
+ *      the required-courses parser) under a `<h2>Approved Courses List</h2>`
+ *      heading. Yields entries with `description` + optional
+ *      `unitRequirement` + `approvedCourses`.
+ *
+ * "Required courses" buckets are dropped from source 1 since those are
+ * captured by `parseProgramRequirements`.
+ */
+export function parseElectives(
+  detail: ElectivesDetailFields,
+  programLabel = "(unknown)",
+): ParseElectivesResult {
+  const warnings: string[] = [];
+
+  const gradReqs = detail.graduationRequirements?.trim();
+  const fromGradReqs = gradReqs ? parseGradReqsBuckets(gradReqs) : [];
+
+  const courseLists = detail.courseListsNew?.trim();
+  const fromCourseLists = courseLists
+    ? parseCourseListsSections(courseLists, programLabel, warnings)
+    : [];
+
+  // Merge by unitRequirement: a courseListsNew section with the same unit
+  // count as a gradReqs bucket is the structured view of that same bucket.
+  // Only merge when there's exactly one candidate bucket — if multiple
+  // gradReqs entries share the unit count (e.g. "2.0 units of approved" AND
+  // "2.0 units of communications"), we can't tell which one this list belongs
+  // to, so push the courseList entry standalone rather than attaching it to
+  // the wrong bucket.
+  const electives: ElectiveCategory[] = [...fromGradReqs];
+  for (const entry of fromCourseLists) {
+    const matches =
+      entry.unitRequirement !== undefined
+        ? electives.filter(
+            (e) =>
+              e.unitRequirement === entry.unitRequirement &&
+              e.approvedCourses === undefined,
+          )
+        : [];
+    if (matches.length === 1 && entry.approvedCourses) {
+      matches[0].approvedCourses = entry.approvedCourses;
+    } else {
+      electives.push(entry);
+    }
+  }
+
+  // Stable order: by unitRequirement ascending (entries without one sort
+  // last), then by description. Locks diffs against Kuali reordering either
+  // source.
+  electives.sort((a, b) => {
+    const ua = a.unitRequirement ?? Number.POSITIVE_INFINITY;
+    const ub = b.unitRequirement ?? Number.POSITIVE_INFINITY;
+    if (ua !== ub) return ua - ub;
+    return a.description.localeCompare(b.description);
+  });
+
+  return { electives, warnings };
+}
+
+function parseGradReqsBuckets(html: string): ElectiveCategory[] {
+  const $ = cheerio.load(html);
+  const out: ElectiveCategory[] = [];
+
+  // Walk leaf <li> only. Parents like "Complete a total of 20.0 units:" wrap
+  // the bucket list as a child <ul>, and their recursive .text() runs all
+  // bucket items together (cheerio inserts no separators between tags), which
+  // lets the regex span across siblings and capture garbage.
+  $("li")
+    .filter((_, li) => $(li).find("ul, ol").length === 0)
+    .each((_, li) => {
+      const text = $(li).text().replace(/\s+/g, " ").trim();
+      const m = text.match(UNITS_OF_RE);
+      if (!m || REQUIRED_COURSES_RE.test(m[2])) return;
+      out.push({ description: m[0], unitRequirement: Number(m[1]) });
+    });
+
+  return out;
+}
+
+function parseCourseListsSections(
+  html: string,
+  programLabel: string,
+  warnings: string[],
+): ElectiveCategory[] {
+  const $ = cheerio.load(html);
+  const out: ElectiveCategory[] = [];
+
+  $("section").each((_, section) => {
+    const $section = $(section);
+    const heading = $section
+      .find('h2[data-testid="grouping-label"]')
+      .text()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const courses = $section
+      .find("a")
+      .toArray()
+      .map((a) => normalizeCourseCode($(a).text()))
+      .filter((c): c is string => c !== null);
+
+    const ruleTexts = $section
+      .find('div[data-test^="ruleView-"][data-test$="-result"]')
+      .toArray()
+      .map((r) => $(r).text().replace(/\s+/g, " ").trim());
+
+    const unitMatch = ruleTexts
+      .map((t) => COMPLETE_N_UNITS_RE.exec(t))
+      .find((m): m is RegExpExecArray => m !== null);
+    const unitRequirement = unitMatch ? Number(unitMatch[1]) : undefined;
+    const description = heading || ruleTexts[0];
+
+    if (!description) {
+      if (courses.length > 0) {
+        warnings.push(
+          `${programLabel}: courseListsNew section had ${courses.length} course links but no <h2> heading or rule text`,
+        );
+      }
+      return;
+    }
+
+    out.push({
+      description,
+      ...(unitRequirement !== undefined ? { unitRequirement } : {}),
+      ...(courses.length > 0
+        ? { approvedCourses: [...new Set(courses)].sort() }
+        : {}),
+    });
+  });
+
+  // Stable order across re-runs, mirroring the choiceGroups sort in parseFlexible.
+  out.sort((a, b) => a.description.localeCompare(b.description));
+  return out;
 }
 
 const CREDENTIAL_PREFIX_RE = /^(h|jh|3g|4g)-/;
