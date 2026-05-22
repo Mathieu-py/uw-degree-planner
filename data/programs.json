@@ -2380,14 +2380,7 @@
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "soc401",
-          "soc405",
-          "soc406",
-          "soc408",
-          "soc416",
-          "soc418"
-        ]
+        "options": ["soc401", "soc405", "soc406", "soc408", "soc416", "soc418"]
       }
     ]
   },
@@ -3985,14 +3978,7 @@
       {
         "description": "Complete 2 of the following",
         "selectCount": 2,
-        "options": [
-          "amath345",
-          "amath391",
-          "co353",
-          "co365",
-          "co367",
-          "co370"
-        ]
+        "options": ["amath345", "amath391", "co353", "co365", "co367", "co370"]
       },
       {
         "description": "Complete 2 of the following",
@@ -5474,24 +5460,12 @@
       {
         "description": "Complete 2 of the following",
         "selectCount": 2,
-        "options": [
-          "chem224l",
-          "chem310l",
-          "chem340l",
-          "chem350l",
-          "chem360l"
-        ]
+        "options": ["chem224l", "chem310l", "chem340l", "chem350l", "chem360l"]
       },
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "chem224l",
-          "chem310l",
-          "chem340l",
-          "chem350l",
-          "chem360l"
-        ]
+        "options": ["chem224l", "chem310l", "chem340l", "chem350l", "chem360l"]
       },
       {
         "description": "Complete 1 of the following",
@@ -6961,13 +6935,7 @@
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "phys360b",
-          "phys370l",
-          "phys391l",
-          "phys460a",
-          "phys460b"
-        ]
+        "options": ["phys360b", "phys370l", "phys391l", "phys460a", "phys460b"]
       }
     ]
   },
@@ -7248,14 +7216,7 @@
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "soc401",
-          "soc405",
-          "soc406",
-          "soc408",
-          "soc416",
-          "soc418"
-        ]
+        "options": ["soc401", "soc405", "soc406", "soc408", "soc416", "soc418"]
       }
     ]
   },
@@ -7581,14 +7542,7 @@
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "stv302",
-          "stv304",
-          "stv305",
-          "stv306",
-          "stv400",
-          "stv401"
-        ]
+        "options": ["stv302", "stv304", "stv305", "stv306", "stv400", "stv401"]
       }
     ]
   },
@@ -8191,13 +8145,7 @@
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "phys360b",
-          "phys370l",
-          "phys391l",
-          "phys460a",
-          "phys460b"
-        ]
+        "options": ["phys360b", "phys370l", "phys391l", "phys460a", "phys460b"]
       }
     ]
   },
@@ -8935,13 +8883,7 @@
       {
         "description": "Complete 1 of the following",
         "selectCount": 1,
-        "options": [
-          "amath242",
-          "amath345",
-          "amath391",
-          "amath445",
-          "cs371"
-        ]
+        "options": ["amath242", "amath345", "amath391", "amath445", "cs371"]
       },
       {
         "description": "Complete 1 of the following",
@@ -8961,13 +8903,7 @@
       {
         "description": "Complete 4 of the following",
         "selectCount": 4,
-        "options": [
-          "amath333",
-          "amath474",
-          "phys342",
-          "phys357",
-          "phys363"
-        ]
+        "options": ["amath333", "amath474", "phys342", "phys357", "phys363"]
       },
       {
         "description": "Complete 1 of the following",
