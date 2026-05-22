@@ -57,10 +57,16 @@ interface ProgramDetail extends ProgramListEntry {
   courseRequirementsNoUnits?: string;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return (await res.json()) as T;
+async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(tid);
+  }
 }
 
 /**
@@ -87,9 +93,10 @@ export async function discoverCatalogId(
       .filter((c) => (c.id ?? c._id) != null)
       .filter((c) => /undergraduate/i.test(c.title ?? ""))
       .filter((c) => {
-        const start = c.startDate ?? "";
-        const end = c.endDate ?? "";
-        return start <= today && (end === "" || today < end);
+        const start = c.startDate;
+        const end = c.endDate;
+        if (!start) return false;
+        return start <= today && (!end || today < end);
       })
       .sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
 

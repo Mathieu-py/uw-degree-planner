@@ -143,6 +143,10 @@ function parseFlexible(html: string, programLabel: string): ParseResult {
     (a.options[0] ?? "").localeCompare(b.options[0] ?? ""),
   );
 
+  if (requiredCodes.size === 0 && choiceGroups.length === 0) {
+    return { kind: "empty", warnings };
+  }
+
   return {
     kind: "flexible",
     requiredCourses: [...requiredCodes].sort(),
@@ -205,7 +209,14 @@ function extractRules(
       warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
     });
 
-  return { requiredCodes, choiceGroups, warnings };
+  const seen = new Set<string>();
+  const dedupedChoiceGroups = choiceGroups.filter((g) => {
+    const key = `${g.selectCount ?? 1}|${g.options.join(",")}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return { requiredCodes, choiceGroups: dedupedChoiceGroups, warnings };
 }
 
 function parseTermLetter(headerText: string): TermLetter | null {

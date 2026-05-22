@@ -18,6 +18,14 @@ describe("parseProgramRequirements — empty input", () => {
     expect(r.warnings).toEqual([]);
   });
 
+  it("returns kind:'empty' when requirements HTML has no <section> elements", () => {
+    const r = parseProgramRequirements(
+      { requirements: "<div>No sections here</div>" },
+      "orphan",
+    );
+    expect(r.kind).toBe("empty");
+  });
+
   it("returns kind:'empty' for whitespace-only fields", () => {
     const r = parseProgramRequirements({
       requiredCoursesTermByTerm: "   \n   ",

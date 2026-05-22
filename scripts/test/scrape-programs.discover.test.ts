@@ -113,6 +113,19 @@ describe("discoverCatalogId", () => {
     expect(await discoverCatalogId(NOW)).toBe(FALLBACK);
   });
 
+  it("falls back when an entry has no startDate", async () => {
+    mockFetch(() =>
+      jsonResponse([
+        {
+          _id: "no-start",
+          title: "2026-2027 Undergraduate Studies Academic Calendar",
+          endDate: "2027-04-01",
+        },
+      ]),
+    );
+    expect(await discoverCatalogId(NOW)).toBe(FALLBACK);
+  });
+
   it("falls back when no undergraduate catalog is currently active", async () => {
     mockFetch(() =>
       jsonResponse([
