@@ -20,6 +20,7 @@ import {
   PROGRAMS,
   TERM_LETTERS,
   type TermLetter,
+  hasSchedule,
   isTermLetter,
 } from "@/lib/programs";
 import { safeSetItem } from "@/lib/storage";
@@ -35,9 +36,13 @@ interface Props {
 
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
 
-const SORTED_PROGRAMS = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
-  a.name.localeCompare(b.name),
-);
+// Only programs with a real per-term required-course list are useful seeds.
+// The scraper emits empties for programs whose Kuali entry lacks a term-by-
+// term schedule (most non-Engineering majors) — hiding them avoids a silent
+// no-op when the user picks one.
+const SORTED_PROGRAMS_WITH_SCHEDULE = Object.entries(PROGRAMS)
+  .filter(([, p]) => hasSchedule(p))
+  .sort(([, a], [, b]) => a.name.localeCompare(b.name));
 
 // state.levels === [] means "all four buckets". Selecting all four (or none) collapses back to [].
 function toggleLevel(current: readonly number[], lvl: number): number[] {
@@ -235,6 +240,14 @@ function ProgramSeeder({
   const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
   const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
 
+  // If the selected program isn't in the schedule-having set (e.g. a stale URL
+  // like ?prog=3g-anthropology, or a slug that pre-dated the catalog refresh),
+  // surface it as a pinned option so the user can see and clear it. Without
+  // this, <select> with an unknown value would render as empty.
+  const selectedNotInList =
+    selectedProgram &&
+    !SORTED_PROGRAMS_WITH_SCHEDULE.some(([id]) => id === state.programId);
+
   const selectClass =
     "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
 
@@ -248,7 +261,12 @@ function ProgramSeeder({
           className={selectClass}
         >
           <option value="">Select a program…</option>
-          {SORTED_PROGRAMS.map(([id, p]) => (
+          {selectedNotInList && state.programId && (
+            <option value={state.programId}>
+              {selectedProgram.name} (no schedule data)
+            </option>
+          )}
+          {SORTED_PROGRAMS_WITH_SCHEDULE.map(([id, p]) => (
             <option key={id} value={id}>{p.name}</option>
           ))}
         </select>

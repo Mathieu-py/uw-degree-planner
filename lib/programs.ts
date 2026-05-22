@@ -23,6 +23,10 @@ export function isKnownProgram(id: string | null | undefined): boolean {
   return id != null && Object.prototype.hasOwnProperty.call(PROGRAMS, id);
 }
 
+export function hasSchedule(p: Program): boolean {
+  return TERM_LETTERS.some((t) => p.terms[t].length > 0);
+}
+
 /**
  * Returns the union of required courses from every term strictly before
  * `currentTerm`. Codes are deduped and sorted. Unknown program → [].

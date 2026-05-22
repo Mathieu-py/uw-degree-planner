@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PROGRAMS,
   TERM_LETTERS,
+  hasSchedule,
   inferCompleted,
   isKnownProgram,
   isTermLetter,
@@ -54,6 +55,31 @@ describe("programs.json schema integrity", () => {
   });
 });
 
+describe("hasSchedule", () => {
+  it("returns true when at least one term has courses", () => {
+    expect(hasSchedule(PROGRAMS["systems-design-engineering"])).toBe(true);
+  });
+
+  it("returns false for a program with every term empty", () => {
+    expect(
+      hasSchedule({
+        name: "Empty",
+        asOf: "2026-01-01",
+        terms: {
+          "1A": [], "1B": [], "2A": [], "2B": [],
+          "3A": [], "3B": [], "4A": [], "4B": [],
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it("every program currently in PROGRAMS has schedule data (post-prune invariant)", () => {
+    for (const [id, prog] of Object.entries(PROGRAMS)) {
+      expect(hasSchedule(prog), `${id} should have schedule data`).toBe(true);
+    }
+  });
+});
+
 describe("isTermLetter", () => {
   it("accepts the 8 standard term letters", () => {
     for (const t of TERM_LETTERS) expect(isTermLetter(t)).toBe(true);
@@ -80,6 +106,16 @@ describe("isKnownProgram", () => {
     ]) {
       expect(isKnownProgram(id)).toBe(true);
     }
+  });
+
+  it("rejects programs that were pruned from data/programs.json", () => {
+    // h-computer-science-bcs and friends had no per-term schedule data and
+    // were dropped during the prune. Confirm they're gone — if they reappear,
+    // the parser refactor (Issues B-D) probably needs a corresponding update
+    // to the dropdown's filter.
+    expect(isKnownProgram("h-computer-science-bcs")).toBe(false);
+    expect(isKnownProgram("3g-anthropology")).toBe(false);
+    expect(isKnownProgram("h-history")).toBe(false);
   });
 
   it("rejects unknown ids", () => {
