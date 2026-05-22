@@ -492,3 +492,48 @@ describe("parseElectives — courseListsNew without matching gradReqs bucket", (
     expect(fromCourseLists?.approvedCourses).toContain("biol462");
   });
 });
+
+describe("parseElectives — ambiguous merge guard", () => {
+  it("pushes the courseList entry standalone when multiple gradReqs buckets share its unitRequirement", () => {
+    // Two gradReqs entries with the same unit count → can't safely tell
+    // which one the courseList section enriches. Push standalone.
+    const gradReqs = `
+      <ul>
+        <li>2.0 units of approved courses.</li>
+        <li>2.0 units of communications courses.</li>
+      </ul>`;
+    const r = parseElectives(
+      {
+        graduationRequirements: gradReqs,
+        courseListsNew: fixture("climate-course-lists"),
+      },
+      "ambiguous",
+    );
+    expect(r.electives).toHaveLength(3);
+    // Neither gradReqs bucket should have been mutated.
+    const gradReqsBuckets = r.electives.filter(
+      (e) => e.description !== "Approved Courses List",
+    );
+    expect(gradReqsBuckets).toHaveLength(2);
+    for (const e of gradReqsBuckets) {
+      expect(e.approvedCourses).toBeUndefined();
+    }
+    // The courseList entry survives as its own row, with its course list.
+    const courseList = r.electives.find(
+      (e) => e.description === "Approved Courses List",
+    );
+    expect(courseList?.approvedCourses).toContain("biol462");
+  });
+});
+
+describe("parseElectives — deterministic ordering", () => {
+  it("sorts the merged result by unitRequirement, then description", () => {
+    const gradReqs = `
+      <ul>
+        <li>6.0 units of elective courses.</li>
+        <li>2.0 units of approved courses.</li>
+      </ul>`;
+    const r = parseElectives({ graduationRequirements: gradReqs });
+    expect(r.electives.map((e) => e.unitRequirement)).toEqual([2.0, 6.0]);
+  });
+});

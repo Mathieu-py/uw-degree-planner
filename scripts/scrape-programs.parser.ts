@@ -274,25 +274,37 @@ export function parseElectives(
 
   // Merge by unitRequirement: a courseListsNew section with the same unit
   // count as a gradReqs bucket is the structured view of that same bucket.
-  // Attach its `approvedCourses` onto the gradReqs entry rather than emitting
-  // it as a separate row. The `approvedCourses === undefined` guard prevents
-  // a second courseList section from overwriting the first.
+  // Only merge when there's exactly one candidate bucket — if multiple
+  // gradReqs entries share the unit count (e.g. "2.0 units of approved" AND
+  // "2.0 units of communications"), we can't tell which one this list belongs
+  // to, so push the courseList entry standalone rather than attaching it to
+  // the wrong bucket.
   const electives: ElectiveCategory[] = [...fromGradReqs];
   for (const entry of fromCourseLists) {
-    const target =
+    const matches =
       entry.unitRequirement !== undefined
-        ? electives.find(
+        ? electives.filter(
             (e) =>
               e.unitRequirement === entry.unitRequirement &&
               e.approvedCourses === undefined,
           )
-        : undefined;
-    if (target && entry.approvedCourses) {
-      target.approvedCourses = entry.approvedCourses;
+        : [];
+    if (matches.length === 1 && entry.approvedCourses) {
+      matches[0].approvedCourses = entry.approvedCourses;
     } else {
       electives.push(entry);
     }
   }
+
+  // Stable order: by unitRequirement ascending (entries without one sort
+  // last), then by description. Locks diffs against Kuali reordering either
+  // source.
+  electives.sort((a, b) => {
+    const ua = a.unitRequirement ?? Number.POSITIVE_INFINITY;
+    const ub = b.unitRequirement ?? Number.POSITIVE_INFINITY;
+    if (ua !== ub) return ua - ub;
+    return a.description.localeCompare(b.description);
+  });
 
   return { electives, warnings };
 }
