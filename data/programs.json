@@ -1,7 +1,7 @@
 {
   "architectural-engineering": {
     "name": "Architectural Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJry1RAs2",
     "terms": {
       "1A": [
@@ -60,7 +60,7 @@
   },
   "architectural-studies": {
     "name": "Architectural Studies (Bachelor of Architectural Studies - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SklSyJRRoh",
     "terms": {
       "1A": [
@@ -113,7 +113,7 @@
   },
   "biomedical-engineering": {
     "name": "Biomedical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyrkyRRi3",
     "terms": {
       "1A": [
@@ -178,7 +178,7 @@
   },
   "chemical-engineering": {
     "name": "Chemical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkMSJ1AAin",
     "terms": {
       "1A": [
@@ -240,7 +240,7 @@
   },
   "civil-engineering": {
     "name": "Civil Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1bSkJRAjh",
     "terms": {
       "1A": [
@@ -291,7 +291,7 @@
   },
   "computer-engineering": {
     "name": "Computer Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BybwJ10Ri3",
     "terms": {
       "1A": [
@@ -349,7 +349,7 @@
   },
   "electrical-engineering": {
     "name": "Electrical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkgD1yRAjn",
     "terms": {
       "1A": [
@@ -404,7 +404,7 @@
   },
   "environmental-engineering": {
     "name": "Environmental Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1lv11RCsh",
     "terms": {
       "1A": [
@@ -449,7 +449,7 @@
   },
   "geological-engineering": {
     "name": "Geological Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1jJ1C0s2",
     "terms": {
       "1A": [
@@ -497,7 +497,7 @@
   },
   "management-engineering": {
     "name": "Management Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkzsJ1CRsh",
     "terms": {
       "1A": [
@@ -555,7 +555,7 @@
   },
   "mechanical-engineering": {
     "name": "Mechanical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryAk10Rin",
     "terms": {
       "1A": [
@@ -613,7 +613,7 @@
   },
   "mechatronics-engineering": {
     "name": "Mechatronics Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hk-A1y0Cj2",
     "terms": {
       "1A": [
@@ -674,7 +674,7 @@
   },
   "medical-sciences": {
     "name": "Medical Sciences (Bachelor of Medical Sciences - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1IJxeamkg",
     "terms": {
       "1A": [
@@ -690,7 +690,7 @@
         "biol239",
         "chem123",
         "chem123l",
-        "hlth107",
+        "health107",
         "hlth204",
         "kin146"
       ],
@@ -728,7 +728,7 @@
   },
   "nanotechnology-engineering": {
     "name": "Nanotechnology Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkW0yyA0s3",
     "terms": {
       "1A": [
@@ -783,7 +783,7 @@
   },
   "software-engineering": {
     "name": "Software Engineering (Bachelor of Software Engineering - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1zle10Cs3",
     "terms": {
       "1A": [
@@ -841,7 +841,7 @@
   },
   "systems-design-engineering": {
     "name": "Systems Design Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-05-20",
+    "asOf": "2026-05-22",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJgggJRRoh",
     "terms": {
       "1A": [
