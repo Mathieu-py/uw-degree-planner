@@ -220,15 +220,9 @@ function collectLiSiblings(
   const out: ReturnType<cheerio.CheerioAPI>[] = [];
   $ul.children().each((_, child) => {
     const $child = $(child);
-    if (
-      child.type === "tag" &&
-      (child as { tagName: string }).tagName === "li"
-    ) {
+    if (child.type === "tag" && child.name === "li") {
       out.push($child);
-    } else if (
-      child.type === "tag" &&
-      (child as { tagName: string }).tagName === "div"
-    ) {
+    } else if (child.type === "tag" && child.name === "div") {
       $child.children("li").each((_, li) => {
         out.push($(li));
       });
@@ -381,7 +375,12 @@ function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
       children,
     };
   }
-  return children.length === 1 ? children[0] : { kind: "all", children };
+  if (children.length === 1) return children[0];
+  return {
+    kind: "all",
+    ...(wrapperText ? { description: wrapperText } : {}),
+    children,
+  };
 }
 
 /**
@@ -465,6 +464,10 @@ const UNITS_OF_RE = /(\d+(?:\.\d+)?)\s*units?\s+of\s+([^.<]+)/i;
 const REQUIRED_COURSES_RE = /required\s+courses?/i;
 const COMPLETE_N_UNITS_RE = /Complete\s+(\d+(?:\.\d+)?)\s*units?/i;
 
+// Pinned to "en" so description sorting is deterministic across machines
+// regardless of LANG. Constructed once and reused.
+const DESCRIPTION_COLLATOR = new Intl.Collator("en");
+
 /**
  * Parse a Kuali program detail into `ElectiveCategory[]`.
  *
@@ -525,7 +528,7 @@ export function parseElectives(
     const ua = a.unitRequirement ?? Number.POSITIVE_INFINITY;
     const ub = b.unitRequirement ?? Number.POSITIVE_INFINITY;
     if (ua !== ub) return ua - ub;
-    return a.description.localeCompare(b.description);
+    return DESCRIPTION_COLLATOR.compare(a.description, b.description);
   });
 
   return { electives, warnings };
@@ -603,7 +606,9 @@ function parseCourseListsSections(
   });
 
   // Stable order across re-runs, mirroring the choiceGroups sort in parseFlexible.
-  out.sort((a, b) => a.description.localeCompare(b.description));
+  out.sort((a, b) =>
+    DESCRIPTION_COLLATOR.compare(a.description, b.description),
+  );
   return out;
 }
 

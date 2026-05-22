@@ -466,6 +466,67 @@ describe("subject-pool parsing — synthetic variants", () => {
     expect(pool.subjectCodes).toContain("ACTSC");
     expect(pool.subjectCodes).toContain("STAT");
   });
+
+  it("returns no subjectPool when subject word is not a valid code and no 'from:' clause", () => {
+    // parseSubjectPool returns null; DEFERRED_PROSE_RE catches the prefix so
+    // parseLi silently skips. Single-rule fixture → wrapper has 0 children →
+    // result is `empty`. The point is: no subjectPool node, no warning.
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2 additional things at the 300-level</div>",
+      ),
+    });
+    expect(r.kind).toBe("empty");
+    expect(r.warnings).toEqual([]);
+  });
+});
+
+describe("wrapWithProse — all fallback", () => {
+  // A DOM-nested wrapper <li> whose span text does NOT match `Complete N of`
+  // and which carries multiple children — the path that exercises the `all`
+  // fallback in wrapWithProse.
+  const wrapWithChildren = (spanText: string) => `
+    <section>
+      <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+      <div><div><ul>
+        <li>
+          <span>${spanText}</span>
+          <ul>
+            <li data-test="ruleView-A"><div data-test="ruleView-A-result">Complete all the following: <a href="#">MATH 101</a></div></li>
+            <li data-test="ruleView-B"><div data-test="ruleView-B-result">Complete all the following: <a href="#">PHYS 201</a></div></li>
+          </ul>
+        </li>
+      </ul></div></div>
+    </section>`;
+
+  it("preserves the wrapper text as `description` on the multi-child `all` node", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapWithChildren("Complete all of the following"),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const inner = findNode(
+      r.rules,
+      (n) =>
+        n.kind === "all" && n.description === "Complete all of the following",
+    );
+    expect(inner).toBeDefined();
+    if (inner?.kind !== "all") throw new Error("expected all");
+    expect(inner.children).toHaveLength(2);
+  });
+
+  it("omits `description` when the wrapper text is empty", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapWithChildren(""),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const withDescription: RuleNode[] = [];
+    walkRule(r.rules, (n) => {
+      if (n.kind === "all" && n.description !== undefined) {
+        withDescription.push(n);
+      }
+    });
+    expect(withDescription).toEqual([]);
+  });
 });
 
 describe("parseProgramRequirements — excluded-courses rule", () => {
