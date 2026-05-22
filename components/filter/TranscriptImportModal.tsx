@@ -12,6 +12,7 @@ import {
   parseTranscript,
   type ParsedCourse,
 } from "@/lib/transcript/parse";
+import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 
 export type { TranscriptImportPayload } from "@/lib/transcript/applyHelpers";
 
@@ -31,8 +32,30 @@ export function TranscriptImportModal({
   currentCompletedCount,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
   const [included, setIncluded] = useState<Set<string>>(new Set());
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    setExtractError(null);
+    setText("");
+    setIncluded(new Set());
+    setIsExtracting(true);
+    try {
+      const extracted = await extractTextFromPdf(file);
+      setText(extracted);
+    } catch (err) {
+      setExtractError(err instanceof Error ? err.message : "Failed to read PDF.");
+    } finally {
+      setIsExtracting(false);
+    }
+  }
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -44,11 +67,16 @@ export function TranscriptImportModal({
     }
   }, [isOpen]);
 
-  // Reset internal state on close so a stale paste doesn't leak into the next
-  // open. Driven by user action (Cancel / Esc / Apply), not a render effect.
+  // Reset internal state on close so a stale upload doesn't leak into the
+  // next open. Driven by user action (Cancel / Esc / Apply), not a render
+  // effect. Also clear the file input so re-selecting the same file fires
+  // an onChange.
   function handleClose() {
     setText("");
+    setFileName(null);
+    setExtractError(null);
     setIncluded(new Set());
+    if (fileInputRef.current) fileInputRef.current.value = "";
     onClose();
   }
 
@@ -86,7 +114,10 @@ export function TranscriptImportModal({
   function handleApply() {
     onApply(buildImportPayload(parseResult, categorized, included));
     setText("");
+    setFileName(null);
+    setExtractError(null);
     setIncluded(new Set());
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   const hasInput = text.trim().length > 0;
@@ -116,30 +147,53 @@ export function TranscriptImportModal({
           Parsed in your browser. Never sent anywhere.
         </p>
 
-        <textarea
-          autoFocus
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Paste your Quest unofficial transcript here…"
-          rows={10}
-          className="w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1.5 text-xs font-mono placeholder:text-zinc-400 resize-y"
-        />
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="transcript-pdf-input"
+            className="text-xs text-zinc-600 dark:text-zinc-400"
+          >
+            Quest unofficial transcript (PDF)
+          </label>
+          <input
+            ref={fileInputRef}
+            id="transcript-pdf-input"
+            type="file"
+            accept="application/pdf,.pdf"
+            onChange={handleFileChange}
+            disabled={isExtracting}
+            className="block w-full text-xs text-zinc-700 dark:text-zinc-300 file:mr-3 file:rounded file:border file:border-zinc-300 dark:file:border-zinc-700 file:bg-zinc-100 dark:file:bg-zinc-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-900 dark:file:text-zinc-100 file:cursor-pointer hover:file:bg-zinc-200 dark:hover:file:bg-zinc-800 disabled:opacity-50"
+          />
+          {fileName && !isExtracting && !extractError && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {fileName}
+            </p>
+          )}
+        </div>
 
         <div className="text-xs">
-          {!hasInput && (
+          {isExtracting && (
+            <p className="text-zinc-500 dark:text-zinc-400">Reading PDF…</p>
+          )}
+
+          {extractError && (
+            <p className="text-rose-600 dark:text-rose-400">{extractError}</p>
+          )}
+
+          {!isExtracting && !extractError && !hasInput && (
             <p className="text-zinc-500 dark:text-zinc-400">
-              Paste your Quest unofficial transcript above.
+              Sign into Quest → Student Center → Other Academic… → Transcript:
+              View Unofficial → save as PDF, then upload it here.
             </p>
           )}
 
-          {hasInput && !hasResults && (
+          {!isExtracting && !extractError && hasInput && !hasResults && (
             <p className="text-rose-600 dark:text-rose-400">
-              No course codes found — make sure you pasted from Quest&apos;s
+              No course codes found in the PDF — make sure you uploaded a Quest
               unofficial transcript.
             </p>
           )}
 
-          {hasResults && (
+          {!isExtracting && !extractError && hasResults && (
             <div className="flex flex-col gap-2">
               <DetectionLine
                 programName={detectedProgramName}
