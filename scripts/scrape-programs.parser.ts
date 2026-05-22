@@ -1,9 +1,5 @@
 import * as cheerio from "cheerio";
-import type {
-  ChoiceGroup,
-  ElectiveCategory,
-  TermLetter,
-} from "../lib/programs";
+import type { ElectiveCategory, RuleNode, TermLetter } from "../lib/programs";
 import { isTermLetter, TERM_LETTERS } from "../lib/programs";
 
 export function normalizeCourseCode(raw: string): string | null {
@@ -15,16 +11,10 @@ export function normalizeCourseCode(raw: string): string | null {
 export type ParseResult =
   | {
       kind: "engineering";
-      terms: Record<TermLetter, string[]>;
-      choiceGroupsByTerm: Record<TermLetter, ChoiceGroup[]>;
+      terms: Record<TermLetter, RuleNode>;
       warnings: string[];
     }
-  | {
-      kind: "flexible";
-      requiredCourses: string[];
-      choiceGroups: ChoiceGroup[];
-      warnings: string[];
-    }
+  | { kind: "flexible"; rules: RuleNode; warnings: string[] }
   | { kind: "empty"; warnings: string[] };
 
 interface ProgramDetailFields {
@@ -43,47 +33,38 @@ export interface ParseElectivesResult {
   warnings: string[];
 }
 
-interface ExtractedRules {
-  requiredCodes: Set<string>;
-  choiceGroups: ChoiceGroup[];
-  warnings: string[];
-}
-
-const emptyTerms = (): Record<TermLetter, string[]> =>
-  Object.fromEntries(TERM_LETTERS.map((t) => [t, [] as string[]])) as Record<
-    TermLetter,
-    string[]
-  >;
-
-const emptyChoiceGroupsByTerm = (): Record<TermLetter, ChoiceGroup[]> =>
+const emptyTermsTree = (): Record<TermLetter, RuleNode> =>
   Object.fromEntries(
-    TERM_LETTERS.map((t) => [t, [] as ChoiceGroup[]]),
-  ) as Record<TermLetter, ChoiceGroup[]>;
+    TERM_LETTERS.map((t) => [t, { kind: "all", children: [] } as RuleNode]),
+  ) as Record<TermLetter, RuleNode>;
 
 const COMPLETE_ALL_RE = /^Complete all (the|of the) following/i;
 const COMPLETE_N_OF_RE = /^Complete (\d+) of (the )?following/i;
-// Catch-all for descriptive prose, subject-restricted elective buckets,
-// conditional notes, and exclusion lists — anything that isn't an explicit
-// "Complete all/Complete N of the following" course-listing rule. Examples:
-//   "Complete 2 additional STAT courses at the 300-level"
-//   "Complete 1 approved elective" / "Complete 5.5 units of …"
-//   "Complete 2 Technical Electives from List 1"
-//   "Complete the List 1 and List 2 requirements below"
-//   "Choose any of the following" / "Complete no more than 1 from the following"
-//   "The following cannot be used towards this academic plan"
-//   "Note", "If CO255 is taken…", "Subject concentration"
-// Capturing these properly needs ElectiveCategory / conditional modeling and
-// is deferred to a follow-up issue per ADR 0001 §118-127.
+const CHOOSE_ANY_RE = /^Choose any (?:of|course from) the following/i;
+const COMPLETE_NO_MORE_THAN_RE =
+  /^Complete no more than (\d+) from (the )?following/i;
+const COMPLETE_N_FROM_CHOICES_RE =
+  /^Complete (\d+) courses? from the following choices/i;
+const SUBJECT_POOL_PREFIX_RE = /^Complete (\d+) additional\b/i;
+const EXCLUDED_RE =
+  /^The following cannot be used towards (?:this )?(?:academic )?plan/i;
+// Catch-all for prose that doesn't fit any recognized rule shape. After #43
+// removed "Choose" and the rule-tree refactor handles "Complete N additional
+// …" as subject pools, what remains is genuinely unstructured prose: stray
+// notes, conditional preambles without enumerable courses, exclusion clauses,
+// and the unit-bound elective phrasings handled by `parseElectives`. "Choose"
+// is deliberately absent so future Kuali drift on `Choose …` phrasings
+// surfaces as warnings.
 const DEFERRED_PROSE_RE =
-  /^(?:Complete|Choose|The following|Note|If\b|Subject concentration)/i;
+  /^(?:Complete|The following|Note|If\b|Subject concentration)/i;
 
 /**
  * Parse a Kuali program detail into a discriminated `ParseResult`.
  *
  * Field-selection precedence (first non-empty wins):
- *   1. `requiredCoursesTermByTerm` → engineering (per-term schedule)
- *   2. `requirements`              → flexible (flat required list)
- *   3. `courseRequirementsNoUnits` → flexible (flat required list)
+ *   1. `requiredCoursesTermByTerm` → engineering (per-term rule trees)
+ *   2. `requirements`              → flexible (single rule tree)
+ *   3. `courseRequirementsNoUnits` → flexible (single rule tree)
  *
  * The `requirements` and `courseRequirementsNoUnits` fields are HTML-equivalent
  * — Kuali emits the same `<section><h2>Required Courses</h2>...` shape into
@@ -106,131 +87,371 @@ export function parseProgramRequirements(
 }
 
 function parseEngineering(html: string, programLabel: string): ParseResult {
-  const terms = emptyTerms();
-  const choiceGroupsByTerm = emptyChoiceGroupsByTerm();
+  const terms = emptyTermsTree();
   const warnings: string[] = [];
   const $ = cheerio.load(html);
 
   $("section").each((_, section) => {
-    const header = $(section)
+    const $section = $(section);
+    const header = $section
       .find('h2[data-testid="grouping-label"]')
       .text()
       .trim();
     const termLetter = parseTermLetter(header);
     if (!termLetter) return;
 
-    const extracted = extractRules(
+    const root = parseSectionTree(
       $,
-      $(section),
+      $section,
       `${programLabel} ${termLetter}`,
+      warnings,
     );
-    if (extracted.requiredCodes.size > 0) {
-      terms[termLetter] = [...extracted.requiredCodes].sort();
+    if (root.children.length > 0 || root.kind !== "all") {
+      terms[termLetter] = root;
     }
-    if (extracted.choiceGroups.length > 0) {
-      choiceGroupsByTerm[termLetter] = extracted.choiceGroups;
-    }
-    warnings.push(...extracted.warnings);
   });
 
-  return { kind: "engineering", terms, choiceGroupsByTerm, warnings };
+  return { kind: "engineering", terms, warnings };
 }
 
 function parseFlexible(html: string, programLabel: string): ParseResult {
-  const requiredCodes = new Set<string>();
-  const choiceGroups: ChoiceGroup[] = [];
+  const allChildren: RuleNode[] = [];
   const warnings: string[] = [];
   const $ = cheerio.load(html);
 
-  // Flexible programs may have one or more sections; merge them all into one
-  // bucket. In practice it's a single "Required Courses" section, but we
-  // don't depend on that.
+  // Flexible programs may have one or more sections; merge them all under
+  // one root `all` node. In practice it's a single "Required Courses"
+  // section, but we don't depend on that.
   $("section").each((_, section) => {
-    const extracted = extractRules($, $(section), programLabel);
-    for (const c of extracted.requiredCodes) requiredCodes.add(c);
-    choiceGroups.push(...extracted.choiceGroups);
-    warnings.push(...extracted.warnings);
+    const root = parseSectionTree($, $(section), programLabel, warnings);
+    if (root.kind === "all") allChildren.push(...root.children);
+    else allChildren.push(root);
   });
 
-  // Sort choiceGroups by first option for stable JSON across re-runs.
-  choiceGroups.sort((a, b) =>
-    (a.options[0] ?? "").localeCompare(b.options[0] ?? ""),
-  );
-
-  if (requiredCodes.size === 0 && choiceGroups.length === 0) {
+  if (allChildren.length === 0) {
     return { kind: "empty", warnings };
   }
 
   return {
     kind: "flexible",
-    requiredCourses: [...requiredCodes].sort(),
-    choiceGroups,
+    rules: { kind: "all", children: allChildren },
     warnings,
   };
 }
 
-function extractRules(
+/**
+ * Build a rule tree from a `<section>`. Walks the section's top-level `<ul>`
+ * hierarchically rather than flattening every `ruleView-*` descendant. Two
+ * parent-child shapes both produce a tree:
+ *   - DOM-nested: `<li><span>Complete all of the following</span><ul>…children…</ul></li>`
+ *   - Sibling-implied: a leaf `<li data-test="…">` containing meta-prose
+ *     ("Complete N courses from the following choices:") consumes its
+ *     subsequent same-level siblings as children.
+ */
+function parseSectionTree(
   $: cheerio.CheerioAPI,
   $section: ReturnType<cheerio.CheerioAPI>,
   contextLabel: string,
-): ExtractedRules {
-  const requiredCodes = new Set<string>();
-  const choiceGroups: ChoiceGroup[] = [];
-  const warnings: string[] = [];
+  warnings: string[],
+): RuleNode & { kind: "all" } {
+  const topUl = $section
+    .children()
+    .find("ul")
+    .filter((_, ul) => $(ul).children("li").length > 0)
+    .first();
+  if (topUl.length === 0) return { kind: "all", children: [] };
+  const children = walkUl($, topUl, contextLabel, warnings);
+  return { kind: "all", children };
+}
 
-  $section
-    .find('div[data-test^="ruleView-"][data-test$="-result"]')
-    .each((_, rule) => {
-      const fullText = $(rule).text();
-      const colonIdx = fullText.indexOf(":");
-      const prefix = fullText
-        .slice(0, colonIdx >= 0 ? colonIdx : 120)
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (COMPLETE_ALL_RE.test(prefix)) {
-        $(rule)
-          .find("a")
-          .each((_, a) => {
-            const code = normalizeCourseCode($(a).text());
-            if (code) requiredCodes.add(code);
-          });
-        return;
-      }
-
-      const nOf = COMPLETE_N_OF_RE.exec(prefix);
-      if (nOf) {
-        const opts = new Set<string>();
-        $(rule)
-          .find("a")
-          .each((_, a) => {
-            const code = normalizeCourseCode($(a).text());
-            if (code) opts.add(code);
-          });
-        if (opts.size > 0) {
-          choiceGroups.push({
-            description: prefix.replace(/:\s*$/, "").trim(),
-            selectCount: Number(nOf[1]),
-            options: [...opts].sort(),
-          });
+/**
+ * Walk a `<ul>` and produce one RuleNode per logical child. Handles both
+ * DOM-nested wrappers and sibling-implied meta-parent rules.
+ */
+function walkUl(
+  $: cheerio.CheerioAPI,
+  $ul: ReturnType<cheerio.CheerioAPI>,
+  contextLabel: string,
+  warnings: string[],
+): RuleNode[] {
+  const items = collectLiSiblings($, $ul);
+  const out: RuleNode[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const parsed = parseLi($, items[i], contextLabel, warnings);
+    if (parsed === null) continue;
+    if (parsed.kind === "metaParent") {
+      // Consume subsequent siblings as children until end of ul or another
+      // metaParent. Skipped (null) siblings are just noise; non-null siblings
+      // become children.
+      const children: RuleNode[] = [];
+      let j = i + 1;
+      while (j < items.length) {
+        const next = parseLi($, items[j], contextLabel, warnings);
+        if (next !== null) {
+          if (next.kind === "metaParent") break;
+          children.push(next.node);
         }
-        return;
+        j++;
       }
+      out.push({
+        kind: "pick",
+        description: parsed.description,
+        selectMin: parsed.selectMin,
+        selectMax: parsed.selectMax,
+        children,
+      });
+      i = j - 1;
+      continue;
+    }
+    out.push(parsed.node);
+  }
+  return out;
+}
 
-      if (DEFERRED_PROSE_RE.test(prefix)) return;
-
-      // Unrecognized prefix — record so Kuali wording drift is visible.
-      warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
-    });
-
-  const seen = new Set<string>();
-  const dedupedChoiceGroups = choiceGroups.filter((g) => {
-    const key = `${g.selectCount ?? 1}|${g.options.join(",")}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+/**
+ * Gather a `<ul>`'s logical `<li>` children. Kuali sometimes wraps subsets
+ * of children in a `<div>` (for the `rules_groupHeader_37` spacer) — we look
+ * one level into those `<div>`s.
+ */
+function collectLiSiblings(
+  $: cheerio.CheerioAPI,
+  $ul: ReturnType<cheerio.CheerioAPI>,
+): ReturnType<cheerio.CheerioAPI>[] {
+  const out: ReturnType<cheerio.CheerioAPI>[] = [];
+  $ul.children().each((_, child) => {
+    const $child = $(child);
+    if (child.type === "tag" && child.name === "li") {
+      out.push($child);
+    } else if (child.type === "tag" && child.name === "div") {
+      $child.children("li").each((_, li) => {
+        out.push($(li));
+      });
+    }
   });
-  return { requiredCodes, choiceGroups: dedupedChoiceGroups, warnings };
+  return out;
+}
+
+type ParsedLi =
+  | { kind: "node"; node: RuleNode }
+  | {
+      kind: "metaParent";
+      description?: string;
+      selectMin?: number;
+      selectMax?: number;
+    };
+
+function parseLi(
+  $: cheerio.CheerioAPI,
+  $li: ReturnType<cheerio.CheerioAPI>,
+  contextLabel: string,
+  warnings: string[],
+): ParsedLi | null {
+  // DOM-nested wrapper: <li>(no data-test) with a <span> + nested <ul>.
+  const dataTest = $li.attr("data-test");
+  if (!dataTest) {
+    const $directChildren = $li.children();
+    const $span = $directChildren.filter("span").first();
+    const $childUl = $directChildren.filter("ul").first();
+    if ($childUl.length === 0) return null;
+    const wrapperText = $span.text().replace(/\s+/g, " ").trim();
+    const children = walkUl($, $childUl, contextLabel, warnings);
+    if (children.length === 0) return null;
+    const wrapper = wrapWithProse(wrapperText, children);
+    return { kind: "node", node: wrapper };
+  }
+
+  // Leaf rule: <li data-test="ruleView-X"> with <div data-test="ruleView-X-result"> inside.
+  const $result = $li
+    .children('div[data-test^="ruleView-"][data-test$="-result"]')
+    .first();
+  if ($result.length === 0) return null;
+
+  const fullText = $result.text().replace(/\s+/g, " ").trim();
+  const colonIdx = fullText.indexOf(":");
+  const prefix =
+    colonIdx >= 0 ? fullText.slice(0, colonIdx).trim() : fullText.slice(0, 200);
+  const description = prefix.replace(/:\s*$/, "").trim();
+
+  const codes = collectCourseCodes($, $result);
+
+  if (COMPLETE_ALL_RE.test(prefix)) {
+    if (codes.length === 0) return null;
+    return { kind: "node", node: { kind: "courses", courses: codes } };
+  }
+
+  const nOf = COMPLETE_N_OF_RE.exec(prefix);
+  if (nOf) {
+    if (codes.length === 0) return null;
+    const n = Number(nOf[1]);
+    return {
+      kind: "node",
+      node: {
+        kind: "pick",
+        description,
+        selectMin: n,
+        selectMax: n,
+        children: [{ kind: "courses", courses: codes }],
+      },
+    };
+  }
+
+  if (CHOOSE_ANY_RE.test(prefix)) {
+    if (codes.length === 0) return null;
+    return {
+      kind: "node",
+      node: {
+        kind: "pick",
+        description,
+        children: [{ kind: "courses", courses: codes }],
+      },
+    };
+  }
+
+  const noMoreThan = COMPLETE_NO_MORE_THAN_RE.exec(prefix);
+  if (noMoreThan) {
+    if (codes.length === 0) return null;
+    return {
+      kind: "node",
+      node: {
+        kind: "pick",
+        description,
+        selectMax: Number(noMoreThan[1]),
+        children: [{ kind: "courses", courses: codes }],
+      },
+    };
+  }
+
+  const metaParent = COMPLETE_N_FROM_CHOICES_RE.exec(prefix);
+  if (metaParent) {
+    const n = Number(metaParent[1]);
+    return { kind: "metaParent", description, selectMin: n, selectMax: n };
+  }
+
+  if (EXCLUDED_RE.test(prefix)) {
+    if (codes.length === 0) return null;
+    return {
+      kind: "node",
+      node: { kind: "excluded", description, courses: codes },
+    };
+  }
+
+  // Subject-pool prose. Try against the full text (the rule may have colons).
+  const subjectPool = parseSubjectPool(fullText);
+  if (subjectPool) return { kind: "node", node: subjectPool };
+
+  if (DEFERRED_PROSE_RE.test(prefix)) return null;
+
+  warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
+  return null;
+}
+
+function collectCourseCodes(
+  $: cheerio.CheerioAPI,
+  $result: ReturnType<cheerio.CheerioAPI>,
+): string[] {
+  const codes = new Set<string>();
+  $result.find("a").each((_, a) => {
+    const code = normalizeCourseCode($(a).text());
+    if (code) codes.add(code);
+  });
+  return [...codes].sort();
+}
+
+/**
+ * Wrap a list of children based on the prose carried by a DOM wrapper `<li>`.
+ * Only `Complete N of` is structurally meaningful here; everything else
+ * (`Complete all of …`, or unrecognized prose) is treated as a plain `all`
+ * since the children themselves carry the rule shape.
+ */
+function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
+  const nOf = COMPLETE_N_OF_RE.exec(wrapperText);
+  if (nOf) {
+    const n = Number(nOf[1]);
+    return {
+      kind: "pick",
+      description: wrapperText,
+      selectMin: n,
+      selectMax: n,
+      children,
+    };
+  }
+  if (children.length === 1) return children[0];
+  return {
+    kind: "all",
+    ...(wrapperText ? { description: wrapperText } : {}),
+    children,
+  };
+}
+
+/**
+ * Parse a "Complete N additional …" rule into a `subjectPool` node. Returns
+ * null if the prose doesn't match any known variant. Handles:
+ *   - "Complete 2 additional STAT courses at the 300-level"
+ *   - "Complete 3 additional PMATH courses at the 400-level"
+ *   - "Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, CS, …"
+ *   - "Complete 2 additional math courses at the 400-level from the following subject codes: ACTSC, AMATH, …"
+ *   - "Complete 3 additional courses from: ACTSC, AMATH, CO, …"
+ *   - Optional trailing exclusion clause separated by `;`.
+ */
+function parseSubjectPool(fullText: string): RuleNode | null {
+  const head = SUBJECT_POOL_PREFIX_RE.exec(fullText);
+  if (!head) return null;
+  const selectCount = Number(head[1]);
+  let rest = fullText.slice(head[0].length).trim();
+
+  // Optional single-subject prefix ("STAT courses", "PMATH courses", "math courses").
+  let subjectCodes: string[] = [];
+  const subjMatch = rest.match(/^([A-Za-z]+)\s+courses?\b/);
+  if (subjMatch) {
+    const word = subjMatch[1];
+    if (/^[A-Z]{2,8}$/.test(word)) subjectCodes = [word.toUpperCase()];
+    rest = rest.slice(subjMatch[0].length).trim();
+  } else if (/^courses?\b/i.test(rest)) {
+    rest = rest.replace(/^courses?\b/i, "").trim();
+  } else {
+    return null;
+  }
+
+  // Optional "at the X-level" / "at the X- or Y-level".
+  let minLevel: number | undefined;
+  let maxLevel: number | undefined;
+  const levelMatch = rest.match(
+    /^at the\s+(\d+)(?:\s*-?\s*or\s+(\d+))?\s*-?\s*level\b/i,
+  );
+  if (levelMatch) {
+    minLevel = Number(levelMatch[1]);
+    if (levelMatch[2]) maxLevel = Number(levelMatch[2]);
+    rest = rest.slice(levelMatch[0].length).trim();
+  }
+
+  // Optional "from [the following subject codes]: <list>[; <exclusion>]".
+  let exclusions: string[] | undefined;
+  const fromMatch = rest.match(
+    /^from(?:\s+the\s+following\s+subject\s+codes)?:\s*(.+)$/i,
+  );
+  if (fromMatch) {
+    const parts = fromMatch[1].split(";").map((p) => p.trim());
+    const fromSubjects = parts[0]
+      .split(/[,\s]+/)
+      .map((s) => s.trim())
+      .filter((s) => /^[A-Z]{2,8}$/.test(s));
+    if (fromSubjects.length > 0) subjectCodes = fromSubjects;
+    if (parts.length > 1) {
+      exclusions = parts.slice(1).filter((p) => p.length > 0);
+    }
+  }
+
+  if (subjectCodes.length === 0) return null;
+
+  return {
+    kind: "subjectPool",
+    description: fullText,
+    selectCount,
+    subjectCodes,
+    ...(minLevel !== undefined ? { minLevel } : {}),
+    ...(maxLevel !== undefined ? { maxLevel } : {}),
+    ...(exclusions !== undefined ? { exclusions } : {}),
+  };
 }
 
 function parseTermLetter(headerText: string): TermLetter | null {
@@ -242,6 +463,10 @@ function parseTermLetter(headerText: string): TermLetter | null {
 const UNITS_OF_RE = /(\d+(?:\.\d+)?)\s*units?\s+of\s+([^.<]+)/i;
 const REQUIRED_COURSES_RE = /required\s+courses?/i;
 const COMPLETE_N_UNITS_RE = /Complete\s+(\d+(?:\.\d+)?)\s*units?/i;
+
+// Pinned to "en" so description sorting is deterministic across machines
+// regardless of LANG. Constructed once and reused.
+const DESCRIPTION_COLLATOR = new Intl.Collator("en");
 
 /**
  * Parse a Kuali program detail into `ElectiveCategory[]`.
@@ -303,7 +528,7 @@ export function parseElectives(
     const ua = a.unitRequirement ?? Number.POSITIVE_INFINITY;
     const ub = b.unitRequirement ?? Number.POSITIVE_INFINITY;
     if (ua !== ub) return ua - ub;
-    return a.description.localeCompare(b.description);
+    return DESCRIPTION_COLLATOR.compare(a.description, b.description);
   });
 
   return { electives, warnings };
@@ -381,7 +606,9 @@ function parseCourseListsSections(
   });
 
   // Stable order across re-runs, mirroring the choiceGroups sort in parseFlexible.
-  out.sort((a, b) => a.description.localeCompare(b.description));
+  out.sort((a, b) =>
+    DESCRIPTION_COLLATOR.compare(a.description, b.description),
+  );
   return out;
 }
 

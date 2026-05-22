@@ -5,6 +5,85 @@
 **Issue:** [#29](https://github.com/Mathieu-py/uw-elective-finder/issues/29)
 **Informed by:** [#28 diagnostic findings](../../scripts/diagnostic/findings.md)
 
+## Amendment — 2026-05-22 (issue [#43](https://github.com/Mathieu-py/uw-elective-finder/issues/43))
+
+`ChoiceGroup.selectCount` is replaced with explicit `selectMin?: number; selectMax?: number` bounds so the schema can express the three "pick K from a course list" rule shapes uniformly:
+
+- `Complete N of {opts}` → `selectMin: N, selectMax: N`
+- `Choose any of {opts}` → both omitted (any subset, including none)
+- `Complete no more than N from {opts}` → `selectMax: N`, `selectMin` omitted
+
+`ElectiveCategory` is narrowed to **unit-bound** electives only: bucket descriptions (`5.5 units of elective courses`) and unit-bound approved pools (Climate's `Approved Courses List`, `{ unitRequirement: 2.0, approvedCourses: [...] }`). Rule-derived approved-pools (`Choose any`, `Complete no more than N`) live in `choiceGroups` / `choiceGroupsByTerm` going forward — they were never unit-counted, so colocating them with unit electives created a fuzzy semantic boundary.
+
+The inline schema below still shows the original `selectCount` for historical accuracy; the live type is in [`lib/programs.ts`](../../lib/programs.ts). `data/programs.json` was migrated in-place: `{ selectCount: N }` → `{ selectMin: N, selectMax: N }` across 803 entries.
+
+Out of scope for #43 alone: capturing the **parent-quota constraint** that ties sibling rules together (e.g. Combinatorics' "Complete 3 courses from the following choices:" parent over one `Choose any` + five `Complete no more than 1` siblings). This was resolved by the rule-tree refactor amendment below, which represents the parent-quota as a `pick` node wrapping its sibling children.
+
+## Amendment — 2026-05-22 (rule-tree refactor)
+
+The flat fields `requiredCourses` / `choiceGroups` / `choiceGroupsByTerm` are replaced with a single recursive `RuleNode` AST per program (per-term for engineering). The AST captures the parent-quota constraints and the `Complete N additional <SUBJECT>` rules that flat fields cannot represent. The shape mirrors the `PrereqNode` AST in [`lib/prereqs/parse.ts`](../../lib/prereqs/parse.ts).
+
+```ts
+export type RuleNode =
+  | { kind: "all"; description?: string; children: RuleNode[] }
+  | { kind: "pick"; description?: string; selectMin?: number; selectMax?: number; children: RuleNode[] }
+  | { kind: "subjectPool"; description: string; selectCount: number; subjectCodes: string[]; minLevel?: number; maxLevel?: number; exclusions?: string[] }
+  | { kind: "courses"; courses: string[] }
+  | { kind: "excluded"; description?: string; courses: string[] };
+```
+
+Kuali rule-shape mapping:
+
+| Kuali rule | Node |
+| --- | --- |
+| Section root / `Complete all of the following` | `all` |
+| `Complete N of the following` | `pick { selectMin: N, selectMax: N }` |
+| `Choose any (of \| course from) the following` | `pick { /* both omitted */ }` |
+| `Complete no more than N from the following` | `pick { selectMax: N }` |
+| `Complete N courses from the following choices:` (meta-prose parent) | `pick { selectMin: N, selectMax: N }` over its subsequent same-level siblings |
+| `Complete N additional <SUBJECT> courses at the X-level [from: …]` | `subjectPool` |
+| `The following cannot be used towards this academic plan:` | `excluded` |
+| Bare `<a>`-link list inside a parent | `courses` |
+
+Program shapes become:
+
+```ts
+export interface EngineeringProgram {
+  kind: "engineering";
+  terms: Record<TermLetter, RuleNode>;  // was Record<TermLetter, string[]>
+  // choiceGroupsByTerm removed — derivable
+  ...
+}
+export interface FlexibleProgram {
+  kind: "flexible";
+  rules: RuleNode;                       // was requiredCourses + choiceGroups
+  ...
+}
+```
+
+`Specialization` gains the same `rules?: RuleNode` shape.
+
+**Derived helpers** in [`lib/programs.ts`](../../lib/programs.ts) preserve the legacy API surface so callers don't break:
+- `getRequiredCourses(program)` — walks the tree under `all`-only paths. Also promotes a `pick(N, N)` whose total course-leaf options equal `N` (single-option mandatory rules) to required, since Kuali emits some mandatory rules as `pick(1,1)` over one course instead of `all`.
+- `getChoiceGroups` / `getChoiceGroupsByTerm` — flatten leaf-`pick` nodes back into the legacy `ChoiceGroup[]` shape for any consumer not yet tree-aware.
+- `getSubjectPools` — list of `subjectPool` nodes for UI.
+- `getExcludedCourses` — flat union of courses across `excluded` nodes; the seeder uses this to warn rather than auto-complete when a student claims a barred course.
+- `walkRule`, `requiredCoursesIn`, `flattenChoiceGroups` — tree-level helpers.
+
+**Correctness note (not a regression).** The old parser used `cheerio.find('a')` which recurses into descendant rules; for any `Complete all` rule that DOM-wrapped nested `Complete N of` rules, it incorrectly slurped the nested options into `requiredCourses`. The new hierarchical walker correctly classifies them as `pick` children. Effect: 32 programs see fewer "required" courses post-refactor (h-science, mathematical-finance, 4g-political-science, etc.) — those courses were over-seeded before and are now correctly recognized as choice options.
+
+**New rules captured** that the previous parser dropped silently:
+- 57 `subjectPool` nodes (e.g. Combinatorics "Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, …")
+- 3 meta-parent `Complete N courses from the following choices` rollups (Combinatorics' parent-quota constraint)
+- 18 `Choose any` picks + 13 `Complete no more than` picks (already captured by #43; now structurally nested where applicable)
+- 12 `excluded` nodes (42 course-mentions) — programs like H-Chemistry, H-Computer-Science-BMath, and several Earth Sciences specializations that explicitly bar certain intro-level courses from counting toward the degree. Surfaced via a one-shot audit of `DEFERRED_PROSE_RE` rules with `<a>` links.
+
+`ChoiceGroup` and `ElectiveCategory` types are retained for derived views; the live source of truth is the tree. The inline schema in the Decision block below is left intact for historical accuracy; the live types are in `lib/programs.ts`.
+
+Dependency notes:
+- #39 (variant-picker modal) should consume `RuleNode` directly. Render `pick` with bounds-aware controls, `subjectPool` with a subject-code filter UI, `all` by recursing, `courses` as a required-course list.
+- #42 (FilterState `choiceGroupSelections`) keying will need path-based IDs once the tree is exposed to UI (e.g. `term=2A.children[3].children[1]`); the current flat-key scheme can't disambiguate nested picks.
+
 ## Context
 
 The current `Program` shape ([`lib/programs.ts:16-21`](../../lib/programs.ts#L16-L21)) was designed against the engineering pattern of a fixed per-term schedule:
