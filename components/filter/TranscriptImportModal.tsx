@@ -3,15 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
 import {
+  buildImportPayload,
+  categorize,
+  type Categorized,
+  type TranscriptImportPayload,
+} from "@/lib/transcript/applyHelpers";
+import {
   parseTranscript,
   type ParsedCourse,
 } from "@/lib/transcript/parse";
 
-export interface TranscriptImportPayload {
-  codes: string[];
-  programId: string | null;
-  currentTerm: TermLetter | null;
-}
+export type { TranscriptImportPayload } from "@/lib/transcript/applyHelpers";
 
 interface Props {
   isOpen: boolean;
@@ -19,14 +21,6 @@ interface Props {
   onApply: (payload: TranscriptImportPayload) => void;
   allCourseCodes: string[];
   currentCompletedCount: number;
-}
-
-interface Categorized {
-  passed: ParsedCourse[];
-  inProgress: ParsedCourse[];
-  transfer: ParsedCourse[];
-  skipped: ParsedCourse[];
-  unrecognized: ParsedCourse[];
 }
 
 export function TranscriptImportModal({
@@ -60,39 +54,28 @@ export function TranscriptImportModal({
 
   const parseResult = useMemo(() => parseTranscript(text), [text]);
   const catalog = useMemo(() => new Set(allCourseCodes), [allCourseCodes]);
+  const categorized = useMemo<Categorized>(
+    () => categorize(parseResult, catalog),
+    [parseResult, catalog],
+  );
 
-  const categorized = useMemo<Categorized>(() => {
-    const out: Categorized = {
-      passed: [],
-      inProgress: [],
-      transfer: [],
-      skipped: [],
-      unrecognized: [],
-    };
-    for (const c of parseResult.courses) {
-      if (c.status === "skipped") {
-        out.skipped.push(c);
-        continue;
-      }
-      if (c.status === "unrecognized" || !catalog.has(c.code)) {
-        out.unrecognized.push(c);
-        continue;
-      }
-      if (c.status === "passed") out.passed.push(c);
-      else if (c.status === "in-progress") out.inProgress.push(c);
-      else if (c.status === "transfer") out.transfer.push(c);
-    }
-    return out;
-  }, [parseResult, catalog]);
-
-  const includedUnrecognized = categorized.unrecognized.filter(
-    (c) => !excluded.has(c.code),
+  // Set of unrecognized codes the user has opted to INCLUDE. Today (Commit 3)
+  // the default is "all included unless excluded"; Commit 4 flips this to
+  // "all excluded unless included". Stored as a Set for fast membership.
+  const includedUnrecognizedSet = useMemo(
+    () =>
+      new Set(
+        categorized.unrecognized
+          .map((c) => c.code)
+          .filter((code) => !excluded.has(code)),
+      ),
+    [categorized.unrecognized, excluded],
   );
   const includedCount =
     categorized.passed.length +
     categorized.inProgress.length +
     categorized.transfer.length +
-    includedUnrecognized.length;
+    includedUnrecognizedSet.size;
 
   const detectedProgramName = parseResult.detectedProgramId
     ? PROGRAMS[parseResult.detectedProgramId]?.name
@@ -108,16 +91,7 @@ export function TranscriptImportModal({
   }
 
   function handleApply() {
-    const codes = new Set<string>();
-    for (const c of categorized.passed) codes.add(c.code);
-    for (const c of categorized.inProgress) codes.add(c.code);
-    for (const c of categorized.transfer) codes.add(c.code);
-    for (const c of includedUnrecognized) codes.add(c.code);
-    onApply({
-      codes: [...codes].sort(),
-      programId: parseResult.detectedProgramId,
-      currentTerm: parseResult.detectedCurrentTerm,
-    });
+    onApply(buildImportPayload(parseResult, categorized, includedUnrecognizedSet));
     setText("");
     setExcluded(new Set());
   }
