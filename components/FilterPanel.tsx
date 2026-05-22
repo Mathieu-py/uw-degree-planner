@@ -5,6 +5,10 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Chip } from "./filter/Chip";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { PrefixPicker } from "./filter/PrefixPicker";
+import {
+  TranscriptImportModal,
+  type TranscriptImportPayload,
+} from "./filter/TranscriptImportModal";
 import { rebaseCompletedCourses } from "@/lib/completedCourses";
 import {
   BROWSE_QS_STORAGE_KEY,
@@ -55,6 +59,7 @@ export function FilterPanel({
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
+  const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
 
   const completedCoursesRef = useRef(completedCourses);
   useEffect(() => {
@@ -105,6 +110,19 @@ export function FilterPanel({
     }
 
     commit(next);
+  }
+
+  // Apply a parsed transcript: replace completedCourses with the parsed list
+  // and auto-fill programId/currentTerm. `patch` triggers a rebase using the
+  // pre-import list; we then override with the imported codes (React batches
+  // both state updates so the rebased value is never observable).
+  function handleTranscriptApply(payload: TranscriptImportPayload) {
+    patch({
+      programId: payload.programId,
+      currentTerm: payload.currentTerm,
+    });
+    onCompletedChange(payload.codes);
+    setTranscriptModalOpen(false);
   }
 
   return (
@@ -187,7 +205,22 @@ export function FilterPanel({
           allCourseCodes={allCourseCodes}
           onChange={onCompletedChange}
         />
+        <button
+          type="button"
+          onClick={() => setTranscriptModalOpen(true)}
+          className="self-start rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
+        >
+          ↗ Paste transcript
+        </button>
       </Section>
+
+      <TranscriptImportModal
+        isOpen={transcriptModalOpen}
+        onClose={() => setTranscriptModalOpen(false)}
+        onApply={handleTranscriptApply}
+        allCourseCodes={allCourseCodes}
+        currentCompletedCount={completedCourses.length}
+      />
     </aside>
   );
 }
