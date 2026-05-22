@@ -93,8 +93,8 @@ describe("decodeFilterState", () => {
   });
 
   it("accepts a known program id and normalises casing", () => {
-    expect(decodeFilterState(new URLSearchParams("prog=syde")).programId).toBe("syde");
-    expect(decodeFilterState(new URLSearchParams("prog=SYDE")).programId).toBe("syde");
+    expect(decodeFilterState(new URLSearchParams("prog=systems-design-engineering")).programId).toBe("systems-design-engineering");
+    expect(decodeFilterState(new URLSearchParams("prog=SYSTEMS-DESIGN-ENGINEERING")).programId).toBe("systems-design-engineering");
   });
 
   it("drops unknown program ids to null", () => {
@@ -131,7 +131,7 @@ describe("encodeFilterState", () => {
   it("never emits completedCourses to the URL (profile data lives in localStorage)", () => {
     const state: FilterState = {
       ...DEFAULT_FILTER_STATE,
-      programId: "syde",
+      programId: "systems-design-engineering",
       currentTerm: "3A",
       completedCourses: ["cs115", "math116", "math117"],
     };
@@ -177,7 +177,7 @@ describe("mergeFilterStateIntoParams", () => {
       hideUnmetPrereqs: true,
       minUseful: 0.6,
       minEasy: 0.3,
-      programId: "syde",
+      programId: "systems-design-engineering",
       currentTerm: "3A",
     };
     const merged = mergeFilterStateIntoParams(new URLSearchParams("s=code"), state);
@@ -209,7 +209,7 @@ describe("round trip", () => {
       hideUnmetPrereqs: true,
       minUseful: 0.6,
       minEasy: 0.3,
-      programId: "syde",
+      programId: "systems-design-engineering",
       currentTerm: "3A",
     };
     expect(roundTrip(state)).toEqual({ ...state, completedCourses: [] });

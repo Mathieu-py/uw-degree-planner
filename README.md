@@ -24,7 +24,8 @@ pnpm start            # run the production build
 pnpm lint             # eslint
 pnpm test             # vitest (single run)
 pnpm test:watch       # vitest in watch mode
-pnpm fetch-courses    # refresh data/ from UWFlow
+pnpm fetch-courses    # refresh data/courses.*.json from UWFlow
+pnpm scrape-programs  # refresh data/programs.json from the UW calendar
 ```
 
 ## Project layout
@@ -33,11 +34,18 @@ pnpm fetch-courses    # refresh data/ from UWFlow
 - `components/` — UI components (`CourseBrowser`, `FilterPanel`, …)
 - `lib/` — filter logic, prereq parsing, types, tests
 - `scripts/fetch-uwflow.ts` — pulls course data from the UWFlow GraphQL API into `data/`
-- `data/` — cached course JSON, keyed by UW term code
+- `scripts/scrape-programs.ts` — pulls program term schedules from the UW academic calendar into `data/programs.json`
+- `data/` — committed JSON snapshots (course data per term, plus the program directory)
 
-## Data source
+## Data sources
 
-Course ratings, metadata, and section/seat counts come from [UWFlow](https://uwflow.com) via their public GraphQL endpoint. The snapshot in `data/` is committed; refresh it manually with `pnpm fetch-courses`.
+**Courses**: ratings, metadata, and section/seat counts come from [UWFlow](https://uwflow.com) via their public GraphQL endpoint. Refresh with `pnpm fetch-courses`.
+
+**Programs**: term-by-term schedules come from the UWaterloo academic calendar's Kuali backend (`uwaterloocm.kuali.co/api/v1/catalog/`). Refresh with `pnpm scrape-programs` — typically once per academic year when the calendar is republished, or whenever you notice the `asOf` dates in `data/programs.json` are stale.
+
+If the calendar is republished with a new catalog id, the scraper will return 404s; find the new id by opening the calendar in a browser with devtools open, watching the request to `/api/v1/catalog/programs/{id}`, and updating `CATALOG_ID` in [scripts/scrape-programs.ts](scripts/scrape-programs.ts).
+
+Only programs whose calendar entry defines a per-term required-course list (currently 16 — 14 Engineering majors plus Architectural Studies and Medical Sciences) are emitted to `data/programs.json`. Programs with a flexible / sub-plan curriculum (most of Math, Arts, Science, AHS, Environment) are dropped — the current parser can't extract their required courses, and a parser refactor is tracked in [issue #15](https://github.com/Mathieu-py/uw-elective-finder/issues/15). Until that lands, those students use the transcript-import flow instead of program seeding.
 
 ## Notes
 
