@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   PROGRAMS,
   TERM_LETTERS,
-  hasSchedule,
   inferCompleted,
   isKnownProgram,
   isTermLetter,
@@ -53,29 +52,11 @@ describe("programs.json schema integrity", () => {
       }
     }
   });
-});
 
-describe("hasSchedule", () => {
-  it("returns true when at least one term has courses", () => {
-    expect(hasSchedule(PROGRAMS["systems-design-engineering"])).toBe(true);
-  });
-
-  it("returns false for a program with every term empty", () => {
-    expect(
-      hasSchedule({
-        name: "Empty",
-        asOf: "2026-01-01",
-        terms: {
-          "1A": [], "1B": [], "2A": [], "2B": [],
-          "3A": [], "3B": [], "4A": [], "4B": [],
-        },
-      }),
-    ).toBe(false);
-  });
-
-  it("every program currently in PROGRAMS has schedule data (post-prune invariant)", () => {
+  it("every program has at least one non-empty term (scraper enforces this)", () => {
     for (const [id, prog] of Object.entries(PROGRAMS)) {
-      expect(hasSchedule(prog), `${id} should have schedule data`).toBe(true);
+      const hasAny = TERM_LETTERS.some((t) => prog.terms[t].length > 0);
+      expect(hasAny, `${id} should have at least one non-empty term`).toBe(true);
     }
   });
 });

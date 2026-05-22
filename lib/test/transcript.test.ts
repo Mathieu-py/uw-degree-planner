@@ -52,7 +52,7 @@ describe("parseTranscript — typical undergrad", () => {
 
   it("includes IP courses as in-progress", () => {
     const ip = result.courses
-      .filter((c) => c.status === "in-progress")
+      .filter((c) => c.status === "inProgress")
       .map((c) => c.code)
       .sort();
     expect(ip).toEqual(["math215", "syde201"]);
@@ -351,7 +351,7 @@ SYDE 223  Data Structures and Algorithms
       "syde192", "syde192l", "syde223",
     ]) {
       expect(byCode.get(code)?.status, `${code} should be in-progress`).toBe(
-        "in-progress",
+        "inProgress",
       );
     }
   });

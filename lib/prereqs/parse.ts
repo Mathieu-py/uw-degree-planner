@@ -38,6 +38,7 @@ const LEVEL_RE = /^level at least (\d[a-z])/i;
 const ONE_OF_RE = /^one of\b/i;
 const OR_RE = /^or\b/i;
 const AND_RE = /^and\b/i;
+const RAW_RE = /^[^(),;\/]+/;
 
 function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -117,7 +118,7 @@ function tokenize(input: string): Token[] {
     }
 
     // Everything else: grab a run of word chars + spaces as RAW.
-    const rawMatch = rest.match(/^[^(),;\/]+/);
+    const rawMatch = rest.match(RAW_RE);
     if (rawMatch) {
       const raw = rawMatch[0].trim();
       if (raw.length > 0) tokens.push({ kind: "RAW", text: raw });

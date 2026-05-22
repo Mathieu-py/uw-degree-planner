@@ -2,7 +2,7 @@ import type { TermLetter } from "../programs";
 
 export type CourseStatus =
   | "passed"
-  | "in-progress"
+  | "inProgress"
   | "skipped"
   | "transfer"
   | "unrecognized";

@@ -42,7 +42,7 @@ export function categorize(
       continue;
     }
     if (c.status === "passed") out.passed.push(c);
-    else if (c.status === "in-progress") out.inProgress.push(c);
+    else if (c.status === "inProgress") out.inProgress.push(c);
     else if (c.status === "transfer") out.transfer.push(c);
   }
   return out;
@@ -58,13 +58,14 @@ export function buildImportPayload(
   categorized: Categorized,
   includedUnrecognized: ReadonlySet<string>,
 ): TranscriptImportPayload {
-  const codes = new Set<string>();
-  for (const c of categorized.passed) codes.add(c.code);
-  for (const c of categorized.inProgress) codes.add(c.code);
-  for (const c of categorized.transfer) codes.add(c.code);
-  for (const c of categorized.unrecognized) {
-    if (includedUnrecognized.has(c.code)) codes.add(c.code);
-  }
+  const codes = new Set<string>([
+    ...categorized.passed.map((c) => c.code),
+    ...categorized.inProgress.map((c) => c.code),
+    ...categorized.transfer.map((c) => c.code),
+    ...categorized.unrecognized
+      .filter((c) => includedUnrecognized.has(c.code))
+      .map((c) => c.code),
+  ]);
   return {
     codes: [...codes].sort(),
     programId: parseResult.detectedProgramId,

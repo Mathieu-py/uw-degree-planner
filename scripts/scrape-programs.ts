@@ -86,19 +86,20 @@ async function main() {
       );
       allWarnings.push(...warnings);
       const hasAny = Object.values(terms).some((arr) => arr.length > 0);
-      if (hasAny) withTerms++;
-      else {
+      if (hasAny) {
+        withTerms++;
+        out[slug] = {
+          name: p.title,
+          asOf: today,
+          source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
+          terms,
+        };
+        console.log("ok");
+      } else {
         withoutTerms++;
         skippedNoTerms.push(slug);
+        console.log("skipped (no term data)");
       }
-
-      out[slug] = {
-        name: p.title,
-        asOf: today,
-        source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
-        terms,
-      };
-      console.log(hasAny ? "ok" : "(no term data)");
     } catch (e) {
       console.log(`ERROR: ${(e as Error).message}`);
     }
@@ -115,14 +116,14 @@ async function main() {
   const outPath = path.join(dataDir, "programs.json");
   await writeFile(outPath, JSON.stringify(sorted, null, 2), "utf-8");
   console.log(
-    `\nWrote ${path.relative(process.cwd(), outPath)}: ${Object.keys(sorted).length} programs (${withTerms} with term data, ${withoutTerms} empty)`,
+    `\nWrote ${path.relative(process.cwd(), outPath)}: ${withTerms} programs (${withoutTerms} skipped for having no term-by-term data)`,
   );
 
   if (skippedNoTerms.length > 0) {
     console.error(
-      `\n${skippedNoTerms.length} programs have no term-by-term data ` +
-        `(emitted with empty term arrays; these are typically Math/Arts ` +
-        `programs that use a flexible flat course-requirement structure):`,
+      `\n${skippedNoTerms.length} programs skipped (no term-by-term data ` +
+        `— typically Math/Arts programs that use a flexible flat ` +
+        `course-requirement structure rather than a per-term schedule):`,
     );
     for (const s of skippedNoTerms) console.error(`  ${s}`);
   }

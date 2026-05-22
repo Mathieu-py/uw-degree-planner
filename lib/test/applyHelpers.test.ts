@@ -45,7 +45,7 @@ describe("categorize", () => {
   it("buckets each status into its corresponding array", () => {
     const r = result([
       course("cs135", "passed"),
-      course("cs136", "in-progress"),
+      course("cs136", "inProgress"),
       course("math137", "transfer"),
       course("cs999", "skipped"),
       course("xyz000", "unrecognized"),
@@ -86,7 +86,7 @@ describe("buildImportPayload", () => {
   it("includes passed + in-progress + transfer codes; omits skipped", () => {
     const c: Categorized = {
       passed: [course("cs135", "passed")],
-      inProgress: [course("cs136", "in-progress")],
+      inProgress: [course("cs136", "inProgress")],
       transfer: [course("math137", "transfer")],
       skipped: [course("cs999", "skipped")],
       unrecognized: [],
@@ -129,7 +129,7 @@ describe("buildImportPayload", () => {
   it("returns codes sorted and deduped", () => {
     const c: Categorized = {
       passed: [course("math137", "passed"), course("cs135", "passed")],
-      inProgress: [course("cs135", "in-progress")], // dup of passed
+      inProgress: [course("cs135", "inProgress")], // dup of passed
       transfer: [course("math137", "transfer")], // dup of passed
       skipped: [],
       unrecognized: [],

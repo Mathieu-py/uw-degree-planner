@@ -11,8 +11,8 @@ import {
 } from "./filter/TranscriptImportModal";
 import { rebaseCompletedCourses } from "@/lib/completedCourses";
 import { applyTranscriptToFilterState } from "@/lib/transcript/applyHelpers";
+import { buildBrowseUrl } from "@/lib/browseUrl";
 import {
-  BROWSE_QS_STORAGE_KEY,
   DEFAULT_FILTER_STATE,
   decodeFilterState,
   mergeFilterStateIntoParams,
@@ -21,10 +21,8 @@ import {
   PROGRAMS,
   TERM_LETTERS,
   type TermLetter,
-  hasSchedule,
   isTermLetter,
 } from "@/lib/programs";
-import { safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
 
 interface Props {
@@ -37,13 +35,12 @@ interface Props {
 
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
 
-// Only programs with a real per-term required-course list are useful seeds.
-// The scraper emits empties for programs whose Kuali entry lacks a term-by-
-// term schedule (most non-Engineering majors) — hiding them avoids a silent
-// no-op when the user picks one.
-const SORTED_PROGRAMS_WITH_SCHEDULE = Object.entries(PROGRAMS)
-  .filter(([, p]) => hasSchedule(p))
-  .sort(([, a], [, b]) => a.name.localeCompare(b.name));
+const SORTED_PROGRAMS = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
+  a.name.localeCompare(b.name),
+);
+
+const SELECT_CLASS =
+  "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
 
 // state.levels === [] means "all four buckets". Selecting all four (or none) collapses back to [].
 function toggleLevel(current: readonly number[], lvl: number): number[] {
@@ -74,15 +71,13 @@ export function FilterPanel({
 
   const commit = useCallback(
     (next: FilterState) => {
-      // Read the live querystring so sort params (s, d) survive a filter change.
-      const current = typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search)
-        : new URLSearchParams();
-      const merged = mergeFilterStateIntoParams(current, next);
-      merged.delete("p");
-      const qs = merged.toString();
-      const url = qs ? `${pathname}?${qs}` : pathname;
-      safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
+      // mergeFilterStateIntoParams preserves sort params (s, d) so a filter
+      // change doesn't drop them.
+      const url = buildBrowseUrl(pathname, (params) => {
+        const merged = mergeFilterStateIntoParams(params, next);
+        merged.delete("p");
+        return merged;
+      });
       startTransition(() => {
         router.replace(url, { scroll: false });
       });
@@ -242,17 +237,6 @@ function ProgramSeeder({
   const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
   const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
 
-  // If the selected program isn't in the schedule-having set (e.g. a stale URL
-  // like ?prog=3g-anthropology, or a slug that pre-dated the catalog refresh),
-  // surface it as a pinned option so the user can see and clear it. Without
-  // this, <select> with an unknown value would render as empty.
-  const selectedNotInList =
-    selectedProgram &&
-    !SORTED_PROGRAMS_WITH_SCHEDULE.some(([id]) => id === state.programId);
-
-  const selectClass =
-    "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
-
   return (
     <div className="flex flex-col gap-2">
       <label className="flex flex-col gap-1">
@@ -260,15 +244,10 @@ function ProgramSeeder({
         <select
           value={state.programId ?? ""}
           onChange={(e) => patch({ programId: e.target.value || null })}
-          className={selectClass}
+          className={SELECT_CLASS}
         >
           <option value="">Select a program…</option>
-          {selectedNotInList && state.programId && (
-            <option value={state.programId}>
-              {selectedProgram.name} (no schedule data)
-            </option>
-          )}
-          {SORTED_PROGRAMS_WITH_SCHEDULE.map(([id, p]) => (
+          {SORTED_PROGRAMS.map(([id, p]) => (
             <option key={id} value={id}>{p.name}</option>
           ))}
         </select>
@@ -281,7 +260,7 @@ function ProgramSeeder({
           onChange={(e) =>
             patch({ currentTerm: isTermLetter(e.target.value) ? e.target.value : null })
           }
-          className={selectClass}
+          className={SELECT_CLASS}
         >
           <option value="">Select a term…</option>
           {TERM_LETTERS.map((t: TermLetter) => (

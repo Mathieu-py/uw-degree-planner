@@ -33,11 +33,31 @@ const ATTEMPTED_EARNED_RE = /\b\d+\.\d+\s+\d+\.\d+\b/;
 // in regular term sections with no Attempted/Earned. Numeric grades are NOT
 // in this set: a bare "2" without columns can't be distinguished from a
 // description word and must be treated as a future enrollment.
-const NON_NUMERIC_GRADE_RE = /^(TR|IP|F|W|WD|NCR|AU|INC|DNW|CR|P)$/i;
+//
+// Single source of truth: NON_NUMERIC_GRADE_RE is derived from the keys so the
+// detector and the classifier can't drift out of sync.
+const NON_NUMERIC_GRADES: Record<string, Exclude<CourseStatus, "unrecognized">> = {
+  TR: "transfer",
+  IP: "inProgress",
+  CR: "passed",
+  P: "passed",
+  F: "skipped",
+  W: "skipped",
+  WD: "skipped",
+  NCR: "skipped",
+  AU: "skipped",
+  INC: "skipped",
+  DNW: "skipped",
+};
+
+const NON_NUMERIC_GRADE_RE = new RegExp(
+  `^(${Object.keys(NON_NUMERIC_GRADES).join("|")})$`,
+  "i",
+);
 
 const STATUS_PRIORITY: Record<CourseStatus, number> = {
   passed: 5,
-  "in-progress": 4,
+  inProgress: 4,
   transfer: 3,
   skipped: 2,
   unrecognized: 1,
@@ -49,16 +69,6 @@ type SectionState =
   | { kind: "term"; label: string; studyIndex: number | null };
 
 export function parseTranscript(text: string): TranscriptParseResult {
-  if (!text.trim()) {
-    return {
-      detectedProgramId: null,
-      detectedCurrentTerm: null,
-      rawPlanText: null,
-      courses: [],
-      warnings: [],
-    };
-  }
-
   const lines = text.split(/\r?\n/);
 
   // Collect every Plan:/Program: candidate so we can pick the first one that
@@ -117,7 +127,7 @@ export function parseTranscript(text: string): TranscriptParseResult {
     // WKRPT rows don't contribute to completedCourses and don't make their
     // containing term count as a study term — the student didn't take real
     // coursework. Skip entirely.
-    if (/^wkrpt/.test(code)) continue;
+    if (code.startsWith("wkrpt")) continue;
 
     // First real course in a term commits the term as a study term.
     if (currentSection.kind === "term" && currentSection.studyIndex === null) {
@@ -129,32 +139,26 @@ export function parseTranscript(text: string): TranscriptParseResult {
     const lastToken = tokens[tokens.length - 1] ?? "";
     const hasGradeColumns = ATTEMPTED_EARNED_RE.test(tail);
 
-    // Disambiguation hierarchy for the row's status:
-    //   1. Attempted/Earned columns present → use last token as grade.
-    //   2. No columns but last token is a non-numeric grade code (TR, CR, IP,
-    //      F, W, WD, NCR, AU, INC, DNW, P) → use it (handles backdated
-    //      transfer credits inside a term section).
-    //   3. No columns, no recognized grade token, inside a term section →
-    //      future enrollment; classify as in-progress, ignore last token.
-    //   4. Anything else falls through to classifyStatus with whatever the
-    //      last token is — preserves transfer-section behavior.
-    let rawGrade: string;
-    let status: CourseStatus;
-    if (hasGradeColumns || NON_NUMERIC_GRADE_RE.test(lastToken)) {
-      rawGrade = lastToken;
-      status = classifyStatus({ rawGrade, section: currentSection });
-    } else if (currentSection.kind === "term") {
-      rawGrade = "";
-      status = "in-progress";
-    } else {
-      rawGrade = lastToken;
-      status = classifyStatus({ rawGrade, section: currentSection });
-    }
+    // A row is a future enrollment when it's inside a term section but has
+    // neither Attempted/Earned columns nor a recognized non-numeric grade —
+    // the "last token" then is a description word (e.g. "2" from "Calculus
+    // 2"), not a grade. Treat as in-progress with no grade. Every other
+    // shape delegates to classifyStatus on the last token (handles past
+    // graded rows, backdated TR/CR rows, and transfer-section rows).
+    const isFutureEnrollment =
+      !hasGradeColumns &&
+      !NON_NUMERIC_GRADE_RE.test(lastToken) &&
+      currentSection.kind === "term";
+    const rawGrade = isFutureEnrollment ? "" : lastToken;
+    const status: CourseStatus = isFutureEnrollment
+      ? "inProgress"
+      : classifyStatus({ rawGrade, section: currentSection });
 
-    if (status === "in-progress" && currentSection.kind === "term") {
-      currentTermIPIdx = currentSection.studyIndex ?? currentTermIPIdx;
-    } else if (status === "passed" && currentSection.kind === "term") {
-      if (
+    if (currentSection.kind === "term") {
+      if (status === "inProgress") {
+        currentTermIPIdx = currentSection.studyIndex ?? currentTermIPIdx;
+      } else if (
+        status === "passed" &&
         currentSection.studyIndex !== null &&
         currentSection.studyIndex > lastPassedTermIdx
       ) {
@@ -238,10 +242,9 @@ function classifyStatus({
   rawGrade: string;
   section: SectionState;
 }): CourseStatus {
-  if (section.kind === "transfer" || rawGrade === "TR") return "transfer";
-  if (rawGrade === "IP") return "in-progress";
-  if (/^(F|W|WD|NCR|AU|INC|DNW)$/i.test(rawGrade)) return "skipped";
-  if (/^(CR|P)$/i.test(rawGrade)) return "passed";
+  if (section.kind === "transfer") return "transfer";
+  const upper = rawGrade.toUpperCase();
+  if (upper in NON_NUMERIC_GRADES) return NON_NUMERIC_GRADES[upper];
   if (/^\d+(?:\.\d+)?$/.test(rawGrade)) {
     return parseFloat(rawGrade) >= 50 ? "passed" : "skipped";
   }
@@ -260,19 +263,22 @@ function normalizeProgramName(s: string): string {
     .trim();
 }
 
-export function matchProgramSlug(planText: string): string | null {
-  const needle = normalizeProgramName(planText);
-  if (!needle) return null;
-
-  const entries = Object.entries(PROGRAMS).map(([id, p]) => ({
+// Precomputed at module load — PROGRAMS is static, so normalizing every name
+// on each matchProgramSlug call was wasted work.
+const NORMALIZED_PROGRAMS: ReadonlyArray<{ id: string; normalized: string }> =
+  Object.entries(PROGRAMS).map(([id, p]) => ({
     id,
     normalized: normalizeProgramName(p.name),
   }));
 
-  const exact = entries.filter((e) => e.normalized === needle);
+export function matchProgramSlug(planText: string): string | null {
+  const needle = normalizeProgramName(planText);
+  if (!needle) return null;
+
+  const exact = NORMALIZED_PROGRAMS.filter((e) => e.normalized === needle);
   if (exact.length === 1) return exact[0].id;
 
-  const substr = entries.filter((e) => e.normalized.includes(needle));
+  const substr = NORMALIZED_PROGRAMS.filter((e) => e.normalized.includes(needle));
   if (substr.length === 1) return substr[0].id;
 
   return null;
