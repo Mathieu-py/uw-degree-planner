@@ -32,7 +32,7 @@ export function TranscriptImportModal({
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [text, setText] = useState("");
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [included, setIncluded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -48,7 +48,7 @@ export function TranscriptImportModal({
   // open. Driven by user action (Cancel / Esc / Apply), not a render effect.
   function handleClose() {
     setText("");
-    setExcluded(new Set());
+    setIncluded(new Set());
     onClose();
   }
 
@@ -59,30 +59,23 @@ export function TranscriptImportModal({
     [parseResult, catalog],
   );
 
-  // Set of unrecognized codes the user has opted to INCLUDE. Today (Commit 3)
-  // the default is "all included unless excluded"; Commit 4 flips this to
-  // "all excluded unless included". Stored as a Set for fast membership.
-  const includedUnrecognizedSet = useMemo(
-    () =>
-      new Set(
-        categorized.unrecognized
-          .map((c) => c.code)
-          .filter((code) => !excluded.has(code)),
-      ),
-    [categorized.unrecognized, excluded],
-  );
+  // `included` is the set of unrecognized codes the user has opted IN. The
+  // unrecognized bucket is excluded by default (Commit 4) because most
+  // unrecognized entries are placeholder rows or codes the user actually
+  // doesn't want as completed courses; check-to-include avoids silently
+  // polluting the completed-courses list.
   const includedCount =
     categorized.passed.length +
     categorized.inProgress.length +
     categorized.transfer.length +
-    includedUnrecognizedSet.size;
+    included.size;
 
   const detectedProgramName = parseResult.detectedProgramId
     ? PROGRAMS[parseResult.detectedProgramId]?.name
     : null;
 
-  function toggleExcluded(code: string) {
-    setExcluded((prev) => {
+  function toggleIncluded(code: string) {
+    setIncluded((prev) => {
       const next = new Set(prev);
       if (next.has(code)) next.delete(code);
       else next.add(code);
@@ -91,9 +84,9 @@ export function TranscriptImportModal({
   }
 
   function handleApply() {
-    onApply(buildImportPayload(parseResult, categorized, includedUnrecognizedSet));
+    onApply(buildImportPayload(parseResult, categorized, included));
     setText("");
-    setExcluded(new Set());
+    setIncluded(new Set());
   }
 
   const hasInput = text.trim().length > 0;
@@ -182,8 +175,8 @@ export function TranscriptImportModal({
               {categorized.unrecognized.length > 0 && (
                 <UnrecognizedDetails
                   items={categorized.unrecognized}
-                  excluded={excluded}
-                  onToggle={toggleExcluded}
+                  included={included}
+                  onToggle={toggleIncluded}
                 />
               )}
 
@@ -285,17 +278,17 @@ function CategoryDetails({
 
 function UnrecognizedDetails({
   items,
-  excluded,
+  included,
   onToggle,
 }: {
   items: ParsedCourse[];
-  excluded: Set<string>;
+  included: Set<string>;
   onToggle: (code: string) => void;
 }) {
   return (
     <details open className="text-amber-700 dark:text-amber-400">
       <summary className="cursor-pointer select-none">
-        ⚠ Unrecognized codes ({items.length}) — review
+        ⚠ Unrecognized codes ({items.length}) — check to include
       </summary>
       <ul className="mt-1 ml-4 space-y-1">
         {items.map((c) => (
@@ -303,7 +296,7 @@ function UnrecognizedDetails({
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={!excluded.has(c.code)}
+                checked={included.has(c.code)}
                 onChange={() => onToggle(c.code)}
                 className="h-3.5 w-3.5"
               />
