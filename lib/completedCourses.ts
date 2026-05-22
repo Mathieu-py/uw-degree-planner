@@ -44,7 +44,11 @@ export function saveCompletedCourses(courses: string[]): void {
  * the list is preserved (everything counts as an extra).
  */
 export function rebaseCompletedCourses(
-  previous: { programId: string | null; currentTerm: string | null; completedCourses: string[] },
+  previous: {
+    programId: string | null;
+    currentTerm: string | null;
+    completedCourses: string[];
+  },
   nextProgramId: string | null,
   nextCurrentTerm: string | null,
 ): string[] {
@@ -55,11 +59,14 @@ export function rebaseCompletedCourses(
   );
   const oldEffective = new Set(previous.completedCourses);
   const extras = previous.completedCourses.filter((c) => !oldBaseline.has(c));
-  const removals = new Set([...oldBaseline].filter((c) => !oldEffective.has(c)));
+  const removals = new Set(
+    [...oldBaseline].filter((c) => !oldEffective.has(c)),
+  );
 
-  const newBaseline = nextProgramId && isTermLetter(nextCurrentTerm)
-    ? inferCompleted(nextProgramId, nextCurrentTerm)
-    : [];
+  const newBaseline =
+    nextProgramId && isTermLetter(nextCurrentTerm)
+      ? inferCompleted(nextProgramId, nextCurrentTerm)
+      : [];
   return [...new Set([...newBaseline, ...extras])]
     .filter((c) => !removals.has(c))
     .sort();

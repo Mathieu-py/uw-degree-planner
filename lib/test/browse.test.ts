@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { attachEligibility, buildBrowseRows, type BrowseRow } from "../browse";
-import { enrichCourse } from "../filters";
+import { attachEligibility, type BrowseRow, buildBrowseRows } from "../browse";
 import { DEFAULT_FILTER_STATE } from "../filterState";
+import { enrichCourse } from "../filters";
 import type { Course, UWFlowCourse } from "../types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
@@ -72,7 +72,11 @@ describe("buildBrowseRows", () => {
 
   it("uncertain prereqs (raw text only) survive hideUnmetPrereqs", () => {
     const courses = [
-      makeCourse({ id: 1, code: "phil110", prereqs: "Permission of the instructor" }),
+      makeCourse({
+        id: 1,
+        code: "phil110",
+        prereqs: "Permission of the instructor",
+      }),
     ];
     const rows = buildBrowseRows(courses, {
       ...DEFAULT_FILTER_STATE,

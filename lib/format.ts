@@ -11,5 +11,5 @@ export function formatCourseCode(code: string): string {
 export function truncate(text: string | null | undefined, max = 140): string {
   if (!text) return "";
   if (text.length <= max) return text;
-  return text.slice(0, max).trimEnd() + "…";
+  return `${text.slice(0, max).trimEnd()}…`;
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_FILTER_STATE } from "../filterState";
 import {
   applyFilters,
   enrichCourse,
@@ -9,7 +10,6 @@ import {
   passesSeatsFilter,
   seatsAvailable,
 } from "../filters";
-import { DEFAULT_FILTER_STATE } from "../filterState";
 import type { Course, UWFlowCourse, UWFlowRating } from "../types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
@@ -121,7 +121,9 @@ describe("passesSeatsFilter", () => {
 
 describe("passesMinUsefulFilter", () => {
   it("null threshold passes everything (rule disabled)", () => {
-    expect(passesMinUsefulFilter(makeCourse({ rating: null }), null)).toBe(true);
+    expect(passesMinUsefulFilter(makeCourse({ rating: null }), null)).toBe(
+      true,
+    );
   });
   it("rejects when useful rating is below threshold", () => {
     const c = makeCourse({ rating: rating({ useful: 0.4 }) });
@@ -130,10 +132,17 @@ describe("passesMinUsefulFilter", () => {
   it("passes when useful rating meets or exceeds threshold", () => {
     const c = makeCourse({ rating: rating({ useful: 0.5 }) });
     expect(passesMinUsefulFilter(c, 0.5)).toBe(true);
-    expect(passesMinUsefulFilter(makeCourse({ rating: rating({ useful: 0.9 }) }), 0.5)).toBe(true);
+    expect(
+      passesMinUsefulFilter(
+        makeCourse({ rating: rating({ useful: 0.9 }) }),
+        0.5,
+      ),
+    ).toBe(true);
   });
   it("treats null rating as 0 and rejects against a positive threshold", () => {
-    expect(passesMinUsefulFilter(makeCourse({ rating: null }), 0.1)).toBe(false);
+    expect(passesMinUsefulFilter(makeCourse({ rating: null }), 0.1)).toBe(
+      false,
+    );
   });
   it("treats null rating as 0 and passes a zero threshold", () => {
     expect(passesMinUsefulFilter(makeCourse({ rating: null }), 0)).toBe(true);

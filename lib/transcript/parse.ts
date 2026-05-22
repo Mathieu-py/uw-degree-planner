@@ -1,7 +1,15 @@
 import { PROGRAMS, TERM_LETTERS, type TermLetter } from "../programs";
-import type { CourseStatus, ParsedCourse, TranscriptParseResult } from "./types";
+import type {
+  CourseStatus,
+  ParsedCourse,
+  TranscriptParseResult,
+} from "./types";
 
-export type { CourseStatus, ParsedCourse, TranscriptParseResult } from "./types";
+export type {
+  CourseStatus,
+  ParsedCourse,
+  TranscriptParseResult,
+} from "./types";
 
 const TERM_HEADER_RE = /^(Fall|Winter|Spring)\s+(\d{4})\s*$/i;
 const TRANSFER_HEADER_RE = /^Transfer\s+Credit\s*$/i;
@@ -36,7 +44,10 @@ const ATTEMPTED_EARNED_RE = /\b\d+\.\d+\s+\d+\.\d+\b/;
 //
 // Single source of truth: NON_NUMERIC_GRADE_RE is derived from the keys so the
 // detector and the classifier can't drift out of sync.
-const NON_NUMERIC_GRADES: Record<string, Exclude<CourseStatus, "unrecognized">> = {
+const NON_NUMERIC_GRADES: Record<
+  string,
+  Exclude<CourseStatus, "unrecognized">
+> = {
   TR: "transfer",
   IP: "inProgress",
   CR: "passed",
@@ -278,7 +289,9 @@ export function matchProgramSlug(planText: string): string | null {
   const exact = NORMALIZED_PROGRAMS.filter((e) => e.normalized === needle);
   if (exact.length === 1) return exact[0].id;
 
-  const substr = NORMALIZED_PROGRAMS.filter((e) => e.normalized.includes(needle));
+  const substr = NORMALIZED_PROGRAMS.filter((e) =>
+    e.normalized.includes(needle),
+  );
   if (substr.length === 1) return substr[0].id;
 
   return null;

@@ -2,7 +2,12 @@ import { CourseBrowser } from "@/components/CourseBrowser";
 import { buildBrowseRows } from "@/lib/browse";
 import { loadTerm } from "@/lib/data";
 import { decodeFilterState } from "@/lib/filterState";
-import { compareCourses, parsePage, parseSortDir, parseSortKey } from "@/lib/sort";
+import {
+  compareCourses,
+  parsePage,
+  parseSortDir,
+  parseSortKey,
+} from "@/lib/sort";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
 export const metadata = {
@@ -33,11 +38,13 @@ export default async function BrowsePage({
         <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
           {termLabel(TERM)}
         </span>
-        <h1 className="text-3xl font-semibold tracking-tight">Browse electives</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Browse electives
+        </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
-          {all.length.toLocaleString()} courses in the catalog. Configure the filters
-          on the left to match your program; the URL stays in sync so you can share or
-          bookmark any view.
+          {all.length.toLocaleString()} courses in the catalog. Configure the
+          filters on the left to match your program; the URL stays in sync so
+          you can share or bookmark any view.
         </p>
       </div>
 

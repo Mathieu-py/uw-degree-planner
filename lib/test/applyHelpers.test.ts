@@ -2,14 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   applyTranscriptToFilterState,
   buildImportPayload,
-  categorize,
   type Categorized,
+  categorize,
   type TranscriptImportPayload,
 } from "../transcript/applyHelpers";
-import type {
-  ParsedCourse,
-  TranscriptParseResult,
-} from "../transcript/types";
+import type { ParsedCourse, TranscriptParseResult } from "../transcript/types";
 import type { FilterState } from "../types";
 
 function course(
@@ -118,11 +115,7 @@ describe("buildImportPayload", () => {
         course("yyy888", "unrecognized"),
       ],
     };
-    const payload = buildImportPayload(
-      result([]),
-      c,
-      new Set(["zzz999"]),
-    );
+    const payload = buildImportPayload(result([]), c, new Set(["zzz999"]));
     expect(payload.codes).toEqual(["cs135", "zzz999"]);
   });
 
@@ -144,7 +137,11 @@ describe("buildImportPayload", () => {
       detectedCurrentTerm: "3A",
     });
     const empty: Categorized = {
-      passed: [], inProgress: [], transfer: [], skipped: [], unrecognized: [],
+      passed: [],
+      inProgress: [],
+      transfer: [],
+      skipped: [],
+      unrecognized: [],
     };
     const payload = buildImportPayload(r, empty, new Set());
     expect(payload.programId).toBe("systems-design-engineering");

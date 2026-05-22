@@ -2,6 +2,21 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { buildBrowseUrl } from "@/lib/browseUrl";
+import { rebaseCompletedCourses } from "@/lib/completedCourses";
+import {
+  DEFAULT_FILTER_STATE,
+  decodeFilterState,
+  mergeFilterStateIntoParams,
+} from "@/lib/filterState";
+import {
+  isTermLetter,
+  PROGRAMS,
+  TERM_LETTERS,
+  type TermLetter,
+} from "@/lib/programs";
+import { applyTranscriptToFilterState } from "@/lib/transcript/applyHelpers";
+import type { FilterState } from "@/lib/types";
 import { Chip } from "./filter/Chip";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { PrefixPicker } from "./filter/PrefixPicker";
@@ -9,21 +24,6 @@ import {
   TranscriptImportModal,
   type TranscriptImportPayload,
 } from "./filter/TranscriptImportModal";
-import { rebaseCompletedCourses } from "@/lib/completedCourses";
-import { applyTranscriptToFilterState } from "@/lib/transcript/applyHelpers";
-import { buildBrowseUrl } from "@/lib/browseUrl";
-import {
-  DEFAULT_FILTER_STATE,
-  decodeFilterState,
-  mergeFilterStateIntoParams,
-} from "@/lib/filterState";
-import {
-  PROGRAMS,
-  TERM_LETTERS,
-  type TermLetter,
-  isTermLetter,
-} from "@/lib/programs";
-import type { FilterState } from "@/lib/types";
 
 interface Props {
   state: FilterState;
@@ -89,10 +89,13 @@ export function FilterPanel({
   // prior click in the same transition (router.replace is async). The updater
   // form lets callers derive the next state from the live one — required for
   // toggles like level chips where the input depends on the current value.
-  function patch(p: Partial<FilterState> | ((live: FilterState) => Partial<FilterState>)) {
-    const live = typeof window !== "undefined"
-      ? decodeFilterState(new URLSearchParams(window.location.search))
-      : state;
+  function patch(
+    p: Partial<FilterState> | ((live: FilterState) => Partial<FilterState>),
+  ) {
+    const live =
+      typeof window !== "undefined"
+        ? decodeFilterState(new URLSearchParams(window.location.search))
+        : state;
     const delta = typeof p === "function" ? p(live) : p;
     const next = { ...live, ...delta };
 
@@ -145,12 +148,15 @@ export function FilterPanel({
       <Section title="Levels">
         <div className="flex flex-wrap gap-2">
           {LEVEL_BUCKETS.map((lvl) => {
-            const active = state.levels.length === 0 || state.levels.includes(lvl);
+            const active =
+              state.levels.length === 0 || state.levels.includes(lvl);
             return (
               <Chip
                 key={lvl}
                 active={active}
-                onClick={() => patch((live) => ({ levels: toggleLevel(live.levels, lvl) }))}
+                onClick={() =>
+                  patch((live) => ({ levels: toggleLevel(live.levels, lvl) }))
+                }
               >
                 {lvl}
               </Chip>
@@ -158,7 +164,9 @@ export function FilterPanel({
           })}
         </div>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          {state.levels.length === 0 ? "All levels" : `${state.levels.join(", ")} only`}
+          {state.levels.length === 0
+            ? "All levels"
+            : `${state.levels.join(", ")} only`}
         </p>
       </Section>
 
@@ -240,7 +248,9 @@ function ProgramSeeder({
   return (
     <div className="flex flex-col gap-2">
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">Program</span>
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+          Program
+        </span>
         <select
           value={state.programId ?? ""}
           onChange={(e) => patch({ programId: e.target.value || null })}
@@ -248,23 +258,31 @@ function ProgramSeeder({
         >
           <option value="">Select a program…</option>
           {SORTED_PROGRAMS.map(([id, p]) => (
-            <option key={id} value={id}>{p.name}</option>
+            <option key={id} value={id}>
+              {p.name}
+            </option>
           ))}
         </select>
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">Current term</span>
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+          Current term
+        </span>
         <select
           value={term ?? ""}
           onChange={(e) =>
-            patch({ currentTerm: isTermLetter(e.target.value) ? e.target.value : null })
+            patch({
+              currentTerm: isTermLetter(e.target.value) ? e.target.value : null,
+            })
           }
           className={SELECT_CLASS}
         >
           <option value="">Select a term…</option>
           {TERM_LETTERS.map((t: TermLetter) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
       </label>
@@ -278,7 +296,13 @@ function ProgramSeeder({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-2">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
@@ -341,7 +365,9 @@ function RangeSlider({
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
         <span>{label}</span>
-        <span className="tabular-nums">{draftPct === 0 ? "off" : `${draftPct}%`}</span>
+        <span className="tabular-nums">
+          {draftPct === 0 ? "off" : `${draftPct}%`}
+        </span>
       </div>
       <input
         type="range"
@@ -357,4 +383,3 @@ function RangeSlider({
     </div>
   );
 }
-

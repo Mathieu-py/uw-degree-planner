@@ -8,7 +8,11 @@ interface Props {
   onChange: (next: string[]) => void;
 }
 
-export function CompletedCoursesInput({ value, allCourseCodes, onChange }: Props) {
+export function CompletedCoursesInput({
+  value,
+  allCourseCodes,
+  onChange,
+}: Props) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const knownCodes = useMemo(() => new Set(allCourseCodes), [allCourseCodes]);
@@ -91,7 +95,11 @@ export function CompletedCoursesInput({ value, allCourseCodes, onChange }: Props
         </button>
       </div>
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-rose-600 dark:text-rose-400">
+        <p
+          id={errorId}
+          role="alert"
+          className="text-xs text-rose-600 dark:text-rose-400"
+        >
           {error}
         </p>
       )}

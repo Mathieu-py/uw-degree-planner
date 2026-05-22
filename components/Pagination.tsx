@@ -7,9 +7,7 @@ interface Props {
 export function Pagination({ page, totalPages, onChange }: Props) {
   const items = paginationWindow(page, totalPages);
   return (
-    <nav
-      className="flex flex-wrap items-center justify-center gap-1 text-xs"
-    >
+    <nav className="flex flex-wrap items-center justify-center gap-1 text-xs">
       <PageButton
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
@@ -18,7 +16,7 @@ export function Pagination({ page, totalPages, onChange }: Props) {
       {items.map((it, i) =>
         it === "…" ? (
           <span
-            key={`gap-${i}`}
+            key={`gap-${items[i - 1]}-${items[i + 1]}`}
             className="px-2 py-1 text-zinc-400 dark:text-zinc-600"
           >
             …
@@ -78,7 +76,9 @@ function paginationWindow(page: number, totalPages: number): (number | "…")[] 
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
   const pages = new Set<number>([1, totalPages, page, page - 1, page + 1]);
-  const sorted = [...pages].filter((n) => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+  const sorted = [...pages]
+    .filter((n) => n >= 1 && n <= totalPages)
+    .sort((a, b) => a - b);
   const out: (number | "…")[] = [];
   for (let i = 0; i < sorted.length; i++) {
     if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push("…");

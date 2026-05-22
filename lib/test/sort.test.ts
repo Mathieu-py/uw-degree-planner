@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { enrichCourse } from "../filters";
 import {
+  compareCourses,
   DEFAULT_SORT_DIR,
   DEFAULT_SORT_KEY,
-  compareCourses,
   parsePage,
   parseSortDir,
   parseSortKey,
 } from "../sort";
-import { enrichCourse } from "../filters";
 import type { Course, UWFlowCourse, UWFlowRating } from "../types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
@@ -26,7 +26,13 @@ function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
 }
 
 function rating(overrides: Partial<UWFlowRating> = {}): UWFlowRating {
-  return { easy: null, useful: null, liked: null, filled_count: null, ...overrides };
+  return {
+    easy: null,
+    useful: null,
+    liked: null,
+    filled_count: null,
+    ...overrides,
+  };
 }
 
 describe("compareCourses", () => {
@@ -111,4 +117,3 @@ describe("parsePage", () => {
     expect(parsePage(["7", "9"])).toBe(7);
   });
 });
-

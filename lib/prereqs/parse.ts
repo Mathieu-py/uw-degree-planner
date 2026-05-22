@@ -38,7 +38,7 @@ const LEVEL_RE = /^level at least (\d[a-z])/i;
 const ONE_OF_RE = /^one of\b/i;
 const OR_RE = /^or\b/i;
 const AND_RE = /^and\b/i;
-const RAW_RE = /^[^(),;\/]+/;
+const RAW_RE = /^[^(),;/]+/;
 
 function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -233,10 +233,7 @@ class Parser {
   }
 }
 
-function flatten(
-  kind: "and" | "or",
-  children: PrereqNode[],
-): PrereqNode {
+function flatten(kind: "and" | "or", children: PrereqNode[]): PrereqNode {
   const dropEmpty = children.filter(
     (c) => !(c.kind === "raw" && c.text === ""),
   );
@@ -250,7 +247,9 @@ function flatten(
   return { kind, children: flat };
 }
 
-export function parsePrereqs(text: string | null | undefined): PrereqNode | null {
+export function parsePrereqs(
+  text: string | null | undefined,
+): PrereqNode | null {
   if (!text || text.trim() === "") return null;
   const tokens = tokenize(text);
   const parser = new Parser(tokens);

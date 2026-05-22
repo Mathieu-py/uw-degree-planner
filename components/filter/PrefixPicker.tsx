@@ -16,7 +16,11 @@ export function PrefixPicker({ selected, known, onChange, emptyLabel }: Props) {
 
   function toggle(prefix: string) {
     const p = prefix.toUpperCase();
-    onChange(selected.includes(p) ? selected.filter((s) => s !== p) : [...selected, p].sort());
+    onChange(
+      selected.includes(p)
+        ? selected.filter((s) => s !== p)
+        : [...selected, p].sort(),
+    );
   }
 
   function remove(prefix: string) {
@@ -65,7 +69,11 @@ export function PrefixPicker({ selected, known, onChange, emptyLabel }: Props) {
       {open && (
         <div className="max-h-48 overflow-y-auto rounded border border-zinc-200 dark:border-zinc-800 p-2 flex flex-wrap gap-1">
           {known.map((p) => (
-            <Chip key={p} active={selected.includes(p)} onClick={() => toggle(p)}>
+            <Chip
+              key={p}
+              active={selected.includes(p)}
+              onClick={() => toggle(p)}
+            >
               <span className="font-mono">{p}</span>
             </Chip>
           ))}

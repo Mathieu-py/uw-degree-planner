@@ -8,9 +8,10 @@ export interface ParseResult {
 }
 
 const emptyTerms = (): Record<TermLetter, string[]> =>
-  Object.fromEntries(
-    TERM_LETTERS.map((t) => [t, [] as string[]]),
-  ) as Record<TermLetter, string[]>;
+  Object.fromEntries(TERM_LETTERS.map((t) => [t, [] as string[]])) as Record<
+    TermLetter,
+    string[]
+  >;
 
 export function parseRequiredCoursesTermByTerm(
   html: string,

@@ -48,3 +48,8 @@ next-env.d.ts
 # UI redesign mockups (not for commit)
 /app/demo/
 
+# playwright
+/playwright-report/
+/test-results/
+/playwright/.cache/
+

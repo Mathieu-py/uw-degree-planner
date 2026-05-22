@@ -9,9 +9,7 @@ interface PageParams {
   code: string;
 }
 
-export async function generateMetadata(props: {
-  params: Promise<PageParams>;
-}) {
+export async function generateMetadata(props: { params: Promise<PageParams> }) {
   const { code } = await props.params;
   const course = await loadCourseByCode(TERM, code);
   if (!course) return { title: "Course not found · UW Elective Finder" };
@@ -84,7 +82,8 @@ export default async function CoursePage(props: {
         ) : (
           <>
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {course.sections.length} section{course.sections.length === 1 ? "" : "s"} ·{" "}
+              {course.sections.length} section
+              {course.sections.length === 1 ? "" : "s"} ·{" "}
               <span
                 className={
                   totalSeats > 0
@@ -97,13 +96,17 @@ export default async function CoursePage(props: {
             </p>
             <ul className="text-xs text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-x-3 gap-y-1 mt-1">
               {course.sections.map((s) => {
-                const open = Math.max(0, s.enrollment_capacity - s.enrollment_total);
+                const open = Math.max(
+                  0,
+                  s.enrollment_capacity - s.enrollment_total,
+                );
                 return (
                   <li key={s.id} className="tabular-nums">
                     #{s.id}: {s.enrollment_total}/{s.enrollment_capacity}
                     {open > 0 && (
                       <span className="text-emerald-600 dark:text-emerald-400">
-                        {" "}({open} open)
+                        {" "}
+                        ({open} open)
                       </span>
                     )}
                   </li>

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { FilterPanel } from "./FilterPanel";
-import { Pagination } from "./Pagination";
 import { attachEligibility, type BrowseRow } from "@/lib/browse";
 import { buildBrowseUrl } from "@/lib/browseUrl";
-import { loadCompletedCourses, saveCompletedCourses } from "@/lib/completedCourses";
-import { seatsAvailable } from "@/lib/filters";
+import {
+  loadCompletedCourses,
+  saveCompletedCourses,
+} from "@/lib/completedCourses";
 import { BROWSE_QS_STORAGE_KEY } from "@/lib/filterState";
+import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import {
@@ -21,6 +22,8 @@ import {
 } from "@/lib/sort";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
+import { FilterPanel } from "./FilterPanel";
+import { Pagination } from "./Pagination";
 
 interface Props {
   rows: BrowseRow[];
@@ -113,7 +116,10 @@ export function CourseBrowser({
     if (key === sortKey) {
       setPresentation({ d: sortDir === "asc" ? "desc" : "asc" });
     } else {
-      setPresentation({ s: key, d: key === "code" || key === "name" ? "asc" : "desc" });
+      setPresentation({
+        s: key,
+        d: key === "code" || key === "name" ? "asc" : "desc",
+      });
     }
   }
 
@@ -163,13 +169,60 @@ export function CourseBrowser({
             </colgroup>
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-left">
-                <Th label="Code" col="code" current={sortKey} dir={sortDir} onSort={onSort} />
-                <Th label="Course" col="name" current={sortKey} dir={sortDir} onSort={onSort} />
-                <Th label="Useful" col="useful" current={sortKey} dir={sortDir} onSort={onSort} align="right" />
-                <Th label="Easy" col="easy" current={sortKey} dir={sortDir} onSort={onSort} align="right" />
-                <Th label="Liked" col="liked" current={sortKey} dir={sortDir} onSort={onSort} align="right" />
-                <Th label="Reviews" col="reviews" current={sortKey} dir={sortDir} onSort={onSort} align="right" />
-                <Th label="Seats" col="seats" current={sortKey} dir={sortDir} onSort={onSort} align="right" />
+                <Th
+                  label="Code"
+                  col="code"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                />
+                <Th
+                  label="Course"
+                  col="name"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                />
+                <Th
+                  label="Useful"
+                  col="useful"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                  align="right"
+                />
+                <Th
+                  label="Easy"
+                  col="easy"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                  align="right"
+                />
+                <Th
+                  label="Liked"
+                  col="liked"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                  align="right"
+                />
+                <Th
+                  label="Reviews"
+                  col="reviews"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                  align="right"
+                />
+                <Th
+                  label="Seats"
+                  col="seats"
+                  current={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                  align="right"
+                />
               </tr>
             </thead>
             <tbody>
@@ -279,7 +332,9 @@ function CourseRow({ row }: { row: BrowseRow }) {
       </td>
       <td className="px-4 py-3">
         <div className="relative flex items-center gap-2 min-w-0 min-h-10">
-          <span className="font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 min-w-0">{course.name}</span>
+          <span className="font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 min-w-0">
+            {course.name}
+          </span>
           {eligibility && <EligibilityBadge result={eligibility} />}
         </div>
       </td>
@@ -293,7 +348,9 @@ function CourseRow({ row }: { row: BrowseRow }) {
         {seats == null ? (
           <span className="text-zinc-400">—</span>
         ) : seats > 0 ? (
-          <span className="text-emerald-600 dark:text-emerald-400">{seats} open</span>
+          <span className="text-emerald-600 dark:text-emerald-400">
+            {seats} open
+          </span>
         ) : (
           <span className="text-zinc-400">Full</span>
         )}
@@ -322,9 +379,13 @@ function EligibilityBadge({ result }: { result: EligibilityResult }) {
     );
   }
   const missingCount = result.missingCourses.length;
-  const missing = result.missingCourses.slice(0, 2).map(formatCourseCode).join(", ");
+  const missing = result.missingCourses
+    .slice(0, 2)
+    .map(formatCourseCode)
+    .join(", ");
   const extra = missingCount > 2 ? ` +${missingCount - 2}` : "";
-  const label = missingCount === 0 ? "Missing requirements" : `Missing ${missing}${extra}`;
+  const label =
+    missingCount === 0 ? "Missing requirements" : `Missing ${missing}${extra}`;
   return (
     <span
       className="inline-flex shrink-0 items-center rounded-full bg-rose-100 text-rose-900 dark:bg-rose-900/40 dark:text-rose-200 px-1.5 py-0.5 text-[10px] font-medium"
@@ -340,7 +401,8 @@ function RatingCell({ value }: { value: number | null | undefined }) {
     return <td className="px-4 py-3 text-right text-xs text-zinc-400">—</td>;
   }
   const pct = Math.round(value * 100);
-  const color = pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500";
+  const color =
+    pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500";
   return (
     <td className="px-4 py-3 text-right">
       <div className="inline-flex items-center gap-2 justify-end min-w-[64px]">
@@ -384,10 +446,11 @@ function Th({
       >
         {label}
         {active && (
-          <span className="text-xs text-zinc-400">{dir === "asc" ? "↑" : "↓"}</span>
+          <span className="text-xs text-zinc-400">
+            {dir === "asc" ? "↑" : "↓"}
+          </span>
         )}
       </button>
     </th>
   );
 }
-

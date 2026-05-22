@@ -53,7 +53,10 @@ describe("loadCompletedCourses", () => {
   });
 
   it("filters out non-string items", async () => {
-    storage.store.set(KEY, JSON.stringify(["cs115", 42, null, "math116", true]));
+    storage.store.set(
+      KEY,
+      JSON.stringify(["cs115", 42, null, "math116", true]),
+    );
     const { loadCompletedCourses } = await import("../completedCourses");
     expect(loadCompletedCourses()).toEqual(["cs115", "math116"]);
   });
@@ -75,7 +78,11 @@ describe("rebaseCompletedCourses", () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
     const rebased = rebaseCompletedCourses(
-      { programId: "systems-design-engineering", currentTerm: "3A", completedCourses: inferCompleted("systems-design-engineering", "3A") },
+      {
+        programId: "systems-design-engineering",
+        currentTerm: "3A",
+        completedCourses: inferCompleted("systems-design-engineering", "3A"),
+      },
       "systems-design-engineering",
       "3B",
     );
@@ -85,9 +92,16 @@ describe("rebaseCompletedCourses", () => {
   it("preserves extras the user added beyond the old baseline", async () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
-    const oldList = [...inferCompleted("systems-design-engineering", "3A"), "econ101"].sort();
+    const oldList = [
+      ...inferCompleted("systems-design-engineering", "3A"),
+      "econ101",
+    ].sort();
     const rebased = rebaseCompletedCourses(
-      { programId: "systems-design-engineering", currentTerm: "3A", completedCourses: oldList },
+      {
+        programId: "systems-design-engineering",
+        currentTerm: "3A",
+        completedCourses: oldList,
+      },
       "systems-design-engineering",
       "3B",
     );
@@ -107,7 +121,11 @@ describe("rebaseCompletedCourses", () => {
 
     const oldList = syde3A.filter((c) => c !== removed);
     const rebased = rebaseCompletedCourses(
-      { programId: "systems-design-engineering", currentTerm: "3A", completedCourses: oldList },
+      {
+        programId: "systems-design-engineering",
+        currentTerm: "3A",
+        completedCourses: oldList,
+      },
       "systems-design-engineering",
       "3B",
     );
@@ -117,9 +135,16 @@ describe("rebaseCompletedCourses", () => {
   it("clearing prog/term drops baseline-derived courses but keeps manually-added extras", async () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
-    const oldList = [...inferCompleted("systems-design-engineering", "3A"), "econ101"].sort();
+    const oldList = [
+      ...inferCompleted("systems-design-engineering", "3A"),
+      "econ101",
+    ].sort();
     const rebased = rebaseCompletedCourses(
-      { programId: "systems-design-engineering", currentTerm: "3A", completedCourses: oldList },
+      {
+        programId: "systems-design-engineering",
+        currentTerm: "3A",
+        completedCourses: oldList,
+      },
       null,
       null,
     );
@@ -129,9 +154,16 @@ describe("rebaseCompletedCourses", () => {
   it("no-op rebase (same prog/term) returns the same effective list", async () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
-    const list = [...inferCompleted("systems-design-engineering", "3A"), "econ101"].sort();
+    const list = [
+      ...inferCompleted("systems-design-engineering", "3A"),
+      "econ101",
+    ].sort();
     const rebased = rebaseCompletedCourses(
-      { programId: "systems-design-engineering", currentTerm: "3A", completedCourses: list },
+      {
+        programId: "systems-design-engineering",
+        currentTerm: "3A",
+        completedCourses: list,
+      },
       "systems-design-engineering",
       "3A",
     );
@@ -147,13 +179,17 @@ describe("saveCompletedCourses", () => {
   });
 
   it("round-trips through load", async () => {
-    const { loadCompletedCourses, saveCompletedCourses } = await import("../completedCourses");
+    const { loadCompletedCourses, saveCompletedCourses } = await import(
+      "../completedCourses"
+    );
     saveCompletedCourses(["cs115", "math116", "syde101"]);
     expect(loadCompletedCourses()).toEqual(["cs115", "math116", "syde101"]);
   });
 
   it("overwrites the previous value", async () => {
-    const { loadCompletedCourses, saveCompletedCourses } = await import("../completedCourses");
+    const { loadCompletedCourses, saveCompletedCourses } = await import(
+      "../completedCourses"
+    );
     saveCompletedCourses(["cs115"]);
     saveCompletedCourses(["math116"]);
     expect(loadCompletedCourses()).toEqual(["math116"]);

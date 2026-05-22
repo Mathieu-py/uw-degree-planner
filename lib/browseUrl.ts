@@ -16,6 +16,7 @@ import { safeSetItem } from "./storage";
 
 export function buildBrowseUrl(
   pathname: string,
+  // biome-ignore lint/suspicious/noConfusingVoidType: callbacks may either mutate params in place (return void) or return a replacement URLSearchParams
   transform: (params: URLSearchParams) => URLSearchParams | void,
 ): string {
   const params = new URLSearchParams(

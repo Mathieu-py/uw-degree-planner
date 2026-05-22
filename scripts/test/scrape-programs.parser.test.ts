@@ -167,11 +167,7 @@ describe("buildProgramSlug + buildConflictCounts", () => {
   });
 
   it("retains prefix when stripped slug would collide", () => {
-    const codes = [
-      "H-Anthropology",
-      "3G-Anthropology",
-      "4G-Anthropology",
-    ];
+    const codes = ["H-Anthropology", "3G-Anthropology", "4G-Anthropology"];
     const counts = buildConflictCounts(codes);
     expect(buildProgramSlug("H-Anthropology", counts)).toBe("h-anthropology");
     expect(buildProgramSlug("3G-Anthropology", counts)).toBe("3g-anthropology");
@@ -196,8 +192,8 @@ describe("buildProgramSlug + buildConflictCounts", () => {
 
   it("converts ampersand to 'and'", () => {
     const counts = buildConflictCounts(["H-Accounting & Financial Management"]);
-    expect(buildProgramSlug("H-Accounting & Financial Management", counts)).toBe(
-      "accounting-and-financial-management",
-    );
+    expect(
+      buildProgramSlug("H-Accounting & Financial Management", counts),
+    ).toBe("accounting-and-financial-management");
   });
 });

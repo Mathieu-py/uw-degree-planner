@@ -27,7 +27,9 @@ export async function extractTextFromPdf(file: File): Promise<string> {
     (file.type && file.type !== "application/pdf") ||
     (ext !== undefined && ext !== "pdf")
   ) {
-    throw new Error("Not a PDF file. Upload a Quest unofficial transcript PDF.");
+    throw new Error(
+      "Not a PDF file. Upload a Quest unofficial transcript PDF.",
+    );
   }
   if (file.size > MAX_FILE_BYTES) {
     throw new Error(
@@ -83,7 +85,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
 export function assembleLines(items: PdfTextItem[]): string[] {
   const rows = new Map<number, PdfTextItem[]>();
   for (const item of items) {
-    if (!item.str || !item.str.trim()) continue;
+    if (!item.str?.trim()) continue;
     const y = Math.round(item.transform[5] / ROW_Y_TOLERANCE);
     let row = rows.get(y);
     if (!row) {
@@ -93,10 +95,12 @@ export function assembleLines(items: PdfTextItem[]): string[] {
     row.push(item);
   }
   // PDF y-axis grows upward; sort descending so we emit top-of-page first.
-  const sortedKeys = [...rows.keys()].sort((a, b) => b - a);
-  return sortedKeys.map((key) => {
-    const row = rows.get(key)!;
+  const sortedEntries = [...rows.entries()].sort(([a], [b]) => b - a);
+  return sortedEntries.map(([, row]) => {
     row.sort((a, b) => a.transform[4] - b.transform[4]);
-    return row.map((it) => it.str.trim()).filter(Boolean).join(" ");
+    return row
+      .map((it) => it.str.trim())
+      .filter(Boolean)
+      .join(" ");
   });
 }

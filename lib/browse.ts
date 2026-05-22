@@ -8,13 +8,15 @@
  */
 
 import { applyFilters } from "./filters";
-import { parsePrereqs, type PrereqNode } from "./prereqs/parse";
-import { evaluate, type EligibilityResult } from "./prereqs/satisfied";
+import { type PrereqNode, parsePrereqs } from "./prereqs/parse";
+import { type EligibilityResult, evaluate } from "./prereqs/satisfied";
 import type { Course, FilterState } from "./types";
 
 const prereqCache = new Map<string, PrereqNode | null>();
 
-function cachedParsePrereqs(text: string | null | undefined): PrereqNode | null {
+function cachedParsePrereqs(
+  text: string | null | undefined,
+): PrereqNode | null {
   const key = text ?? "";
   if (prereqCache.has(key)) return prereqCache.get(key) ?? null;
   const parsed = parsePrereqs(text);
@@ -32,8 +34,15 @@ export function buildBrowseRows(
   state: FilterState,
 ): BrowseRow[] {
   const filtered = applyFilters(courses, state);
-  const baseRows: BrowseRow[] = filtered.map((course) => ({ course, eligibility: null }));
-  return attachEligibility(baseRows, state.completedCourses, state.hideUnmetPrereqs);
+  const baseRows: BrowseRow[] = filtered.map((course) => ({
+    course,
+    eligibility: null,
+  }));
+  return attachEligibility(
+    baseRows,
+    state.completedCourses,
+    state.hideUnmetPrereqs,
+  );
 }
 
 /**
@@ -53,7 +62,11 @@ export function attachEligibility(
   return rows
     .map<BrowseRow>((r) => ({
       course: r.course,
-      eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), { completed: completedSet }),
+      eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), {
+        completed: completedSet,
+      }),
     }))
-    .filter((r) => !hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied);
+    .filter(
+      (r) => !hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied,
+    );
 }
