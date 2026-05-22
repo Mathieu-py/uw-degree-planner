@@ -14,6 +14,21 @@ const PLAN_LINE_RE = /^Plan:\s*(.+?)\s*$/i;
 // token on the line.
 const COURSE_ROW_RE = /^([A-Z]{2,8})\s*(\d{3,4}[A-Z]?)\b\s*(.+)$/;
 
+// Quest transcript rows for past terms have an "Attempted Earned" decimal
+// pair (e.g. `0.50 0.50`) before the grade column. Future-term enrollments
+// have no grade column yet — only `code` + `description`. Without context,
+// the last whitespace-token of a future-term row resolves to a description
+// word like "2" (from "Calculus 2") or "Systems" (from "Digital Systems")
+// and classifyStatus mis-reads it as a grade.
+const ATTEMPTED_EARNED_RE = /\b\d+\.\d+\s+\d+\.\d+\b/;
+
+// Letter-grade tokens that are valid on their own without the column pair —
+// notably backdated transfer credits (`MATH 137 Calculus 1 TR`) which appear
+// in regular term sections with no Attempted/Earned. Numeric grades are NOT
+// in this set: a bare "2" without columns can't be distinguished from a
+// description word and must be treated as a future enrollment.
+const NON_NUMERIC_GRADE_RE = /^(TR|IP|F|W|WD|NCR|AU|INC|DNW|CR|P)$/i;
+
 const STATUS_PRIORITY: Record<CourseStatus, number> = {
   passed: 5,
   "in-progress": 4,
@@ -98,8 +113,30 @@ export function parseTranscript(text: string): TranscriptParseResult {
     }
 
     const tokens = tail.trim().split(/\s+/);
-    const rawGrade = tokens[tokens.length - 1] ?? "";
-    const status = classifyStatus({ rawGrade, section: currentSection });
+    const lastToken = tokens[tokens.length - 1] ?? "";
+    const hasGradeColumns = ATTEMPTED_EARNED_RE.test(tail);
+
+    // Disambiguation hierarchy for the row's status:
+    //   1. Attempted/Earned columns present → use last token as grade.
+    //   2. No columns but last token is a non-numeric grade code (TR, CR, IP,
+    //      F, W, WD, NCR, AU, INC, DNW, P) → use it (handles backdated
+    //      transfer credits inside a term section).
+    //   3. No columns, no recognized grade token, inside a term section →
+    //      future enrollment; classify as in-progress, ignore last token.
+    //   4. Anything else falls through to classifyStatus with whatever the
+    //      last token is — preserves transfer-section behavior.
+    let rawGrade: string;
+    let status: CourseStatus;
+    if (hasGradeColumns || NON_NUMERIC_GRADE_RE.test(lastToken)) {
+      rawGrade = lastToken;
+      status = classifyStatus({ rawGrade, section: currentSection });
+    } else if (currentSection.kind === "term") {
+      rawGrade = "";
+      status = "in-progress";
+    } else {
+      rawGrade = lastToken;
+      status = classifyStatus({ rawGrade, section: currentSection });
+    }
 
     if (status === "in-progress" && currentSection.kind === "term") {
       currentTermIPIdx = currentSection.studyIndex ?? currentTermIPIdx;

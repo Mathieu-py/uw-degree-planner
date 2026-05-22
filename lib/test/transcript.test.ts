@@ -240,6 +240,77 @@ describe("parseTranscript — unrecognized grade tokens", () => {
   });
 });
 
+describe("parseTranscript — future-term enrollment (no grade column yet)", () => {
+  // Reduced fixture matching the real Quest layout the user reported in the
+  // 2026-05-21 modal screenshot: Fall 2025 graded, Winter 2026 work term,
+  // Spring 2026 enrolled but ungraded.
+  const REAL_SYDE = `
+Beginning of Undergraduate Record
+Fall 2025
+
+Program: Systems Design Engineering, Honours, Co-operative Program
+Level: 1A
+Form of Study: Enrolment
+
+Course Description Attempted Earned Grade
+SYDE 101  Communications in Systems Design Engineering — Written and Oral 0.25 0.25 93
+SYDE 101L Communications in Systems Design Engineering — Visualization    0.25 0.25 97
+SYDE 111  Calculus 1                                                       0.50 0.50 94
+SYDE 113  Elementary Engineering Mathematics                               0.25 0.25 89
+SYDE 121  Digital Computation                                              0.50 0.50 88
+SYDE 161  Introduction to Design                                           0.50 0.50 81
+SYDE 181  Physics 1: Statics                                               0.50 0.50 88
+
+Term GPA: 89.18
+
+Spring 2026
+
+Program: Systems Design Engineering, Honours, Co-operative Program
+Level: 1B
+Form of Study: Enrolment
+
+Course Description
+BET 320   Entrepreneurial Strategy
+SYDE 112  Calculus 2
+SYDE 114  Matrices and Linear Systems
+SYDE 162  Human Factors in Design
+SYDE 192  Digital Systems
+SYDE 192L Digital Systems Laboratory
+SYDE 223  Data Structures and Algorithms
+`;
+
+  const result = parseTranscript(REAL_SYDE);
+  const byCode = new Map(result.courses.map((c) => [c.code, c]));
+
+  it("classifies Fall-2025 graded rows as passed", () => {
+    for (const code of [
+      "syde101", "syde101l", "syde111", "syde113",
+      "syde121", "syde161", "syde181",
+    ]) {
+      expect(byCode.get(code)?.status, `${code} should be passed`).toBe("passed");
+    }
+  });
+
+  it("classifies Spring-2026 ungraded rows as in-progress (was: skipped/unrecognized)", () => {
+    for (const code of [
+      "bet320", "syde112", "syde114", "syde162",
+      "syde192", "syde192l", "syde223",
+    ]) {
+      expect(byCode.get(code)?.status, `${code} should be in-progress`).toBe(
+        "in-progress",
+      );
+    }
+  });
+
+  it("does not mis-classify 'Calculus 2' as skipped (regression: rawGrade='2' → 2 < 50)", () => {
+    expect(byCode.get("syde112")?.status).not.toBe("skipped");
+  });
+
+  it("does not mis-classify 'Digital Systems' as unrecognized (regression: rawGrade='Systems')", () => {
+    expect(byCode.get("syde192")?.status).not.toBe("unrecognized");
+  });
+});
+
 describe("parseTranscript — course-number digit boundaries", () => {
   it("ignores rows with fewer than 3 course-number digits (not a UW course)", () => {
     const result = parseTranscript(
