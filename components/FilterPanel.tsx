@@ -1,7 +1,7 @@
 "use client";
 
 import type { PureFilters, StudentPassage } from "@/lib/types";
-import { FiltersPanel } from "./FiltersPanel";
+import { PureFiltersPanel } from "./PureFiltersPanel";
 import { StudentPassagePanel } from "./StudentPassagePanel";
 
 interface Props {
@@ -28,7 +28,7 @@ export function FilterPanel({
 }: Props) {
   return (
     <aside className="flex flex-col gap-6 text-sm">
-      <FiltersPanel filters={filters} knownPrefixes={knownPrefixes} />
+      <PureFiltersPanel filters={filters} knownPrefixes={knownPrefixes} />
       <StudentPassagePanel
         passage={passage}
         completedCourses={completedCourses}

@@ -96,6 +96,13 @@ describe("decodePureFilters", () => {
     expect(state.excludePrefixes).toEqual(["PHIL", "ENGL"]);
   });
 
+  it("dedupes prefixes after case normalisation", () => {
+    const state = decodePureFilters(
+      new URLSearchParams("exc=phil,PHIL,Phil,ENGL"),
+    );
+    expect(state.excludePrefixes).toEqual(["PHIL", "ENGL"]);
+  });
+
   it("decodes booleans from 1, ignores other values", () => {
     expect(
       decodePureFilters(new URLSearchParams("seats=1")).hasSeatsAvailable,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
   DEFAULT_PURE_FILTERS,
   decodePureFilters,
@@ -29,7 +29,7 @@ function toggleLevel(current: readonly number[], lvl: number): number[] {
   return [...next].sort((a, b) => a - b);
 }
 
-export function FiltersPanel({ filters, knownPrefixes }: Props) {
+export function PureFiltersPanel({ filters, knownPrefixes }: Props) {
   const commit = useFilterCommit(mergePureFiltersIntoParams);
 
   // URL is source of truth. Reading the prop would lose changes made by a
@@ -158,6 +158,7 @@ function RangeSlider({
   value: number | null;
   onChange: (next: number | null) => void;
 }) {
+  const labelId = useId();
   const committedPct = Math.round((value ?? 0) * 100);
   const [draftPct, setDraftPct] = useState(committedPct);
 
@@ -178,7 +179,7 @@ function RangeSlider({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-        <span>{label}</span>
+        <span id={labelId}>{label}</span>
         <span className="tabular-nums">
           {draftPct === 0 ? "off" : `${draftPct}%`}
         </span>

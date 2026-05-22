@@ -92,9 +92,9 @@ function parseBool(raw: string | undefined): boolean {
 }
 
 export function decodePureFilters(params: RawParams): PureFilters {
-  const excludePrefixes = splitList(read(params, "exc")).map((s) =>
-    s.toUpperCase(),
-  );
+  const excludePrefixes = [
+    ...new Set(splitList(read(params, "exc")).map((s) => s.toUpperCase())),
+  ];
   const levels = [
     ...new Set(
       splitList(read(params, "lv"))
