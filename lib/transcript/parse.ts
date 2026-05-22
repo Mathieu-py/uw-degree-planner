@@ -12,7 +12,7 @@ const PLAN_LINE_RE = /^Plan:\s*(.+?)\s*$/i;
 // like "Spring 2024 Average: 78". The trailing tail (description + any unit
 // columns + grade) is captured greedily; the grade is the last whitespace
 // token on the line.
-const COURSE_ROW_RE = /^([A-Z]{2,8})\s*(\d{1,4}[A-Z]?)\b\s*(.+)$/;
+const COURSE_ROW_RE = /^([A-Z]{2,8})\s*(\d{3,4}[A-Z]?)\b\s*(.+)$/;
 
 const STATUS_PRIORITY: Record<CourseStatus, number> = {
   passed: 5,

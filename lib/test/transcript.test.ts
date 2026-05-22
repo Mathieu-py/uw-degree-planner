@@ -240,6 +240,24 @@ describe("parseTranscript — unrecognized grade tokens", () => {
   });
 });
 
+describe("parseTranscript — course-number digit boundaries", () => {
+  it("ignores rows with fewer than 3 course-number digits (not a UW course)", () => {
+    const result = parseTranscript(
+      `Plan: Systems Design Engineering\n\nFall 2023\nXX 1    Garbage    0.50 0.50 75\n`,
+    );
+    expect(result.courses).toEqual([]);
+  });
+
+  it("accepts a 3-digit code with a trailing letter (e.g. SYDE 240E)", () => {
+    const result = parseTranscript(
+      `Plan: Systems Design Engineering\n\nFall 2023\nSYDE 240E    Lab    0.50 0.50 80\n`,
+    );
+    const c = result.courses.find((c) => c.code === "syde240e");
+    expect(c).toBeDefined();
+    expect(c?.status).toBe("passed");
+  });
+});
+
 describe("parseTranscript — does not match metadata-looking lines", () => {
   it("ignores 'Spring 2024 Cumulative Average: 78' style lines", () => {
     const result = parseTranscript(
