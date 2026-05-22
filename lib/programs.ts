@@ -83,7 +83,7 @@ export function getRequiredCourses(program: Program): string[] {
   if (program.kind === "engineering") {
     return [...new Set(Object.values(program.terms).flat())].sort();
   }
-  return [...program.requiredCourses].sort();
+  return [...new Set(program.requiredCourses)].sort();
 }
 
 export function getTermSchedule(
@@ -109,7 +109,8 @@ export function inferCompleted(
 ): string[] {
   const program = PROGRAMS[programId];
   if (!program) return [];
-  if (program.kind === "flexible") return [...program.requiredCourses].sort();
+  if (program.kind === "flexible")
+    return [...new Set(program.requiredCourses)].sort();
   if (currentTerm == null) return [];
   const cutoff = TERM_LETTERS.indexOf(currentTerm);
   const completed = TERM_LETTERS.slice(0, cutoff).flatMap(

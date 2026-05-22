@@ -132,7 +132,9 @@ async function main() {
   const allWarnings: string[] = [];
   let withData = 0;
   let withoutData = 0;
+  let failedCount = 0;
   const skippedNoData: string[] = [];
+  const failed: string[] = [];
 
   for (let i = 0; i < majors.length; i++) {
     const p = majors[i];
@@ -179,6 +181,8 @@ async function main() {
         console.log(`ok (${result.kind})`);
       }
     } catch (e) {
+      failedCount++;
+      failed.push(slug);
       console.log(`ERROR: ${(e as Error).message}`);
     }
     if (i < majors.length - 1) {
@@ -194,7 +198,7 @@ async function main() {
   const outPath = path.join(dataDir, "programs.json");
   await writeFile(outPath, JSON.stringify(sorted, null, 2), "utf-8");
   console.log(
-    `\nWrote ${path.relative(process.cwd(), outPath)}: ${withData} programs (${withoutData} skipped for having no parseable data)`,
+    `\nWrote ${path.relative(process.cwd(), outPath)}: ${withData} programs (${withoutData} skipped for having no parseable data, ${failedCount} failed) of ${majors.length} majors`,
   );
 
   if (skippedNoData.length > 0) {
@@ -202,6 +206,11 @@ async function main() {
       `\n${skippedNoData.length} programs skipped (none of requiredCoursesTermByTerm / requirements / courseRequirementsNoUnits had content):`,
     );
     for (const s of skippedNoData) console.error(`  ${s}`);
+  }
+
+  if (failed.length > 0) {
+    console.error(`\n${failed.length} programs failed during fetch/parse:`);
+    for (const s of failed) console.error(`  ${s}`);
   }
 
   if (allWarnings.length > 0) {
