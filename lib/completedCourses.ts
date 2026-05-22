@@ -53,9 +53,7 @@ export function rebaseCompletedCourses(
   nextCurrentTerm: string | null,
 ): string[] {
   const oldBaseline = new Set(
-    previous.programId && isTermLetter(previous.currentTerm)
-      ? inferCompleted(previous.programId, previous.currentTerm)
-      : [],
+    baselineFor(previous.programId, previous.currentTerm),
   );
   const oldEffective = new Set(previous.completedCourses);
   const extras = previous.completedCourses.filter((c) => !oldBaseline.has(c));
@@ -63,11 +61,17 @@ export function rebaseCompletedCourses(
     [...oldBaseline].filter((c) => !oldEffective.has(c)),
   );
 
-  const newBaseline =
-    nextProgramId && isTermLetter(nextCurrentTerm)
-      ? inferCompleted(nextProgramId, nextCurrentTerm)
-      : [];
+  const newBaseline = baselineFor(nextProgramId, nextCurrentTerm);
   return [...new Set([...newBaseline, ...extras])]
     .filter((c) => !removals.has(c))
     .sort();
+}
+
+// Flexible programs ignore the term, so allowing a `null` term here lets them
+// seed without one. Engineering still requires a term — inferCompleted returns
+// [] when called with null on an engineering program.
+function baselineFor(programId: string | null, term: string | null): string[] {
+  if (!programId) return [];
+  const t = isTermLetter(term) ? term : null;
+  return inferCompleted(programId, t);
 }

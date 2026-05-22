@@ -1,9 +1,37 @@
 import * as cheerio from "cheerio";
-import type { TermLetter } from "../lib/programs";
-import { TERM_LETTERS } from "../lib/programs";
+import type { ChoiceGroup, TermLetter } from "../lib/programs";
+import { isTermLetter, TERM_LETTERS } from "../lib/programs";
 
-export interface ParseResult {
-  terms: Record<TermLetter, string[]>;
+export function normalizeCourseCode(raw: string): string | null {
+  const cleaned = raw.replace(/\s+/g, "").toUpperCase();
+  const m = cleaned.match(/^([A-Z]{2,8})(\d{3,4}[A-Z]?)$/);
+  return m ? (m[1] + m[2]).toLowerCase() : null;
+}
+
+export type ParseResult =
+  | {
+      kind: "engineering";
+      terms: Record<TermLetter, string[]>;
+      choiceGroupsByTerm: Record<TermLetter, ChoiceGroup[]>;
+      warnings: string[];
+    }
+  | {
+      kind: "flexible";
+      requiredCourses: string[];
+      choiceGroups: ChoiceGroup[];
+      warnings: string[];
+    }
+  | { kind: "empty"; warnings: string[] };
+
+interface ProgramDetailFields {
+  requiredCoursesTermByTerm?: string;
+  requirements?: string;
+  courseRequirementsNoUnits?: string;
+}
+
+interface ExtractedRules {
+  requiredCodes: Set<string>;
+  choiceGroups: ChoiceGroup[];
   warnings: string[];
 }
 
@@ -13,14 +41,60 @@ const emptyTerms = (): Record<TermLetter, string[]> =>
     string[]
   >;
 
-export function parseRequiredCoursesTermByTerm(
-  html: string,
+const emptyChoiceGroupsByTerm = (): Record<TermLetter, ChoiceGroup[]> =>
+  Object.fromEntries(
+    TERM_LETTERS.map((t) => [t, [] as ChoiceGroup[]]),
+  ) as Record<TermLetter, ChoiceGroup[]>;
+
+const COMPLETE_ALL_RE = /^Complete all (the|of the) following/i;
+const COMPLETE_N_OF_RE = /^Complete (\d+) of (the )?following/i;
+// Catch-all for descriptive prose, subject-restricted elective buckets,
+// conditional notes, and exclusion lists — anything that isn't an explicit
+// "Complete all/Complete N of the following" course-listing rule. Examples:
+//   "Complete 2 additional STAT courses at the 300-level"
+//   "Complete 1 approved elective" / "Complete 5.5 units of …"
+//   "Complete 2 Technical Electives from List 1"
+//   "Complete the List 1 and List 2 requirements below"
+//   "Choose any of the following" / "Complete no more than 1 from the following"
+//   "The following cannot be used towards this academic plan"
+//   "Note", "If CO255 is taken…", "Subject concentration"
+// Capturing these properly needs ElectiveCategory / conditional modeling and
+// is deferred to a follow-up issue per ADR 0001 §118-127.
+const DEFERRED_PROSE_RE =
+  /^(?:Complete|Choose|The following|Note|If\b|Subject concentration)/i;
+
+/**
+ * Parse a Kuali program detail into a discriminated `ParseResult`.
+ *
+ * Field-selection precedence (first non-empty wins):
+ *   1. `requiredCoursesTermByTerm` → engineering (per-term schedule)
+ *   2. `requirements`              → flexible (flat required list)
+ *   3. `courseRequirementsNoUnits` → flexible (flat required list)
+ *
+ * The `requirements` and `courseRequirementsNoUnits` fields are HTML-equivalent
+ * — Kuali emits the same `<section><h2>Required Courses</h2>...` shape into
+ * one or the other depending on whether unit counts are tracked.
+ */
+export function parseProgramRequirements(
+  detail: ProgramDetailFields,
   programLabel = "(unknown)",
 ): ParseResult {
-  const terms = emptyTerms();
-  const warnings: string[] = [];
-  if (!html.trim()) return { terms, warnings };
+  const engHtml = detail.requiredCoursesTermByTerm?.trim();
+  if (engHtml) return parseEngineering(engHtml, programLabel);
 
+  const reqHtml = detail.requirements?.trim();
+  if (reqHtml) return parseFlexible(reqHtml, programLabel);
+
+  const noUnitsHtml = detail.courseRequirementsNoUnits?.trim();
+  if (noUnitsHtml) return parseFlexible(noUnitsHtml, programLabel);
+
+  return { kind: "empty", warnings: [] };
+}
+
+function parseEngineering(html: string, programLabel: string): ParseResult {
+  const terms = emptyTerms();
+  const choiceGroupsByTerm = emptyChoiceGroupsByTerm();
+  const warnings: string[] = [];
   const $ = cheerio.load(html);
 
   $("section").each((_, section) => {
@@ -31,52 +105,123 @@ export function parseRequiredCoursesTermByTerm(
     const termLetter = parseTermLetter(header);
     if (!termLetter) return;
 
-    const codes = new Set<string>();
-    $(section)
-      .find('div[data-test="ruleView-A-result"]')
-      .each((_, rule) => {
-        const fullText = $(rule).text();
-        const colonIdx = fullText.indexOf(":");
-        const prefix = fullText
-          .slice(0, colonIdx >= 0 ? colonIdx : Math.min(fullText.length, 120))
-          .replace(/\s+/g, " ")
-          .trim();
-
-        if (/^Complete all the following/i.test(prefix)) {
-          $(rule)
-            .find("a")
-            .each((_, a) => {
-              const code = normalizeCourseCode($(a).text());
-              if (code) codes.add(code);
-            });
-        } else if (
-          /^Complete \d+ of/i.test(prefix) ||
-          /\bone of the following\b/i.test(prefix) ||
-          /^Choose \d+/i.test(prefix)
-        ) {
-          warnings.push(
-            `${programLabel} ${termLetter}: OR group skipped — "${prefix.trim()}"`,
-          );
-        }
-      });
-
-    if (codes.size > 0) terms[termLetter] = [...codes].sort();
+    const extracted = extractRules(
+      $,
+      $(section),
+      `${programLabel} ${termLetter}`,
+    );
+    if (extracted.requiredCodes.size > 0) {
+      terms[termLetter] = [...extracted.requiredCodes].sort();
+    }
+    if (extracted.choiceGroups.length > 0) {
+      choiceGroupsByTerm[termLetter] = extracted.choiceGroups;
+    }
+    warnings.push(...extracted.warnings);
   });
 
-  return { terms, warnings };
+  return { kind: "engineering", terms, choiceGroupsByTerm, warnings };
+}
+
+function parseFlexible(html: string, programLabel: string): ParseResult {
+  const requiredCodes = new Set<string>();
+  const choiceGroups: ChoiceGroup[] = [];
+  const warnings: string[] = [];
+  const $ = cheerio.load(html);
+
+  // Flexible programs may have one or more sections; merge them all into one
+  // bucket. In practice it's a single "Required Courses" section, but we
+  // don't depend on that.
+  $("section").each((_, section) => {
+    const extracted = extractRules($, $(section), programLabel);
+    for (const c of extracted.requiredCodes) requiredCodes.add(c);
+    choiceGroups.push(...extracted.choiceGroups);
+    warnings.push(...extracted.warnings);
+  });
+
+  // Sort choiceGroups by first option for stable JSON across re-runs.
+  choiceGroups.sort((a, b) =>
+    (a.options[0] ?? "").localeCompare(b.options[0] ?? ""),
+  );
+
+  if (requiredCodes.size === 0 && choiceGroups.length === 0) {
+    return { kind: "empty", warnings };
+  }
+
+  return {
+    kind: "flexible",
+    requiredCourses: [...requiredCodes].sort(),
+    choiceGroups,
+    warnings,
+  };
+}
+
+function extractRules(
+  $: cheerio.CheerioAPI,
+  $section: ReturnType<cheerio.CheerioAPI>,
+  contextLabel: string,
+): ExtractedRules {
+  const requiredCodes = new Set<string>();
+  const choiceGroups: ChoiceGroup[] = [];
+  const warnings: string[] = [];
+
+  $section
+    .find('div[data-test^="ruleView-"][data-test$="-result"]')
+    .each((_, rule) => {
+      const fullText = $(rule).text();
+      const colonIdx = fullText.indexOf(":");
+      const prefix = fullText
+        .slice(0, colonIdx >= 0 ? colonIdx : 120)
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (COMPLETE_ALL_RE.test(prefix)) {
+        $(rule)
+          .find("a")
+          .each((_, a) => {
+            const code = normalizeCourseCode($(a).text());
+            if (code) requiredCodes.add(code);
+          });
+        return;
+      }
+
+      const nOf = COMPLETE_N_OF_RE.exec(prefix);
+      if (nOf) {
+        const opts = new Set<string>();
+        $(rule)
+          .find("a")
+          .each((_, a) => {
+            const code = normalizeCourseCode($(a).text());
+            if (code) opts.add(code);
+          });
+        if (opts.size > 0) {
+          choiceGroups.push({
+            description: prefix.replace(/:\s*$/, "").trim(),
+            selectCount: Number(nOf[1]),
+            options: [...opts].sort(),
+          });
+        }
+        return;
+      }
+
+      if (DEFERRED_PROSE_RE.test(prefix)) return;
+
+      // Unrecognized prefix — record so Kuali wording drift is visible.
+      warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
+    });
+
+  const seen = new Set<string>();
+  const dedupedChoiceGroups = choiceGroups.filter((g) => {
+    const key = `${g.selectCount ?? 1}|${g.options.join(",")}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return { requiredCodes, choiceGroups: dedupedChoiceGroups, warnings };
 }
 
 function parseTermLetter(headerText: string): TermLetter | null {
   const m = headerText.match(/\b(\d[AB])\b/);
-  if (m && (TERM_LETTERS as readonly string[]).includes(m[1]))
-    return m[1] as TermLetter;
-  return null;
-}
-
-export function normalizeCourseCode(raw: string): string | null {
-  const cleaned = raw.replace(/\s+/g, "").toUpperCase();
-  const m = cleaned.match(/^([A-Z]{2,8})(\d{3,4}[A-Z]?)$/);
-  return m ? (m[1] + m[2]).toLowerCase() : null;
+  return m && isTermLetter(m[1]) ? m[1] : null;
 }
 
 const CREDENTIAL_PREFIX_RE = /^(h|jh|3g|4g)-/;

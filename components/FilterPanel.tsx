@@ -243,6 +243,7 @@ function ProgramSeeder({
   patch: (p: Partial<FilterState>) => void;
 }) {
   const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
+  const isFlexible = selectedProgram?.kind === "flexible";
   const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
 
   return (
@@ -253,7 +254,16 @@ function ProgramSeeder({
         </span>
         <select
           value={state.programId ?? ""}
-          onChange={(e) => patch({ programId: e.target.value || null })}
+          onChange={(e) => {
+            const id = e.target.value || null;
+            const next = id ? PROGRAMS[id] : null;
+            // Flexible programs have no term schedule; clear any stale term so
+            // the URL state doesn't carry a value the UI no longer shows.
+            patch({
+              programId: id,
+              ...(next?.kind === "flexible" ? { currentTerm: null } : {}),
+            });
+          }}
           className={SELECT_CLASS}
         >
           <option value="">Select a program…</option>
@@ -265,31 +275,37 @@ function ProgramSeeder({
         </select>
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">
-          Current term
-        </span>
-        <select
-          value={term ?? ""}
-          onChange={(e) =>
-            patch({
-              currentTerm: isTermLetter(e.target.value) ? e.target.value : null,
-            })
-          }
-          className={SELECT_CLASS}
-        >
-          <option value="">Select a term…</option>
-          {TERM_LETTERS.map((t: TermLetter) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!isFlexible && (
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-zinc-600 dark:text-zinc-400">
+            Current term
+          </span>
+          <select
+            value={term ?? ""}
+            onChange={(e) =>
+              patch({
+                currentTerm: isTermLetter(e.target.value)
+                  ? e.target.value
+                  : null,
+              })
+            }
+            className={SELECT_CLASS}
+          >
+            <option value="">Select a term…</option>
+            {TERM_LETTERS.map((t: TermLetter) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {selectedProgram && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Sourced from UW calendar (as of {selectedProgram.asOf}).
+          {isFlexible
+            ? `Flexible program — all required courses are seeded as completed. (As of ${selectedProgram.asOf}.)`
+            : `Sourced from UW calendar (as of ${selectedProgram.asOf}).`}
         </p>
       )}
     </div>
