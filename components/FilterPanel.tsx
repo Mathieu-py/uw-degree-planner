@@ -10,6 +10,7 @@ import {
   type TranscriptImportPayload,
 } from "./filter/TranscriptImportModal";
 import { rebaseCompletedCourses } from "@/lib/completedCourses";
+import { applyTranscriptToFilterState } from "@/lib/transcript/applyHelpers";
 import {
   BROWSE_QS_STORAGE_KEY,
   DEFAULT_FILTER_STATE,
@@ -117,15 +118,16 @@ export function FilterPanel({
     commit(next);
   }
 
-  // Apply a parsed transcript: replace completedCourses with the parsed list
-  // and auto-fill programId/currentTerm. `patch` triggers a rebase using the
-  // pre-import list; we then override with the imported codes (React batches
-  // both state updates so the rebased value is never observable).
+  // The transcript IS the source of truth — skip the prog/term rebase that
+  // `patch` would do. Decode the live URL, merge the payload's prog/term in,
+  // commit to the URL, and replace completedCourses in localStorage.
   function handleTranscriptApply(payload: TranscriptImportPayload) {
-    patch({
-      programId: payload.programId,
-      currentTerm: payload.currentTerm,
-    });
+    const live =
+      typeof window !== "undefined"
+        ? decodeFilterState(new URLSearchParams(window.location.search))
+        : state;
+    const next = applyTranscriptToFilterState(live, payload);
+    commit(next);
     onCompletedChange(payload.codes);
     setTranscriptModalOpen(false);
   }

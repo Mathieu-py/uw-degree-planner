@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyTranscriptToFilterState,
   buildImportPayload,
   categorize,
   type Categorized,
+  type TranscriptImportPayload,
 } from "../transcript/applyHelpers";
 import type {
   ParsedCourse,
   TranscriptParseResult,
 } from "../transcript/types";
+import type { FilterState } from "../types";
 
 function course(
   code: string,
@@ -146,5 +149,58 @@ describe("buildImportPayload", () => {
     const payload = buildImportPayload(r, empty, new Set());
     expect(payload.programId).toBe("systems-design-engineering");
     expect(payload.currentTerm).toBe("3A");
+  });
+});
+
+describe("applyTranscriptToFilterState", () => {
+  const baseLive: FilterState = {
+    excludePrefixes: ["PHIL"],
+    levels: [200, 300],
+    hasSeatsAvailable: true,
+    completedCourses: ["math115", "syde101"],
+    hideUnmetPrereqs: true,
+    minUseful: 0.6,
+    minEasy: 0.3,
+    programId: "systems-design-engineering",
+    currentTerm: "3A",
+  };
+
+  const payload: TranscriptImportPayload = {
+    codes: ["cs135", "math137"],
+    programId: "electrical-engineering",
+    currentTerm: "2A",
+  };
+
+  it("overwrites programId, currentTerm, and completedCourses", () => {
+    const next = applyTranscriptToFilterState(baseLive, payload);
+    expect(next.programId).toBe("electrical-engineering");
+    expect(next.currentTerm).toBe("2A");
+    expect(next.completedCourses).toEqual(["cs135", "math137"]);
+  });
+
+  it("preserves every other filter field", () => {
+    const next = applyTranscriptToFilterState(baseLive, payload);
+    expect(next.excludePrefixes).toEqual(baseLive.excludePrefixes);
+    expect(next.levels).toEqual(baseLive.levels);
+    expect(next.hasSeatsAvailable).toBe(baseLive.hasSeatsAvailable);
+    expect(next.hideUnmetPrereqs).toBe(baseLive.hideUnmetPrereqs);
+    expect(next.minUseful).toBe(baseLive.minUseful);
+    expect(next.minEasy).toBe(baseLive.minEasy);
+  });
+
+  it("does not mutate the input live state", () => {
+    const snapshot = JSON.parse(JSON.stringify(baseLive));
+    applyTranscriptToFilterState(baseLive, payload);
+    expect(baseLive).toEqual(snapshot);
+  });
+
+  it("handles null programId/currentTerm in the payload (no program detected)", () => {
+    const next = applyTranscriptToFilterState(baseLive, {
+      codes: ["cs135"],
+      programId: null,
+      currentTerm: null,
+    });
+    expect(next.programId).toBeNull();
+    expect(next.currentTerm).toBeNull();
   });
 });

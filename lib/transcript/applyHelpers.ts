@@ -1,4 +1,5 @@
 import type { TermLetter } from "../programs";
+import type { FilterState } from "../types";
 import type { ParsedCourse, TranscriptParseResult } from "./types";
 
 export interface Categorized {
@@ -68,5 +69,24 @@ export function buildImportPayload(
     codes: [...codes].sort(),
     programId: parseResult.detectedProgramId,
     currentTerm: parseResult.detectedCurrentTerm,
+  };
+}
+
+/**
+ * Merge a transcript-import payload into the live FilterState. The transcript
+ * IS the source of truth — completedCourses is replaced wholesale, and
+ * programId / currentTerm are overwritten. Other filter fields are preserved.
+ *
+ * Returns a new object; never mutates `live`.
+ */
+export function applyTranscriptToFilterState(
+  live: FilterState,
+  payload: TranscriptImportPayload,
+): FilterState {
+  return {
+    ...live,
+    programId: payload.programId,
+    currentTerm: payload.currentTerm,
+    completedCourses: payload.codes,
   };
 }
