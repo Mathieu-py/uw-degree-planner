@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePrereqs, type PrereqNode } from "../parse";
+import { type PrereqNode, parsePrereqs } from "../parse";
 
 function courses(node: PrereqNode | null): string[] {
   if (!node) return [];
@@ -18,7 +18,10 @@ describe("parsePrereqs", () => {
   });
 
   it("parses a single course", () => {
-    expect(parsePrereqs("MATH116")).toEqual({ kind: "course", code: "math116" });
+    expect(parsePrereqs("MATH116")).toEqual({
+      kind: "course",
+      code: "math116",
+    });
   });
 
   it("parses 'X or Y' as OR", () => {

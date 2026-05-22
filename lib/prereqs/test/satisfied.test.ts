@@ -38,7 +38,10 @@ describe("evaluate", () => {
   });
 
   it("reports the missing course on failure", () => {
-    const result = evaluate(parsePrereqs("MATH116 and CO250"), user(["math116"]));
+    const result = evaluate(
+      parsePrereqs("MATH116 and CO250"),
+      user(["math116"]),
+    );
     expect(result.satisfied).toBe(false);
     expect(result.missingCourses).toEqual(["co250"]);
   });
@@ -49,7 +52,9 @@ describe("evaluate", () => {
       user(["math116"]),
     );
     expect(result.uncertain).toBe(true);
-    expect(result.rawRequirements).toContain("Honours Mathematics students only");
+    expect(result.rawRequirements).toContain(
+      "Honours Mathematics students only",
+    );
   });
 
   it("level requirement passes when user level is high enough", () => {

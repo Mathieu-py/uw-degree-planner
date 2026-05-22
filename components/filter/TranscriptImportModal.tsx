@@ -4,14 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
 import {
   buildImportPayload,
-  categorize,
   type Categorized,
+  categorize,
   type TranscriptImportPayload,
 } from "@/lib/transcript/applyHelpers";
-import {
-  parseTranscript,
-  type ParsedCourse,
-} from "@/lib/transcript/parse";
+import { type ParsedCourse, parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 
 export type { TranscriptImportPayload } from "@/lib/transcript/applyHelpers";
@@ -51,7 +48,9 @@ export function TranscriptImportModal({
       const extracted = await extractTextFromPdf(file);
       setText(extracted);
     } catch (err) {
-      setExtractError(err instanceof Error ? err.message : "Failed to read PDF.");
+      setExtractError(
+        err instanceof Error ? err.message : "Failed to read PDF.",
+      );
     } finally {
       setIsExtracting(false);
     }
@@ -97,7 +96,9 @@ export function TranscriptImportModal({
   // that has since been re-categorized (e.g. catalog updated, parse re-ran)
   // would otherwise be double-counted by the passed/inProgress/transfer
   // tallies AND `included.size`.
-  const unrecognizedCodes = new Set(categorized.unrecognized.map((c) => c.code));
+  const unrecognizedCodes = new Set(
+    categorized.unrecognized.map((c) => c.code),
+  );
   const includedFromUnrecognized = [...included].filter((code) =>
     unrecognizedCodes.has(code),
   ).length;
@@ -254,8 +255,8 @@ export function TranscriptImportModal({
 
               {parseResult.warnings.length > 0 && (
                 <div className="text-amber-700 dark:text-amber-400 text-xs">
-                  {parseResult.warnings.map((w, i) => (
-                    <p key={i}>⚠ {w}</p>
+                  {parseResult.warnings.map((w) => (
+                    <p key={w}>⚠ {w}</p>
                   ))}
                 </div>
               )}

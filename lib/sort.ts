@@ -8,11 +8,24 @@
 import { seatsAvailable } from "./filters";
 import type { Course } from "./types";
 
-export type SortKey = "code" | "name" | "useful" | "easy" | "liked" | "reviews" | "seats";
+export type SortKey =
+  | "code"
+  | "name"
+  | "useful"
+  | "easy"
+  | "liked"
+  | "reviews"
+  | "seats";
 export type SortDir = "asc" | "desc";
 
 const SORT_KEYS: ReadonlySet<SortKey> = new Set([
-  "code", "name", "useful", "easy", "liked", "reviews", "seats",
+  "code",
+  "name",
+  "useful",
+  "easy",
+  "liked",
+  "reviews",
+  "seats",
 ]);
 
 export const DEFAULT_SORT_KEY: SortKey = "useful";
@@ -21,7 +34,10 @@ export const DEFAULT_SORT_DIR: SortDir = "desc";
 export const PAGE_SIZE = 50;
 export const DEFAULT_PAGE = 1;
 
-const NUMERIC: Record<Exclude<SortKey, "code" | "name">, (c: Course) => number> = {
+const NUMERIC: Record<
+  Exclude<SortKey, "code" | "name">,
+  (c: Course) => number
+> = {
   useful: (c) => c.rating?.useful ?? -1,
   easy: (c) => c.rating?.easy ?? -1,
   liked: (c) => c.rating?.liked ?? -1,
@@ -29,7 +45,12 @@ const NUMERIC: Record<Exclude<SortKey, "code" | "name">, (c: Course) => number> 
   seats: (c) => seatsAvailable(c) ?? -1,
 };
 
-export function compareCourses(a: Course, b: Course, key: SortKey, dir: SortDir): number {
+export function compareCourses(
+  a: Course,
+  b: Course,
+  key: SortKey,
+  dir: SortDir,
+): number {
   const mul = dir === "asc" ? 1 : -1;
   switch (key) {
     case "code":

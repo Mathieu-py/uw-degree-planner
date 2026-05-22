@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  PROGRAMS,
-  TERM_LETTERS,
   inferCompleted,
   isKnownProgram,
   isTermLetter,
+  PROGRAMS,
+  TERM_LETTERS,
 } from "../programs";
 
 describe("inferCompleted", () => {
@@ -56,7 +56,9 @@ describe("programs.json schema integrity", () => {
   it("every program has at least one non-empty term (scraper enforces this)", () => {
     for (const [id, prog] of Object.entries(PROGRAMS)) {
       const hasAny = TERM_LETTERS.some((t) => prog.terms[t].length > 0);
-      expect(hasAny, `${id} should have at least one non-empty term`).toBe(true);
+      expect(hasAny, `${id} should have at least one non-empty term`).toBe(
+        true,
+      );
     }
   });
 });

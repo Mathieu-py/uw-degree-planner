@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  matchProgramSlug,
-  parseTranscript,
-} from "../transcript/parse";
+import { matchProgramSlug, parseTranscript } from "../transcript/parse";
 
 const TYPICAL_SYDE = `
 Career: Undergraduate
@@ -207,7 +204,9 @@ describe("parseTranscript — past-4B overflow", () => {
     for (let i = 0; i < 9; i++) {
       const year = 2020 + Math.floor(i / 3);
       const season = ["Fall", "Winter", "Spring"][i % 3];
-      sections.push(`${season} ${year}\nCS ${100 + i}    Course ${i}    0.50 0.50 75\n`);
+      sections.push(
+        `${season} ${year}\nCS ${100 + i}    Course ${i}    0.50 0.50 75\n`,
+      );
     }
     const result = parseTranscript(
       `Plan: Computer Science\n\n${sections.join("\n")}`,
@@ -224,9 +223,7 @@ describe("parseTranscript — unknown plan text", () => {
       `Plan: Some Made Up Program That Doesn't Exist\n\nFall 2023\nCS 135    Functional    0.50 0.50 85\n`,
     );
     expect(result.detectedProgramId).toBeNull();
-    expect(result.rawPlanText).toBe(
-      "Some Made Up Program That Doesn't Exist",
-    );
+    expect(result.rawPlanText).toBe("Some Made Up Program That Doesn't Exist");
   });
 });
 
@@ -338,17 +335,29 @@ SYDE 223  Data Structures and Algorithms
 
   it("classifies Fall-2025 graded rows as passed", () => {
     for (const code of [
-      "syde101", "syde101l", "syde111", "syde113",
-      "syde121", "syde161", "syde181",
+      "syde101",
+      "syde101l",
+      "syde111",
+      "syde113",
+      "syde121",
+      "syde161",
+      "syde181",
     ]) {
-      expect(byCode.get(code)?.status, `${code} should be passed`).toBe("passed");
+      expect(byCode.get(code)?.status, `${code} should be passed`).toBe(
+        "passed",
+      );
     }
   });
 
   it("classifies Spring-2026 ungraded rows as in-progress (was: skipped/unrecognized)", () => {
     for (const code of [
-      "bet320", "syde112", "syde114", "syde162",
-      "syde192", "syde192l", "syde223",
+      "bet320",
+      "syde112",
+      "syde114",
+      "syde162",
+      "syde192",
+      "syde192l",
+      "syde223",
     ]) {
       expect(byCode.get(code)?.status, `${code} should be in-progress`).toBe(
         "inProgress",

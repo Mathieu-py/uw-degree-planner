@@ -8,7 +8,9 @@ import {
 import type { FilterState } from "../types";
 
 function roundTrip(state: FilterState): FilterState {
-  return decodeFilterState(new URLSearchParams(encodeFilterState(state).toString()));
+  return decodeFilterState(
+    new URLSearchParams(encodeFilterState(state).toString()),
+  );
 }
 
 describe("decodeFilterState", () => {
@@ -43,7 +45,9 @@ describe("decodeFilterState", () => {
   });
 
   it("drops level values outside the supported {100,200,300,400} buckets", () => {
-    const state = decodeFilterState(new URLSearchParams("lv=50,100,500,250,400"));
+    const state = decodeFilterState(
+      new URLSearchParams("lv=50,100,500,250,400"),
+    );
     expect(state.levels).toEqual([100, 400]);
   });
 
@@ -60,7 +64,9 @@ describe("decodeFilterState", () => {
   });
 
   it("treats non-finite minUseful/minEasy as unset (null)", () => {
-    const state = decodeFilterState(new URLSearchParams("minU=NaN&minE=Infinity"));
+    const state = decodeFilterState(
+      new URLSearchParams("minU=NaN&minE=Infinity"),
+    );
     expect(state.minUseful).toBeNull();
     expect(state.minEasy).toBeNull();
   });
@@ -80,36 +86,70 @@ describe("decodeFilterState", () => {
   });
 
   it("always returns empty completedCourses (profile data lives in localStorage, not URL)", () => {
-    expect(decodeFilterState(new URLSearchParams("prog=syde&term=3A")).completedCourses).toEqual([]);
-    expect(decodeFilterState(new URLSearchParams("donePlus=cs115")).completedCourses).toEqual([]);
-    expect(decodeFilterState(new URLSearchParams("doneMinus=syde101")).completedCourses).toEqual([]);
+    expect(
+      decodeFilterState(new URLSearchParams("prog=syde&term=3A"))
+        .completedCourses,
+    ).toEqual([]);
+    expect(
+      decodeFilterState(new URLSearchParams("donePlus=cs115")).completedCourses,
+    ).toEqual([]);
+    expect(
+      decodeFilterState(new URLSearchParams("doneMinus=syde101"))
+        .completedCourses,
+    ).toEqual([]);
   });
 
   it("decodes booleans from 1, ignores other values", () => {
-    expect(decodeFilterState(new URLSearchParams("seats=1")).hasSeatsAvailable).toBe(true);
-    expect(decodeFilterState(new URLSearchParams("seats=0")).hasSeatsAvailable).toBe(false);
-    expect(decodeFilterState(new URLSearchParams("seats=true")).hasSeatsAvailable).toBe(false);
-    expect(decodeFilterState(new URLSearchParams("up=1")).hideUnmetPrereqs).toBe(true);
+    expect(
+      decodeFilterState(new URLSearchParams("seats=1")).hasSeatsAvailable,
+    ).toBe(true);
+    expect(
+      decodeFilterState(new URLSearchParams("seats=0")).hasSeatsAvailable,
+    ).toBe(false);
+    expect(
+      decodeFilterState(new URLSearchParams("seats=true")).hasSeatsAvailable,
+    ).toBe(false);
+    expect(
+      decodeFilterState(new URLSearchParams("up=1")).hideUnmetPrereqs,
+    ).toBe(true);
   });
 
   it("accepts a known program id and normalises casing", () => {
-    expect(decodeFilterState(new URLSearchParams("prog=systems-design-engineering")).programId).toBe("systems-design-engineering");
-    expect(decodeFilterState(new URLSearchParams("prog=SYSTEMS-DESIGN-ENGINEERING")).programId).toBe("systems-design-engineering");
+    expect(
+      decodeFilterState(new URLSearchParams("prog=systems-design-engineering"))
+        .programId,
+    ).toBe("systems-design-engineering");
+    expect(
+      decodeFilterState(new URLSearchParams("prog=SYSTEMS-DESIGN-ENGINEERING"))
+        .programId,
+    ).toBe("systems-design-engineering");
   });
 
   it("drops unknown program ids to null", () => {
-    expect(decodeFilterState(new URLSearchParams("prog=phys")).programId).toBeNull();
-    expect(decodeFilterState(new URLSearchParams("prog=")).programId).toBeNull();
+    expect(
+      decodeFilterState(new URLSearchParams("prog=phys")).programId,
+    ).toBeNull();
+    expect(
+      decodeFilterState(new URLSearchParams("prog=")).programId,
+    ).toBeNull();
   });
 
   it("accepts a valid term letter and normalises casing", () => {
-    expect(decodeFilterState(new URLSearchParams("term=3A")).currentTerm).toBe("3A");
-    expect(decodeFilterState(new URLSearchParams("term=3a")).currentTerm).toBe("3A");
+    expect(decodeFilterState(new URLSearchParams("term=3A")).currentTerm).toBe(
+      "3A",
+    );
+    expect(decodeFilterState(new URLSearchParams("term=3a")).currentTerm).toBe(
+      "3A",
+    );
   });
 
   it("drops invalid term values to null", () => {
-    expect(decodeFilterState(new URLSearchParams("term=5A")).currentTerm).toBeNull();
-    expect(decodeFilterState(new URLSearchParams("term=foo")).currentTerm).toBeNull();
+    expect(
+      decodeFilterState(new URLSearchParams("term=5A")).currentTerm,
+    ).toBeNull();
+    expect(
+      decodeFilterState(new URLSearchParams("term=foo")).currentTerm,
+    ).toBeNull();
   });
 });
 
@@ -119,12 +159,18 @@ describe("encodeFilterState", () => {
   });
 
   it("omits fields that match the default", () => {
-    const state: FilterState = { ...DEFAULT_FILTER_STATE, hasSeatsAvailable: true };
+    const state: FilterState = {
+      ...DEFAULT_FILTER_STATE,
+      hasSeatsAvailable: true,
+    };
     expect(encodeFilterState(state).toString()).toBe("seats=1");
   });
 
   it("encodes prefix arrays joined by commas", () => {
-    const state: FilterState = { ...DEFAULT_FILTER_STATE, excludePrefixes: ["PHIL", "ENGL"] };
+    const state: FilterState = {
+      ...DEFAULT_FILTER_STATE,
+      excludePrefixes: ["PHIL", "ENGL"],
+    };
     expect(encodeFilterState(state).get("exc")).toBe("PHIL,ENGL");
   });
 
@@ -145,7 +191,10 @@ describe("encodeFilterState", () => {
 describe("mergeFilterStateIntoParams", () => {
   it("preserves sort params (s, d) when filters change", () => {
     const current = new URLSearchParams("s=easy&d=asc&exc=PHIL");
-    const next: FilterState = { ...DEFAULT_FILTER_STATE, excludePrefixes: ["ENGL"] };
+    const next: FilterState = {
+      ...DEFAULT_FILTER_STATE,
+      excludePrefixes: ["ENGL"],
+    };
     const merged = mergeFilterStateIntoParams(current, next);
     expect(merged.get("s")).toBe("easy");
     expect(merged.get("d")).toBe("asc");
@@ -164,7 +213,10 @@ describe("mergeFilterStateIntoParams", () => {
   it("does not mutate the input params", () => {
     const current = new URLSearchParams("s=easy&exc=PHIL");
     const before = current.toString();
-    mergeFilterStateIntoParams(current, { ...DEFAULT_FILTER_STATE, excludePrefixes: ["ENGL"] });
+    mergeFilterStateIntoParams(current, {
+      ...DEFAULT_FILTER_STATE,
+      excludePrefixes: ["ENGL"],
+    });
     expect(current.toString()).toBe(before);
   });
 
@@ -180,7 +232,10 @@ describe("mergeFilterStateIntoParams", () => {
       programId: "systems-design-engineering",
       currentTerm: "3A",
     };
-    const merged = mergeFilterStateIntoParams(new URLSearchParams("s=code"), state);
+    const merged = mergeFilterStateIntoParams(
+      new URLSearchParams("s=code"),
+      state,
+    );
     expect(merged.get("s")).toBe("code");
     const decoded = decodeFilterState(merged);
     expect(decoded).toEqual({ ...state, completedCourses: [] });

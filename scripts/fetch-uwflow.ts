@@ -98,7 +98,9 @@ async function main() {
     const raw = await fetchTerm(term);
     const courses = raw.filter((c) => !/xxx$/i.test(c.code));
     const out = await writeSnapshot(term, courses);
-    console.log(`${courses.length} courses → ${path.relative(process.cwd(), out)}`);
+    console.log(
+      `${courses.length} courses → ${path.relative(process.cwd(), out)}`,
+    );
   }
 }
 

@@ -18,7 +18,14 @@ export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
 // URL keys owned by FilterState. Used by mergeFilterStateIntoParams to
 // overwrite filter slots without disturbing sort params (s, d).
 const FILTER_PARAM_KEYS = [
-  "exc", "lv", "seats", "up", "minU", "minE", "prog", "term",
+  "exc",
+  "lv",
+  "seats",
+  "up",
+  "minU",
+  "minE",
+  "prog",
+  "term",
 ] as const;
 
 export const DEFAULT_FILTER_STATE: FilterState = {
@@ -33,7 +40,9 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   currentTerm: null,
 };
 
-type RawParams = URLSearchParams | Record<string, string | string[] | undefined>;
+type RawParams =
+  | URLSearchParams
+  | Record<string, string | string[] | undefined>;
 
 function read(params: RawParams, key: string): string | undefined {
   if (params instanceof URLSearchParams) {
@@ -46,7 +55,10 @@ function read(params: RawParams, key: string): string | undefined {
 
 function splitList(raw: string | undefined): string[] {
   if (!raw) return [];
-  const parts = raw.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+  const parts = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
   return [...new Set(parts)];
 }
 
@@ -72,7 +84,9 @@ function parseBool(raw: string | undefined): boolean {
 }
 
 export function decodeFilterState(params: RawParams): FilterState {
-  const excludePrefixes = splitList(read(params, "exc")).map((s) => s.toUpperCase());
+  const excludePrefixes = splitList(read(params, "exc")).map((s) =>
+    s.toUpperCase(),
+  );
   const levels = [
     ...new Set(
       splitList(read(params, "lv"))

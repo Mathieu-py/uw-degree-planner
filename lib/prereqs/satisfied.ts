@@ -23,7 +23,12 @@ export function evaluate(
   state: UserState,
 ): EligibilityResult {
   if (!node) {
-    return { satisfied: true, uncertain: false, missingCourses: [], rawRequirements: [] };
+    return {
+      satisfied: true,
+      uncertain: false,
+      missingCourses: [],
+      rawRequirements: [],
+    };
   }
   const result = walk(node, state);
   return {
@@ -54,7 +59,12 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
     }
     case "level": {
       if (!state.level) {
-        return { satisfied: true, uncertain: true, missing: [], raw: [`Level at least ${node.minLevel}`] };
+        return {
+          satisfied: true,
+          uncertain: true,
+          missing: [],
+          raw: [`Level at least ${node.minLevel}`],
+        };
       }
       return {
         satisfied: compareLevel(state.level, node.minLevel) >= 0,

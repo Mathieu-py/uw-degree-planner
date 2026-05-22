@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./tailwind.css";
 
 const geistSans = Geist({
@@ -36,7 +36,10 @@ export default function RootLayout({
               UW Elective Finder
             </Link>
             <nav className="flex items-center gap-5 text-sm text-zinc-600 dark:text-zinc-400">
-              <Link href="/browse" className="hover:text-zinc-950 dark:hover:text-zinc-50">
+              <Link
+                href="/browse"
+                className="hover:text-zinc-950 dark:hover:text-zinc-50"
+              >
                 Browse
               </Link>
               <a
@@ -54,11 +57,25 @@ export default function RootLayout({
         <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-12">
           <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-3 justify-between">
             <p>
-              Data from <a className="underline hover:text-zinc-700 dark:hover:text-zinc-200" href="https://uwflow.com" target="_blank" rel="noreferrer noopener">UWFlow</a>. Not affiliated with the University of Waterloo.
+              Data from{" "}
+              <a
+                className="underline hover:text-zinc-700 dark:hover:text-zinc-200"
+                href="https://uwflow.com"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                UWFlow
+              </a>
+              . Not affiliated with the University of Waterloo.
             </p>
             <p>
               Open source on{" "}
-              <a className="underline hover:text-zinc-700 dark:hover:text-zinc-200" href="https://github.com/Mathieu-py/uw-elective-finder" target="_blank" rel="noreferrer noopener">
+              <a
+                className="underline hover:text-zinc-700 dark:hover:text-zinc-200"
+                href="https://github.com/Mathieu-py/uw-elective-finder"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
                 GitHub
               </a>
               .
