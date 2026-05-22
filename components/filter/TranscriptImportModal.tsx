@@ -92,11 +92,20 @@ export function TranscriptImportModal({
   // unrecognized entries are placeholder rows or codes the user actually
   // doesn't want as completed courses; check-to-include avoids silently
   // polluting the completed-courses list.
+  //
+  // Intersect with the currently-unrecognized codes: a code in `included`
+  // that has since been re-categorized (e.g. catalog updated, parse re-ran)
+  // would otherwise be double-counted by the passed/inProgress/transfer
+  // tallies AND `included.size`.
+  const unrecognizedCodes = new Set(categorized.unrecognized.map((c) => c.code));
+  const includedFromUnrecognized = [...included].filter((code) =>
+    unrecognizedCodes.has(code),
+  ).length;
   const includedCount =
     categorized.passed.length +
     categorized.inProgress.length +
     categorized.transfer.length +
-    included.size;
+    includedFromUnrecognized;
 
   const detectedProgramName = parseResult.detectedProgramId
     ? PROGRAMS[parseResult.detectedProgramId]?.name
@@ -109,6 +118,15 @@ export function TranscriptImportModal({
       else next.add(code);
       return next;
     });
+  }
+
+  // Esc fires `cancel` AND then `close` on <dialog>. Wiring both events to
+  // handleClose would run it twice. preventDefault() on cancel suppresses
+  // the native close, then we trigger it programmatically so only the
+  // `close` event reaches handleClose.
+  function handleCancel(e: React.SyntheticEvent<HTMLDialogElement>) {
+    e.preventDefault();
+    dialogRef.current?.close();
   }
 
   function handleApply() {
@@ -127,7 +145,7 @@ export function TranscriptImportModal({
     <dialog
       ref={dialogRef}
       onClose={handleClose}
-      onCancel={handleClose}
+      onCancel={handleCancel}
       className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 p-0 backdrop:bg-black/40 max-w-2xl w-[min(640px,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4 p-5">
