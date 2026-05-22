@@ -172,7 +172,8 @@ describe("rebaseCompletedCourses", () => {
       "../programs"
     );
     const biology = PROGRAMS["h-biology"];
-    if (biology?.kind !== "flexible") return;
+    if (biology?.kind !== "flexible")
+      throw new Error("expected h-biology to be flexible after scrape");
 
     const oldList = [
       ...inferCompleted("systems-design-engineering", "2A"),

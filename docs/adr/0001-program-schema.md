@@ -17,7 +17,7 @@
 
 The inline schema below still shows the original `selectCount` for historical accuracy; the live type is in [`lib/programs.ts`](../../lib/programs.ts#L16-L21). `data/programs.json` was migrated in-place: `{ selectCount: N }` → `{ selectMin: N, selectMax: N }` across 803 entries.
 
-Out of scope for #43: capturing the **parent-quota constraint** that ties sibling rules together (e.g. Combinatorics' "Complete 3 courses from the following choices:" parent over one `Choose any` + five `Complete no more than 1` siblings). Both the old and new schema lose this; revisit when the variant-picker modal lands.
+Out of scope for #43 alone: capturing the **parent-quota constraint** that ties sibling rules together (e.g. Combinatorics' "Complete 3 courses from the following choices:" parent over one `Choose any` + five `Complete no more than 1` siblings). This was resolved by the rule-tree refactor amendment below, which represents the parent-quota as a `pick` node wrapping its sibling children.
 
 ## Amendment — 2026-05-22 (rule-tree refactor)
 

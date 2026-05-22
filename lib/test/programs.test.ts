@@ -87,13 +87,20 @@ describe("programs.json schema integrity", () => {
   });
 
   it("engineering programs have all 8 term rule trees", () => {
+    const ruleNodeKinds: ReadonlyArray<RuleNode["kind"]> = [
+      "all",
+      "pick",
+      "subjectPool",
+      "courses",
+      "excluded",
+    ];
     for (const [id, prog] of Object.entries(PROGRAMS)) {
       if (prog.kind !== "engineering") continue;
       for (const term of TERM_LETTERS) {
         expect(
-          prog.terms[term]?.kind,
-          `${id}.terms.${term} should be a RuleNode`,
-        ).toBeDefined();
+          ruleNodeKinds,
+          `${id}.terms.${term}.kind should be a valid RuleNode kind`,
+        ).toContain(prog.terms[term]?.kind);
       }
     }
   });
