@@ -9,11 +9,13 @@
     "start": "next start",
     "lint": "eslint",
     "fetch-courses": "tsx scripts/fetch-uwflow.ts",
+    "scrape-programs": "tsx scripts/scrape-programs.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "next": "16.2.6",
+    "pdfjs-dist": "^5.7.284",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1"
@@ -23,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cheerio": "^1.2.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

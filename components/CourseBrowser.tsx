@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FilterPanel } from "./FilterPanel";
 import { Pagination } from "./Pagination";
 import { attachEligibility, type BrowseRow } from "@/lib/browse";
+import { buildBrowseUrl } from "@/lib/browseUrl";
 import { loadCompletedCourses, saveCompletedCourses } from "@/lib/completedCourses";
 import { seatsAvailable } from "@/lib/filters";
 import { BROWSE_QS_STORAGE_KEY } from "@/lib/filterState";
@@ -88,30 +89,24 @@ export function CourseBrowser({
   const pageRows = searched.slice(startIdx, startIdx + PAGE_SIZE);
 
   function setPageInUrl(n: number) {
-    const params = new URLSearchParams(window.location.search);
-    if (n <= 1) params.delete("p");
-    else params.set("p", String(n));
-    const qs = params.toString();
-    safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const url = buildBrowseUrl(pathname, (params) => {
+      if (n <= 1) params.delete("p");
+      else params.set("p", String(n));
+    });
+    router.replace(url, { scroll: false });
   }
 
   function setPresentation(next: { s?: SortKey; d?: SortDir }) {
-    const params = new URLSearchParams(window.location.search);
-    const nextKey = next.s ?? sortKey;
-    const nextDir = next.d ?? sortDir;
-
-    if (nextKey === DEFAULT_SORT_KEY) params.delete("s");
-    else params.set("s", nextKey);
-
-    if (nextDir === DEFAULT_SORT_DIR) params.delete("d");
-    else params.set("d", nextDir);
-
-    params.delete("p");
-
-    const qs = params.toString();
-    safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const url = buildBrowseUrl(pathname, (params) => {
+      const nextKey = next.s ?? sortKey;
+      const nextDir = next.d ?? sortDir;
+      if (nextKey === DEFAULT_SORT_KEY) params.delete("s");
+      else params.set("s", nextKey);
+      if (nextDir === DEFAULT_SORT_DIR) params.delete("d");
+      else params.set("d", nextDir);
+      params.delete("p");
+    });
+    router.replace(url, { scroll: false });
   }
 
   function onSort(key: SortKey) {

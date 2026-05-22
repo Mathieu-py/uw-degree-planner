@@ -5,9 +5,14 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Chip } from "./filter/Chip";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { PrefixPicker } from "./filter/PrefixPicker";
-import { rebaseCompletedCourses } from "@/lib/completedCourses";
 import {
-  BROWSE_QS_STORAGE_KEY,
+  TranscriptImportModal,
+  type TranscriptImportPayload,
+} from "./filter/TranscriptImportModal";
+import { rebaseCompletedCourses } from "@/lib/completedCourses";
+import { applyTranscriptToFilterState } from "@/lib/transcript/applyHelpers";
+import { buildBrowseUrl } from "@/lib/browseUrl";
+import {
   DEFAULT_FILTER_STATE,
   decodeFilterState,
   mergeFilterStateIntoParams,
@@ -18,7 +23,6 @@ import {
   type TermLetter,
   isTermLetter,
 } from "@/lib/programs";
-import { safeSetItem } from "@/lib/storage";
 import type { FilterState } from "@/lib/types";
 
 interface Props {
@@ -34,6 +38,9 @@ const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
 const SORTED_PROGRAMS = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
   a.name.localeCompare(b.name),
 );
+
+const SELECT_CLASS =
+  "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
 
 // state.levels === [] means "all four buckets". Selecting all four (or none) collapses back to [].
 function toggleLevel(current: readonly number[], lvl: number): number[] {
@@ -55,6 +62,7 @@ export function FilterPanel({
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
+  const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
 
   const completedCoursesRef = useRef(completedCourses);
   useEffect(() => {
@@ -63,15 +71,13 @@ export function FilterPanel({
 
   const commit = useCallback(
     (next: FilterState) => {
-      // Read the live querystring so sort params (s, d) survive a filter change.
-      const current = typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search)
-        : new URLSearchParams();
-      const merged = mergeFilterStateIntoParams(current, next);
-      merged.delete("p");
-      const qs = merged.toString();
-      const url = qs ? `${pathname}?${qs}` : pathname;
-      safeSetItem(BROWSE_QS_STORAGE_KEY, qs);
+      // mergeFilterStateIntoParams preserves sort params (s, d) so a filter
+      // change doesn't drop them.
+      const url = buildBrowseUrl(pathname, (params) => {
+        const merged = mergeFilterStateIntoParams(params, next);
+        merged.delete("p");
+        return merged;
+      });
       startTransition(() => {
         router.replace(url, { scroll: false });
       });
@@ -105,6 +111,20 @@ export function FilterPanel({
     }
 
     commit(next);
+  }
+
+  // The transcript IS the source of truth — skip the prog/term rebase that
+  // `patch` would do. Decode the live URL, merge the payload's prog/term in,
+  // commit to the URL, and replace completedCourses in localStorage.
+  function handleTranscriptApply(payload: TranscriptImportPayload) {
+    const live =
+      typeof window !== "undefined"
+        ? decodeFilterState(new URLSearchParams(window.location.search))
+        : state;
+    const next = applyTranscriptToFilterState(live, payload);
+    commit(next);
+    onCompletedChange(payload.codes);
+    setTranscriptModalOpen(false);
   }
 
   return (
@@ -187,7 +207,22 @@ export function FilterPanel({
           allCourseCodes={allCourseCodes}
           onChange={onCompletedChange}
         />
+        <button
+          type="button"
+          onClick={() => setTranscriptModalOpen(true)}
+          className="self-start rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
+        >
+          ↗ Upload transcript (PDF)
+        </button>
       </Section>
+
+      <TranscriptImportModal
+        isOpen={transcriptModalOpen}
+        onClose={() => setTranscriptModalOpen(false)}
+        onApply={handleTranscriptApply}
+        allCourseCodes={allCourseCodes}
+        currentCompletedCount={completedCourses.length}
+      />
     </aside>
   );
 }
@@ -202,9 +237,6 @@ function ProgramSeeder({
   const selectedProgram = state.programId ? PROGRAMS[state.programId] : null;
   const term = isTermLetter(state.currentTerm) ? state.currentTerm : null;
 
-  const selectClass =
-    "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
-
   return (
     <div className="flex flex-col gap-2">
       <label className="flex flex-col gap-1">
@@ -212,7 +244,7 @@ function ProgramSeeder({
         <select
           value={state.programId ?? ""}
           onChange={(e) => patch({ programId: e.target.value || null })}
-          className={selectClass}
+          className={SELECT_CLASS}
         >
           <option value="">Select a program…</option>
           {SORTED_PROGRAMS.map(([id, p]) => (
@@ -228,7 +260,7 @@ function ProgramSeeder({
           onChange={(e) =>
             patch({ currentTerm: isTermLetter(e.target.value) ? e.target.value : null })
           }
-          className={selectClass}
+          className={SELECT_CLASS}
         >
           <option value="">Select a term…</option>
           {TERM_LETTERS.map((t: TermLetter) => (

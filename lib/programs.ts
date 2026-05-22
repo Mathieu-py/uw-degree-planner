@@ -1,10 +1,8 @@
 import programsData from "../data/programs.json";
 
-export type TermLetter = "1A" | "1B" | "2A" | "2B" | "3A" | "3B" | "4A" | "4B";
+export const TERM_LETTERS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"] as const;
 
-export const TERM_LETTERS: readonly TermLetter[] = [
-  "1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B",
-] as const;
+export type TermLetter = typeof TERM_LETTERS[number];
 
 export interface Program {
   name: string;

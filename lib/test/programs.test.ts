@@ -13,42 +13,31 @@ describe("inferCompleted", () => {
   });
 
   it("returns [] when currentTerm is 1A (nothing before it)", () => {
-    expect(inferCompleted("syde", "1A")).toEqual([]);
+    expect(inferCompleted("systems-design-engineering", "1A")).toEqual([]);
   });
 
   it("seeds SYDE 2A with 1A + 1B core courses", () => {
-    const seeded = inferCompleted("syde", "2A");
-    // Strictly before 2A means 1A ∪ 1B.
+    const seeded = inferCompleted("systems-design-engineering", "2A");
     const expected = new Set([
-      ...PROGRAMS.syde.terms["1A"],
-      ...PROGRAMS.syde.terms["1B"],
+      ...PROGRAMS["systems-design-engineering"].terms["1A"],
+      ...PROGRAMS["systems-design-engineering"].terms["1B"],
     ]);
     expect(new Set(seeded)).toEqual(expected);
   });
 
-  it("seeds SYDE 3A with 1A through 2B (syde322 not in seed but is the smoke-test target)", () => {
-    const seeded = new Set(inferCompleted("syde", "3A"));
-    // A representative course from each of 1A, 1B, 2A, 2B should be present.
+  it("seeds SYDE 3A with 1A through 2B", () => {
+    const seeded = new Set(inferCompleted("systems-design-engineering", "3A"));
     expect(seeded.has("syde101")).toBe(true);
-    expect(seeded.has("syde192")).toBe(true);
-    expect(seeded.has("syde201")).toBe(true);
-    expect(seeded.has("syde262")).toBe(true);
-    // 3A courses themselves should NOT be in the seed.
-    expect(seeded.has("syde301")).toBe(false);
+    expect(seeded.has("syde161")).toBe(true);
+    expect(seeded.has("math115")).toBe(true);
+    expect(seeded.has("syde321")).toBe(false);
   });
 
   it("returns sorted unique codes", () => {
-    const seeded = inferCompleted("syde", "4B");
+    const seeded = inferCompleted("systems-design-engineering", "4B");
     const sorted = [...seeded].sort();
     expect(seeded).toEqual(sorted);
     expect(new Set(seeded).size).toBe(seeded.length);
-  });
-
-  it("cs 4B seed includes 3A and 3B courses but no 4xx-level CS courses", () => {
-    const seeded = inferCompleted("cs", "4B");
-    expect(seeded).toContain("cs341");
-    expect(seeded).toContain("cs350");
-    expect(seeded.some((c) => c.startsWith("cs4"))).toBe(false);
   });
 });
 
@@ -61,6 +50,13 @@ describe("programs.json schema integrity", () => {
           `${id}.terms.${term} should be an array`,
         ).toBe(true);
       }
+    }
+  });
+
+  it("every program has at least one non-empty term (scraper enforces this)", () => {
+    for (const [id, prog] of Object.entries(PROGRAMS)) {
+      const hasAny = TERM_LETTERS.some((t) => prog.terms[t].length > 0);
+      expect(hasAny, `${id} should have at least one non-empty term`).toBe(true);
     }
   });
 });
@@ -80,15 +76,32 @@ describe("isTermLetter", () => {
 });
 
 describe("isKnownProgram", () => {
-  it("accepts the 5 curated programs", () => {
-    for (const id of ["syde", "cs", "ece", "se", "mte"]) {
+  it("accepts well-known scraped program slugs", () => {
+    for (const id of [
+      "systems-design-engineering",
+      "electrical-engineering",
+      "software-engineering",
+      "mechatronics-engineering",
+      "architectural-studies",
+      "medical-sciences",
+    ]) {
       expect(isKnownProgram(id)).toBe(true);
     }
   });
 
+  it("rejects programs that were pruned from data/programs.json", () => {
+    // h-computer-science-bcs and friends had no per-term schedule data and
+    // were dropped during the prune. Confirm they're gone — if they reappear,
+    // the parser refactor (Issues B-D) probably needs a corresponding update
+    // to the dropdown's filter.
+    expect(isKnownProgram("h-computer-science-bcs")).toBe(false);
+    expect(isKnownProgram("3g-anthropology")).toBe(false);
+    expect(isKnownProgram("h-history")).toBe(false);
+  });
+
   it("rejects unknown ids", () => {
     expect(isKnownProgram("phys")).toBe(false);
-    expect(isKnownProgram("SYDE")).toBe(false); // case-sensitive; URL decode normalizes first
+    expect(isKnownProgram("SYSTEMS-DESIGN-ENGINEERING")).toBe(false);
     expect(isKnownProgram(null)).toBe(false);
   });
 });

@@ -1,77 +1,904 @@
 {
-  "syde": {
-    "name": "Systems Design Engineering",
-    "asOf": "2026-05-19",
-    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Systems-Design-Engineering.html",
+  "architectural-engineering": {
+    "name": "Architectural Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJry1RAs2",
     "terms": {
-      "1A": ["syde101", "syde111", "syde113", "syde121", "syde161", "syde181"],
-      "1B": ["syde102", "syde112", "syde114", "syde162", "syde192", "syde223"],
-      "2A": ["syde182", "syde201", "syde211", "syde261", "syde263", "syde283", "syde285"],
-      "2B": ["syde202", "syde212", "syde252", "syde262", "syde286", "syde292"],
-      "3A": ["syde301", "syde311", "syde351", "syde361", "syde381", "syde383"],
-      "3B": ["syde302", "syde312", "syde352", "syde362"],
-      "4A": ["syde401", "syde411", "syde461"],
-      "4B": ["syde402", "syde462"]
+      "1A": [
+        "ae100",
+        "ae101",
+        "ae104",
+        "ae115",
+        "che102",
+        "math116"
+      ],
+      "1B": [
+        "ae105",
+        "ae121",
+        "ae125",
+        "ae199",
+        "math118"
+      ],
+      "2A": [
+        "ae200",
+        "ae204",
+        "ae221",
+        "ae224",
+        "ae280",
+        "ae298"
+      ],
+      "2B": [
+        "ae205",
+        "ae223",
+        "ae225",
+        "ae265",
+        "ae299"
+      ],
+      "3A": [
+        "ae279",
+        "ae300",
+        "ae353",
+        "ae377",
+        "ae398"
+      ],
+      "3B": [
+        "ae303",
+        "ae325",
+        "ae399",
+        "cive507"
+      ],
+      "4A": [
+        "ae400",
+        "ae491",
+        "ae498"
+      ],
+      "4B": [
+        "ae425",
+        "ae499"
+      ]
     }
   },
-  "cs": {
-    "name": "Computer Science (BCS)",
-    "asOf": "2026-05-19",
-    "source": "cs.uwaterloo.ca/sites/default/files/uploads/documents/2024-2025-bcs.pdf (recommended sequence; CS is flexible)",
+  "architectural-studies": {
+    "name": "Architectural Studies (Bachelor of Architectural Studies - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SklSyJRRoh",
     "terms": {
-      "1A": ["cs135", "math135", "math137"],
-      "1B": ["cs136", "cs136l", "math136", "math138"],
-      "2A": ["cs240", "cs241", "math239", "stat230"],
-      "2B": ["cs245", "cs246", "cs251", "stat231"],
-      "3A": ["cs341"],
-      "3B": ["cs350"],
+      "1A": [
+        "arch110",
+        "arch120",
+        "arch142",
+        "arch172",
+        "arch192"
+      ],
+      "1B": [
+        "arch113",
+        "arch126",
+        "arch143",
+        "arch173",
+        "arch193"
+      ],
+      "2A": [
+        "arch212",
+        "arch246",
+        "arch260",
+        "arch292"
+      ],
+      "2B": [
+        "arch225",
+        "arch243",
+        "arch248",
+        "arch276",
+        "arch293"
+      ],
+      "3A": [
+        "arch327",
+        "arch342",
+        "arch362",
+        "arch364",
+        "arch392"
+      ],
+      "3B": [
+        "arch393",
+        "arch442"
+      ],
+      "4A": [
+        "arch492"
+      ],
+      "4B": [
+        "arch463",
+        "arch473",
+        "arch493"
+      ]
+    }
+  },
+  "biomedical-engineering": {
+    "name": "Biomedical Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyrkyRRi3",
+    "terms": {
+      "1A": [
+        "bme121",
+        "bme141",
+        "bme161",
+        "bme186",
+        "math115",
+        "math117"
+      ],
+      "1B": [
+        "bme101",
+        "bme101l",
+        "bme122",
+        "bme123",
+        "bme162",
+        "bme181",
+        "math119"
+      ],
+      "2A": [
+        "bme142",
+        "bme213",
+        "bme281",
+        "bme285",
+        "bme285l",
+        "bme288",
+        "math218"
+      ],
+      "2B": [
+        "bme241",
+        "bme252",
+        "bme261",
+        "bme284",
+        "bme284l",
+        "bme294",
+        "bme294l"
+      ],
+      "3A": [
+        "bme341",
+        "bme342",
+        "bme356",
+        "bme356l",
+        "bme361",
+        "bme385",
+        "bme385l"
+      ],
+      "3B": [
+        "bme355",
+        "bme362",
+        "bme381",
+        "bme384"
+      ],
+      "4A": [
+        "bme364",
+        "bme400",
+        "bme461"
+      ],
+      "4B": [
+        "bme462"
+      ]
+    }
+  },
+  "chemical-engineering": {
+    "name": "Chemical Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkMSJ1AAin",
+    "terms": {
+      "1A": [
+        "che100",
+        "che102",
+        "che120",
+        "che180",
+        "math115",
+        "math116"
+      ],
+      "1B": [
+        "che101",
+        "che161",
+        "che181",
+        "che191",
+        "math118",
+        "phys115"
+      ],
+      "2A": [
+        "che200",
+        "che220",
+        "che230",
+        "che290",
+        "chem262",
+        "chem262l",
+        "math217"
+      ],
+      "2B": [
+        "che211",
+        "che225",
+        "che241",
+        "che291",
+        "math218"
+      ],
+      "3A": [
+        "che312",
+        "che314",
+        "che322",
+        "che330",
+        "che380",
+        "che390"
+      ],
+      "3B": [
+        "che313",
+        "che331",
+        "che341",
+        "che361",
+        "che383"
+      ],
+      "4A": [
+        "che450",
+        "che480",
+        "che490"
+      ],
+      "4B": [
+        "che491"
+      ]
+    }
+  },
+  "civil-engineering": {
+    "name": "Civil Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1bSkJRAjh",
+    "terms": {
+      "1A": [
+        "che102",
+        "cive100",
+        "cive104",
+        "math116"
+      ],
+      "1B": [
+        "cive105",
+        "cive199",
+        "math118"
+      ],
+      "2A": [
+        "cive204",
+        "cive224",
+        "cive241",
+        "cive265",
+        "cive298"
+      ],
+      "2B": [
+        "cive205",
+        "cive222",
+        "cive230",
+        "cive280",
+        "cive299"
+      ],
+      "3A": [
+        "cive332",
+        "cive341",
+        "cive398"
+      ],
+      "3B": [
+        "cive303",
+        "cive375",
+        "cive399"
+      ],
+      "4A": [
+        "cive400",
+        "cive491",
+        "cive498"
+      ],
+      "4B": [
+        "cive401",
+        "cive499"
+      ]
+    }
+  },
+  "computer-engineering": {
+    "name": "Computer Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BybwJ10Ri3",
+    "terms": {
+      "1A": [
+        "ece105",
+        "ece150",
+        "ece190",
+        "ece198",
+        "math115",
+        "math117"
+      ],
+      "1B": [
+        "ece102",
+        "ece106",
+        "ece108",
+        "ece124",
+        "ece140",
+        "ece192",
+        "math119"
+      ],
+      "2A": [
+        "ece109",
+        "ece201",
+        "ece204",
+        "ece222",
+        "ece240",
+        "ece250"
+      ],
+      "2B": [
+        "ece202",
+        "ece203",
+        "ece207",
+        "ece208",
+        "ece224",
+        "ece252",
+        "ece298"
+      ],
+      "3A": [
+        "ece301",
+        "ece318",
+        "ece327",
+        "ece350",
+        "ece380"
+      ],
+      "3B": [
+        "ece302",
+        "ece307"
+      ],
+      "4A": [
+        "ece401"
+      ],
+      "4B": [
+        "ece402"
+      ]
+    }
+  },
+  "electrical-engineering": {
+    "name": "Electrical Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkgD1yRAjn",
+    "terms": {
+      "1A": [
+        "ece105",
+        "ece150",
+        "ece190",
+        "ece198",
+        "math115",
+        "math117"
+      ],
+      "1B": [
+        "ece102",
+        "ece106",
+        "ece108",
+        "ece124",
+        "ece140",
+        "ece192",
+        "math119"
+      ],
+      "2A": [
+        "ece109",
+        "ece201",
+        "ece204",
+        "ece222",
+        "ece240",
+        "ece250"
+      ],
+      "2B": [
+        "ece202",
+        "ece203",
+        "ece207",
+        "ece231",
+        "ece260",
+        "ece298"
+      ],
+      "3A": [
+        "ece301",
+        "ece318",
+        "ece340",
+        "ece375",
+        "ece380"
+      ],
+      "3B": [
+        "ece302",
+        "ece307"
+      ],
+      "4A": [
+        "ece401"
+      ],
+      "4B": []
+    }
+  },
+  "environmental-engineering": {
+    "name": "Environmental Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1lv11RCsh",
+    "terms": {
+      "1A": [
+        "cive104",
+        "enve175",
+        "math116"
+      ],
+      "1B": [
+        "enve176",
+        "math118"
+      ],
+      "2A": [
+        "enve200",
+        "enve275",
+        "enve298"
+      ],
+      "2B": [
+        "enve225",
+        "enve277",
+        "enve279",
+        "enve299"
+      ],
+      "3A": [
+        "enve330",
+        "enve375",
+        "enve398"
+      ],
+      "3B": [
+        "enve335",
+        "enve376",
+        "enve399"
+      ],
+      "4A": [
+        "enve400",
+        "enve498"
+      ],
+      "4B": [
+        "enve401",
+        "enve499"
+      ]
+    }
+  },
+  "geological-engineering": {
+    "name": "Geological Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1jJ1C0s2",
+    "terms": {
+      "1A": [
+        "che102",
+        "cive104",
+        "math116"
+      ],
+      "1B": [
+        "cive105",
+        "math118"
+      ],
+      "2A": [
+        "earth238",
+        "geoe298"
+      ],
+      "2B": [
+        "cive204",
+        "earth231",
+        "earth235",
+        "earth260",
+        "geoe299"
+      ],
+      "3A": [
+        "earth232",
+        "earth458",
+        "earth458l",
+        "geoe398"
+      ],
+      "3B": [
+        "earth333",
+        "earth437",
+        "earth438",
+        "enve382",
+        "geoe399"
+      ],
+      "4A": [
+        "geoe400",
+        "geoe498"
+      ],
+      "4B": [
+        "geoe401",
+        "geoe499"
+      ]
+    }
+  },
+  "management-engineering": {
+    "name": "Management Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkzsJ1CRsh",
+    "terms": {
+      "1A": [
+        "che102",
+        "math115",
+        "math116",
+        "mse100",
+        "mse121"
+      ],
+      "1B": [
+        "gene123",
+        "math118",
+        "mse100b",
+        "mse131",
+        "phys115"
+      ],
+      "2A": [
+        "mse200a",
+        "mse240",
+        "mse251",
+        "mse261",
+        "mse271"
+      ],
+      "2B": [
+        "mse200b",
+        "mse232",
+        "mse245",
+        "mse253",
+        "mse263"
+      ],
+      "3A": [
+        "mse211",
+        "mse300a",
+        "mse334",
+        "mse342",
+        "mse431",
+        "mse446"
+      ],
+      "3B": [
+        "mse300b",
+        "mse302",
+        "mse332",
+        "mse333",
+        "mse343"
+      ],
+      "4A": [
+        "mse400a",
+        "mse434"
+      ],
+      "4B": [
+        "mse311",
+        "mse400b"
+      ]
+    }
+  },
+  "mechanical-engineering": {
+    "name": "Mechanical Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryAk10Rin",
+    "terms": {
+      "1A": [
+        "che102",
+        "math115",
+        "math116",
+        "me100",
+        "phys115"
+      ],
+      "1B": [
+        "math118",
+        "me100b",
+        "me101",
+        "me115",
+        "me123"
+      ],
+      "2A": [
+        "me200a",
+        "me201",
+        "me202",
+        "me219",
+        "me230",
+        "me269"
+      ],
+      "2B": [
+        "me200b",
+        "me203",
+        "me212",
+        "me220",
+        "me250",
+        "me262"
+      ],
+      "3A": [
+        "me300a",
+        "me303",
+        "me321",
+        "me340",
+        "me351",
+        "me354"
+      ],
+      "3B": [
+        "me300b",
+        "me322",
+        "me353",
+        "me360",
+        "me362",
+        "me380",
+        "mse261"
+      ],
+      "4A": [],
+      "4B": [
+        "me400b"
+      ]
+    }
+  },
+  "mechatronics-engineering": {
+    "name": "Mechatronics Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hk-A1y0Cj2",
+    "terms": {
+      "1A": [
+        "che102",
+        "math115",
+        "math116",
+        "mte100",
+        "mte121"
+      ],
+      "1B": [
+        "math118",
+        "mte100b",
+        "mte111",
+        "mte119",
+        "mte120",
+        "mte140"
+      ],
+      "2A": [
+        "mte182",
+        "mte200a",
+        "mte201",
+        "mte202",
+        "mte219",
+        "mte262"
+      ],
+      "2B": [
+        "mte200b",
+        "mte203",
+        "mte204",
+        "mte220",
+        "mte241",
+        "mte252"
+      ],
+      "3A": [
+        "mte300a",
+        "mte309",
+        "mte320",
+        "mte321",
+        "mte325",
+        "mte351"
+      ],
+      "3B": [
+        "mse261",
+        "mte300b",
+        "mte322",
+        "mte352",
+        "mte360",
+        "mte380"
+      ],
+      "4A": [
+        "mte400a",
+        "mte484"
+      ],
+      "4B": [
+        "mte400b"
+      ]
+    }
+  },
+  "medical-sciences": {
+    "name": "Medical Sciences (Bachelor of Medical Sciences - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1IJxeamkg",
+    "terms": {
+      "1A": [
+        "biol130",
+        "biol130l",
+        "chem120",
+        "chem120l",
+        "hlth101",
+        "phys105"
+      ],
+      "1B": [
+        "biol201",
+        "biol239",
+        "chem123",
+        "chem123l",
+        "hlth107",
+        "hlth204",
+        "kin146"
+      ],
+      "2A": [
+        "biol240",
+        "biol240l",
+        "biol273",
+        "chem237",
+        "chem266",
+        "chem266l",
+        "medsci200",
+        "medsci202"
+      ],
+      "2B": [
+        "medsci203",
+        "medsci250",
+        "medsci260",
+        "medsci270",
+        "medsci280",
+        "medsci290"
+      ],
+      "3A": [
+        "medsci300"
+      ],
+      "3B": [
+        "medsci350"
+      ],
+      "4A": [
+        "medsci420"
+      ],
+      "4B": [
+        "medsci400"
+      ]
+    }
+  },
+  "nanotechnology-engineering": {
+    "name": "Nanotechnology Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkW0yyA0s3",
+    "terms": {
+      "1A": [
+        "math117",
+        "ne100",
+        "ne109",
+        "ne111",
+        "ne112",
+        "ne121"
+      ],
+      "1B": [
+        "math119",
+        "ne110",
+        "ne113",
+        "ne125",
+        "ne131",
+        "ne140"
+      ],
+      "2A": [
+        "ne215",
+        "ne216",
+        "ne220l",
+        "ne222",
+        "ne241"
+      ],
+      "2B": [
+        "ne217",
+        "ne225",
+        "ne226",
+        "ne226l",
+        "ne242",
+        "ne281"
+      ],
+      "3A": [
+        "mse261",
+        "ne318",
+        "ne320l",
+        "ne332",
+        "ne333",
+        "ne343"
+      ],
+      "3B": [
+        "ne307",
+        "ne330l",
+        "ne334",
+        "ne336",
+        "ne352"
+      ],
       "4A": [],
       "4B": []
     }
   },
-  "ece": {
-    "name": "Electrical Engineering",
-    "asOf": "2026-05-19",
-    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Electrical-Engineering.html",
+  "software-engineering": {
+    "name": "Software Engineering (Bachelor of Software Engineering - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1zle10Cs3",
     "terms": {
-      "1A": ["commst192", "ece105", "ece150", "ece190", "ece198", "math115", "math117"],
-      "1B": ["ece102", "ece106", "ece108", "ece124", "ece140", "ece192", "math119"],
-      "2A": ["ece109", "ece201", "ece204", "ece205", "ece222", "ece240", "ece250"],
-      "2B": ["ece202", "ece203", "ece206", "ece207", "ece231", "ece260", "ece298"],
-      "3A": ["ece301", "ece318", "ece340", "ece375", "ece380"],
-      "3B": ["ece302", "ece307"],
-      "4A": ["ece401", "ece498a"],
-      "4B": ["ece402", "ece498b"]
+      "1A": [
+        "che102",
+        "cs137",
+        "math115",
+        "math117",
+        "math135",
+        "se101"
+      ],
+      "1B": [
+        "cs138",
+        "ece124",
+        "ece140",
+        "ece192",
+        "math119",
+        "se102"
+      ],
+      "2A": [
+        "cs241",
+        "ece222",
+        "se201",
+        "se212",
+        "stat206"
+      ],
+      "2B": [
+        "cs240",
+        "cs247",
+        "cs348",
+        "math239",
+        "se202"
+      ],
+      "3A": [
+        "cs341",
+        "math213",
+        "se301",
+        "se350",
+        "se464",
+        "se465"
+      ],
+      "3B": [
+        "cs343",
+        "ece358",
+        "se302",
+        "se380",
+        "se463"
+      ],
+      "4A": [
+        "se401"
+      ],
+      "4B": [
+        "se402"
+      ]
     }
   },
-  "se": {
-    "name": "Software Engineering",
-    "asOf": "2026-05-19",
-    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Software-Engineering.html",
+  "systems-design-engineering": {
+    "name": "Systems Design Engineering (Bachelor of Applied Science - Honours)",
+    "asOf": "2026-05-20",
+    "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJgggJRRoh",
     "terms": {
-      "1A": ["cs137", "ece105", "math115", "math117", "math135", "se101"],
-      "1B": ["cs138", "ece106", "ece124", "ece140", "math119", "se102"],
-      "2A": ["che102", "cs241", "ece222", "se201", "se212", "stat206"],
-      "2B": ["cs240", "cs247", "cs348", "ece192", "math239", "se202"],
-      "3A": ["cs341", "cs349", "math213", "se301", "se350", "se465"],
-      "3B": ["cs343", "ece358", "se302", "se380", "se390", "se464"],
-      "4A": ["se401", "se463", "se490"],
-      "4B": ["se402", "se491"]
-    }
-  },
-  "mte": {
-    "name": "Mechatronics Engineering",
-    "asOf": "2026-05-19",
-    "source": "academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2023-2024/page/ENG-Mechatronics-Engineering.html",
-    "terms": {
-      "1A": ["che102", "math115", "math116", "mte100", "mte121"],
-      "1B": ["math118", "mte100b", "mte111", "mte119", "mte120", "mte140"],
-      "2A": ["mte200a", "mte201", "mte202", "mte219", "mte262", "syde182"],
-      "2B": ["mte200b", "mte203", "mte204", "mte220", "mte241", "syde252"],
-      "3A": ["mte300a", "mte309", "mte320", "mte321", "mte325", "syde351"],
-      "3B": ["mte300b", "me351", "mte322", "mte360", "mte380", "msci261"],
-      "4A": ["ece484", "mte400a", "mte481"],
-      "4B": ["mte400b", "mte482"]
+      "1A": [
+        "math115",
+        "math117",
+        "syde101",
+        "syde121",
+        "syde151",
+        "syde161"
+      ],
+      "1B": [
+        "math119",
+        "syde101l",
+        "syde152",
+        "syde162",
+        "syde163",
+        "syde181"
+      ],
+      "2A": [
+        "syde208",
+        "syde223",
+        "syde252",
+        "syde261",
+        "syde263",
+        "syde288"
+      ],
+      "2B": [
+        "math218",
+        "syde192l",
+        "syde212",
+        "syde251",
+        "syde264",
+        "syde292"
+      ],
+      "3A": [
+        "syde262",
+        "syde292l",
+        "syde321",
+        "syde351",
+        "syde362",
+        "syde385"
+      ],
+      "3B": [
+        "syde352",
+        "syde352l",
+        "syde364",
+        "syde382",
+        "syde411"
+      ],
+      "4A": [
+        "syde400",
+        "syde461",
+        "syde532"
+      ],
+      "4B": [
+        "syde462"
+      ]
     }
   }
 }
