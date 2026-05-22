@@ -6,7 +6,13 @@ export type { CourseStatus, ParsedCourse, TranscriptParseResult } from "./types"
 const TERM_HEADER_RE = /^(Fall|Winter|Spring)\s+(\d{4})\s*$/i;
 const TRANSFER_HEADER_RE = /^Transfer\s+Credit\s*$/i;
 const WORK_TERM_HEADER_RE = /^(Co-?op\s+)?Work\s+Term\b/i;
-const PLAN_LINE_RE = /^Plan:\s*(.+?)\s*$/i;
+// Quest transcripts label the student's major one of two ways depending on
+// which section it appears in: the academic-record header uses
+// `Plan: <major>`, while the per-term-section header uses
+// `Program: <major>, Honours, Co-operative Program`. Either should resolve
+// to the same program slug. The comma-split happens at extraction time so
+// the suffix doesn't break matchProgramSlug.
+const PLAN_LINE_RE = /^(?:Plan|Program):\s*(.+?)\s*$/i;
 
 // Course-code at start of line, strictly uppercase to avoid matching metadata
 // like "Spring 2024 Average: 78". The trailing tail (description + any unit
@@ -55,7 +61,12 @@ export function parseTranscript(text: string): TranscriptParseResult {
 
   const lines = text.split(/\r?\n/);
 
-  let rawPlanText: string | null = null;
+  // Collect every Plan:/Program: candidate so we can pick the first one that
+  // resolves to a real program slug. Necessary because Quest emits multiple
+  // such lines (a faculty header like `Program: Engineering` AND per-term
+  // `Program: Systems Design Engineering, Honours, …`); the faculty header
+  // would otherwise win the "first match" race and silently fail detection.
+  const planCandidates: string[] = [];
   let currentSection: SectionState = { kind: "none" };
   let studyTermCounter = 0;
   let currentTermIPIdx = -1;
@@ -67,12 +78,14 @@ export function parseTranscript(text: string): TranscriptParseResult {
     const line = rawLine.trim();
     if (!line) continue;
 
-    if (rawPlanText === null) {
-      const planMatch = PLAN_LINE_RE.exec(line);
-      if (planMatch) {
-        rawPlanText = planMatch[1];
-        continue;
-      }
+    const planMatch = PLAN_LINE_RE.exec(line);
+    if (planMatch) {
+      // The Program: line carries `<major>, Honours, Co-operative Program`;
+      // drop everything past the first comma so the major name matches
+      // PROGRAMS[*].name. Plan: lines are typically already bare majors.
+      const candidate = planMatch[1].split(",")[0].trim();
+      if (candidate) planCandidates.push(candidate);
+      continue;
     }
 
     const termHeader = TERM_HEADER_RE.exec(line);
@@ -195,8 +208,19 @@ export function parseTranscript(text: string): TranscriptParseResult {
     }
   }
 
-  const detectedProgramId =
-    rawPlanText !== null ? matchProgramSlug(rawPlanText) : null;
+  // Pick the first candidate that resolves to a real program slug; fall back
+  // to the first candidate string so the UI can still show what we saw if
+  // none matched ("Detected: <X> — pick after import").
+  let detectedProgramId: string | null = null;
+  let rawPlanText: string | null = planCandidates[0] ?? null;
+  for (const cand of planCandidates) {
+    const slug = matchProgramSlug(cand);
+    if (slug) {
+      detectedProgramId = slug;
+      rawPlanText = cand;
+      break;
+    }
+  }
 
   return {
     detectedProgramId,

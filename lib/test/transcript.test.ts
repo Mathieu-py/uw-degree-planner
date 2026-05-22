@@ -240,6 +240,60 @@ describe("parseTranscript — unrecognized grade tokens", () => {
   });
 });
 
+describe("parseTranscript — program detection from Quest Program: lines", () => {
+  it("matches `Program: Systems Design Engineering, Honours, Co-operative Program`", () => {
+    // Real Quest per-term-section format: trailing `, Honours, ...` suffix
+    // must be stripped before matching against PROGRAMS[*].name.
+    const result = parseTranscript(
+      `Fall 2025
+Program: Systems Design Engineering, Honours, Co-operative Program
+Level: 1A
+SYDE 101 Communications 0.50 0.50 93
+`,
+    );
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
+    expect(result.rawPlanText).toBe("Systems Design Engineering");
+  });
+
+  it("skips a faculty-level `Program: Engineering` header and picks the per-term line", () => {
+    // Quest sometimes emits both a faculty header (Engineering) and a per-
+    // term major line. The faculty header doesn't match any slug; the parser
+    // must keep scanning candidates instead of returning null.
+    const result = parseTranscript(
+      `Program: Engineering
+
+Fall 2025
+Program: Systems Design Engineering, Honours, Co-operative Program
+SYDE 101 Communications 0.50 0.50 93
+`,
+    );
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
+    expect(result.rawPlanText).toBe("Systems Design Engineering");
+  });
+
+  it("still honors a Plan: line if present (legacy header format)", () => {
+    const result = parseTranscript(
+      `Career: Undergraduate
+Plan: Systems Design Engineering
+
+Fall 2025
+SYDE 101 Communications 0.50 0.50 93
+`,
+    );
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
+  });
+
+  it("falls back to the first candidate string when nothing matches a slug", () => {
+    const result = parseTranscript(
+      `Program: Hogwarts Wizardry, Honours
+SYDE 101 Communications 0.50 0.50 93
+`,
+    );
+    expect(result.detectedProgramId).toBeNull();
+    expect(result.rawPlanText).toBe("Hogwarts Wizardry");
+  });
+});
+
 describe("parseTranscript — future-term enrollment (no grade column yet)", () => {
   // Reduced fixture matching the real Quest layout the user reported in the
   // 2026-05-21 modal screenshot: Fall 2025 graded, Winter 2026 work term,
