@@ -1,0 +1,32 @@
+{
+  "facultyCalendarDisplay": {
+    "name": "Faculty of Mathematics",
+    "id": "648b232258e749e939f21ba4"
+  },
+  "code": "H-Pure Mathematics",
+  "__passedCatalogQuery": true,
+  "courseRequirementsNoUnits": "<div><section><header data-test=\"grouping-0-header\"><div><h2 data-testid=\"grouping-label\"><span>Required Courses</span></h2></div><div><div><button aria-label=\"Collapse\"><i></i></button></div></div></header><div><div><ul><li><span>Complete <!-- -->all<!-- --> of the following</span><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\">Complete all the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/64a5b9945d7577764076c994\" target=\"_blank\">PMATH347</a> <!-- -->-<!-- --> <!-- -->Groups and Rings<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/64a5b9945d7577099576c998\" target=\"_blank\">PMATH348</a> <!-- -->-<!-- --> <!-- -->Fields and Galois Theory<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/65e8ba10b40640d7cede873a\" target=\"_blank\">PMATH351</a> <!-- -->-<!-- --> <!-- -->Real Analysis<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/66f6c9a2bfb0192c577b2cd8\" target=\"_blank\">PMATH352</a> <!-- -->-<!-- --> <!-- -->Complex Analysis<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/66f6b36ab53b7dda3073c67c\" target=\"_blank\">PMATH450</a> <!-- -->-<!-- --> <!-- -->Measure Theory<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-B\"><div data-test=\"ruleView-B-result\">Complete <span>1</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/69a1d0fc4bac9e1d8e75eeec\" target=\"_blank\">MATH237</a> <!-- -->-<!-- --> <!-- -->Calculus 3 for Honours Mathematics<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/65b91c1cfd7afea4850875c8\" target=\"_blank\">MATH247</a> <!-- -->-<!-- --> <!-- -->Calculus 3 (Advanced Level)<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-C\"><div data-test=\"ruleView-C-result\">Complete <span>1</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/69a1b08d5e731ab5996528f7\" target=\"_blank\">MATH239</a> <!-- -->-<!-- --> <!-- -->Introduction to Combinatorics<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69a1b0e24aaaf35263032bc9\" target=\"_blank\">MATH249</a> <!-- -->-<!-- --> <!-- -->Introduction to Combinatorics (Advanced Level)<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-F\"><div data-test=\"ruleView-F-result\">Complete <span>1</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/65cfb3a4b406406f4bdde914\" target=\"_blank\">PMATH365</a> <!-- -->-<!-- --> <!-- -->Differential Geometry<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/65cfa8716632c6641835b255\" target=\"_blank\">PMATH367</a> <!-- -->-<!-- --> <!-- -->Topology<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-D\"><div data-test=\"ruleView-D-result\"><div>Complete 3 additional PMATH courses at the 400-level</div></div></li><li data-test=\"ruleView-E\"><div data-test=\"ruleView-E-result\"><div>Complete 2 additional math courses at the 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT</div></div></li></ul></li></ul></div><div></div></div></section></div>",
+  "coOperativeRequirementsUndergraduate": "<p>For students in the co-operative system of study, see <a href=\"#/programs/rJj6aXDk6\">Bachelor of Mathematics co-operative education program requirements</a>.</p>",
+  "pid": "S1eexkCAo2",
+  "systemsOfStudy": {
+    "coOperative": true,
+    "regular": true
+  },
+  "title": "Pure Mathematics (Bachelor of Mathematics - Honours)",
+  "minimumAverageSRequired": "<ul> <li>A minimum cumulative overall average of 60.0%.</li> <li>A minimum cumulative major average of 65.0%: all math courses.</li> </ul>",
+  "undergraduateCredentialType": {
+    "name": "Major",
+    "id": "63c8259d3ad5f81006a3bbb3"
+  },
+  "dateStart": "2025-09-02",
+  "id": "6785437d5a867725196a1833",
+  "fieldOfStudy": {
+    "name": "Pure Mathematics",
+    "id": "63e566392d95e9001675fc70",
+    "customFields": {}
+  },
+  "catalogActivationDate": "2025-04-02",
+  "graduationRequirements": "<ul> <li>See <a href=\"#/programs/rJj6aXDk6\">Bachelor of Mathematics degree-level requirements</a>.</li> <li>Complete all the required courses listed below.</li> <li>Complete a minimum of 13.0 units of math courses.</li> <li>Complete a minimum of 5.0 units of non-math courses.</li> </ul>",
+  "_score": 1,
+  "specializations": []
+}

@@ -1,0 +1,29 @@
+{
+  "slug": "h-biology",
+  "name": "Biology (Bachelor of Science - Honours)",
+  "code": "H-Biology",
+  "pid": "BJS1JCCi2",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJS1JCCi2",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": false,
+    "requirements": 5647,
+    "courseListsNew": false,
+    "specializationsList": false,
+    "graduationRequirements": 614,
+    "additionalConstraints": 303
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}

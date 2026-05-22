@@ -1,0 +1,29 @@
+{
+  "slug": "h-pure-mathematics",
+  "name": "Pure Mathematics (Bachelor of Mathematics - Honours)",
+  "code": "H-Pure Mathematics",
+  "pid": "S1eexkCAo2",
+  "calendarUrl": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1eexkCAo2",
+  "fieldsPresent": {
+    "requiredCoursesTermByTerm": false,
+    "courseRequirementsNoUnits": 3597,
+    "requirements": false,
+    "courseListsNew": false,
+    "specializationsList": false,
+    "graduationRequirements": 287,
+    "additionalConstraints": false
+  },
+  "parserOutput": {
+    "terms": {
+      "1A": [],
+      "1B": [],
+      "2A": [],
+      "2B": [],
+      "3A": [],
+      "3B": [],
+      "4A": [],
+      "4B": []
+    },
+    "warnings": []
+  }
+}
