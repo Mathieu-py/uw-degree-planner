@@ -15,61 +15,14 @@
   },
   "parserOutput": {
     "terms": {
-      "1A": [
-        "math115",
-        "math117",
-        "syde101",
-        "syde121",
-        "syde151",
-        "syde161"
-      ],
-      "1B": [
-        "math119",
-        "syde101l",
-        "syde152",
-        "syde162",
-        "syde163",
-        "syde181"
-      ],
-      "2A": [
-        "syde208",
-        "syde223",
-        "syde252",
-        "syde261",
-        "syde263",
-        "syde288"
-      ],
-      "2B": [
-        "math218",
-        "syde192l",
-        "syde212",
-        "syde251",
-        "syde264",
-        "syde292"
-      ],
-      "3A": [
-        "syde262",
-        "syde292l",
-        "syde321",
-        "syde351",
-        "syde362",
-        "syde385"
-      ],
-      "3B": [
-        "syde352",
-        "syde352l",
-        "syde364",
-        "syde382",
-        "syde411"
-      ],
-      "4A": [
-        "syde400",
-        "syde461",
-        "syde532"
-      ],
-      "4B": [
-        "syde462"
-      ]
+      "1A": ["math115", "math117", "syde101", "syde121", "syde151", "syde161"],
+      "1B": ["math119", "syde101l", "syde152", "syde162", "syde163", "syde181"],
+      "2A": ["syde208", "syde223", "syde252", "syde261", "syde263", "syde288"],
+      "2B": ["math218", "syde192l", "syde212", "syde251", "syde264", "syde292"],
+      "3A": ["syde262", "syde292l", "syde321", "syde351", "syde362", "syde385"],
+      "3B": ["syde352", "syde352l", "syde364", "syde382", "syde411"],
+      "4A": ["syde400", "syde461", "syde532"],
+      "4B": ["syde462"]
     },
     "warnings": []
   }
