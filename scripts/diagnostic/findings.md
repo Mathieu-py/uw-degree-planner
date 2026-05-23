@@ -208,7 +208,7 @@ The existing `normalizeCourseCode` and `Complete all the following` matching req
 
 The endpoint suggested by the issue text (`/api/v1/catalog/program/{catalogId}/{pid}`) **returns 404** for specialization ids. The working endpoint is:
 
-```
+```http
 GET https://uwaterloocm.kuali.co/api/v1/catalog/program/byId/{catalogId}/{id}
 ```
 

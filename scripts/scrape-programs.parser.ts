@@ -378,10 +378,13 @@ function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
       children,
     };
   }
-  if (children.length === 1) return children[0];
   // Drop wrapper text only when it matches the standard `Complete all …` form.
-  // Anything else is non-standard prose that's worth preserving verbatim.
+  // Anything else is non-standard prose that's worth preserving verbatim — even
+  // on the single-child fast path, where unwrapping would otherwise lose it.
   const isStandardAll = COMPLETE_ALL_RE.test(wrapperText);
+  if (children.length === 1 && (!wrapperText || isStandardAll)) {
+    return children[0];
+  }
   return {
     kind: "all",
     ...(wrapperText && !isStandardAll ? { description: wrapperText } : {}),

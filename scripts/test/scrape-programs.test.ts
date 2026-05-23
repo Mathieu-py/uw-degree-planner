@@ -137,7 +137,7 @@ describe("buildSpecialization", () => {
     expect(spec.slug).toBe("foo-example");
     expect(spec.name).toBe("FOO-Example Specialization");
     expect(spec.pid).toBe("abc123");
-    expect(spec.source).toBe("https://example.com/programs/abc123");
+    expect(spec.source).toBe("https://example.com/programs/view/abc123");
     expect(spec.rules?.kind).toBe("all");
     expect(warnings).toEqual([]);
     expect(taken.get("foo-example")).toBe("abc123");
@@ -231,7 +231,7 @@ describe("buildSpecialization", () => {
       taken,
       "https://example.com/programs",
     );
-    expect(spec.source).toBe("https://example.com/programs/abc%20123");
+    expect(spec.source).toBe("https://example.com/programs/view/abc%20123");
   });
 });
 

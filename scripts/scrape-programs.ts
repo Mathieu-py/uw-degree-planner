@@ -205,7 +205,10 @@ export function buildSpecialization(
     slug,
     name,
     pid: id,
-    source: `${viewBase}/${encodeURIComponent(id)}`,
+    // Specs use the `#/programs/view/{id}` route (matches the
+    // specializationsList anchor in the parent's HTML). Parent programs use
+    // the bare `#/programs/{pid}` route.
+    source: `${viewBase}/view/${encodeURIComponent(id)}`,
     ...(rules !== undefined ? { rules } : {}),
     ...(electivesResult.electives.length > 0
       ? { electives: electivesResult.electives }
@@ -330,11 +333,11 @@ async function runPhaseA(
     onResult: (detail, p) => {
       const slug = buildProgramSlug(p.code, conflictCounts);
       const result = parseProgramRequirements(detail, slug);
+      warnings.push(...result.warnings);
       if (result.kind === "empty") {
         skippedNoData.push(slug);
         return "skipped (no data)";
       }
-      warnings.push(...result.warnings);
       const electivesResult = parseElectives(detail, slug);
       warnings.push(...electivesResult.warnings);
       const electivesField =
