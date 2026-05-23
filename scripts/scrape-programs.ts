@@ -451,9 +451,6 @@ async function writeOutput(programs: Record<string, Program>): Promise<string> {
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
   const outPath = path.join(dataDir, "programs.json");
-  // Write to a sibling tmp file then rename so a Ctrl-C mid-write can't
-  // leave a truncated programs.json (which would break `next dev` at import
-  // time on the next boot).
   const tmpPath = `${outPath}.tmp`;
   await writeFile(tmpPath, JSON.stringify(sorted, null, 2), "utf-8");
   await rename(tmpPath, outPath);
