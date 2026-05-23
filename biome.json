@@ -15,7 +15,7 @@
       "!scripts/diagnostic/raw-specs",
       "!scripts/diagnostic/parsed",
       "!app/tailwind.css",
-      "!data/courses.*.json"
+      "!data/*.json"
     ]
   },
   "formatter": {
