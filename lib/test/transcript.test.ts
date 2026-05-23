@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { matchProgramSlug, parseTranscript } from "../transcript/parse";
+import { PROGRAMS } from "../programs";
+import {
+  matchProgramSlug,
+  matchSpecializationFromPlan,
+  parseTranscript,
+} from "../transcript/parse";
 
 const TYPICAL_SYDE = `
 Career: Undergraduate
@@ -432,4 +437,124 @@ describe("matchProgramSlug", () => {
       "systems-design-engineering",
     );
   });
+});
+
+describe("matchSpecializationFromPlan", () => {
+  // SYDE is used as the parent because it's the only Systems Design
+  // Engineering variant (single match for "Systems Design Engineering") and
+  // also has 4 specializations attached — exactly the shape needed to
+  // exercise both halves of the parser. These tests skip cleanly if
+  // data/programs.json is regenerated without specs.
+  const hasSydeSpecs =
+    (PROGRAMS["systems-design-engineering"]?.specializations?.length ?? 0) > 0;
+
+  it.runIf(hasSydeSpecs)(
+    "resolves both program and specialization when the Plan line has both halves (em-dash)",
+    () => {
+      const r = matchSpecializationFromPlan(
+        "Systems Design Engineering — Human Factors and Interfaces Specialization",
+      );
+      expect(r).not.toBeNull();
+      expect(r?.programId).toBe("systems-design-engineering");
+      expect(r?.specializationSlug).toBe("syde-human-factors-and-interfaces");
+    },
+  );
+
+  it.runIf(hasSydeSpecs)("tolerates a plain hyphen-minus separator", () => {
+    const r = matchSpecializationFromPlan(
+      "Systems Design Engineering - Human Factors and Interfaces Specialization",
+    );
+    expect(r?.specializationSlug).toBe("syde-human-factors-and-interfaces");
+  });
+
+  it("returns null when the line has no specialization clause", () => {
+    expect(
+      matchSpecializationFromPlan("Systems Design Engineering"),
+    ).toBeNull();
+    // Right half is missing the literal 'Specialization'.
+    expect(
+      matchSpecializationFromPlan(
+        "Systems Design Engineering — something else",
+      ),
+    ).toBeNull();
+  });
+
+  it("returns null when the parent program does not resolve", () => {
+    expect(
+      matchSpecializationFromPlan(
+        "Hogwarts Wizardry — Dark Arts Specialization",
+      ),
+    ).toBeNull();
+  });
+
+  it.runIf(hasSydeSpecs)(
+    "returns null when the parent resolves but the specialization name does not match anything",
+    () => {
+      expect(
+        matchSpecializationFromPlan(
+          "Systems Design Engineering — Quantum Bagpipe Specialization",
+        ),
+      ).toBeNull();
+    },
+  );
+
+  it.runIf(hasSydeSpecs)(
+    "parseTranscript exposes detectedSpecializationSlug end-to-end",
+    () => {
+      const r = parseTranscript(
+        "Plan: Systems Design Engineering — Human Factors and Interfaces Specialization\n\nFall 2024\nSYDE 101    Foo    0.50 0.50 85\n",
+      );
+      expect(r.detectedProgramId).toBe("systems-design-engineering");
+      expect(r.detectedSpecializationSlug).toBe(
+        "syde-human-factors-and-interfaces",
+      );
+    },
+  );
+
+  it("parseTranscript falls back to parent-only when no spec clause is present", () => {
+    const r = parseTranscript(
+      "Plan: Systems Design Engineering\n\nFall 2023\nSYDE 101    Foo    0.50 0.50 85\n",
+    );
+    expect(r.detectedProgramId).toBe("systems-design-engineering");
+    expect(r.detectedSpecializationSlug).toBeNull();
+  });
+
+  it.runIf(hasSydeSpecs)(
+    "exact match wins (regression: word-boundary fallback never overrides exact)",
+    () => {
+      // Sanity: the exact-match path resolves the canonical spec name even
+      // when the word-boundary fallback would also match it.
+      const r = matchSpecializationFromPlan(
+        "Systems Design Engineering — Human Factors and Interfaces Specialization",
+      );
+      expect(r?.specializationSlug).toBe("syde-human-factors-and-interfaces");
+    },
+  );
+
+  it.runIf(hasSydeSpecs)(
+    "word-boundary fallback resolves when the needle is a shorter, unambiguous prefix-style match",
+    () => {
+      // "Human Factors Specialization" isn't an exact spec name, but its
+      // non-sentinel tokens ("human", "factors") uniquely appear in
+      // "Human Factors and Interfaces Specialization".
+      const r = matchSpecializationFromPlan(
+        "Systems Design Engineering — Human Factors Specialization",
+      );
+      expect(r?.specializationSlug).toBe("syde-human-factors-and-interfaces");
+    },
+  );
+
+  it.runIf(hasSydeSpecs)(
+    "rejects a single-token needle even when one spec uniquely contains it",
+    () => {
+      // "Interfaces" alone substring-matched "Human Factors and Interfaces
+      // Specialization" under the old logic and silently picked it — but the
+      // user's intent is ambiguous with only one disambiguating token. The
+      // fallback now requires at least two non-sentinel tokens.
+      const r = matchSpecializationFromPlan(
+        "Systems Design Engineering — Interfaces Specialization",
+      );
+      expect(r).toBeNull();
+    },
+  );
 });

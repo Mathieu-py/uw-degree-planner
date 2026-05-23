@@ -7,9 +7,13 @@
   },
   "files": {
     "ignoreUnknown": false,
+    "maxSize": 4194304,
     "includes": [
       "**",
       "!scripts/test/fixtures",
+      "!scripts/diagnostic/raw",
+      "!scripts/diagnostic/raw-specs",
+      "!scripts/diagnostic/parsed",
       "!app/tailwind.css",
       "!data/courses.*.json"
     ]

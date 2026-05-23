@@ -29,6 +29,7 @@ function result(
 ): TranscriptParseResult {
   return {
     detectedProgramId: null,
+    detectedSpecializationSlug: null,
     detectedCurrentTerm: null,
     rawPlanText: null,
     courses,

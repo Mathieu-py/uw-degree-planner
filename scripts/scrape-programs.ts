@@ -21,12 +21,14 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Program } from "../lib/programs";
+import type { Program, Specialization } from "../lib/programs";
 import {
   buildConflictCounts,
   buildProgramSlug,
+  buildSpecializationSlug,
   parseElectives,
   parseProgramRequirements,
+  parseSpecializationsList,
 } from "./scrape-programs.parser";
 
 const FALLBACK_CATALOG_ID = "67e557ed6ed2fe2bd3a38956";
@@ -52,12 +54,18 @@ interface ProgramListEntry {
   fieldOfStudy?: { name?: string };
 }
 
-interface ProgramDetail extends ProgramListEntry {
+export interface ProgramDetail extends ProgramListEntry {
   requiredCoursesTermByTerm?: string;
   requirements?: string;
   courseRequirementsNoUnits?: string;
   graduationRequirements?: string;
   courseListsNew?: string;
+  specializationsList?: string;
+}
+
+export interface SpecializationRef {
+  id: string;
+  name: string;
 }
 
 async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
@@ -70,6 +78,168 @@ async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
   } finally {
     clearTimeout(tid);
   }
+}
+
+/**
+ * Iterate `items` sequentially with a polite delay between requests. Each
+ * iteration prints `[i/N] <label>... ` followed by either the caller's result
+ * string or `ERROR: <message>`. State recording (success buckets, failure
+ * lists) is the caller's responsibility via `onResult` / `onError`.
+ *
+ * Extracted to dedupe Phase A and Phase B, which previously shared this
+ * loop structure verbatim.
+ */
+async function fetchEachPaced<T, R>(opts: {
+  items: readonly T[];
+  label: (item: T) => string;
+  fetcher: (item: T) => Promise<R>;
+  onResult: (result: R, item: T) => string;
+  onError: (item: T, message: string) => void;
+}): Promise<void> {
+  const { items, label, fetcher, onResult, onError } = opts;
+  const total = items.length;
+  for (let i = 0; i < total; i++) {
+    const item = items[i];
+    process.stdout.write(`[${i + 1}/${total}] ${label(item)}... `);
+    try {
+      const r = await fetcher(item);
+      console.log(onResult(r, item));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      onError(item, msg);
+      console.log(`ERROR: ${msg}`);
+    }
+    if (i < total - 1) {
+      await new Promise((r) => setTimeout(r, FETCH_DELAY_MS));
+    }
+  }
+}
+
+function reportList(label: string, items: readonly string[]): void {
+  if (items.length === 0) return;
+  console.error(`\n${items.length} ${label}:`);
+  for (const s of items) console.error(`  ${s}`);
+}
+
+/**
+ * Deduplicate the spec ids referenced by every parent. 153 unique ids vs 283
+ * total references across all parents, so Phase B can fetch each id at most
+ * once and attach the result to every parent that referenced it.
+ */
+export function collectUniqueSpecIds(
+  refsByParent: ReadonlyMap<string, readonly SpecializationRef[]>,
+): string[] {
+  const ids = new Set<string>();
+  for (const refs of refsByParent.values()) {
+    for (const r of refs) ids.add(r.id);
+  }
+  return [...ids];
+}
+
+/**
+ * Pick a slug for a spec, avoiding collisions with prior specs that already
+ * claimed `baseSlug`. Idempotent: if `id` is the same as the one that already
+ * owns `baseSlug`, returns `baseSlug` unchanged with no warning. Otherwise
+ * appends `-2`, `-3`, … and emits a warning.
+ *
+ * Does NOT mutate `takenSlugs` — callers are responsible for `.set(slug, id)`
+ * after a successful build, so a parse failure doesn't reserve a slot.
+ */
+export function resolveSpecSlug(
+  baseSlug: string,
+  id: string,
+  takenSlugs: ReadonlyMap<string, string>,
+): { slug: string; warning?: string } {
+  const prior = takenSlugs.get(baseSlug);
+  if (prior === undefined || prior === id) return { slug: baseSlug };
+  let n = 2;
+  while (takenSlugs.has(`${baseSlug}-${n}`)) n++;
+  const dupSlug = `${baseSlug}-${n}`;
+  return {
+    slug: dupSlug,
+    warning: `[spec:${baseSlug}] slug collision with id ${prior}; using ${dupSlug} for id ${id}`,
+  };
+}
+
+/**
+ * Build a `Specialization` from a fetched Kuali detail. Handles slug-collision
+ * resolution (mutates `takenSlugs`), routes through `parseProgramRequirements`
+ * and `parseElectives`, and surfaces an "unexpected engineering" warning if
+ * Kuali ever ships a spec with `requiredCoursesTermByTerm` populated.
+ */
+export function buildSpecialization(
+  detail: ProgramDetail,
+  id: string,
+  takenSlugs: Map<string, string>,
+  viewBase: string,
+): { spec: Specialization; warnings: string[] } {
+  const code = detail.code ?? "";
+  const name = detail.title ?? code;
+  const baseSlug = buildSpecializationSlug(code);
+  const { slug, warning: collisionWarning } = resolveSpecSlug(
+    baseSlug,
+    id,
+    takenSlugs,
+  );
+  takenSlugs.set(slug, id);
+
+  const warnings: string[] = [];
+  if (collisionWarning) warnings.push(collisionWarning);
+
+  const result = parseProgramRequirements(detail, `spec:${slug}`);
+  if (result.kind === "engineering") {
+    // Specs are expected to be flexible-shaped — see spike findings.
+    // If Kuali ever ships an engineering-shaped spec, surface it loudly
+    // rather than silently truncating to the flexible path.
+    warnings.push(
+      `[spec:${slug}] unexpected kind:"engineering" — using empty rule tree as a placeholder`,
+    );
+  }
+  const rules = result.kind === "flexible" ? result.rules : undefined;
+  if (result.kind === "flexible") warnings.push(...result.warnings);
+
+  const electivesResult = parseElectives(detail, `spec:${slug}`);
+  warnings.push(...electivesResult.warnings);
+
+  const spec: Specialization = {
+    slug,
+    name,
+    pid: id,
+    source: `${viewBase}/${encodeURIComponent(id)}`,
+    ...(rules !== undefined ? { rules } : {}),
+    ...(electivesResult.electives.length > 0
+      ? { electives: electivesResult.electives }
+      : {}),
+  };
+
+  return { spec, warnings };
+}
+
+/**
+ * Attach each parent's specs in the order they appeared in `specializationsList`.
+ * Missing specs (failed fetches) are silently skipped. Parents not present in
+ * `programs` are skipped (e.g. parent itself failed Phase A). Mutates
+ * `programs[parentSlug].specializations`.
+ */
+export function attachSpecsToParents(
+  programs: Record<string, Program>,
+  refsByParent: ReadonlyMap<string, readonly SpecializationRef[]>,
+  specsById: ReadonlyMap<string, Specialization>,
+): { parentsAttached: number; specsAttached: number } {
+  let parentsAttached = 0;
+  let specsAttached = 0;
+  for (const [parentSlug, refs] of refsByParent.entries()) {
+    const program = programs[parentSlug];
+    if (!program) continue;
+    const specs = refs
+      .map((r) => specsById.get(r.id))
+      .filter((s): s is Specialization => s !== undefined);
+    if (specs.length === 0) continue;
+    program.specializations = specs;
+    parentsAttached++;
+    specsAttached += specs.length;
+  }
+  return { parentsAttached, specsAttached };
 }
 
 /**
@@ -123,13 +293,169 @@ export async function discoverCatalogId(
   }
 }
 
+interface PhaseAResult {
+  programs: Record<string, Program>;
+  specRefsByParent: Map<string, SpecializationRef[]>;
+  withData: number;
+  skippedNoData: string[];
+  failed: string[];
+  warnings: string[];
+}
+
+/**
+ * Phase A — fetch every major, parse its rules + electives, collect its
+ * specialization references. Defers spec fetches to Phase B so we can dedup
+ * across parents (153 unique ids vs 283 refs in the current calendar).
+ */
+async function runPhaseA(
+  catalogId: string,
+  majors: readonly ProgramListEntry[],
+  conflictCounts: ReadonlyMap<string, number>,
+  today: string,
+): Promise<PhaseAResult> {
+  const programs: Record<string, Program> = {};
+  const specRefsByParent = new Map<string, SpecializationRef[]>();
+  const skippedNoData: string[] = [];
+  const failed: string[] = [];
+  const warnings: string[] = [];
+  let withData = 0;
+
+  await fetchEachPaced({
+    items: majors,
+    label: (p) => buildProgramSlug(p.code, conflictCounts),
+    fetcher: (p) =>
+      fetchJson<ProgramDetail>(
+        `${API_BASE}/program/${catalogId}/${encodeURIComponent(p.pid)}`,
+      ),
+    onResult: (detail, p) => {
+      const slug = buildProgramSlug(p.code, conflictCounts);
+      const result = parseProgramRequirements(detail, slug);
+      if (result.kind === "empty") {
+        skippedNoData.push(slug);
+        return "skipped (no data)";
+      }
+      warnings.push(...result.warnings);
+      const electivesResult = parseElectives(detail, slug);
+      warnings.push(...electivesResult.warnings);
+      const electivesField =
+        electivesResult.electives.length > 0
+          ? { electives: electivesResult.electives }
+          : {};
+      const base = {
+        name: p.title,
+        asOf: today,
+        source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
+      };
+      programs[slug] =
+        result.kind === "engineering"
+          ? {
+              kind: "engineering",
+              ...base,
+              terms: result.terms,
+              ...electivesField,
+            }
+          : {
+              kind: "flexible",
+              ...base,
+              rules: result.rules,
+              ...electivesField,
+            };
+      const specRefs = parseSpecializationsList(detail.specializationsList);
+      if (specRefs.length > 0) specRefsByParent.set(slug, specRefs);
+      withData++;
+      const specSuffix =
+        specRefs.length > 0
+          ? `, ${specRefs.length} spec ref${specRefs.length === 1 ? "" : "s"}`
+          : "";
+      return `ok (${result.kind}${specSuffix})`;
+    },
+    onError: (p) => {
+      failed.push(buildProgramSlug(p.code, conflictCounts));
+    },
+  });
+
+  return {
+    programs,
+    specRefsByParent,
+    withData,
+    skippedNoData,
+    failed,
+    warnings,
+  };
+}
+
+interface PhaseBResult {
+  specById: Map<string, Specialization>;
+  failedSpecs: string[];
+  warnings: string[];
+  uniqueSpecIds: readonly string[];
+}
+
+/**
+ * Phase B — fetch every unique specialization id at most once. The endpoint
+ * differs from parents: `/program/byId/{cid}/{id}` where `{id}` is the
+ * 24-char hex from the parent's `specializationsList` anchor.
+ */
+async function runPhaseB(
+  catalogId: string,
+  specRefsByParent: ReadonlyMap<string, readonly SpecializationRef[]>,
+): Promise<PhaseBResult> {
+  const specById = new Map<string, Specialization>();
+  const specSlugTaken = new Map<string, string>();
+  const failedSpecs: string[] = [];
+  const warnings: string[] = [];
+  const uniqueSpecIds = collectUniqueSpecIds(specRefsByParent);
+
+  console.log(`\nFetching ${uniqueSpecIds.length} unique specializations...`);
+
+  await fetchEachPaced({
+    items: uniqueSpecIds,
+    label: (id) => `spec ${id}`,
+    fetcher: (id) =>
+      fetchJson<ProgramDetail>(
+        `${API_BASE}/program/byId/${catalogId}/${encodeURIComponent(id)}`,
+      ),
+    onResult: (detail, id) => {
+      const { spec, warnings: w } = buildSpecialization(
+        detail,
+        id,
+        specSlugTaken,
+        VIEW_BASE,
+      );
+      warnings.push(...w);
+      specById.set(id, spec);
+      return `ok (${spec.slug})`;
+    },
+    onError: (id) => {
+      failedSpecs.push(id);
+    },
+  });
+
+  return { specById, failedSpecs, warnings, uniqueSpecIds };
+}
+
+/**
+ * Sort programs by slug and write the JSON output. Returns the absolute
+ * path of the written file.
+ */
+async function writeOutput(programs: Record<string, Program>): Promise<string> {
+  const sorted = Object.fromEntries(
+    Object.entries(programs).sort(([a], [b]) => a.localeCompare(b)),
+  );
+  const dataDir = path.resolve(process.cwd(), "data");
+  await mkdir(dataDir, { recursive: true });
+  const outPath = path.join(dataDir, "programs.json");
+  await writeFile(outPath, JSON.stringify(sorted, null, 2), "utf-8");
+  return outPath;
+}
+
 async function main() {
   const today = new Date().toISOString().slice(0, 10);
-  const CATALOG_ID = await discoverCatalogId();
+  const catalogId = await discoverCatalogId();
 
   process.stdout.write("Fetching program list... ");
   const list = await fetchJson<ProgramListEntry[]>(
-    `${API_BASE}/programs/${CATALOG_ID}?q=`,
+    `${API_BASE}/programs/${catalogId}?q=`,
   );
   const majors = list.filter(
     (p) => p.undergraduateCredentialType?.name === "Major",
@@ -138,96 +464,33 @@ async function main() {
 
   const conflictCounts = buildConflictCounts(majors.map((p) => p.code));
 
-  const out: Record<string, Program> = {};
-  const allWarnings: string[] = [];
-  let withData = 0;
-  let withoutData = 0;
-  let failedCount = 0;
-  const skippedNoData: string[] = [];
-  const failed: string[] = [];
-
-  for (let i = 0; i < majors.length; i++) {
-    const p = majors[i];
-    const slug = buildProgramSlug(p.code, conflictCounts);
-    const idx = `[${i + 1}/${majors.length}]`;
-    process.stdout.write(`${idx} ${slug}... `);
-    try {
-      const detail = await fetchJson<ProgramDetail>(
-        `${API_BASE}/program/${CATALOG_ID}/${encodeURIComponent(p.pid)}`,
-      );
-      const result = parseProgramRequirements(detail, slug);
-      if (result.kind === "empty") {
-        withoutData++;
-        skippedNoData.push(slug);
-        console.log("skipped (no data)");
-      } else {
-        allWarnings.push(...result.warnings);
-        const electivesResult = parseElectives(detail, slug);
-        allWarnings.push(...electivesResult.warnings);
-        const electivesField =
-          electivesResult.electives.length > 0
-            ? { electives: electivesResult.electives }
-            : {};
-        const base = {
-          name: p.title,
-          asOf: today,
-          source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
-        };
-        if (result.kind === "engineering") {
-          out[slug] = {
-            kind: "engineering",
-            ...base,
-            terms: result.terms,
-            ...electivesField,
-          };
-        } else {
-          out[slug] = {
-            kind: "flexible",
-            ...base,
-            rules: result.rules,
-            ...electivesField,
-          };
-        }
-        withData++;
-        console.log(`ok (${result.kind})`);
-      }
-    } catch (e) {
-      failedCount++;
-      failed.push(slug);
-      console.log(`ERROR: ${(e as Error).message}`);
-    }
-    if (i < majors.length - 1) {
-      await new Promise((r) => setTimeout(r, FETCH_DELAY_MS));
-    }
-  }
-
-  const sorted: Record<string, Program> = {};
-  for (const k of Object.keys(out).sort()) sorted[k] = out[k];
-
-  const dataDir = path.resolve(process.cwd(), "data");
-  await mkdir(dataDir, { recursive: true });
-  const outPath = path.join(dataDir, "programs.json");
-  await writeFile(outPath, JSON.stringify(sorted, null, 2), "utf-8");
-  console.log(
-    `\nWrote ${path.relative(process.cwd(), outPath)}: ${withData} programs (${withoutData} skipped for having no parseable data, ${failedCount} failed) of ${majors.length} majors`,
+  const phaseA = await runPhaseA(catalogId, majors, conflictCounts, today);
+  const phaseB = await runPhaseB(catalogId, phaseA.specRefsByParent);
+  const { parentsAttached, specsAttached } = attachSpecsToParents(
+    phaseA.programs,
+    phaseA.specRefsByParent,
+    phaseB.specById,
   );
 
-  if (skippedNoData.length > 0) {
-    console.error(
-      `\n${skippedNoData.length} programs skipped (none of requiredCoursesTermByTerm / requirements / courseRequirementsNoUnits had content):`,
-    );
-    for (const s of skippedNoData) console.error(`  ${s}`);
-  }
+  const outPath = await writeOutput(phaseA.programs);
 
-  if (failed.length > 0) {
-    console.error(`\n${failed.length} programs failed during fetch/parse:`);
-    for (const s of failed) console.error(`  ${s}`);
-  }
+  console.log(
+    `\nWrote ${path.relative(process.cwd(), outPath)}: ${phaseA.withData} programs (${phaseA.skippedNoData.length} skipped for having no parseable data, ${phaseA.failed.length} failed) of ${majors.length} majors`,
+  );
+  console.log(
+    `Specializations: ${phaseB.specById.size} unique fetched / ${phaseB.uniqueSpecIds.length} expected (${phaseB.failedSpecs.length} failed), attached ${specsAttached} times across ${parentsAttached} parents`,
+  );
 
-  if (allWarnings.length > 0) {
-    console.error(`\n${allWarnings.length} unrecognized-rule warnings:`);
-    for (const w of allWarnings) console.error(`  ${w}`);
-  }
+  reportList(
+    "programs skipped (none of requiredCoursesTermByTerm / requirements / courseRequirementsNoUnits had content)",
+    phaseA.skippedNoData,
+  );
+  reportList("programs failed during fetch/parse", phaseA.failed);
+  reportList("specs failed during fetch/parse", phaseB.failedSpecs);
+  reportList("unrecognized-rule warnings", [
+    ...phaseA.warnings,
+    ...phaseB.warnings,
+  ]);
 }
 
 // Only run main() when invoked directly via `tsx scripts/scrape-programs.ts`,

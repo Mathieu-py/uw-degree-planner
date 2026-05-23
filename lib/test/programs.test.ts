@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  describeRule,
   flattenChoiceGroups,
   getChoiceGroupsByTerm,
   getExcludedCourses,
@@ -432,5 +433,141 @@ describe("getExcludedCourses", () => {
     });
     expect(getRequiredCourses(program)).toEqual(["cs100"]);
     expect(getExcludedCourses(program)).toEqual(["chem266"]);
+  });
+});
+
+describe("describeRule", () => {
+  it("returns undefined for leaf `courses` nodes", () => {
+    expect(
+      describeRule({ kind: "courses", courses: ["cs115"] }),
+    ).toBeUndefined();
+  });
+
+  it("derives 'Complete all of the following' for `all`", () => {
+    expect(describeRule({ kind: "all", children: [] })).toBe(
+      "Complete all of the following",
+    );
+  });
+
+  it("derives the excluded prose for `excluded`", () => {
+    expect(describeRule({ kind: "excluded", courses: ["chem266"] })).toBe(
+      "The following cannot be used towards this academic plan",
+    );
+  });
+
+  it("derives 'Complete N of the following' for pick(N,N) over a single courses leaf", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 2,
+      selectMax: 2,
+      children: [{ kind: "courses", courses: ["cs115", "cs135"] }],
+    };
+    expect(describeRule(node)).toBe("Complete 2 of the following");
+  });
+
+  it("derives the metaParent phrasing for pick(N,N) whose children are themselves rules", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 3,
+      selectMax: 3,
+      children: [
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs462"] }] },
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs466"] }] },
+      ],
+    };
+    expect(describeRule(node)).toBe(
+      "Complete 3 courses from the following choices",
+    );
+  });
+
+  it("singularizes 'course' when the metaParent count is 1", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs462"] }] },
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs466"] }] },
+      ],
+    };
+    expect(describeRule(node)).toBe(
+      "Complete 1 course from the following choices",
+    );
+  });
+
+  it("derives 'Choose any of the following' for an unbounded pick", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      children: [{ kind: "courses", courses: ["cs462"] }],
+    };
+    expect(describeRule(node)).toBe("Choose any of the following");
+  });
+
+  it("derives 'Complete no more than N from the following' for pick with only selectMax", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMax: 1,
+      children: [{ kind: "courses", courses: ["cs100", "cs101"] }],
+    };
+    expect(describeRule(node)).toBe(
+      "Complete no more than 1 from the following",
+    );
+  });
+
+  it("honors a stored `description` override (non-standard wrapper prose)", () => {
+    expect(
+      describeRule({
+        kind: "all",
+        description: "Take these before 3A term",
+        children: [],
+      }),
+    ).toBe("Take these before 3A term");
+  });
+
+  it("reconstructs subjectPool prose for the single-subject + level case", () => {
+    expect(
+      describeRule({
+        kind: "subjectPool",
+        selectCount: 2,
+        subjectCodes: ["STAT"],
+        minLevel: 300,
+      }),
+    ).toBe("Complete 2 additional STAT courses at the 300-level");
+  });
+
+  it("reconstructs subjectPool prose for the multi-subject + level-range + exclusion case", () => {
+    expect(
+      describeRule({
+        kind: "subjectPool",
+        selectCount: 2,
+        subjectCodes: ["ACTSC", "AMATH", "CS"],
+        minLevel: 300,
+        maxLevel: 400,
+        exclusions: ["excluding courses cross-listed with a CO course"],
+      }),
+    ).toBe(
+      "Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, CS; excluding courses cross-listed with a CO course",
+    );
+  });
+
+  it("reconstructs subjectPool prose for the multi-subject + no-level case", () => {
+    expect(
+      describeRule({
+        kind: "subjectPool",
+        selectCount: 3,
+        subjectCodes: ["ACTSC", "AMATH"],
+      }),
+    ).toBe("Complete 3 additional courses from: ACTSC, AMATH");
+  });
+
+  it("singularizes 'course' when subjectPool selectCount is 1", () => {
+    expect(
+      describeRule({
+        kind: "subjectPool",
+        selectCount: 1,
+        subjectCodes: ["EARTH"],
+        minLevel: 300,
+      }),
+    ).toBe("Complete 1 additional EARTH course at the 300-level");
   });
 });

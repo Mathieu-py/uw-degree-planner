@@ -225,10 +225,20 @@ export function parseTranscript(text: string): TranscriptParseResult {
 
   // Pick the first candidate that resolves to a real program slug; fall back
   // to the first candidate string so the UI can still show what we saw if
-  // none matched ("Detected: <X> — pick after import").
+  // none matched ("Detected: <X> — pick after import"). Prefer the
+  // specialization match (program + spec) when available, since it carries
+  // strictly more information than the parent-only match.
   let detectedProgramId: string | null = null;
+  let detectedSpecializationSlug: string | null = null;
   let rawPlanText: string | null = planCandidates[0] ?? null;
   for (const cand of planCandidates) {
+    const spec = matchSpecializationFromPlan(cand);
+    if (spec) {
+      detectedProgramId = spec.programId;
+      detectedSpecializationSlug = spec.specializationSlug;
+      rawPlanText = cand;
+      break;
+    }
     const slug = matchProgramSlug(cand);
     if (slug) {
       detectedProgramId = slug;
@@ -239,6 +249,7 @@ export function parseTranscript(text: string): TranscriptParseResult {
 
   return {
     detectedProgramId,
+    detectedSpecializationSlug,
     detectedCurrentTerm,
     rawPlanText,
     courses,
@@ -294,5 +305,77 @@ export function matchProgramSlug(planText: string): string | null {
   );
   if (substr.length === 1) return substr[0].id;
 
+  return null;
+}
+
+// Quest formats specialization-bearing Plan lines as
+// `Plan: Honours History — Global Interactions Specialization`. The
+// separator is an em-dash (U+2014); some exports also use an en-dash or
+// a plain hyphen-minus surrounded by spaces. The right-hand side is
+// expected to contain the literal "Specialization" (case-insensitive).
+const PLAN_SPLIT_RE = /\s+[—–-]\s+/;
+
+// "Specialization" appears in every spec name and every Plan spec-half, so
+// it carries no disambiguation signal — strip it when counting tokens.
+const SPEC_SENTINEL_TOKENS = new Set(["specialization", "specializations"]);
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function tokensForSpecMatch(normalized: string): string[] {
+  return normalized
+    .split(/[\s,]+/)
+    .filter((t) => t.length > 0 && !SPEC_SENTINEL_TOKENS.has(t));
+}
+
+/**
+ * Parse a Plan/Program line that contains both a parent program and a
+ * specialization. Returns the resolved program slug + specialization slug
+ * if both halves match, otherwise null (callers should then fall back to
+ * `matchProgramSlug` on the full line).
+ *
+ * The fallback after exact match uses word-boundary token coverage rather
+ * than raw substring: every non-sentinel token in the needle must appear as
+ * a whole word in the candidate, AND the needle must carry at least two
+ * non-sentinel tokens. A single token like "Interfaces" otherwise
+ * substring-matches "Human Factors and Interfaces Specialization" and
+ * silently picks a spec the user didn't intend.
+ */
+export function matchSpecializationFromPlan(
+  planText: string,
+): { programId: string; specializationSlug: string } | null {
+  const parts = planText.split(PLAN_SPLIT_RE);
+  if (parts.length < 2) return null;
+  const specHalf = parts[parts.length - 1];
+  if (!/specialization/i.test(specHalf)) return null;
+
+  const programId = matchProgramSlug(parts.slice(0, -1).join(" "));
+  if (!programId) return null;
+
+  const program = PROGRAMS[programId];
+  const specs = program?.specializations;
+  if (!specs || specs.length === 0) return null;
+
+  const needle = normalizeProgramName(specHalf);
+  if (!needle) return null;
+
+  const exact = specs.filter((s) => normalizeProgramName(s.name) === needle);
+  if (exact.length === 1) {
+    return { programId, specializationSlug: exact[0].slug };
+  }
+
+  const needleTokens = tokensForSpecMatch(needle);
+  if (needleTokens.length < 2) return null;
+  const tokenRes = needleTokens.map(
+    (t) => new RegExp(`\\b${escapeRegExp(t)}\\b`),
+  );
+  const matches = specs.filter((s) => {
+    const candidate = normalizeProgramName(s.name);
+    return tokenRes.every((re) => re.test(candidate));
+  });
+  if (matches.length === 1) {
+    return { programId, specializationSlug: matches[0].slug };
+  }
   return null;
 }

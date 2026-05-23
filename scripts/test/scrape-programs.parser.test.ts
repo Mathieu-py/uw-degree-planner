@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { RuleNode } from "../../lib/programs";
 import {
+  describeRule,
   flattenChoiceGroups,
   requiredCoursesIn,
   walkRule,
@@ -10,9 +11,11 @@ import {
 import {
   buildConflictCounts,
   buildProgramSlug,
+  buildSpecializationSlug,
   normalizeCourseCode,
   parseElectives,
   parseProgramRequirements,
+  parseSpecializationsList,
 } from "../scrape-programs.parser";
 
 const fixture = (name: string) =>
@@ -265,7 +268,7 @@ describe("parseProgramRequirements — bounded picks (Combinatorics fixture)", (
     const chooseAny = findNode(
       r.rules,
       (n) =>
-        n.kind === "pick" && n.description === "Choose any of the following",
+        n.kind === "pick" && describeRule(n) === "Choose any of the following",
     );
     expect(chooseAny).toBeDefined();
     if (chooseAny?.kind !== "pick") throw new Error("expected pick");
@@ -280,10 +283,11 @@ describe("parseProgramRequirements — bounded picks (Combinatorics fixture)", (
     if (r.kind !== "flexible") throw new Error("expected flexible");
     const noMoreThan: RuleNode[] = [];
     walkRule(r.rules, (n) => {
+      const desc = describeRule(n);
       if (
         n.kind === "pick" &&
-        n.description !== undefined &&
-        /^Complete no more than \d+ from the following$/.test(n.description)
+        desc !== undefined &&
+        /^Complete no more than \d+ from the following$/.test(desc)
       ) {
         noMoreThan.push(n);
       }
@@ -302,8 +306,7 @@ describe("parseProgramRequirements — bounded picks (Combinatorics fixture)", (
       r.rules,
       (n) =>
         n.kind === "pick" &&
-        n.description !== undefined &&
-        /^Complete 3 courses from the following choices$/.test(n.description),
+        describeRule(n) === "Complete 3 courses from the following choices",
     );
     expect(parent).toBeDefined();
     if (parent?.kind !== "pick") throw new Error("expected pick parent");
@@ -390,8 +393,7 @@ describe("'Complete no more than N' with N > 1", () => {
       r.rules,
       (n) =>
         n.kind === "pick" &&
-        n.description !== undefined &&
-        /Complete no more than 3 from the following/.test(n.description),
+        describeRule(n) === "Complete no more than 3 from the following",
     );
     expect(node).toBeDefined();
     if (node?.kind !== "pick") throw new Error("expected pick");
@@ -400,6 +402,11 @@ describe("'Complete no more than N' with N > 1", () => {
     const groups = flattenChoiceGroups(r.rules);
     const group = groups.find((g) => g.selectMax === 3);
     expect(group?.options).toEqual(["cs100", "cs101", "cs102", "cs103"]);
+    // ChoiceGroup carries the derived description even though the underlying
+    // rule node stores none.
+    expect(group?.description).toBe(
+      "Complete no more than 3 from the following",
+    );
   });
 });
 
@@ -499,19 +506,44 @@ describe("wrapWithProse — all fallback", () => {
       </ul></div></div>
     </section>`;
 
-  it("preserves the wrapper text as `description` on the multi-child `all` node", () => {
+  it("drops standard 'Complete all of the following' wrapper text (derivable from kind)", () => {
     const r = parseProgramRequirements({
       requirements: wrapWithChildren("Complete all of the following"),
     });
     if (r.kind !== "flexible") throw new Error("expected flexible");
+    // No `all` node should carry a `description` for the standard phrasing —
+    // describeRule reconstructs it from the kind.
+    const withDescription: RuleNode[] = [];
+    walkRule(r.rules, (n) => {
+      if (n.kind === "all" && n.description !== undefined) {
+        withDescription.push(n);
+      }
+    });
+    expect(withDescription).toEqual([]);
+    // The structural wrap still happens — find the inner `all` with 2 children.
     const inner = findNode(
       r.rules,
-      (n) =>
-        n.kind === "all" && n.description === "Complete all of the following",
+      (n) => n.kind === "all" && n.children.length === 2,
+    );
+    expect(inner).toBeDefined();
+    if (inner?.kind !== "all") throw new Error("expected all");
+    expect(describeRule(inner)).toBe("Complete all of the following");
+  });
+
+  it("preserves non-standard wrapper text as `description` (defensive future-proofing)", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapWithChildren("Take these before 3A term"),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const inner = findNode(
+      r.rules,
+      (n) => n.kind === "all" && n.description === "Take these before 3A term",
     );
     expect(inner).toBeDefined();
     if (inner?.kind !== "all") throw new Error("expected all");
     expect(inner.children).toHaveLength(2);
+    // describeRule honors the stored override.
+    expect(describeRule(inner)).toBe("Take these before 3A term");
   });
 
   it("omits `description` when the wrapper text is empty", () => {
@@ -879,5 +911,81 @@ describe("parseElectives — deterministic ordering", () => {
       </ul>`;
     const r = parseElectives({ graduationRequirements: gradReqs });
     expect(r.electives.map((e) => e.unitRequirement)).toEqual([2.0, 6.0]);
+  });
+});
+
+describe("parseSpecializationsList", () => {
+  // Verbatim shape from scripts/diagnostic/raw/h-history.json.
+  const HISTORY_HTML =
+    '<div><div><div><ul><li data-test="ruleView-A"><div data-test="ruleView-A-result"><span>' +
+    '<a href="#/programs/view/69b1aec70cdb8bf7a71689de" target="_blank">HIST-Global Interactions Specialization</a>, ' +
+    '<a href="#/programs/view/69aa7e22ab246f872d3d2735" target="_blank">HIST-International Relations Specialization</a>, <!-- -->or ' +
+    '<a href="#/programs/view/69b1aeaa88df55191cce4453" target="_blank">HIST-Revolution, War, &amp; Upheaval Specialization</a>' +
+    "</span></div></li></ul></div></div></div>";
+
+  it("returns [] for missing input", () => {
+    expect(parseSpecializationsList(undefined)).toEqual([]);
+    expect(parseSpecializationsList("")).toEqual([]);
+    expect(parseSpecializationsList("   ")).toEqual([]);
+  });
+
+  it("returns [] when there are no matching anchors", () => {
+    expect(parseSpecializationsList("<div>nothing here</div>")).toEqual([]);
+  });
+
+  it("extracts each spec anchor's id and name (History — 3 specs)", () => {
+    expect(parseSpecializationsList(HISTORY_HTML)).toEqual([
+      {
+        id: "69b1aec70cdb8bf7a71689de",
+        name: "HIST-Global Interactions Specialization",
+      },
+      {
+        id: "69aa7e22ab246f872d3d2735",
+        name: "HIST-International Relations Specialization",
+      },
+      {
+        id: "69b1aeaa88df55191cce4453",
+        name: "HIST-Revolution, War, & Upheaval Specialization",
+      },
+    ]);
+  });
+
+  it("ignores non-spec anchors (course links, view-program-only links)", () => {
+    const mixed =
+      '<a href="#/courses/view/abc123">CHEM 120</a>' +
+      '<a href="#/programs/view/aaa111bbb222ccc333dddeeee">CS-AI Specialization</a>' +
+      '<a href="https://example.com">External</a>';
+    expect(parseSpecializationsList(mixed)).toEqual([
+      { id: "aaa111bbb222ccc333dddeeee", name: "CS-AI Specialization" },
+    ]);
+  });
+});
+
+describe("buildSpecializationSlug", () => {
+  it("kebab-cases the code and strips the -specialization suffix", () => {
+    expect(
+      buildSpecializationSlug("HIST-Global Interactions Specialization"),
+    ).toBe("hist-global-interactions");
+  });
+
+  it("expands & to 'and' (mirrors buildProgramSlug)", () => {
+    expect(
+      buildSpecializationSlug("SYDE-Human Factors & Interfaces Specialization"),
+    ).toBe("syde-human-factors-and-interfaces");
+  });
+
+  it("retains the program prefix even when the parent program slug would strip it", () => {
+    // `buildProgramSlug("H-History", …)` returns `"history"` (credential
+    // prefix stripped). Spec codes carry program prefixes like HIST/CS/SYDE
+    // that are part of the spec's identity — those must NOT be stripped.
+    expect(buildSpecializationSlug("CS-Bioinformatics Specialization")).toBe(
+      "cs-bioinformatics",
+    );
+  });
+
+  it("handles codes with no trailing 'Specialization' word", () => {
+    expect(buildSpecializationSlug("ENGL-Communication Design")).toBe(
+      "engl-communication-design",
+    );
   });
 });
