@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { rebaseCompletedCourses } from "@/lib/completedCourses";
+import { useState } from "react";
+import {
+  baselineForPassage,
+  clearCompletedFromTranscriptFlag,
+  isCompletedFromTranscript,
+  markCompletedFromTranscript,
+  rebaseCompletedCourses,
+} from "@/lib/completedCourses";
 import {
   DEFAULT_STUDENT_PASSAGE,
   decodeStudentPassage,
@@ -46,15 +52,11 @@ export function StudentPassagePanel({
   const commitPassage = useFilterCommit(mergeStudentPassageIntoParams);
   const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
 
-  const completedCoursesRef = useRef(completedCourses);
-  useEffect(() => {
-    completedCoursesRef.current = completedCourses;
-  }, [completedCourses]);
-
-  // URL is source of truth (router.replace is async). On prog/term change,
-  // rebase the localStorage list through the new baseline so the table updates
-  // immediately. The live list comes from the ref (localStorage-backed) —
-  // `decodeStudentPassage` always returns [] for completedCourses.
+  // URL is source of truth for prog/term (router.replace is async; the prop
+  // can lag in a transition). The live URL is decoded for those fields;
+  // `completedCourses` comes from the prop (parent owns it via useState,
+  // backed by localStorage). `decodeStudentPassage` always returns
+  // completedCourses: [], so we overwrite it from the prop.
   function patchPassage(delta: Partial<StudentPassage>) {
     const live =
       typeof window !== "undefined"
@@ -63,26 +65,35 @@ export function StudentPassagePanel({
     const next = { ...live, ...delta };
 
     if (delta.programId !== undefined || delta.currentTerm !== undefined) {
-      onCompletedChange(
-        rebaseCompletedCourses(
-          { ...live, completedCourses: completedCoursesRef.current },
-          next.programId,
-          next.currentTerm,
-        ),
-      );
+      if (isCompletedFromTranscript()) {
+        // Explicit re-seed after transcript import: replace, don't preserve
+        // extras. The transcript was the source of truth until now; re-seeding
+        // signals the user wants the new program's baseline as a clean start.
+        // See issue #47.
+        onCompletedChange(baselineForPassage(next.programId, next.currentTerm));
+        clearCompletedFromTranscriptFlag();
+      } else {
+        onCompletedChange(
+          rebaseCompletedCourses(
+            { ...live, completedCourses },
+            next.programId,
+            next.currentTerm,
+          ),
+        );
+      }
     }
 
     commitPassage(next);
   }
 
-  // Explicit "wipe everything" path. Bypasses patchPassage's rebase because
-  // `completedCoursesRef` updates one tick behind state — if we routed through
-  // patchPassage with `programId: null, currentTerm: null`, rebase would see
-  // the stale list and project the extras forward. Going direct keeps the
-  // intent unambiguous: zero passage state, zero completedCourses.
+  // Explicit "wipe everything" path. Goes direct rather than through
+  // patchPassage so the intent is unambiguous: zero passage state, zero
+  // completedCourses. Routing through patchPassage would invoke rebase logic
+  // we don't want here.
   function clearPassage() {
     onCompletedChange([]);
     commitPassage(DEFAULT_STUDENT_PASSAGE);
+    clearCompletedFromTranscriptFlag();
   }
 
   // Transcript IS the source of truth — skip the prog/term rebase that
@@ -92,6 +103,7 @@ export function StudentPassagePanel({
     const next = applyTranscriptToStudentPassage(payload);
     commitPassage(next);
     onCompletedChange(payload.codes);
+    markCompletedFromTranscript();
     setTranscriptModalOpen(false);
   }
 
