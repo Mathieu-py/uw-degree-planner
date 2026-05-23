@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackToBrowse } from "@/components/BackToBrowse";
 import { loadCourseByCode } from "@/lib/data";
 import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent } from "@/lib/format";
@@ -31,12 +31,9 @@ export default async function CoursePage(props: {
 
   return (
     <div className="mx-auto max-w-3xl w-full px-6 py-10 flex flex-col gap-8">
-      <Link
-        href="/browse"
-        className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 w-fit"
-      >
+      <BackToBrowse className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 w-fit">
         ← Back to browse
-      </Link>
+      </BackToBrowse>
 
       <header className="flex flex-col gap-2">
         <span className="font-mono text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
