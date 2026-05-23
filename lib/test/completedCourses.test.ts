@@ -238,3 +238,56 @@ describe("saveCompletedCourses", () => {
     expect(loadCompletedCourses()).toEqual(["math116"]);
   });
 });
+
+describe("transcript flag", () => {
+  const FLAG_KEY = "uwfinder.completedCoursesFromTranscript";
+
+  it("isCompletedFromTranscript returns false on a fresh store", async () => {
+    const { isCompletedFromTranscript } = await import("../completedCourses");
+    expect(isCompletedFromTranscript()).toBe(false);
+  });
+
+  it("mark → is → clear round-trip", async () => {
+    const {
+      clearCompletedFromTranscriptFlag,
+      isCompletedFromTranscript,
+      markCompletedFromTranscript,
+    } = await import("../completedCourses");
+    markCompletedFromTranscript();
+    expect(isCompletedFromTranscript()).toBe(true);
+    expect(storage.store.get(FLAG_KEY)).toBe("1");
+    clearCompletedFromTranscriptFlag();
+    expect(isCompletedFromTranscript()).toBe(false);
+    expect(storage.store.has(FLAG_KEY)).toBe(false);
+  });
+
+  it("is independent of the completedCourses list", async () => {
+    const {
+      clearCompletedFromTranscriptFlag,
+      isCompletedFromTranscript,
+      loadCompletedCourses,
+      markCompletedFromTranscript,
+      saveCompletedCourses,
+    } = await import("../completedCourses");
+
+    // Setting the flag does not touch the courses list.
+    markCompletedFromTranscript();
+    expect(loadCompletedCourses()).toEqual([]);
+
+    // Saving courses does not touch the flag.
+    saveCompletedCourses(["cs115"]);
+    expect(isCompletedFromTranscript()).toBe(true);
+
+    // Clearing the flag does not touch the courses list.
+    clearCompletedFromTranscriptFlag();
+    expect(loadCompletedCourses()).toEqual(["cs115"]);
+  });
+
+  it("ignores stored values other than '1'", async () => {
+    const { isCompletedFromTranscript } = await import("../completedCourses");
+    storage.store.set(FLAG_KEY, "true");
+    expect(isCompletedFromTranscript()).toBe(false);
+    storage.store.set(FLAG_KEY, "0");
+    expect(isCompletedFromTranscript()).toBe(false);
+  });
+});

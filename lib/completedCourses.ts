@@ -14,6 +14,30 @@ import type { StudentPassage } from "./types";
 
 export const COMPLETED_STORAGE_KEY = "uwfinder.completedCourses";
 
+/**
+ * Sibling flag recording that the last write to `completedCourses` came from a
+ * transcript import (as opposed to a program seed or manual edit). Used by
+ * StudentPassagePanel to decide between "rebase through baseline" (default) and
+ * "replace with new baseline" (after transcript) on the next prog/term change.
+ *
+ * Persisted because the user might upload a transcript, close the tab, and
+ * re-seed days later — the replace behavior should still fire.
+ */
+export const COMPLETED_FROM_TRANSCRIPT_KEY =
+  "uwfinder.completedCoursesFromTranscript";
+
+export function isCompletedFromTranscript(): boolean {
+  return safeGetItem(COMPLETED_FROM_TRANSCRIPT_KEY) === "1";
+}
+
+export function markCompletedFromTranscript(): void {
+  safeSetItem(COMPLETED_FROM_TRANSCRIPT_KEY, "1");
+}
+
+export function clearCompletedFromTranscriptFlag(): void {
+  safeRemoveItem(COMPLETED_FROM_TRANSCRIPT_KEY);
+}
+
 export function loadCompletedCourses(): string[] {
   const raw = safeGetItem(COMPLETED_STORAGE_KEY);
   if (raw == null) return [];
@@ -50,7 +74,7 @@ export function rebaseCompletedCourses(
   nextCurrentTerm: string | null,
 ): string[] {
   const oldBaseline = new Set(
-    baselineFor(previous.programId, previous.currentTerm),
+    baselineForPassage(previous.programId, previous.currentTerm),
   );
   const oldEffective = new Set(previous.completedCourses);
   const extras = previous.completedCourses.filter((c) => !oldBaseline.has(c));
@@ -58,16 +82,22 @@ export function rebaseCompletedCourses(
     [...oldBaseline].filter((c) => !oldEffective.has(c)),
   );
 
-  const newBaseline = baselineFor(nextProgramId, nextCurrentTerm);
+  const newBaseline = baselineForPassage(nextProgramId, nextCurrentTerm);
   return [...new Set([...newBaseline, ...extras])]
     .filter((c) => !removals.has(c))
     .sort();
 }
 
-// Flexible programs ignore the term, so allowing a `null` term here lets them
-// seed without one. Engineering still requires a term — inferCompleted returns
-// [] when called with null on an engineering program.
-function baselineFor(programId: string | null, term: string | null): string[] {
+/**
+ * The inferred completed-courses baseline for a passage's prog/term pair.
+ * Flexible programs ignore the term, so a null term is allowed; engineering
+ * with a null term yields `[]` (no prior terms to infer from). Output is
+ * sorted because `inferCompleted` returns sorted.
+ */
+export function baselineForPassage(
+  programId: string | null,
+  term: string | null,
+): string[] {
   if (!programId) return [];
   const t = isTermLetter(term) ? term : null;
   return inferCompleted(programId, t);
