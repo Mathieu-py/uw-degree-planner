@@ -1,0 +1,28 @@
+{
+  "facultyCalendarDisplay": {
+    "name": "Faculty of Engineering",
+    "id": "648b230afc613edabf8e2eba"
+  },
+  "code": "SYDE-Human Factors & Interfaces Specialization",
+  "__passedCatalogQuery": true,
+  "courseRequirementsNoUnits": "<div><section><header data-test=\"grouping-0-header\"><div><h2 data-testid=\"grouping-label\"><span>Required Courses</span></h2></div><div><div><button aria-label=\"Collapse\"><i></i></button></div></div></header><div><div><ul><li><span>Complete <!-- -->all<!-- --> of the following</span><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\">Complete all the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/65ce6ec67a5405025a805889\" target=\"_blank\">SYDE548</a> <!-- -->-<!-- --> <!-- -->User Centred Design Methods<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-B\"><div data-test=\"ruleView-B-result\">Complete <span>2</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/6994716647557d57c3d444f1\" target=\"_blank\">SYDE334</a> <!-- -->-<!-- --> <!-- -->Applied Statistics<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69a09fb04bac9e1d8e73bc42\" target=\"_blank\">SYDE542</a> <!-- -->-<!-- --> <!-- -->Interface Design<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/670fd6cb57a3dadb546bdd8f\" target=\"_blank\">SYDE543</a> <!-- -->-<!-- --> <!-- -->Cognitive Ergonomics<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-C\"><div data-test=\"ruleView-C-result\">Complete <span>1</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/68c2c54c0543262b15856bd0\" target=\"_blank\">INTEG251</a> <!-- -->-<!-- --> <!-- -->Creativity and Innovation<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/68c2c65018f0b18a70913813\" target=\"_blank\">INTEG340</a> <!-- -->-<!-- --> <!-- -->Research Design and Methods<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69a0a2274bac9e1d8e73c836\" target=\"_blank\">MSE543</a> <!-- -->-<!-- --> <!-- -->Analytics and User Experience<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/66c6591ecd008829792e9a58\" target=\"_blank\">STV202</a> <!-- -->-<!-- --> <!-- -->Design and Society<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/64a5b955ec4d1a17e46b525b\" target=\"_blank\">STV205</a> <!-- -->-<!-- --> <!-- -->Cybernetics and Society<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li></ul></li></ul></div><div></div></div></section></div>",
+  "pid": "r1spnvU3p",
+  "title": "Human Factors and Interfaces Specialization",
+  "minimumAverageSRequired": "<ul> <li>A minimum average of 60.0% in the specialization courses.</li> </ul>",
+  "undergraduateCredentialType": {
+    "name": "Specialization",
+    "id": "63c825a4d76a2cec43ca6347"
+  },
+  "dateStart": "2026-09-02",
+  "specializationIsAvailableForStudentsInTheFollowingMajorsRules": "<div><div><div><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\"><span><a href=\"#/programs/view/68d3e28280cf5839623926f2\" target=\"_blank\">H-Systems Design Engineering</a></span></div></li></ul></div></div></div>",
+  "id": "69b1b6c413e1b07a8b6d7742",
+  "fieldOfStudy": {
+    "name": "Systems Design Engineering",
+    "id": "63e5600020f9330016f519f2",
+    "customFields": {}
+  },
+  "catalogActivationDate": "2026-04-02",
+  "graduationRequirements": "<ul> <li>Complete a total of four courses according to the requirements below.</li> </ul>",
+  "_score": 1,
+  "specializations": []
+}

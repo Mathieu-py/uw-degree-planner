@@ -1,0 +1,29 @@
+{
+  "facultyCalendarDisplay": {
+    "name": "Faculty of Arts",
+    "id": "648b2302dedb397b7d9b0731"
+  },
+  "code": "HIST-Global Interactions Specialization",
+  "__passedCatalogQuery": true,
+  "detailsAndNotes": "<ul> <li>Visit the <a href=\"https://uwaterloo.ca/history/\">Department of History website</a> for further information.</li> </ul>",
+  "additionalConstraints": "<ol> <li><span>Students may only complete one course from any cross-listed set.</span></li> <li><span>Students may request to have special topics courses, or courses taken on academic exchange, accepted to meet a specialization requirement. For details, consult the History academic advisor.</span></li> </ol>",
+  "courseRequirementsNoUnits": "<div><section><header data-test=\"grouping-0-header\"><div><h2 data-testid=\"grouping-label\"><span>Required Courses</span></h2></div><div><div><button aria-label=\"Collapse\"><i></i></button></div></div></header><div><div><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\">Complete <span>4</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/69aa7173943da42afcc5b8ad\" target=\"_blank\">HIST216</a> <!-- -->-<!-- --> <!-- -->From Gutenberg to Zuckerberg: A (Long) History of the Internet<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6ee588fba4af19cb470a\" target=\"_blank\">HIST268</a> <!-- -->-<!-- --> <!-- -->A Global History of Empires<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6bd55cacac2fbe7fad07\" target=\"_blank\">HIST275</a> <!-- -->-<!-- --> <!-- -->The Modern World in Historical Perspective<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa734917940b8f16d3f567\" target=\"_blank\">HIST321</a> <!-- -->-<!-- --> <!-- -->Human Rights in Historical Perspective<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa721b405ebfa9d2b56e90\" target=\"_blank\">HIST322</a> <!-- -->-<!-- --> <!-- -->Global History of the Detention Camp<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa721717940b8f16d3e90e\" target=\"_blank\">HIST323</a> <!-- -->-<!-- --> <!-- -->Global History of the Prison<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6d8b0cdb8bf7a704063f\" target=\"_blank\">HIST351</a> <!-- -->-<!-- --> <!-- -->Canada: The Immigrant Experience<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa789188fba4af19cb93dd\" target=\"_blank\">HIST369</a> <!-- -->-<!-- --> <!-- -->The Politics of Decolonization<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6bf4df9c42c28b613855\" target=\"_blank\">HIST389</a> <!-- -->-<!-- --> <!-- -->Canada in World Affairs<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa77bb17940b8f16d40c42\" target=\"_blank\">LS331</a> <!-- -->-<!-- --> <!-- -->Human Rights in Historical Perspective<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa73f588fba4af19cb7b9f\" target=\"_blank\">PSCI369</a> <!-- -->-<!-- --> <!-- -->The Politics of Decolonization<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li></ul></div><div></div></div></section></div>",
+  "pid": "B1gEgJCRi2",
+  "title": "Global Interactions Specialization",
+  "undergraduateCredentialType": {
+    "name": "Specialization",
+    "id": "63c825a4d76a2cec43ca6347"
+  },
+  "dateStart": "2026-09-02",
+  "specializationIsAvailableForStudentsInTheFollowingMajorsRules": "<div><div><div><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\"><span><a href=\"#/programs/view/69aa7e1a306256e3f12a1623\" target=\"_blank\">3G-History</a>, <a href=\"#/programs/view/69aa7e115cacac2fbe80399f\" target=\"_blank\">4G-History</a>, <!-- -->or <a href=\"#/programs/view/69aa7e29df9c42c28b61ca8e\" target=\"_blank\">H-History</a></span></div></li></ul></div></div></div>",
+  "id": "69b1aec70cdb8bf7a71689de",
+  "fieldOfStudy": {
+    "name": "History",
+    "id": "63e55df2516abf001614364c",
+    "customFields": {}
+  },
+  "catalogActivationDate": "2026-04-02",
+  "graduationRequirements": "<ul> <li>Complete a total of 2.0 units.</li> </ul>",
+  "_score": 1,
+  "specializations": []
+}

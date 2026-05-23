@@ -195,3 +195,62 @@ The existing `normalizeCourseCode` and `Complete all the following` matching req
 - Specialization sub-plan recursion (History's 3 specializations, Climate's 5, Kinesiology's 1) — useful but not required for the flexible-program seed to work.
 - `courseListsNew` ("Approved Courses List" — Climate) — only relevant if we ever want to enforce elective category buckets.
 - Auto-discovery of `CATALOG_ID` (already noted in #30).
+
+---
+
+## Spike addendum — issue #40 (specialization scraping)
+
+**Method.** Ran [`scripts/diagnostic/dump-spec-pids.ts`](./dump-spec-pids.ts) against 5 specializations spanning faculties: HIST (Arts), CEC (Environment), SYDE (Engineering parent), CS-BCS (Math), ENGL-Communication-Design (cross-parent dedup probe). Each spec's full Kuali response is in [`raw-specs/<slug>.json`](./raw-specs/).
+
+**Scope numbers (full live enumeration over all 197 majors).** 80 parent programs have a non-empty `specializationsList`; 283 total spec references across those parents; **153 unique specialization ids** — so 130 of 283 references are duplicates, driven by H/3G/4G credential variants of the same program (e.g. all 3 English-Literature variants share the same 5-6 specs). Dedup is required for both fetch budget and JSON size.
+
+### Endpoint discovery (Q1)
+
+The endpoint suggested by the issue text (`/api/v1/catalog/program/{catalogId}/{pid}`) **returns 404** for specialization ids. The working endpoint is:
+
+```http
+GET https://uwaterloocm.kuali.co/api/v1/catalog/program/byId/{catalogId}/{id}
+```
+
+Discovered by inspecting `https://uwaterloocm.kuali.co/catalog/build/catalog.js` (the SPA bundle), which contains:
+
+```js
+c = i ? "/program/".concat(n._id, "/").concat(i)
+      : "/program/byId/".concat(n._id, "/").concat(r)
+```
+
+The HTML `specializationsList` anchor href is `#/programs/view/{id}` — the `{id}` is what we pass to `/program/byId/`. The 5 sample fetches all returned 200.
+
+### Identifier note
+
+`specializationsList` anchors carry the **`id`** (24-char hex like `69b1aec70cdb8bf7a71689de`), not the spec's own `pid` field. Each spec response includes both:
+- `id`: the 24-char hex (matches what was in the parent's anchor)
+- `pid`: a short alpha string (like `B1gEgJCRi2` for HIST-Global Interactions, or `r1spnvU3p` for the SYDE Human Factors spec)
+
+The issue text uses "pid" loosely to mean the hex identifier; in the `Specialization` type we'll store the hex `id` value in the `pid` field, since that's how the parent program references it and how `byId/` fetches resolve.
+
+### Credential type (Q2)
+
+All 5 sampled specs have `undergraduateCredentialType.name === "Specialization"`. No surprises (e.g. no `"Concentration"` or `"Sub-plan"` variants).
+
+### Field shape (Q3)
+
+| spec | field used | has electives |
+| --- | --- | --- |
+| HIST-Global Interactions | `courseRequirementsNoUnits` | yes |
+| CEC-Aviation | `requirements` | yes |
+| SYDE-Human Factors & Interfaces | `courseRequirementsNoUnits` | yes |
+| CS-Artificial Intelligence | `courseRequirementsNoUnits` | yes |
+| ENGL-Communication Design | `courseRequirementsNoUnits` | yes |
+
+**None have `requiredCoursesTermByTerm`.** This includes the SYDE spec — the Engineering parent does not propagate per-term structure into its specs. So every spec parses as `kind: "flexible"` via existing `parseProgramRequirements`; the scraper can assert this and warn if it ever changes.
+
+Specs also expose `specializationIsAvailableForStudentsInTheFollowingMajorsRules` — a reverse lookup of which majors can take this spec. We don't need it (the forward direction in each parent's `specializationsList` is already sufficient and easier to consume), but it's nice to know.
+
+### Cross-parent sharing (Q4)
+
+Confirmed by the full enumeration (above). Two patterns:
+1. **Credential variants** (H/3G/4G of the same program) share specs — the bulk of the 130 duplicates. Example: H-English-Literature, 3G-English-Literature, 4G-English-Literature each reference the same 5-6 ENGL specs.
+2. **Cross-faculty joint programs** share specs — e.g. H-Geography-&-Environmental-Management and JH-Geography-&-Environmental-Management share their 7 specs.
+
+In both cases the implementation is the same: fetch each unique spec id once, attach the resulting `Specialization` object to every parent that referenced it.

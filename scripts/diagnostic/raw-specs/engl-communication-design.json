@@ -1,0 +1,30 @@
+{
+  "facultyCalendarDisplay": {
+    "name": "Faculty of Arts",
+    "id": "648b2302dedb397b7d9b0731"
+  },
+  "code": "ENGL-Communication Design Specialization",
+  "__passedCatalogQuery": true,
+  "detailsAndNotes": "<ul> <li>Visit the <a href=\"https://uwaterloo.ca/english/\">English Language and Literature website</a> for further information.</li> </ul>",
+  "additionalConstraints": "<ol> <li>Students may only complete one course from any cross-listed set.</li> </ol>",
+  "courseRequirementsNoUnits": "<div><section><header data-test=\"grouping-0-header\"><div><h2 data-testid=\"grouping-label\"><span>Required Courses</span></h2></div><div><div><button aria-label=\"Collapse\"><i></i></button></div></div></header><div><div><ul><li><span>Complete <!-- -->all<!-- --> of the following</span><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\">Complete all the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/69aa6b30405ebfa9d2b52c42\" target=\"_blank\">ENGL392A</a> <!-- -->-<!-- --> <!-- -->Information Design<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li><li data-test=\"ruleView-B\"><div data-test=\"ruleView-B-result\">Complete <span>3</span> of the following: <div><ul style=\"margin-top:5px;margin-bottom:5px\"><li><span><a href=\"#/courses/view/69aa70ceab246f872d3cc3f8\" target=\"_blank\">ENGL210J</a> <!-- -->-<!-- --> <!-- -->Technical Editing<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa70ae8197cc8370a4ca98\" target=\"_blank\">ENGL295</a> <!-- -->-<!-- --> <!-- -->Social Media<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6b3188df55191cbbdae2\" target=\"_blank\">ENGL392B</a> <!-- -->-<!-- --> <!-- -->Visual Rhetoric<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6b35df9c42c28b6130f3\" target=\"_blank\">ENGL408B</a> <!-- -->-<!-- --> <!-- -->The Discourse of Advertising<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa6b3613e1b07a8b5abb4c\" target=\"_blank\">ENGL408C</a> <!-- -->-<!-- --> <!-- -->The Rhetoric of Digital Design: Theory and Practice<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li><li><span><a href=\"#/courses/view/69aa7039df9c42c28b616527\" target=\"_blank\">ENGL493</a> <!-- -->-<!-- --> <!-- -->Topics in Professional Writing and Communication Design<!-- --> <span style=\"margin-left:5px\">(0.50)</span></span></li></ul></div></div></li></ul></li></ul></div><div></div></div></section></div>",
+  "pid": "H1fzgJACon",
+  "title": "Communication Design Specialization",
+  "undergraduateCredentialType": {
+    "name": "Specialization",
+    "id": "63c825a4d76a2cec43ca6347"
+  },
+  "dateStart": "2026-09-02",
+  "declarationRequirements": "",
+  "specializationIsAvailableForStudentsInTheFollowingMajorsRules": "<div><div><div><ul><li data-test=\"ruleView-A\"><div data-test=\"ruleView-A-result\"><span><a href=\"#/programs/view/69b2e8410cdb8bf7a718a6db\" target=\"_blank\">3G-English - Creative &amp; Professional Writing</a>, <a href=\"#/programs/view/69b2e75f405ebfa9d2c9e916\" target=\"_blank\">3G-English - Language &amp; Literature</a>, <a href=\"#/programs/view/69b2e4a413e1b07a8b6f5095\" target=\"_blank\">3G-English - Literature &amp; Rhetoric</a>, <a href=\"#/programs/view/69b2e69d88df55191cd05b93\" target=\"_blank\">3G-English - Rhetoric, Media, &amp; Professional Communication</a>, <a href=\"#/programs/view/69b2e8f988df55191cd06a1e\" target=\"_blank\">4G-English - Creative &amp; Professional Writing</a>, <a href=\"#/programs/view/69aa7d1888df55191cbc74a2\" target=\"_blank\">4G-English - Literature</a>, <a href=\"#/programs/view/69b2e8c7306256e3f13ff063\" target=\"_blank\">4G-English - Literature &amp; Rhetoric</a>, <a href=\"#/programs/view/69b2e878405ebfa9d2c9eea5\" target=\"_blank\">4G-English - Rhetoric, Media, &amp; Professional Communication</a>, <a href=\"#/programs/view/69b2e9bd13e1b07a8b6f6807\" target=\"_blank\">H-English - Creative &amp; Professional Writing</a>, <a href=\"#/programs/view/69b2ea8f0cdb8bf7a718b2ef\" target=\"_blank\">H-English - Literature</a>, <a href=\"#/programs/view/69b2e9f98197cc8370b948c2\" target=\"_blank\">H-English - Literature &amp; Rhetoric</a>, <!-- -->or <a href=\"#/programs/view/69b2eac4b6dd38094e916346\" target=\"_blank\">H-English - Rhetoric, Media, &amp; Professional Communication</a></span></div></li></ul></div></div></div>",
+  "id": "69b1a95b17940b8f16e7aaee",
+  "fieldOfStudy": {
+    "name": "English",
+    "id": "63e55d86e3b48a00163e7eb1",
+    "customFields": {}
+  },
+  "catalogActivationDate": "2026-04-02",
+  "graduationRequirements": "<ul> <li>Complete a total of 2.0 units.</li> </ul>",
+  "_score": 1,
+  "specializations": []
+}

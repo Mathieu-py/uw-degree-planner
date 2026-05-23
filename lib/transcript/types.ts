@@ -17,6 +17,7 @@ export interface ParsedCourse {
 
 export interface TranscriptParseResult {
   detectedProgramId: string | null;
+  detectedSpecializationSlug: string | null;
   detectedCurrentTerm: TermLetter | null;
   rawPlanText: string | null;
   courses: ParsedCourse[];
