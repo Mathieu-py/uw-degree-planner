@@ -69,7 +69,7 @@ export interface ElectiveCategory {
 export interface Specialization {
   slug: string;
   name: string;
-  pid: string;
+  kualiId: string;
   source?: string;
   rules?: RuleNode;
   electives?: ElectiveCategory[];
@@ -149,19 +149,28 @@ export function describeRule(node: RuleNode): string | undefined {
       if (selectMin === undefined && selectMax !== undefined) {
         return `Complete no more than ${selectMax} from the following`;
       }
+      // metaParent shape: a pick whose children are themselves rules (not a
+      // single `courses` leaf) emits the variant "from … choices" phrasing.
+      // The leaf form wraps a single courses leaf with "of the following".
+      const isMetaParent =
+        children.length !== 1 || children[0].kind !== "courses";
       if (selectMin === selectMax && selectMin !== undefined) {
-        // metaParent shape: pick(N,N) whose children are themselves rules
-        // (not a single `courses` leaf) emits the variant "from … choices"
-        // phrasing. Regular "Complete N of the following" wraps a single
-        // courses leaf.
-        const isMetaParent =
-          children.length !== 1 || children[0].kind !== "courses";
         const noun = selectMin === 1 ? "course" : "courses";
         return isMetaParent
           ? `Complete ${selectMin} ${noun} from the following choices`
           : `Complete ${selectMin} of the following`;
       }
-      return undefined;
+      if (selectMin !== undefined && selectMax === undefined) {
+        const noun = selectMin === 1 ? "course" : "courses";
+        return isMetaParent
+          ? `Complete at least ${selectMin} ${noun} from the following choices`
+          : `Complete at least ${selectMin} of the following`;
+      }
+      // Remaining shape: both bounds defined and unequal (the equal case is
+      // handled above).
+      return isMetaParent
+        ? `Complete between ${selectMin} and ${selectMax} courses from the following choices`
+        : `Complete between ${selectMin} and ${selectMax} of the following`;
     }
     case "subjectPool": {
       if (node.description !== undefined) return node.description;

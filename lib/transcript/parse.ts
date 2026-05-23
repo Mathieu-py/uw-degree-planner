@@ -227,7 +227,9 @@ export function parseTranscript(text: string): TranscriptParseResult {
   // to the first candidate string so the UI can still show what we saw if
   // none matched ("Detected: <X> — pick after import"). Prefer the
   // specialization match (program + spec) when available, since it carries
-  // strictly more information than the parent-only match.
+  // strictly more information than the parent-only match — so a parent-only
+  // hit does not stop the scan; a later candidate carrying a spec can still
+  // upgrade the detection.
   let detectedProgramId: string | null = null;
   let detectedSpecializationSlug: string | null = null;
   let rawPlanText: string | null = planCandidates[0] ?? null;
@@ -239,11 +241,12 @@ export function parseTranscript(text: string): TranscriptParseResult {
       rawPlanText = cand;
       break;
     }
-    const slug = matchProgramSlug(cand);
-    if (slug) {
-      detectedProgramId = slug;
-      rawPlanText = cand;
-      break;
+    if (detectedProgramId === null) {
+      const slug = matchProgramSlug(cand);
+      if (slug) {
+        detectedProgramId = slug;
+        rawPlanText = cand;
+      }
     }
   }
 

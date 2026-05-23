@@ -23,10 +23,10 @@ const fakeProgram = (): Program => ({
   rules: { kind: "all", children: [] },
 });
 
-const fakeSpec = (slug: string, pid: string): Specialization => ({
+const fakeSpec = (slug: string, kualiId: string): Specialization => ({
   slug,
   name: slug,
-  pid,
+  kualiId,
 });
 
 const FLEX_HTML = `
@@ -136,7 +136,7 @@ describe("buildSpecialization", () => {
     );
     expect(spec.slug).toBe("foo-example");
     expect(spec.name).toBe("FOO-Example Specialization");
-    expect(spec.pid).toBe("abc123");
+    expect(spec.kualiId).toBe("abc123");
     expect(spec.source).toBe("https://example.com/programs/view/abc123");
     expect(spec.rules?.kind).toBe("all");
     expect(warnings).toEqual([]);

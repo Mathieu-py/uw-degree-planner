@@ -18,7 +18,7 @@
  * hardcoded constant below so the script still produces output.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Program, Specialization } from "../lib/programs";
@@ -181,7 +181,6 @@ export function buildSpecialization(
     id,
     takenSlugs,
   );
-  takenSlugs.set(slug, id);
 
   const warnings: string[] = [];
   if (collisionWarning) warnings.push(collisionWarning);
@@ -204,16 +203,14 @@ export function buildSpecialization(
   const spec: Specialization = {
     slug,
     name,
-    pid: id,
-    // Specs use the `#/programs/view/{id}` route (matches the
-    // specializationsList anchor in the parent's HTML). Parent programs use
-    // the bare `#/programs/{pid}` route.
+    kualiId: id,
     source: `${viewBase}/view/${encodeURIComponent(id)}`,
     ...(rules !== undefined ? { rules } : {}),
     ...(electivesResult.electives.length > 0
       ? { electives: electivesResult.electives }
       : {}),
   };
+  takenSlugs.set(slug, id);
 
   return { spec, warnings };
 }
@@ -223,6 +220,12 @@ export function buildSpecialization(
  * Missing specs (failed fetches) are silently skipped. Parents not present in
  * `programs` are skipped (e.g. parent itself failed Phase A). Mutates
  * `programs[parentSlug].specializations`.
+ *
+ * The same `Specialization` instance is shared by reference across every
+ * parent that references it (153 unique objects across 283 attachments in the
+ * current calendar). Consumers must treat the returned spec objects as
+ * immutable — mutating one parent's spec will silently mutate the same object
+ * everywhere it's attached.
  */
 export function attachSpecsToParents(
   programs: Record<string, Program>,
@@ -448,7 +451,12 @@ async function writeOutput(programs: Record<string, Program>): Promise<string> {
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
   const outPath = path.join(dataDir, "programs.json");
-  await writeFile(outPath, JSON.stringify(sorted, null, 2), "utf-8");
+  // Write to a sibling tmp file then rename so a Ctrl-C mid-write can't
+  // leave a truncated programs.json (which would break `next dev` at import
+  // time on the next boot).
+  const tmpPath = `${outPath}.tmp`;
+  await writeFile(tmpPath, JSON.stringify(sorted, null, 2), "utf-8");
+  await rename(tmpPath, outPath);
   return outPath;
 }
 

@@ -514,6 +514,58 @@ describe("describeRule", () => {
     );
   });
 
+  it("derives 'Complete at least N of the following' for pick with only selectMin over a leaf", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 2,
+      children: [{ kind: "courses", courses: ["cs100", "cs101", "cs102"] }],
+    };
+    expect(describeRule(node)).toBe("Complete at least 2 of the following");
+  });
+
+  it("derives the metaParent 'Complete at least N courses from the following choices' for pick with only selectMin", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 2,
+      children: [
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs462"] }] },
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs466"] }] },
+      ],
+    };
+    expect(describeRule(node)).toBe(
+      "Complete at least 2 courses from the following choices",
+    );
+  });
+
+  it("derives the ranged 'Complete between N and M of the following' for pick over a leaf", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 2,
+      selectMax: 4,
+      children: [
+        { kind: "courses", courses: ["cs100", "cs101", "cs102", "cs103"] },
+      ],
+    };
+    expect(describeRule(node)).toBe(
+      "Complete between 2 and 4 of the following",
+    );
+  });
+
+  it("derives the metaParent ranged phrasing for pick with unequal selectMin/selectMax", () => {
+    const node: RuleNode = {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 3,
+      children: [
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs462"] }] },
+        { kind: "pick", children: [{ kind: "courses", courses: ["cs466"] }] },
+      ],
+    };
+    expect(describeRule(node)).toBe(
+      "Complete between 1 and 3 courses from the following choices",
+    );
+  });
+
   it("honors a stored `description` override (non-standard wrapper prose)", () => {
     expect(
       describeRule({
