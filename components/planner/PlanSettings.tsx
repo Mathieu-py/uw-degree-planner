@@ -147,7 +147,12 @@ export function PlanSettings({
           <div className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400 flex flex-col gap-1">
             <div className="flex justify-between">
               <span>Start term</span>
-              <span>{plan.startTermId ? (termInfo(plan.startTermId)?.label ?? String(plan.startTermId)) : "—"}</span>
+              <span>
+                {plan.startTermId
+                  ? (termInfo(plan.startTermId)?.label ??
+                    String(plan.startTermId))
+                  : "—"}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Co-op stream</span>

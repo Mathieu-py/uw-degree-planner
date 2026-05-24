@@ -3,12 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
-import {
-  clearPlan,
-  emptyPlan,
-  loadPlan,
-  savePlan,
-} from "@/lib/plan/storage";
+import { clearPlan, emptyPlan, loadPlan, savePlan } from "@/lib/plan/storage";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, PlanSlot, Stream } from "@/lib/plan/types";
 import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
