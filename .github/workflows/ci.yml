@@ -44,18 +44,19 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    # Official Playwright image: ships with Chromium + every system dep
+    # pre-installed, so we skip the `apt-get install` that was hanging for
+    # 10 min on Ubuntu 24.04 noble. Image tag must match the locked
+    # @playwright/test version in pnpm-lock.yaml (currently 1.60.0).
+    container:
+      image: mcr.microsoft.com/playwright:v1.60.0-noble
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - if: failure()
         uses: actions/upload-artifact@v4
