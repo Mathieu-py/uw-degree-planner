@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TranscriptImportModal } from "@/components/filter/TranscriptImportModal";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import {
@@ -22,6 +21,7 @@ import { EmptyState } from "./EmptyState";
 import { PlanSettings } from "./PlanSettings";
 import { SlotPicker } from "./SlotPicker";
 import { Timeline } from "./Timeline";
+import { TranscriptImportModal } from "./TranscriptImportModal";
 
 export interface ProgramOption {
   id: string;
