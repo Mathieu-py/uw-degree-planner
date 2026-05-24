@@ -110,6 +110,75 @@ begin
     raise exception 'RPC fail: get_shared_plan returned non-null for unknown token';
   end if;
 
+  -- -------------------------------------------------------------------------
+  -- Assert 4: save_plan_state respects ownership (security invoker + RLS).
+  -- User B tries to overwrite user A's plan. The RPC's `update ... where id`
+  -- matches zero rows under user B's RLS view, so it raises 42501.
+  -- -------------------------------------------------------------------------
+  perform set_config('request.jwt.claims', json_build_object('sub', user_b, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  begin
+    perform public.save_plan_state(plan_a, jsonb_build_object(
+      'programId', null,
+      'specializationId', null,
+      'stream', 'regular',
+      'startTermId', null,
+      'programScrapeVersion', null,
+      'slots', '[]'::jsonb
+    ));
+    raise exception 'RPC fail: save_plan_state should have denied cross-owner write';
+  exception when insufficient_privilege then
+    -- expected
+    null;
+  end;
+
+  -- -------------------------------------------------------------------------
+  -- Assert 5: save_plan_state replaces the owner's slots+courses atomically.
+  -- Switch back to user A, push a snapshot with two slots, verify counts.
+  -- -------------------------------------------------------------------------
+  perform set_config('request.jwt.claims', json_build_object('sub', user_a, 'role', 'authenticated')::text, true);
+
+  perform public.save_plan_state(plan_a, jsonb_build_object(
+    'programId', 'h-software-engineering-beng',
+    'specializationId', null,
+    'stream', 'stream8',
+    'startTermId', 1239,
+    'programScrapeVersion', null,
+    'slots', jsonb_build_array(
+      jsonb_build_object(
+        'id', gen_random_uuid()::text,
+        'termId', 1239,
+        'position', '1A',
+        'isCoop', false,
+        'courses', jsonb_build_array(
+          jsonb_build_object('code', 'cs115', 'grade', null),
+          jsonb_build_object('code', 'math115', 'grade', '87')
+        )
+      ),
+      jsonb_build_object(
+        'id', gen_random_uuid()::text,
+        'termId', 1245,
+        'position', '1B',
+        'isCoop', false,
+        'courses', '[]'::jsonb
+      )
+    )
+  ));
+
+  select count(*) into visible_count from public.plan_slots where plan_id = plan_a;
+  if visible_count <> 2 then
+    raise exception 'RPC fail: save_plan_state wrote % slots, expected 2', visible_count;
+  end if;
+
+  select count(*) into visible_count
+  from public.plan_courses c
+  join public.plan_slots s on s.id = c.slot_id
+  where s.plan_id = plan_a;
+  if visible_count <> 2 then
+    raise exception 'RPC fail: save_plan_state wrote % courses, expected 2', visible_count;
+  end if;
+
   raise notice 'RLS test passed';
 end $$;
 
