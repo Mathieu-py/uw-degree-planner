@@ -18,7 +18,11 @@
  * normalises, UI controls add normalised). The encoder trusts this.
  */
 
-import { isKnownProgram, isTermLetter } from "./programs";
+import {
+  isKnownProgram,
+  isKnownSpecialization,
+  isTermLetter,
+} from "./programs";
 import type { PureFilters, StudentPassage } from "./types";
 
 export const BROWSE_QS_STORAGE_KEY = "uwfinder.browseQs";
@@ -31,7 +35,7 @@ const PURE_FILTER_PARAM_KEYS = [
   "minU",
   "minE",
 ] as const;
-const PASSAGE_PARAM_KEYS = ["prog", "term"] as const;
+const PASSAGE_PARAM_KEYS = ["prog", "term", "spec", "cgs", "sys"] as const;
 
 export const DEFAULT_PURE_FILTERS: PureFilters = {
   excludePrefixes: [],
@@ -46,6 +50,9 @@ export const DEFAULT_STUDENT_PASSAGE: StudentPassage = {
   programId: null,
   currentTerm: null,
   completedCourses: [],
+  specializationId: null,
+  choiceGroupSelections: {},
+  systemOfStudy: null,
 };
 
 type RawParams =
@@ -120,11 +127,56 @@ export function decodeStudentPassage(params: RawParams): StudentPassage {
   const rawTerm = read(params, "term")?.toUpperCase();
   const currentTerm = isTermLetter(rawTerm) ? rawTerm : null;
 
+  // Spec is only meaningful in the context of a valid program; an orphan
+  // ?spec=foo without a matching ?prog= decodes to null. Validation against
+  // the parent's specializations[] catches stale/typo slugs.
+  const rawSpec = read(params, "spec")?.toLowerCase();
+  const specializationId =
+    rawSpec && programId && isKnownSpecialization(programId, rawSpec)
+      ? rawSpec
+      : null;
+
+  const choiceGroupSelections = parseChoiceGroupSelections(read(params, "cgs"));
+
+  const rawSys = read(params, "sys");
+  const systemOfStudy: "coop" | "regular" | null =
+    rawSys === "coop" || rawSys === "regular" ? rawSys : null;
+
   return {
     programId,
     currentTerm,
     completedCourses: [],
+    specializationId,
+    choiceGroupSelections,
+    systemOfStudy,
   };
+}
+
+// Defensive JSON parse mirroring loadCompletedCourses: a hand-crafted ?cgs=
+// with the wrong shape silently degrades to {} rather than throwing. Course
+// codes are lowercased to match the catalog's canonical form.
+function parseChoiceGroupSelections(
+  raw: string | undefined,
+): Record<string, string[]> {
+  if (!raw) return {};
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return {};
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {};
+  }
+  const out: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!Array.isArray(value)) continue;
+    const codes = value
+      .filter((c): c is string => typeof c === "string")
+      .map((c) => c.toLowerCase());
+    if (codes.length > 0) out[key] = codes;
+  }
+  return out;
 }
 
 export function encodePureFilters(state: PureFilters): URLSearchParams {
@@ -146,6 +198,11 @@ export function encodeStudentPassage(state: StudentPassage): URLSearchParams {
   const out = new URLSearchParams();
   if (state.programId) out.set("prog", state.programId);
   if (state.currentTerm) out.set("term", state.currentTerm);
+  if (state.specializationId) out.set("spec", state.specializationId);
+  if (Object.keys(state.choiceGroupSelections).length > 0) {
+    out.set("cgs", JSON.stringify(state.choiceGroupSelections));
+  }
+  if (state.systemOfStudy) out.set("sys", state.systemOfStudy);
   return out;
 }
 

@@ -31,6 +31,7 @@ function result(
     detectedProgramId: null,
     detectedSpecializationSlug: null,
     detectedCurrentTerm: null,
+    detectedSystemOfStudy: null,
     rawPlanText: null,
     courses,
     warnings: [],
@@ -147,6 +148,24 @@ describe("buildImportPayload", () => {
     expect(payload.programId).toBe("systems-design-engineering");
     expect(payload.currentTerm).toBe("3A");
   });
+
+  it("forwards specialization and systemOfStudy from the parse result", () => {
+    const r = result([], {
+      detectedProgramId: "3g-english-literature-and-rhetoric",
+      detectedSpecializationSlug: "engl-communication-design",
+      detectedSystemOfStudy: "coop",
+    });
+    const empty: Categorized = {
+      passed: [],
+      inProgress: [],
+      transfer: [],
+      skipped: [],
+      unrecognized: [],
+    };
+    const payload = buildImportPayload(r, empty, new Set());
+    expect(payload.specializationId).toBe("engl-communication-design");
+    expect(payload.systemOfStudy).toBe("coop");
+  });
 });
 
 describe("applyTranscriptToStudentPassage", () => {
@@ -154,6 +173,8 @@ describe("applyTranscriptToStudentPassage", () => {
     codes: ["cs135", "math137"],
     programId: "electrical-engineering",
     currentTerm: "2A",
+    specializationId: null,
+    systemOfStudy: "coop",
   };
 
   it("returns a passage with exactly the payload's fields", () => {
@@ -162,15 +183,21 @@ describe("applyTranscriptToStudentPassage", () => {
       programId: "electrical-engineering",
       currentTerm: "2A",
       completedCourses: ["cs135", "math137"],
+      specializationId: null,
+      choiceGroupSelections: {},
+      systemOfStudy: "coop",
     });
   });
 
   it("returns exactly the StudentPassage shape (no extra keys leak)", () => {
     const next = applyTranscriptToStudentPassage(payload);
     expect(Object.keys(next).sort()).toEqual([
+      "choiceGroupSelections",
       "completedCourses",
       "currentTerm",
       "programId",
+      "specializationId",
+      "systemOfStudy",
     ]);
   });
 
@@ -179,9 +206,25 @@ describe("applyTranscriptToStudentPassage", () => {
       codes: ["cs135"],
       programId: null,
       currentTerm: null,
+      specializationId: null,
+      systemOfStudy: null,
     });
     expect(next.programId).toBeNull();
     expect(next.currentTerm).toBeNull();
     expect(next.completedCourses).toEqual(["cs135"]);
+    expect(next.specializationId).toBeNull();
+    expect(next.systemOfStudy).toBeNull();
+  });
+
+  it("forwards a detected specialization through to the passage", () => {
+    const next = applyTranscriptToStudentPassage({
+      codes: [],
+      programId: "3g-english-literature-and-rhetoric",
+      currentTerm: null,
+      specializationId: "engl-communication-design",
+      systemOfStudy: "regular",
+    });
+    expect(next.specializationId).toBe("engl-communication-design");
+    expect(next.systemOfStudy).toBe("regular");
   });
 });

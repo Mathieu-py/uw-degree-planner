@@ -111,6 +111,23 @@ export function isKnownProgram(id: string): boolean {
   return Object.hasOwn(PROGRAMS, id);
 }
 
+export function getSpecialization(
+  programId: string,
+  specializationSlug: string,
+): Specialization | null {
+  const program = PROGRAMS[programId];
+  return (
+    program?.specializations?.find((s) => s.slug === specializationSlug) ?? null
+  );
+}
+
+export function isKnownSpecialization(
+  programId: string,
+  specializationSlug: string,
+): boolean {
+  return getSpecialization(programId, specializationSlug) !== null;
+}
+
 export function walkRule(node: RuleNode, visit: (n: RuleNode) => void): void {
   visit(node);
   if (node.kind === "all" || node.kind === "pick") {
@@ -277,20 +294,34 @@ export function getTermSchedule(
  * `currentTerm: null` means "no term selected" — engineering returns []
  * (nothing seeded yet); flexible still returns the full required list.
  *
- * Unknown program → [].
+ * If `specializationId` resolves on the program, the spec's tree-derived
+ * required courses are unioned in regardless of term (specs are thematic
+ * focuses, not temporal schedules).
+ *
+ * Unknown program → []. Unknown specialization (or program with no specs) →
+ * parent-only result.
  */
 export function inferCompleted(
   programId: string,
   currentTerm: TermLetter | null,
+  specializationId: string | null = null,
 ): string[] {
   const program = PROGRAMS[programId];
   if (!program) return [];
-  if (program.kind === "flexible") return getRequiredCourses(program);
-  if (currentTerm == null) return [];
-  const cutoff = TERM_LETTERS.indexOf(currentTerm);
   const out = new Set<string>();
-  for (const t of TERM_LETTERS.slice(0, cutoff)) {
-    for (const c of requiredCoursesIn(program.terms[t])) out.add(c);
+  if (program.kind === "flexible") {
+    for (const c of getRequiredCourses(program)) out.add(c);
+  } else if (currentTerm != null) {
+    const cutoff = TERM_LETTERS.indexOf(currentTerm);
+    for (const t of TERM_LETTERS.slice(0, cutoff)) {
+      for (const c of requiredCoursesIn(program.terms[t])) out.add(c);
+    }
+  }
+  if (specializationId) {
+    const spec = getSpecialization(programId, specializationId);
+    if (spec?.rules) {
+      for (const c of requiredCoursesIn(spec.rules)) out.add(c);
+    }
   }
   return [...out].sort();
 }

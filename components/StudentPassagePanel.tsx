@@ -64,13 +64,23 @@ export function StudentPassagePanel({
         : passage;
     const next = { ...live, ...delta };
 
-    if (delta.programId !== undefined || delta.currentTerm !== undefined) {
+    if (
+      delta.programId !== undefined ||
+      delta.currentTerm !== undefined ||
+      delta.specializationId !== undefined
+    ) {
       if (isCompletedFromTranscript()) {
         // Explicit re-seed after transcript import: replace, don't preserve
         // extras. The transcript was the source of truth until now; re-seeding
         // signals the user wants the new program's baseline as a clean start.
         // See issue #47.
-        onCompletedChange(baselineForPassage(next.programId, next.currentTerm));
+        onCompletedChange(
+          baselineForPassage(
+            next.programId,
+            next.currentTerm,
+            next.specializationId,
+          ),
+        );
         clearCompletedFromTranscriptFlag();
       } else {
         onCompletedChange(
@@ -78,6 +88,7 @@ export function StudentPassagePanel({
             { ...live, completedCourses },
             next.programId,
             next.currentTerm,
+            next.specializationId,
           ),
         );
       }
@@ -132,8 +143,12 @@ export function StudentPassagePanel({
                 const next = id ? PROGRAMS[id] : null;
                 // Flexible programs have no term schedule; clear any stale term
                 // so the URL state doesn't carry a value the UI no longer shows.
+                // Specialization belongs to a specific program, so it's cleared
+                // on every program change — the new program's specs won't match
+                // the old slug.
                 patchPassage({
                   programId: id,
+                  specializationId: null,
                   ...(next?.kind === "flexible" ? { currentTerm: null } : {}),
                 });
               }}

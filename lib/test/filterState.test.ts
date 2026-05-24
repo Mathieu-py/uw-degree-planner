@@ -196,6 +196,77 @@ describe("decodeStudentPassage", () => {
       decodeStudentPassage(new URLSearchParams("exc=PHIL&lv=100&seats=1")),
     ).toEqual(DEFAULT_STUDENT_PASSAGE);
   });
+
+  it("accepts a known specialization id alongside its parent program", () => {
+    const decoded = decodeStudentPassage(
+      new URLSearchParams(
+        "prog=3g-english-literature-and-rhetoric&spec=engl-communication-design",
+      ),
+    );
+    expect(decoded.specializationId).toBe("engl-communication-design");
+  });
+
+  it("drops a specialization slug that doesn't belong to the program", () => {
+    const decoded = decodeStudentPassage(
+      new URLSearchParams(
+        "prog=systems-design-engineering&spec=engl-communication-design",
+      ),
+    );
+    expect(decoded.specializationId).toBeNull();
+  });
+
+  it("drops an orphan specialization slug with no program set", () => {
+    expect(
+      decodeStudentPassage(
+        new URLSearchParams("spec=engl-communication-design"),
+      ).specializationId,
+    ).toBeNull();
+  });
+
+  it("accepts coop/regular for systemOfStudy and rejects other values", () => {
+    expect(
+      decodeStudentPassage(new URLSearchParams("sys=coop")).systemOfStudy,
+    ).toBe("coop");
+    expect(
+      decodeStudentPassage(new URLSearchParams("sys=regular")).systemOfStudy,
+    ).toBe("regular");
+    expect(
+      decodeStudentPassage(new URLSearchParams("sys=part-time")).systemOfStudy,
+    ).toBeNull();
+  });
+
+  it("parses a well-formed cgs JSON object and lowercases course codes", () => {
+    const cgs = JSON.stringify({
+      "2A.children[3]": ["CS136"],
+      "root.children[5]": ["math137", "math147"],
+    });
+    const decoded = decodeStudentPassage(new URLSearchParams([["cgs", cgs]]));
+    expect(decoded.choiceGroupSelections).toEqual({
+      "2A.children[3]": ["cs136"],
+      "root.children[5]": ["math137", "math147"],
+    });
+  });
+
+  it("drops malformed cgs values to an empty object", () => {
+    expect(
+      decodeStudentPassage(new URLSearchParams("cgs=not-json{"))
+        .choiceGroupSelections,
+    ).toEqual({});
+    expect(
+      decodeStudentPassage(
+        new URLSearchParams([["cgs", JSON.stringify(["a"])]]),
+      ).choiceGroupSelections,
+    ).toEqual({});
+    expect(
+      decodeStudentPassage(new URLSearchParams([["cgs", JSON.stringify(null)]]))
+        .choiceGroupSelections,
+    ).toEqual({});
+    expect(
+      decodeStudentPassage(
+        new URLSearchParams([["cgs", JSON.stringify({ k: "not-an-array" })]]),
+      ).choiceGroupSelections,
+    ).toEqual({});
+  });
 });
 
 describe("encodePureFilters", () => {
@@ -227,6 +298,7 @@ describe("encodeStudentPassage", () => {
 
   it("never emits completedCourses to the URL (profile data lives in localStorage)", () => {
     const state: StudentPassage = {
+      ...DEFAULT_STUDENT_PASSAGE,
       programId: "systems-design-engineering",
       currentTerm: "3A",
       completedCourses: ["cs115", "math116", "math117"],
@@ -235,6 +307,30 @@ describe("encodeStudentPassage", () => {
     expect(params.has("donePlus")).toBe(false);
     expect(params.has("doneMinus")).toBe(false);
     expect([...params.keys()].sort()).toEqual(["prog", "term"]);
+  });
+
+  it("emits spec, sys, and cgs when set; omits at defaults", () => {
+    const state: StudentPassage = {
+      ...DEFAULT_STUDENT_PASSAGE,
+      programId: "3g-english-literature-and-rhetoric",
+      specializationId: "engl-communication-design",
+      systemOfStudy: "coop",
+      choiceGroupSelections: { "root.children[2]": ["cs136"] },
+    };
+    const params = encodeStudentPassage(state);
+    expect(params.get("spec")).toBe("engl-communication-design");
+    expect(params.get("sys")).toBe("coop");
+    expect(params.get("cgs")).toBe(
+      JSON.stringify({ "root.children[2]": ["cs136"] }),
+    );
+  });
+
+  it("omits cgs when the selections object is empty", () => {
+    const params = encodeStudentPassage({
+      ...DEFAULT_STUDENT_PASSAGE,
+      choiceGroupSelections: {},
+    });
+    expect(params.has("cgs")).toBe(false);
   });
 });
 
@@ -291,9 +387,9 @@ describe("mergeStudentPassageIntoParams", () => {
       "s=easy&d=asc&p=2&exc=PHIL&prog=systems-design-engineering",
     );
     const next: StudentPassage = {
+      ...DEFAULT_STUDENT_PASSAGE,
       programId: null,
       currentTerm: null,
-      completedCourses: [],
     };
     const merged = mergeStudentPassageIntoParams(current, next);
     expect(merged.get("s")).toBe("easy");
@@ -349,9 +445,9 @@ describe("composed mergers", () => {
       hasSeatsAvailable: true,
     };
     const passage: StudentPassage = {
+      ...DEFAULT_STUDENT_PASSAGE,
       programId: "systems-design-engineering",
       currentTerm: "3A",
-      completedCourses: [],
     };
     const afterFilters = mergePureFiltersIntoParams(start, filters);
     const afterBoth = mergeStudentPassageIntoParams(afterFilters, passage);
@@ -362,6 +458,39 @@ describe("composed mergers", () => {
     expect(afterBoth.get("seats")).toBe("1");
     expect(afterBoth.get("prog")).toBe("systems-design-engineering");
     expect(afterBoth.get("term")).toBe("3A");
+  });
+
+  it("committing pure filters preserves all passage slots (spec, sys, cgs)", () => {
+    const start = new URLSearchParams(
+      "prog=3g-english-literature-and-rhetoric&spec=engl-communication-design&sys=coop&cgs=" +
+        encodeURIComponent(JSON.stringify({ "root.children[2]": ["cs136"] })),
+    );
+    const merged = mergePureFiltersIntoParams(start, {
+      ...DEFAULT_PURE_FILTERS,
+      excludePrefixes: ["PHIL"],
+    });
+    expect(merged.get("prog")).toBe("3g-english-literature-and-rhetoric");
+    expect(merged.get("spec")).toBe("engl-communication-design");
+    expect(merged.get("sys")).toBe("coop");
+    expect(merged.get("cgs")).toBe(
+      JSON.stringify({ "root.children[2]": ["cs136"] }),
+    );
+  });
+
+  it("committing passage clears all five passage slots when reset to defaults", () => {
+    const start = new URLSearchParams(
+      "prog=3g-english-literature-and-rhetoric&term=3A&spec=engl-communication-design&sys=coop&cgs=%7B%7D&exc=PHIL",
+    );
+    const merged = mergeStudentPassageIntoParams(
+      start,
+      DEFAULT_STUDENT_PASSAGE,
+    );
+    expect(merged.has("prog")).toBe(false);
+    expect(merged.has("term")).toBe(false);
+    expect(merged.has("spec")).toBe(false);
+    expect(merged.has("sys")).toBe(false);
+    expect(merged.has("cgs")).toBe(false);
+    expect(merged.get("exc")).toBe("PHIL");
   });
 });
 
@@ -392,10 +521,25 @@ describe("round trip", () => {
 
   it("preserves every URL-resident passage field but drops completedCourses", () => {
     const state: StudentPassage = {
+      ...DEFAULT_STUDENT_PASSAGE,
       programId: "systems-design-engineering",
       currentTerm: "3A",
       completedCourses: ["cs115", "math116", "math117"],
     };
     expect(roundTripPassage(state)).toEqual({ ...state, completedCourses: [] });
+  });
+
+  it("preserves spec, sys, and cgs through a roundtrip", () => {
+    const state: StudentPassage = {
+      ...DEFAULT_STUDENT_PASSAGE,
+      programId: "3g-english-literature-and-rhetoric",
+      specializationId: "engl-communication-design",
+      systemOfStudy: "regular",
+      choiceGroupSelections: {
+        "root.children[2]": ["cs136"],
+        "root.children[5]": ["math137"],
+      },
+    };
+    expect(roundTripPassage(state)).toEqual(state);
   });
 });

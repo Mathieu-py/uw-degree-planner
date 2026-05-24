@@ -14,6 +14,8 @@ export interface TranscriptImportPayload {
   codes: string[];
   programId: string | null;
   currentTerm: TermLetter | null;
+  specializationId: string | null;
+  systemOfStudy: "coop" | "regular" | null;
 }
 
 /**
@@ -70,6 +72,8 @@ export function buildImportPayload(
     codes: [...codes].sort(),
     programId: parseResult.detectedProgramId,
     currentTerm: parseResult.detectedCurrentTerm,
+    specializationId: parseResult.detectedSpecializationSlug,
+    systemOfStudy: parseResult.detectedSystemOfStudy,
   };
 }
 
@@ -85,5 +89,8 @@ export function applyTranscriptToStudentPassage(
     programId: payload.programId,
     currentTerm: payload.currentTerm,
     completedCourses: payload.codes,
+    specializationId: payload.specializationId,
+    choiceGroupSelections: {},
+    systemOfStudy: payload.systemOfStudy,
   };
 }

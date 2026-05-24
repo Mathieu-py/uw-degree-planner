@@ -5,10 +5,12 @@ import {
   getChoiceGroupsByTerm,
   getExcludedCourses,
   getRequiredCourses,
+  getSpecialization,
   getSubjectPools,
   getTermSchedule,
   inferCompleted,
   isKnownProgram,
+  isKnownSpecialization,
   isTermLetter,
   PROGRAMS,
   type Program,
@@ -186,6 +188,68 @@ describe("isKnownProgram", () => {
   it("rejects unknown ids", () => {
     expect(isKnownProgram("phys")).toBe(false);
     expect(isKnownProgram("SYSTEMS-DESIGN-ENGINEERING")).toBe(false);
+  });
+});
+
+describe("isKnownSpecialization / getSpecialization", () => {
+  const parent = "3g-english-literature-and-rhetoric";
+  const spec = "engl-communication-design";
+
+  it("accepts a slug that belongs to the program", () => {
+    expect(isKnownSpecialization(parent, spec)).toBe(true);
+    expect(getSpecialization(parent, spec)?.slug).toBe(spec);
+  });
+
+  it("rejects a slug from a different program", () => {
+    expect(isKnownSpecialization("systems-design-engineering", spec)).toBe(
+      false,
+    );
+    expect(getSpecialization("systems-design-engineering", spec)).toBeNull();
+  });
+
+  it("rejects an unknown spec slug under a known program", () => {
+    expect(isKnownSpecialization(parent, "totally-fake-spec")).toBe(false);
+    expect(getSpecialization(parent, "totally-fake-spec")).toBeNull();
+  });
+
+  it("rejects all specs when the program is unknown", () => {
+    expect(isKnownSpecialization("not-a-program", spec)).toBe(false);
+  });
+});
+
+describe("inferCompleted (with specialization)", () => {
+  const parent = "3g-english-literature-and-rhetoric";
+  const spec = "engl-communication-design";
+
+  it("unions the specialization's required courses with the parent's", () => {
+    const program = PROGRAMS[parent];
+    if (program.kind !== "flexible")
+      throw new Error("expected English Lit to be flexible");
+    const parentOnly = inferCompleted(parent, null);
+    const withSpec = inferCompleted(parent, null, spec);
+    const specReq = requiredCoursesIn(
+      getSpecialization(parent, spec)?.rules ?? { kind: "all", children: [] },
+    );
+    for (const c of parentOnly) expect(withSpec).toContain(c);
+    for (const c of specReq) expect(withSpec).toContain(c);
+  });
+
+  it("falls back to parent-only behavior when the spec slug is unknown", () => {
+    expect(inferCompleted(parent, null, "not-a-spec")).toEqual(
+      inferCompleted(parent, null),
+    );
+  });
+
+  it("falls back to parent-only behavior when specializationId is null (default arg)", () => {
+    expect(inferCompleted(parent, null, null)).toEqual(
+      inferCompleted(parent, null),
+    );
+  });
+
+  it("returns sorted unique codes when a spec adds required courses", () => {
+    const seeded = inferCompleted(parent, null, spec);
+    expect(seeded).toEqual([...seeded].sort());
+    expect(new Set(seeded).size).toBe(seeded.length);
   });
 });
 

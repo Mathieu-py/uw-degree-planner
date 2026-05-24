@@ -19,6 +19,7 @@ export interface TranscriptParseResult {
   detectedProgramId: string | null;
   detectedSpecializationSlug: string | null;
   detectedCurrentTerm: TermLetter | null;
+  detectedSystemOfStudy: "coop" | "regular" | null;
   rawPlanText: string | null;
   courses: ParsedCourse[];
   warnings: string[];

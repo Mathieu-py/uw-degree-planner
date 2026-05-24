@@ -88,6 +88,11 @@ export function parseTranscript(text: string): TranscriptParseResult {
   // `Program: Systems Design Engineering, Honours, …`); the faculty header
   // would otherwise win the "first match" race and silently fail detection.
   const planCandidates: string[] = [];
+  // Raw, comma-tail-preserved Plan/Program line bodies. We strip the tail
+  // before pushing into `planCandidates` (since the major name is what
+  // matches program slugs), but `Co-operative Program` lives in that tail —
+  // so co-op detection scans the raw form after the main loop.
+  const planLineBodies: string[] = [];
   let currentSection: SectionState = { kind: "none" };
   let studyTermCounter = 0;
   let currentTermIPIdx = -1;
@@ -104,7 +109,9 @@ export function parseTranscript(text: string): TranscriptParseResult {
       // The Program: line carries `<major>, Honours, Co-operative Program`;
       // drop everything past the first comma so the major name matches
       // PROGRAMS[*].name. Plan: lines are typically already bare majors.
-      const candidate = planMatch[1].split(",")[0].trim();
+      const body = planMatch[1];
+      planLineBodies.push(body);
+      const candidate = body.split(",")[0].trim();
       if (candidate) planCandidates.push(candidate);
       continue;
     }
@@ -250,10 +257,23 @@ export function parseTranscript(text: string): TranscriptParseResult {
     }
   }
 
+  // Co-op detection: any Plan/Program line carrying "Co-operative Program" in
+  // its tail (after the major name) flips the student to co-op. If we saw a
+  // Plan line at all but none mentioned co-op, treat it as regular. No Plan
+  // line at all → null (unknown).
+  const COOP_RE = /co-?operative\s+program/i;
+  let detectedSystemOfStudy: "coop" | "regular" | null = null;
+  if (planLineBodies.length > 0) {
+    detectedSystemOfStudy = planLineBodies.some((b) => COOP_RE.test(b))
+      ? "coop"
+      : "regular";
+  }
+
   return {
     detectedProgramId,
     detectedSpecializationSlug,
     detectedCurrentTerm,
+    detectedSystemOfStudy,
     rawPlanText,
     courses,
     warnings,

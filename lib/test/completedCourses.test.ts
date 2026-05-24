@@ -1,8 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { StudentPassage } from "../types";
 
 const storage = vi.hoisted(() => ({
   store: new Map<string, string>(),
 }));
+
+const BASE_PASSAGE: StudentPassage = {
+  programId: null,
+  currentTerm: null,
+  completedCourses: [],
+  specializationId: null,
+  choiceGroupSelections: {},
+  systemOfStudy: null,
+};
+
+function passage(p: Partial<StudentPassage>): StudentPassage {
+  return { ...BASE_PASSAGE, ...p };
+}
 
 vi.mock("../storage", () => ({
   safeGetItem: (key: string) => storage.store.get(key) ?? null,
@@ -67,9 +81,10 @@ describe("rebaseCompletedCourses", () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
     const rebased = rebaseCompletedCourses(
-      { programId: null, currentTerm: null, completedCourses: [] },
+      passage({}),
       "systems-design-engineering",
       "3A",
+      null,
     );
     expect(rebased).toEqual(inferCompleted("systems-design-engineering", "3A"));
   });
@@ -78,13 +93,14 @@ describe("rebaseCompletedCourses", () => {
     const { rebaseCompletedCourses } = await import("../completedCourses");
     const { inferCompleted } = await import("../programs");
     const rebased = rebaseCompletedCourses(
-      {
+      passage({
         programId: "systems-design-engineering",
         currentTerm: "3A",
         completedCourses: inferCompleted("systems-design-engineering", "3A"),
-      },
+      }),
       "systems-design-engineering",
       "3B",
+      null,
     );
     expect(rebased).toEqual(inferCompleted("systems-design-engineering", "3B"));
   });
@@ -97,13 +113,14 @@ describe("rebaseCompletedCourses", () => {
       "econ101",
     ].sort();
     const rebased = rebaseCompletedCourses(
-      {
+      passage({
         programId: "systems-design-engineering",
         currentTerm: "3A",
         completedCourses: oldList,
-      },
+      }),
       "systems-design-engineering",
       "3B",
+      null,
     );
     expect(rebased).toContain("econ101");
     for (const c of inferCompleted("systems-design-engineering", "3B")) {
@@ -121,13 +138,14 @@ describe("rebaseCompletedCourses", () => {
 
     const oldList = syde3A.filter((c) => c !== removed);
     const rebased = rebaseCompletedCourses(
-      {
+      passage({
         programId: "systems-design-engineering",
         currentTerm: "3A",
         completedCourses: oldList,
-      },
+      }),
       "systems-design-engineering",
       "3B",
+      null,
     );
     expect(rebased).not.toContain(removed);
   });
@@ -140,11 +158,12 @@ describe("rebaseCompletedCourses", () => {
       "econ101",
     ].sort();
     const rebased = rebaseCompletedCourses(
-      {
+      passage({
         programId: "systems-design-engineering",
         currentTerm: "3A",
         completedCourses: oldList,
-      },
+      }),
+      null,
       null,
       null,
     );
@@ -159,8 +178,9 @@ describe("rebaseCompletedCourses", () => {
       throw new Error("expected h-biology to be flexible after scrape");
 
     const rebased = rebaseCompletedCourses(
-      { programId: null, currentTerm: null, completedCourses: [] },
+      passage({}),
       "h-biology",
+      null,
       null,
     );
     expect(rebased).toEqual(getRequiredCourses(biology));
@@ -180,12 +200,13 @@ describe("rebaseCompletedCourses", () => {
       "extra101",
     ];
     const rebased = rebaseCompletedCourses(
-      {
+      passage({
         programId: "systems-design-engineering",
         currentTerm: "2A",
         completedCourses: oldList,
-      },
+      }),
       "h-biology",
+      null,
       null,
     );
     expect(rebased).toContain("extra101");
@@ -202,15 +223,69 @@ describe("rebaseCompletedCourses", () => {
       "econ101",
     ].sort();
     const rebased = rebaseCompletedCourses(
-      {
+      passage({
         programId: "systems-design-engineering",
         currentTerm: "3A",
         completedCourses: list,
-      },
+      }),
       "systems-design-engineering",
       "3A",
+      null,
     );
     expect(rebased).toEqual(list);
+  });
+
+  it("adding a specialization unions in its required courses (parent stays the same)", async () => {
+    const { rebaseCompletedCourses, baselineForPassage } = await import(
+      "../completedCourses"
+    );
+    const parent = "3g-english-literature-and-rhetoric";
+    const spec = "engl-communication-design";
+
+    const parentOnly = baselineForPassage(parent, null, null);
+    const rebased = rebaseCompletedCourses(
+      passage({
+        programId: parent,
+        currentTerm: null,
+        completedCourses: parentOnly,
+      }),
+      parent,
+      null,
+      spec,
+    );
+    const withSpec = baselineForPassage(parent, null, spec);
+    for (const c of withSpec) expect(rebased).toContain(c);
+  });
+
+  it("dropping a specialization removes its baseline-only courses (unless user added them as extras)", async () => {
+    const { rebaseCompletedCourses, baselineForPassage } = await import(
+      "../completedCourses"
+    );
+    const parent = "3g-english-literature-and-rhetoric";
+    const spec = "engl-communication-design";
+    const withSpec = baselineForPassage(parent, null, spec);
+    const parentOnly = baselineForPassage(parent, null, null);
+    const specExtras = withSpec.filter((c) => !parentOnly.includes(c));
+    // Fixture sanity: this test only proves anything if the spec contributes
+    // at least one required course the parent doesn't already require. If a
+    // future scrape drifts (e.g. the parent absorbs the spec's contributions
+    // or the spec's rule tree changes shape), the test must fail loudly
+    // rather than vacuously pass — pick a different fixture pair.
+    expect(specExtras.length).toBeGreaterThan(0);
+
+    const rebased = rebaseCompletedCourses(
+      passage({
+        programId: parent,
+        currentTerm: null,
+        completedCourses: withSpec,
+        specializationId: spec,
+      }),
+      parent,
+      null,
+      null,
+    );
+    for (const c of specExtras) expect(rebased).not.toContain(c);
+    for (const c of parentOnly) expect(rebased).toContain(c);
   });
 });
 
