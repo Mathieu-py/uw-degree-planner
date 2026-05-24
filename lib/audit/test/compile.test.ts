@@ -255,7 +255,7 @@ describe("compileAudit — excluded courses", () => {
 });
 
 describe("compileAudit — specialization", () => {
-  it("compiles spec rules into specializationRoot when present", () => {
+  it("compiles spec rules from the passed program object", () => {
     const program: Program = {
       kind: "flexible",
       name: "P",
@@ -277,16 +277,15 @@ describe("compileAudit — specialization", () => {
       ],
     };
     const plan = makePlan([slot("s1", 1239, ["base1", "cs486"])]);
-    // Inject the program-id into the placement plan so getSpecialization can find it.
+    // "myprog" is not registered in the global PROGRAMS index — the spec must
+    // resolve from the passed program object, not via getSpecialization.
     plan.programId = "myprog";
-    // Stub PROGRAMS lookup by passing the program directly; spec lookup uses programId+slug
-    // against the global PROGRAMS map, so this test only verifies that when the program
-    // arg DOES provide a matching spec, it gets compiled.
     const audit = compileAudit(program, plan, "ai");
-    // The spec compilation requires programId+specializationId to resolve via getSpecialization.
-    // We don't have "myprog" in the global PROGRAMS index, so specializationRoot will be null.
-    // This test asserts the graceful-degradation behavior:
-    expect(audit.specializationRoot).toBeNull();
+    expect(audit.specializationRoot).not.toBeNull();
+    expect(audit.specializationRoot?.status).toBe("met");
+    expect(audit.specializationRoot?.satisfiers.map((s) => s.code)).toEqual([
+      "cs486",
+    ]);
   });
 });
 

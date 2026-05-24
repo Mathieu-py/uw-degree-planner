@@ -68,7 +68,7 @@ export function SlotPicker({
   onClose,
 }: Props) {
   const [filters, setFilters] = useState<PickerFilters>(DEFAULT_FILTERS);
-  const [sortKey, setSortKey] = useState<SortKey>("useful");
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT_KEY);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT_DIR);
   const [limit, setLimit] = useState(PAGE);
 

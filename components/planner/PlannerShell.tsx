@@ -145,6 +145,7 @@ export function PlannerShell({
     }
     setPlan(null);
     setPickerCtx(null);
+    setImportBanner(null);
   }, []);
 
   const persist = useCallback((next: LocalPlan) => {

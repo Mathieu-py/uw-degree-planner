@@ -75,7 +75,7 @@ export function Slot({ slot, issuesByCourse, onAdd, onRemoveCourse }: Props) {
                 onClick={() => onRemoveCourse(c.code)}
                 aria-label={`Remove ${c.code}`}
                 title={`Remove ${c.code}`}
-                className="text-zinc-300 hover:text-rose-600 dark:text-zinc-700 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="text-zinc-300 hover:text-rose-600 dark:text-zinc-700 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               >
                 <span aria-hidden="true">×</span>
               </button>

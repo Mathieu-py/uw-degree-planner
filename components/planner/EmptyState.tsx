@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Stream } from "@/lib/plan/types";
-import { KNOWN_TERMS } from "@/lib/terms";
+import { KNOWN_TERMS, makeTermId } from "@/lib/terms";
 import type { ProgramOption } from "./PlannerShell";
 
 interface Props {
@@ -36,7 +36,9 @@ export function EmptyState({
   const [programId, setProgramId] = useState<string>(
     programOptions[0]?.id ?? "",
   );
-  const [startTermId, setStartTermId] = useState<number>(1239); // Fall 2023 default
+  const [startTermId, setStartTermId] = useState<number>(() =>
+    makeTermId(new Date().getFullYear(), "Fall"),
+  );
   const [stream, setStream] = useState<Stream>("regular");
 
   const canSubmit = programId && startTermId > 0;

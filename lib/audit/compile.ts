@@ -263,11 +263,13 @@ export function compileAudit(
     flexibleRoot = compile(program.rules, placement);
   }
   let specializationRoot: AuditNode | null = null;
-  if (programId && specializationId) {
-    const spec: Specialization | null = getSpecialization(
-      programId,
-      specializationId,
+  if (specializationId) {
+    const localSpec = program.specializations?.find(
+      (s) => s.slug === specializationId,
     );
+    const spec: Specialization | null =
+      localSpec ??
+      (programId ? getSpecialization(programId, specializationId) : null);
     if (spec?.rules) {
       specializationRoot = compile(spec.rules, placement);
     }

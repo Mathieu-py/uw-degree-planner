@@ -1,5 +1,11 @@
 import { safeGetItem, safeRemoveItem, safeSetItem } from "../storage";
-import type { LocalPlan, PlanSlot, SlotCourse, Stream } from "./types";
+import type {
+  LocalPlan,
+  PlanSlot,
+  SlotCourse,
+  SlotPosition,
+  Stream,
+} from "./types";
 import { PLAN_SCHEMA_VERSION } from "./types";
 
 /**
@@ -13,6 +19,24 @@ const VALID_STREAMS: ReadonlySet<Stream> = new Set<Stream>([
   "regular",
   "stream4",
   "stream8",
+]);
+
+const VALID_POSITIONS: ReadonlySet<SlotPosition> = new Set<SlotPosition>([
+  "1A",
+  "1B",
+  "2A",
+  "2B",
+  "3A",
+  "3B",
+  "4A",
+  "4B",
+  "coop1",
+  "coop2",
+  "coop3",
+  "coop4",
+  "coop5",
+  "coop6",
+  "pre",
 ]);
 
 function isString(v: unknown): v is string {
@@ -36,7 +60,7 @@ function isPlanSlot(v: unknown): v is PlanSlot {
   const s = v as Partial<PlanSlot>;
   if (!isString(s.id)) return false;
   if (s.termId !== null && typeof s.termId !== "number") return false;
-  if (!isString(s.position)) return false;
+  if (!VALID_POSITIONS.has(s.position as SlotPosition)) return false;
   if (typeof s.isCoop !== "boolean") return false;
   if (!Array.isArray(s.courses)) return false;
   return s.courses.every(isSlotCourse);
