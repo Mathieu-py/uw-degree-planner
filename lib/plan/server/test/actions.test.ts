@@ -347,6 +347,81 @@ describe("loadServerPlan", () => {
     expect(result.data?.slots[0].courses).toEqual([{ code: "cs115" }]);
   });
 
+  it("returns an error when the plan query fails", async () => {
+    installClient({
+      tables: {
+        plans: { data: null, error: { message: "db down", code: "08006" } },
+      },
+    });
+    const result = await loadServerPlan("p1");
+    expect(result).toEqual({ ok: false, error: "db down" });
+  });
+
+  it("returns an error when the slot query fails", async () => {
+    installClient({
+      tableQueues: {
+        plans: [
+          {
+            data: {
+              id: "p1",
+              name: "My plan",
+              program_id: null,
+              specialization_id: null,
+              system_of_study: null,
+              start_term_id: null,
+              program_scrape_version: null,
+              updated_at: "2026-05-24T00:00:00.000Z",
+            },
+            error: null,
+          },
+        ],
+        plan_slots: [{ data: null, error: { message: "slot error" } }],
+      },
+    });
+    const result = await loadServerPlan("p1");
+    expect(result).toEqual({ ok: false, error: "slot error" });
+  });
+
+  it("returns an error when the course query fails", async () => {
+    installClient({
+      tableQueues: {
+        plans: [
+          {
+            data: {
+              id: "p1",
+              name: "My plan",
+              program_id: null,
+              specialization_id: null,
+              system_of_study: null,
+              start_term_id: null,
+              program_scrape_version: null,
+              updated_at: "2026-05-24T00:00:00.000Z",
+            },
+            error: null,
+          },
+        ],
+        plan_slots: [
+          {
+            data: [
+              {
+                id: "s1",
+                plan_id: "p1",
+                term_id: 1239,
+                position: "1A",
+                is_coop: false,
+                ordinal: 0,
+              },
+            ],
+            error: null,
+          },
+        ],
+        plan_courses: [{ data: null, error: { message: "course error" } }],
+      },
+    });
+    const result = await loadServerPlan("p1");
+    expect(result).toEqual({ ok: false, error: "course error" });
+  });
+
   it("skips the courses query when there are no slots", async () => {
     const { client } = installClient({
       tableQueues: {
