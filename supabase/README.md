@@ -22,7 +22,7 @@ pnpm exec supabase start
 pnpm exec supabase status
 ```
 
-Copy `.env.example` to `.env.local` and paste in the printed values:
+Create `.env.local` at the project root and paste in the printed values:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
