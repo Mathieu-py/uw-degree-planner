@@ -62,7 +62,7 @@ export function saveCompletedCourses(courses: string[]): void {
 }
 
 /**
- * Project the previous effective completedCourses through a program/term
+ * Project the previous effective completedCourses through a program/term/spec
  * change. Extras (manually added beyond the old baseline) and removals
  * (baseline courses the user explicitly cleared) survive the rebase against
  * the new baseline. Clearing prog or term yields an empty new baseline, so
@@ -72,9 +72,14 @@ export function rebaseCompletedCourses(
   previous: StudentPassage,
   nextProgramId: string | null,
   nextCurrentTerm: string | null,
+  nextSpecializationId: string | null,
 ): string[] {
   const oldBaseline = new Set(
-    baselineForPassage(previous.programId, previous.currentTerm),
+    baselineForPassage(
+      previous.programId,
+      previous.currentTerm,
+      previous.specializationId,
+    ),
   );
   const oldEffective = new Set(previous.completedCourses);
   const extras = previous.completedCourses.filter((c) => !oldBaseline.has(c));
@@ -82,23 +87,28 @@ export function rebaseCompletedCourses(
     [...oldBaseline].filter((c) => !oldEffective.has(c)),
   );
 
-  const newBaseline = baselineForPassage(nextProgramId, nextCurrentTerm);
+  const newBaseline = baselineForPassage(
+    nextProgramId,
+    nextCurrentTerm,
+    nextSpecializationId,
+  );
   return [...new Set([...newBaseline, ...extras])]
     .filter((c) => !removals.has(c))
     .sort();
 }
 
 /**
- * The inferred completed-courses baseline for a passage's prog/term pair.
- * Flexible programs ignore the term, so a null term is allowed; engineering
- * with a null term yields `[]` (no prior terms to infer from). Output is
- * sorted because `inferCompleted` returns sorted.
+ * The inferred completed-courses baseline for a passage's prog/term/spec
+ * triple. Flexible programs ignore the term, so a null term is allowed;
+ * engineering with a null term yields the spec-only baseline (or [] if no
+ * spec). Output is sorted because `inferCompleted` returns sorted.
  */
 export function baselineForPassage(
   programId: string | null,
   term: string | null,
+  specializationId: string | null,
 ): string[] {
   if (!programId) return [];
   const t = isTermLetter(term) ? term : null;
-  return inferCompleted(programId, t);
+  return inferCompleted(programId, t, specializationId);
 }

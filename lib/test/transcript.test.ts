@@ -105,6 +105,54 @@ SYDE 201    Systems Models     0.50 0.50 IP
   });
 });
 
+describe("parseTranscript — systemOfStudy detection", () => {
+  it("detects co-op from a Program line carrying the Co-operative Program tail", () => {
+    const text = `
+Program: Systems Design Engineering, Honours, Co-operative Program
+
+Fall 2023
+SYDE 101    Communications     0.50 0.50 85
+`;
+    expect(parseTranscript(text).detectedSystemOfStudy).toBe("coop");
+  });
+
+  it("detects regular when a Plan line is present but no co-op marker", () => {
+    const text = `
+Plan: Systems Design Engineering
+
+Fall 2023
+SYDE 101    Communications     0.50 0.50 85
+`;
+    expect(parseTranscript(text).detectedSystemOfStudy).toBe("regular");
+  });
+
+  it("upgrades to coop when any Plan/Program line mentions co-op (faculty header without, major line with)", () => {
+    const text = `
+Program: Engineering
+Program: Systems Design Engineering, Honours, Co-operative Program
+
+Fall 2023
+SYDE 101    Communications     0.50 0.50 85
+`;
+    expect(parseTranscript(text).detectedSystemOfStudy).toBe("coop");
+  });
+
+  it("matches the hyphenated 'Co-operative' and the unhyphenated 'Cooperative'", () => {
+    const a = parseTranscript(
+      "Program: Systems Design Engineering, Cooperative Program\nFall 2023\nSYDE 101 Communications 0.50 0.50 85\n",
+    );
+    expect(a.detectedSystemOfStudy).toBe("coop");
+  });
+
+  it("returns null when there's no Plan/Program line at all", () => {
+    const text = `
+Fall 2023
+SYDE 101    Communications     0.50 0.50 85
+`;
+    expect(parseTranscript(text).detectedSystemOfStudy).toBeNull();
+  });
+});
+
 describe("parseTranscript — transfer credits", () => {
   const TRANSFER = `
 Plan: Computer Science

@@ -54,12 +54,25 @@ export interface PureFilters {
 
 /**
  * The student's academic context: which program they're in, which term they're
- * planning for, and which courses they've completed. `programId`/`currentTerm`
- * are URL-encoded so a seeded view is shareable; `completedCourses` is profile
- * data persisted in localStorage and never written to the URL.
+ * planning for, which courses they've completed, and the choices they've made
+ * through the program (specialization, variant picks within choice groups, and
+ * co-op vs regular stream).
+ *
+ * URL-encoded (shareable): `programId`, `currentTerm`, `specializationId`,
+ * `systemOfStudy`, and `choiceGroupSelections`. `completedCourses` is profile
+ * data persisted in localStorage and never written to the URL — a shared link
+ * describes the sender's view, not their transcript.
+ *
+ * `choiceGroupSelections` keys are path-based identifiers into the program's
+ * RuleNode AST (see ADR 0001 amendment line 85), e.g. `"2A.children[3]"` for
+ * engineering or `"root.children[5]"` for flexible. The variant-picker modal
+ * is the canonical writer; the codec validates JSON shape only.
  */
 export interface StudentPassage {
   programId: string | null;
   currentTerm: string | null;
   completedCourses: string[];
+  specializationId: string | null;
+  choiceGroupSelections: Record<string, string[]>;
+  systemOfStudy: "coop" | "regular" | null;
 }
