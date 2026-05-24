@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { enumerateChoiceGroups } from "@/lib/choiceGroups";
+import { useState } from "react";
 import {
   loadExtras,
   rebaseCompletedCourses,
@@ -13,22 +12,20 @@ import {
   decodeStudentPassage,
   mergeStudentPassageIntoParams,
 } from "@/lib/filterState";
-import {
-  isTermLetter,
-  PROGRAMS,
-  TERM_LETTERS,
-  type TermLetter,
-} from "@/lib/programs";
+import { isTermLetter, PROGRAMS } from "@/lib/programs";
 import { applyTranscriptToStudentPassage } from "@/lib/transcript/applyHelpers";
 import type { StudentPassage } from "@/lib/types";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
 import { Section } from "./filter/Section";
 import {
+  SetupModal,
+  type SetupModalApplyPayload,
+} from "./filter/SetupModal";
+import {
   TranscriptImportModal,
   type TranscriptImportPayload,
 } from "./filter/TranscriptImportModal";
 import { useFilterCommit } from "./filter/useFilterCommit";
-import { VariantPickerModal } from "./filter/VariantPickerModal";
 
 interface Props {
   passage: StudentPassage;
@@ -52,7 +49,7 @@ export function StudentPassagePanel({
 }: Props) {
   const commitPassage = useFilterCommit(mergeStudentPassageIntoParams);
   const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
-  const [variantModalOpen, setVariantModalOpen] = useState(false);
+  const [setupModalOpen, setSetupModalOpen] = useState(false);
 
   // URL is source of truth for prog/term (router.replace is async; the prop
   // can lag in a transition). The live URL is decoded for those fields;
@@ -124,20 +121,19 @@ export function StudentPassagePanel({
     setTranscriptModalOpen(false);
   }
 
-  function handleVariantApply(next: Record<string, string[]>) {
-    patchPassage({ choiceGroupSelections: next });
-    setVariantModalOpen(false);
+  function handleSetupApply(next: SetupModalApplyPayload) {
+    patchPassage({
+      specializationId: next.specializationId,
+      currentTerm: next.currentTerm,
+      choiceGroupSelections: next.choiceGroupSelections,
+    });
+    setSetupModalOpen(false);
   }
 
   const selectedProgram = passage.programId
     ? PROGRAMS[passage.programId]
     : null;
-  const isFlexible = selectedProgram?.kind === "flexible";
   const term = isTermLetter(passage.currentTerm) ? passage.currentTerm : null;
-  const variantCount = useMemo(
-    () => (selectedProgram ? enumerateChoiceGroups(selectedProgram).length : 0),
-    [selectedProgram],
-  );
   const hasPassageState =
     passage.programId !== null ||
     passage.currentTerm !== null ||
@@ -145,7 +141,7 @@ export function StudentPassagePanel({
 
   return (
     <>
-      <Section title="Program & term">
+      <Section title="Program">
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-zinc-600 dark:text-zinc-400">
@@ -155,19 +151,21 @@ export function StudentPassagePanel({
               value={passage.programId ?? ""}
               onChange={(e) => {
                 const id = e.target.value || null;
-                const next = id ? PROGRAMS[id] : null;
-                // Flexible programs have no term schedule; clear any stale term
-                // so the URL state doesn't carry a value the UI no longer shows.
-                // Specialization and choice-group picks belong to a specific
-                // program (spec slug + AST path keys); both are cleared on every
-                // program change — the new program's tree won't match the old
-                // selections.
+                // Program change is a re-seed: spec, term, and choice-group
+                // picks are all program-scoped (spec slug + AST path keys +
+                // term schedule), so they're cleared on every change. The
+                // user then fills them via the setup modal.
                 patchPassage({
                   programId: id,
                   specializationId: null,
+                  currentTerm: null,
                   choiceGroupSelections: {},
-                  ...(next?.kind === "flexible" ? { currentTerm: null } : {}),
                 });
+                // Auto-open setup modal so the user can fill spec/term/picks
+                // for the new program in one place. Per D4, only on program
+                // change (not on subsequent dropdown toggles), and only when
+                // a real program is selected.
+                if (id !== null) setSetupModalOpen(true);
               }}
               className={SELECT_CLASS}
             >
@@ -180,54 +178,44 @@ export function StudentPassagePanel({
             </select>
           </label>
 
-          {!isFlexible && (
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                Current term
-              </span>
-              <select
-                value={term ?? ""}
-                onChange={(e) =>
-                  patchPassage({
-                    currentTerm: isTermLetter(e.target.value)
-                      ? e.target.value
-                      : null,
-                  })
-                }
-                className={SELECT_CLASS}
-              >
-                <option value="">Select a term…</option>
-                {TERM_LETTERS.map((t: TermLetter) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">
+              System of study
+            </span>
+            <select
+              value={passage.systemOfStudy ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                patchPassage({
+                  systemOfStudy:
+                    v === "coop" || v === "regular" ? v : null,
+                });
+              }}
+              className={SELECT_CLASS}
+            >
+              <option value="">Not specified</option>
+              <option value="coop">Co-op</option>
+              <option value="regular">Regular</option>
+            </select>
+          </label>
 
           {selectedProgram && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {isFlexible
+              {selectedProgram.kind === "flexible"
                 ? `Flexible program — all required courses are seeded as completed. (As of ${selectedProgram.asOf}.)`
                 : `Sourced from UW calendar (as of ${selectedProgram.asOf}).`}
             </p>
           )}
 
-          {selectedProgram &&
-            (variantCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => setVariantModalOpen(true)}
-                className="self-start rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
-              >
-                Pick course variants ({variantCount})
-              </button>
-            ) : (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                No course variants to pick.
-              </p>
-            ))}
+          {selectedProgram && (
+            <button
+              type="button"
+              onClick={() => setSetupModalOpen(true)}
+              className="self-start rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            >
+              Edit setup
+            </button>
+          )}
         </div>
       </Section>
 
@@ -264,12 +252,15 @@ export function StudentPassagePanel({
       />
 
       {selectedProgram && (
-        <VariantPickerModal
-          isOpen={variantModalOpen}
-          onClose={() => setVariantModalOpen(false)}
-          onApply={handleVariantApply}
+        <SetupModal
+          isOpen={setupModalOpen}
+          onClose={() => setSetupModalOpen(false)}
+          onApply={handleSetupApply}
           program={selectedProgram}
+          initialSpecializationId={passage.specializationId}
+          initialCurrentTerm={term}
           initialSelections={passage.choiceGroupSelections}
+          completedCourses={completedCourses}
         />
       )}
     </>
