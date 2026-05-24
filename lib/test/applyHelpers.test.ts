@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyTranscriptToStudentPassage,
   buildImportPayload,
   type Categorized,
   categorize,
-  type TranscriptImportPayload,
 } from "../transcript/applyHelpers";
 import type { ParsedCourse, TranscriptParseResult } from "../transcript/types";
 
@@ -165,66 +163,5 @@ describe("buildImportPayload", () => {
     const payload = buildImportPayload(r, empty, new Set());
     expect(payload.specializationId).toBe("engl-communication-design");
     expect(payload.systemOfStudy).toBe("coop");
-  });
-});
-
-describe("applyTranscriptToStudentPassage", () => {
-  const payload: TranscriptImportPayload = {
-    codes: ["cs135", "math137"],
-    programId: "electrical-engineering",
-    currentTerm: "2A",
-    specializationId: null,
-    systemOfStudy: "coop",
-  };
-
-  it("returns a passage with exactly the payload's fields", () => {
-    const next = applyTranscriptToStudentPassage(payload);
-    expect(next).toEqual({
-      programId: "electrical-engineering",
-      currentTerm: "2A",
-      completedCourses: ["cs135", "math137"],
-      specializationId: null,
-      choiceGroupSelections: {},
-      systemOfStudy: "coop",
-    });
-  });
-
-  it("returns exactly the StudentPassage shape (no extra keys leak)", () => {
-    const next = applyTranscriptToStudentPassage(payload);
-    expect(Object.keys(next).sort()).toEqual([
-      "choiceGroupSelections",
-      "completedCourses",
-      "currentTerm",
-      "programId",
-      "specializationId",
-      "systemOfStudy",
-    ]);
-  });
-
-  it("handles null programId/currentTerm in the payload (no program detected)", () => {
-    const next = applyTranscriptToStudentPassage({
-      codes: ["cs135"],
-      programId: null,
-      currentTerm: null,
-      specializationId: null,
-      systemOfStudy: null,
-    });
-    expect(next.programId).toBeNull();
-    expect(next.currentTerm).toBeNull();
-    expect(next.completedCourses).toEqual(["cs135"]);
-    expect(next.specializationId).toBeNull();
-    expect(next.systemOfStudy).toBeNull();
-  });
-
-  it("forwards a detected specialization through to the passage", () => {
-    const next = applyTranscriptToStudentPassage({
-      codes: [],
-      programId: "3g-english-literature-and-rhetoric",
-      currentTerm: null,
-      specializationId: "engl-communication-design",
-      systemOfStudy: "regular",
-    });
-    expect(next.specializationId).toBe("engl-communication-design");
-    expect(next.systemOfStudy).toBe("regular");
   });
 });

@@ -6,28 +6,29 @@ export default function Home() {
       <div className="flex flex-col gap-5">
         <span className="inline-flex items-center self-start gap-2 rounded-full border border-zinc-300 dark:border-zinc-700 px-3 py-1 text-xs uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
           <span className="size-1.5 rounded-full bg-emerald-500" />
-          Winter 2026 catalog
+          Beta · UWaterloo degree planner
         </span>
         <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">
-          Find the right{" "}
+          Plan every term of your{" "}
           <span className="bg-gradient-to-br from-rose-500 via-amber-500 to-emerald-500 bg-clip-text text-transparent">
-            UWaterloo elective
+            UWaterloo degree
           </span>{" "}
-          without the spreadsheet.
+          on one screen.
         </h1>
         <p className="text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 max-w-2xl">
-          Sort and filter ~10,000 UWaterloo courses by usefulness, easiness,
-          prerequisites you&apos;ve already done, and available seats — sourced
-          from UWFlow ratings.
+          Upload your Quest transcript to bootstrap a full plan in seconds. See
+          requirement progress live, get prereq-aware suggestions, and spot
+          conflicts before you enrol — sourced from UWFlow ratings and the UW
+          Undergraduate Calendar.
         </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/browse"
+          href="/plan"
           className="inline-flex items-center justify-center rounded-full bg-zinc-950 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
         >
-          Browse electives →
+          Plan my degree →
         </Link>
         <a
           href="https://github.com/Mathieu-py/uw-elective-finder"
@@ -41,16 +42,16 @@ export default function Home() {
 
       <dl className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
         <Feature
-          title="Real reviews"
-          body="Ratings, easiness, and review counts come from UWFlow — no guesswork from course descriptions alone."
+          title="Transcript-driven"
+          body="Drop in your Quest PDF; every past term, transfer credit, and co-op slot lands where it belongs. Parsed locally — nothing leaves your browser."
         />
         <Feature
-          title="Smart filters"
-          body="Auto-exclude courses that conflict with your program, require prereqs you don't have, or have no seats left."
+          title="Live degree audit"
+          body="Requirements from the official Undergraduate Calendar update as you place courses. See exactly what's met, partial, and missing."
         />
         <Feature
-          title="Coming: ask in English"
-          body="“Find me easy STEM electives that complement CS” → typed filters, powered by Claude."
+          title="Smart catalog picker"
+          body="Click an empty slot, get courses filtered to what's offered, what you're eligible for, and what fits your program — UWFlow ratings included."
         />
       </dl>
     </div>

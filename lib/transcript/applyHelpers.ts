@@ -1,5 +1,4 @@
 import type { TermLetter } from "../programs";
-import type { StudentPassage } from "../types";
 import type { ParsedCourse, TranscriptParseResult } from "./types";
 
 export interface Categorized {
@@ -74,23 +73,5 @@ export function buildImportPayload(
     currentTerm: parseResult.detectedCurrentTerm,
     specializationId: parseResult.detectedSpecializationSlug,
     systemOfStudy: parseResult.detectedSystemOfStudy,
-  };
-}
-
-/**
- * Build a new StudentPassage from a transcript-import payload. The transcript
- * IS the source of truth — every passage field is replaced. Pure filters
- * (catalog view chips) are a separate slice and untouched at the call site.
- */
-export function applyTranscriptToStudentPassage(
-  payload: TranscriptImportPayload,
-): StudentPassage {
-  return {
-    programId: payload.programId,
-    currentTerm: payload.currentTerm,
-    completedCourses: payload.codes,
-    specializationId: payload.specializationId,
-    choiceGroupSelections: {},
-    systemOfStudy: payload.systemOfStudy,
   };
 }

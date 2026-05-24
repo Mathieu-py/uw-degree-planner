@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PURE_FILTERS } from "../filterState";
 import {
   applyFilters,
+  DEFAULT_PURE_FILTERS,
   enrichCourse,
   passesLevelFilter,
   passesMinEasyFilter,

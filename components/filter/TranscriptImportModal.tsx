@@ -10,13 +10,26 @@ import {
 } from "@/lib/transcript/applyHelpers";
 import { type ParsedCourse, parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
+import type { TranscriptParseResult } from "@/lib/transcript/types";
 
 export type { TranscriptImportPayload } from "@/lib/transcript/applyHelpers";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (payload: TranscriptImportPayload) => void;
+  /**
+   * Lossy payload for `StudentPassage`-shaped consumers (legacy /browse).
+   * Optional — supply this OR `onApplyPlan`.
+   */
+  onApply?: (payload: TranscriptImportPayload) => void;
+  /**
+   * Richer callback for the planner — gets per-course term info needed to
+   * build a `LocalPlan` with slots. Optional — supply this OR `onApply`.
+   */
+  onApplyPlan?: (
+    parseResult: TranscriptParseResult,
+    includedUnrecognized: ReadonlySet<string>,
+  ) => void;
   allCourseCodes: string[];
   currentCompletedCount: number;
 }
@@ -25,6 +38,7 @@ export function TranscriptImportModal({
   isOpen,
   onClose,
   onApply,
+  onApplyPlan,
   allCourseCodes,
   currentCompletedCount,
 }: Props) {
@@ -131,7 +145,12 @@ export function TranscriptImportModal({
   }
 
   function handleApply() {
-    onApply(buildImportPayload(parseResult, categorized, included));
+    if (onApply) {
+      onApply(buildImportPayload(parseResult, categorized, included));
+    }
+    if (onApplyPlan) {
+      onApplyPlan(parseResult, included);
+    }
     setText("");
     setFileName(null);
     setExtractError(null);

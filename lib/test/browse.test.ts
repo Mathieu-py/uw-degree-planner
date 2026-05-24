@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attachEligibility, type BrowseRow, buildBrowseRows } from "../browse";
-import { DEFAULT_PURE_FILTERS } from "../filterState";
-import { enrichCourse } from "../filters";
+import { DEFAULT_PURE_FILTERS, enrichCourse } from "../filters";
 import type { Course, UWFlowCourse } from "../types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {

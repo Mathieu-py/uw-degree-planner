@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BackToBrowse } from "@/components/BackToBrowse";
 import { loadCourseByCode } from "@/lib/data";
 import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent } from "@/lib/format";
@@ -12,9 +12,9 @@ interface PageParams {
 export async function generateMetadata(props: { params: Promise<PageParams> }) {
   const { code } = await props.params;
   const course = await loadCourseByCode(TERM, code);
-  if (!course) return { title: "Course not found · UW Elective Finder" };
+  if (!course) return { title: "Course not found · UW Degree Planner" };
   return {
-    title: `${formatCourseCode(course.code)} — ${course.name} · UW Elective Finder`,
+    title: `${formatCourseCode(course.code)} — ${course.name} · UW Degree Planner`,
     description: course.description?.slice(0, 160) ?? undefined,
   };
 }
@@ -31,9 +31,12 @@ export default async function CoursePage(props: {
 
   return (
     <div className="mx-auto max-w-3xl w-full px-6 py-10 flex flex-col gap-8">
-      <BackToBrowse className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 w-fit">
-        ← Back to browse
-      </BackToBrowse>
+      <Link
+        href="/plan"
+        className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 w-fit"
+      >
+        ← Back to planner
+      </Link>
 
       <header className="flex flex-col gap-2">
         <span className="font-mono text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
