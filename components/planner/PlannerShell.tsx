@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import {
+  clearPlan,
   emptyPlan,
   loadPlan,
-  PLAN_STORAGE_KEY,
   savePlan,
 } from "@/lib/plan/storage";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
@@ -140,9 +140,7 @@ export function PlannerShell({
   );
 
   const handleReset = useCallback(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(PLAN_STORAGE_KEY);
-    }
+    clearPlan();
     setPlan(null);
     setPickerCtx(null);
     setImportBanner(null);
@@ -362,7 +360,7 @@ function planSubtitle(plan: LocalPlan): string {
         ? "Stream 8 co-op"
         : "Regular (no co-op)";
   const start = plan.startTermId
-    ? `start term ${plan.startTermId}`
+    ? (termInfo(plan.startTermId)?.label ?? `Term ${plan.startTermId}`)
     : "no start term";
   return `${stream} · ${start} · ${plan.slots.length} slots`;
 }

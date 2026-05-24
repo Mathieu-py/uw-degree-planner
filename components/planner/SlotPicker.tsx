@@ -91,7 +91,7 @@ export function SlotPicker({
   const candidates = useMemo<Course[]>(() => {
     if (focusCodes && focusCodes.length > 0) {
       const want = new Set(focusCodes.map((c) => c.toLowerCase()));
-      return catalog.filter((c) => want.has(c.code));
+      return catalog.filter((c) => want.has(c.code) && !placedCodes.has(c.code));
     }
     return catalog.filter((c) => !placedCodes.has(c.code));
   }, [catalog, focusCodes, placedCodes]);
