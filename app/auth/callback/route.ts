@@ -10,7 +10,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/plan";
+  const next = sanitizeNextPath(url.searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(`${url.origin}/?auth_error=missing_code`);
@@ -26,4 +26,20 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.redirect(`${url.origin}${next}`);
+}
+
+/**
+ * Constrain the `?next=` redirect target to a same-origin path. Without this,
+ * `?next=//evil.com` would produce `https://app.com//evil.com` which browsers
+ * treat as protocol-relative — i.e. an open redirect to a different origin.
+ *
+ * Accepts only values that start with a single `/` (not `//` or `/\`); anything
+ * else falls back to `/plan`.
+ */
+function sanitizeNextPath(raw: string | null): string {
+  if (!raw) return "/plan";
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("/")) return "/plan";
+  if (trimmed.startsWith("//") || trimmed.startsWith("/\\")) return "/plan";
+  return trimmed;
 }

@@ -13,8 +13,11 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Run on every path except static assets and the Next.js image optimizer.
-    // We intentionally include /auth/callback so the code-exchange handler
-    // sees a hydrated cookie context.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.ico$).*)",
+    // We intentionally let /auth/callback through (no extension, doesn't match
+    // the file-extension negation) so the code-exchange handler sees a hydrated
+    // cookie context. The extension list covers things served from /public and
+    // common asset types; Next.js still runs the proxy for /_next/data routes
+    // regardless of this matcher (documented behavior).
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:css|js|map|jpg|jpeg|gif|webp|avif|svg|png|ico|txt|xml|json|wasm|eot|ttf|woff|woff2|mp4|webm|ogg|mp3|m4a|zip|gz|crt|pem)$).*)",
   ],
 };

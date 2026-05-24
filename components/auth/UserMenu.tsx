@@ -18,11 +18,19 @@ export function UserMenu() {
     const supabase = createSupabaseBrowserClient();
     let cancelled = false;
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (cancelled) return;
-      setUser(data.user ?? null);
-      setReady(true);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setUser(data.user ?? null);
+      })
+      .catch((err) => {
+        console.warn("UserMenu: getUser failed", err);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setReady(true);
+      });
 
     const {
       data: { subscription },

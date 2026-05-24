@@ -24,7 +24,7 @@ pnpm exec supabase status
 
 Create `.env.local` at the project root and paste in the printed values:
 
-```
+```text
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from supabase status>
 ```
@@ -54,7 +54,7 @@ care about auth.
    - Authorized redirect URI:
      `http://127.0.0.1:54321/auth/v1/callback`
 2. Put the client id + secret into `.env.local`:
-   ```
+   ```text
    SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=...
    SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=...
    ```
