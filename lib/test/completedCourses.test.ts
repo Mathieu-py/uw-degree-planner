@@ -266,7 +266,12 @@ describe("rebaseCompletedCourses", () => {
     const withSpec = baselineForPassage(parent, null, spec);
     const parentOnly = baselineForPassage(parent, null, null);
     const specExtras = withSpec.filter((c) => !parentOnly.includes(c));
-    if (specExtras.length === 0) return;
+    // Fixture sanity: this test only proves anything if the spec contributes
+    // at least one required course the parent doesn't already require. If a
+    // future scrape drifts (e.g. the parent absorbs the spec's contributions
+    // or the spec's rule tree changes shape), the test must fail loudly
+    // rather than vacuously pass — pick a different fixture pair.
+    expect(specExtras.length).toBeGreaterThan(0);
 
     const rebased = rebaseCompletedCourses(
       passage({
