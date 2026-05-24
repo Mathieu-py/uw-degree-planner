@@ -1,13 +1,23 @@
-import type { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSupabaseSession } from "@/lib/supabase/session";
 
 /**
  * Next.js 16 root `proxy.ts` (formerly `middleware.ts`). Runs on every
  * navigation matched by `config.matcher` and keeps the Supabase auth session
  * alive so Server Components see fresh user state.
+ *
+ * Wrapped in try/catch as a backstop: a failed session refresh (network
+ * blip, misconfigured env, transient Supabase outage) should never break
+ * navigation for the rest of the app. The signed-out paths work fine
+ * without a session, and the next request will retry the refresh.
  */
 export async function proxy(request: NextRequest) {
-  return updateSupabaseSession(request);
+  try {
+    return await updateSupabaseSession(request);
+  } catch (err) {
+    console.warn("proxy: session refresh failed; continuing without it", err);
+    return NextResponse.next({ request });
+  }
 }
 
 export const config = {

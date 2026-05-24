@@ -19,6 +19,19 @@ export async function updateSupabaseSession(
   request: NextRequest,
 ): Promise<NextResponse> {
   let response = NextResponse.next({ request });
+
+  // Skip session refresh when Supabase isn't configured. Reasons this happens:
+  //   - Contributor hasn't created .env.local yet
+  //   - NODE_ENV=test, which makes Next.js intentionally skip .env.local
+  //     (so e2e tests are deterministic across machines)
+  // Either way, the planner's signed-out path is fully functional — the only
+  // thing missing is auth, which the UI degrades to "Sign in" gracefully.
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return response;
+  }
   const { url, anonKey } = supabasePublicEnv();
 
   const supabase = createServerClient(url, anonKey, {
