@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { UserMenu } from "@/components/auth/UserMenu";
 import "./tailwind.css";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
               >
                 GitHub
               </a>
+              <UserMenu />
             </nav>
           </div>
         </header>
