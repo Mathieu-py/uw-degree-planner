@@ -4,12 +4,24 @@ import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+// NEXT_PUBLIC_* vars are inlined at build time, so this is a true constant per
+// build. When unset (fresh clone with no .env.local), we hide the menu instead
+// of throwing on mount — the planner's signed-out flow works fine without auth.
+const SUPABASE_CONFIGURED =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 /**
  * Header sign-in / sign-out button. Shows the user's email when signed in,
  * a "Sign in with Google" link otherwise. Subscribes to auth-state changes
  * so the UI flips immediately after the OAuth callback redirects back.
  */
 export function UserMenu() {
+  if (!SUPABASE_CONFIGURED) return null;
+  return <UserMenuInner />;
+}
+
+function UserMenuInner() {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);

@@ -44,6 +44,12 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    # Fake Supabase env so the UserMenu renders normally in CI. The values
+    # don't need to resolve to a real project — the e2e tests don't exercise
+    # auth, and Supabase auth network calls fail silently inside getUser().
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
