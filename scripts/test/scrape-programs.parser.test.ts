@@ -2,12 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { RuleNode } from "../../lib/programs";
-import {
-  describeRule,
-  flattenChoiceGroups,
-  requiredCoursesIn,
-  walkRule,
-} from "../../lib/programs";
+import { describeRule, requiredCoursesIn, walkRule } from "../../lib/programs";
 import {
   buildConflictCounts,
   buildProgramSlug,
@@ -31,6 +26,39 @@ const findNode = (
     if (found === undefined && pred(n)) found = n;
   });
   return found;
+};
+
+interface LeafPickGroup {
+  description?: string;
+  selectMin?: number;
+  selectMax?: number;
+  options: string[];
+}
+
+/**
+ * Collect every `pick` node whose direct children are all `courses` leaves
+ * into a flat shape, useful for asserting on the scraper's output.
+ */
+const leafPickGroups = (root: RuleNode): LeafPickGroup[] => {
+  const out: LeafPickGroup[] = [];
+  walkRule(root, (n) => {
+    if (n.kind !== "pick") return;
+    if (n.children.length === 0) return;
+    if (!n.children.every((c) => c.kind === "courses")) return;
+    const options = [
+      ...new Set(
+        n.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
+      ),
+    ].sort();
+    const description = describeRule(n);
+    out.push({
+      ...(description !== undefined ? { description } : {}),
+      ...(n.selectMin !== undefined ? { selectMin: n.selectMin } : {}),
+      ...(n.selectMax !== undefined ? { selectMax: n.selectMax } : {}),
+      options,
+    });
+  });
+  return out;
 };
 
 describe("parseProgramRequirements — empty input", () => {
@@ -157,7 +185,7 @@ describe("parseProgramRequirements — engineering 'Complete N of' → pick node
     );
     if (r.kind !== "engineering") throw new Error("expected engineering");
     expect(requiredCoursesIn(r.terms["1A"])).toEqual(["math115"]);
-    const groups = flattenChoiceGroups(r.terms["1A"]);
+    const groups = leafPickGroups(r.terms["1A"]);
     expect(groups).toEqual([
       {
         description: "Complete 1 of the following",
@@ -183,7 +211,7 @@ describe("parseProgramRequirements — engineering 'Complete N of' → pick node
     );
     if (r.kind !== "engineering") throw new Error("expected engineering");
     expect(requiredCoursesIn(r.terms["4A"])).toEqual([]);
-    expect(flattenChoiceGroups(r.terms["4A"])).toEqual([]);
+    expect(leafPickGroups(r.terms["4A"])).toEqual([]);
     expect(r.warnings).toEqual([]);
   });
 });
@@ -201,7 +229,7 @@ describe("parseProgramRequirements — flexible programs", () => {
     expect(required.length).toBeGreaterThanOrEqual(19);
     // Biology has a couple of "Complete 1 of" choices (intro physics,
     // communications) alongside its required core.
-    const groups = flattenChoiceGroups(r.rules);
+    const groups = leafPickGroups(r.rules);
     expect(groups.length).toBeGreaterThanOrEqual(1);
     for (const g of groups) {
       expect(g.selectMin).toBe(1);
@@ -234,7 +262,7 @@ describe("parseProgramRequirements — flexible programs", () => {
     expect(required).toContain("cs136l");
     expect(required).toContain("cs341");
     expect(required).toContain("cs350");
-    const groups = flattenChoiceGroups(r.rules);
+    const groups = leafPickGroups(r.rules);
     // Intro CS variant — CS115/CS135/CS145 — must come through as a pick.
     const intro = groups.find(
       (g) => g.options.includes("cs135") && g.options.includes("cs115"),
@@ -253,7 +281,7 @@ describe("parseProgramRequirements — flexible programs", () => {
     if (r.kind !== "flexible") throw new Error("expected flexible");
     expect(r.warnings).toEqual([]);
     // Should have many choice groups (the B.1, B.2, B.3 style suffixes).
-    expect(flattenChoiceGroups(r.rules).length).toBeGreaterThanOrEqual(3);
+    expect(leafPickGroups(r.rules).length).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -399,7 +427,7 @@ describe("'Complete no more than N' with N > 1", () => {
     if (node?.kind !== "pick") throw new Error("expected pick");
     expect(node.selectMax).toBe(3);
     expect(node.selectMin).toBeUndefined();
-    const groups = flattenChoiceGroups(r.rules);
+    const groups = leafPickGroups(r.rules);
     const group = groups.find((g) => g.selectMax === 3);
     expect(group?.options).toEqual(["cs100", "cs101", "cs102", "cs103"]);
     // ChoiceGroup carries the derived description even though the underlying

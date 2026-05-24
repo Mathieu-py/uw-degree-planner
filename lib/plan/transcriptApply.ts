@@ -13,8 +13,7 @@
  *     slot at the end of the sequence so they're visible, not silently lost.
  *
  * Skipped courses are always dropped. Unrecognized courses are included
- * only if their code is in `includedUnrecognized` (caller opt-in, same
- * convention as `buildImportPayload`).
+ * only if their code is in `includedUnrecognized` (caller opt-in).
  */
 
 import { termLabelToTermId } from "../terms";

@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   describeRule,
-  flattenChoiceGroups,
-  getChoiceGroupsByTerm,
   getExcludedCourses,
   getRequiredCourses,
   getSpecialization,
@@ -17,7 +15,16 @@ import {
   type RuleNode,
   requiredCoursesIn,
   TERM_LETTERS,
+  walkRule,
 } from "../programs";
+
+function hasAnyPick(node: RuleNode): boolean {
+  let found = false;
+  walkRule(node, (n) => {
+    if (n.kind === "pick") found = true;
+  });
+  return found;
+}
 
 describe("inferCompleted (engineering)", () => {
   it("returns [] for an unknown program", () => {
@@ -108,21 +115,19 @@ describe("programs.json schema integrity", () => {
     }
   });
 
-  it("every program has at least some captured data (required courses or choice groups)", () => {
-    // A program with empty required courses but populated choice groups is
+  it("every program has at least some captured data (required courses or pick nodes)", () => {
+    // A program with empty required courses but populated pick nodes is
     // still valid — see e.g. 3g-mathematics, which is entirely choice-driven.
     // The scraper drops only programs that yield neither.
     for (const [id, prog] of Object.entries(PROGRAMS)) {
       const hasRequired = getRequiredCourses(prog).length > 0;
       const hasChoices =
         prog.kind === "engineering"
-          ? Object.values(getChoiceGroupsByTerm(prog) ?? {}).some(
-              (arr) => arr.length > 0,
-            )
-          : flattenChoiceGroups(prog.rules).length > 0;
+          ? TERM_LETTERS.some((t) => hasAnyPick(prog.terms[t]))
+          : hasAnyPick(prog.rules);
       expect(
         hasRequired || hasChoices,
-        `${id} should have required courses or choice groups`,
+        `${id} should have required courses or pick nodes`,
       ).toBe(true);
     }
   });
@@ -323,85 +328,6 @@ describe("requiredCoursesIn — functionally-mandatory pick promotion", () => {
       children: [{ kind: "courses", courses: ["cs100"] }],
     };
     expect(requiredCoursesIn(node)).toEqual([]);
-  });
-});
-
-describe("flattenChoiceGroups — selectMin/selectMax preservation", () => {
-  it("preserves selectMax-only picks ('Complete no more than N')", () => {
-    const groups = flattenChoiceGroups({
-      kind: "pick",
-      description: "Complete no more than 2",
-      selectMax: 2,
-      children: [{ kind: "courses", courses: ["cs100", "cs101", "cs102"] }],
-    });
-    expect(groups).toEqual([
-      {
-        description: "Complete no more than 2",
-        selectMax: 2,
-        options: ["cs100", "cs101", "cs102"],
-      },
-    ]);
-  });
-
-  it("preserves both-undefined picks ('Choose any')", () => {
-    const groups = flattenChoiceGroups({
-      kind: "pick",
-      description: "Choose any",
-      children: [{ kind: "courses", courses: ["cs100", "cs101"] }],
-    });
-    expect(groups).toEqual([
-      { description: "Choose any", options: ["cs100", "cs101"] },
-    ]);
-    expect(groups[0].selectMin).toBeUndefined();
-    expect(groups[0].selectMax).toBeUndefined();
-  });
-
-  it("preserves selectMin=selectMax=N picks ('Complete N of')", () => {
-    const groups = flattenChoiceGroups({
-      kind: "pick",
-      description: "Complete 2 of the following",
-      selectMin: 2,
-      selectMax: 2,
-      children: [{ kind: "courses", courses: ["cs100", "cs101", "cs102"] }],
-    });
-    expect(groups[0].selectMin).toBe(2);
-    expect(groups[0].selectMax).toBe(2);
-  });
-
-  // Documenting test: when a `pick` has mixed children (some `courses`,
-  // some nested non-`courses`), the legacy ChoiceGroup view *cannot*
-  // represent the parent's bound across the heterogeneous children. The
-  // implementation recurses into each child; nested `pick`s flatten
-  // normally, but `courses` siblings have no parent group to attach to
-  // and are silently dropped from the flat view. RuleNode-aware consumers
-  // (variant-picker modal) see the full structure; ChoiceGroup-only
-  // consumers do not.
-  it("silently drops `courses` siblings when a pick has mixed children", () => {
-    const groups = flattenChoiceGroups({
-      kind: "pick",
-      description: "Complete 2 of the following",
-      selectMin: 2,
-      selectMax: 2,
-      children: [
-        { kind: "courses", courses: ["orphan100"] },
-        {
-          kind: "pick",
-          description: "nested",
-          selectMin: 1,
-          selectMax: 1,
-          children: [{ kind: "courses", courses: ["nested100", "nested101"] }],
-        },
-      ],
-    });
-    expect(groups).toEqual([
-      {
-        description: "nested",
-        selectMin: 1,
-        selectMax: 1,
-        options: ["nested100", "nested101"],
-      },
-    ]);
-    expect(groups.some((g) => g.options.includes("orphan100"))).toBe(false);
   });
 });
 

@@ -5,11 +5,7 @@ import type {
   TranscriptParseResult,
 } from "./types";
 
-export type {
-  CourseStatus,
-  ParsedCourse,
-  TranscriptParseResult,
-} from "./types";
+export type { ParsedCourse, TranscriptParseResult } from "./types";
 
 const TERM_HEADER_RE = /^(Fall|Winter|Spring)\s+(\d{4})\s*$/i;
 const TRANSFER_HEADER_RE = /^Transfer\s+Credit\s*$/i;

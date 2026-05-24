@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { enrichCourse } from "../filters";
-import {
-  compareCourses,
-  DEFAULT_SORT_DIR,
-  DEFAULT_SORT_KEY,
-  parsePage,
-  parseSortDir,
-  parseSortKey,
-} from "../sort";
+import { compareCourses } from "../sort";
 import type { Course, UWFlowCourse, UWFlowRating } from "../types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
@@ -70,50 +63,5 @@ describe("compareCourses", () => {
       sections: [{ id: 2, enrollment_total: 30, enrollment_capacity: 30 }],
     });
     expect(compareCourses(open, full, "seats", "desc")).toBeLessThan(0);
-  });
-});
-
-describe("parseSortKey", () => {
-  it("returns the default when value is missing or unknown", () => {
-    expect(parseSortKey(undefined)).toBe(DEFAULT_SORT_KEY);
-    expect(parseSortKey("bogus")).toBe(DEFAULT_SORT_KEY);
-  });
-  it("accepts a known key", () => {
-    expect(parseSortKey("easy")).toBe("easy");
-    expect(parseSortKey("seats")).toBe("seats");
-  });
-  it("takes the first element of an array param", () => {
-    expect(parseSortKey(["liked", "useful"])).toBe("liked");
-  });
-});
-
-describe("parseSortDir", () => {
-  it("defaults to desc", () => {
-    expect(parseSortDir(undefined)).toBe(DEFAULT_SORT_DIR);
-    expect(parseSortDir("garbage")).toBe("desc");
-  });
-  it("returns 'asc' when explicitly set", () => {
-    expect(parseSortDir("asc")).toBe("asc");
-    expect(parseSortDir(["asc"])).toBe("asc");
-  });
-});
-
-describe("parsePage", () => {
-  it("defaults to 1 when missing or invalid", () => {
-    expect(parsePage(undefined)).toBe(1);
-    expect(parsePage("")).toBe(1);
-    expect(parsePage("abc")).toBe(1);
-    expect(parsePage("0")).toBe(1);
-    expect(parsePage("-3")).toBe(1);
-    expect(parsePage("2.5")).toBe(1);
-    expect(parsePage("10abc")).toBe(1);
-    expect(parsePage("1e3")).toBe(1);
-  });
-  it("returns the parsed positive integer", () => {
-    expect(parsePage("5")).toBe(5);
-    expect(parsePage("42")).toBe(42);
-  });
-  it("takes the first element of an array param", () => {
-    expect(parsePage(["7", "9"])).toBe(7);
   });
 });

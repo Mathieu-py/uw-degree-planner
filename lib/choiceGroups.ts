@@ -3,7 +3,7 @@
  *
  * Each pickable `pick` node (one whose children are all `kind: "courses"`
  * leaves AND that isn't functionally mandatory) gets a canonical AST path
- * the variant-picker modal uses to key `StudentPassage.choiceGroupSelections`.
+ * the variant-picker modal uses to key the student's selections.
  *
  * Path scheme:
  *  - Engineering: `<term>.<idx>.<idx>...` — term letter (`"1A".."4B"`) followed by

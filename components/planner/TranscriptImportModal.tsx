@@ -2,31 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
-import {
-  buildImportPayload,
-  type Categorized,
-  categorize,
-  type TranscriptImportPayload,
-} from "@/lib/transcript/applyHelpers";
+import { type Categorized, categorize } from "@/lib/transcript/applyHelpers";
 import { type ParsedCourse, parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 
-export type { TranscriptImportPayload } from "@/lib/transcript/applyHelpers";
-
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  /**
-   * Lossy payload for `StudentPassage`-shaped consumers (legacy /browse).
-   * Optional — supply this OR `onApplyPlan`.
-   */
-  onApply?: (payload: TranscriptImportPayload) => void;
-  /**
-   * Richer callback for the planner — gets per-course term info needed to
-   * build a `LocalPlan` with slots. Optional — supply this OR `onApply`.
-   */
-  onApplyPlan?: (
+  /** Hands the parsed transcript to the planner to build a `LocalPlan`. */
+  onApplyPlan: (
     parseResult: TranscriptParseResult,
     includedUnrecognized: ReadonlySet<string>,
   ) => void;
@@ -37,7 +22,6 @@ interface Props {
 export function TranscriptImportModal({
   isOpen,
   onClose,
-  onApply,
   onApplyPlan,
   allCourseCodes,
   currentCompletedCount,
@@ -145,12 +129,7 @@ export function TranscriptImportModal({
   }
 
   function handleApply() {
-    if (onApply) {
-      onApply(buildImportPayload(parseResult, categorized, included));
-    }
-    if (onApplyPlan) {
-      onApplyPlan(parseResult, included);
-    }
+    onApplyPlan(parseResult, included);
     setText("");
     setFileName(null);
     setExtractError(null);

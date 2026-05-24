@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildImportPayload,
-  type Categorized,
-  categorize,
-} from "../transcript/applyHelpers";
+import { type Categorized, categorize } from "../transcript/applyHelpers";
 import type { ParsedCourse, TranscriptParseResult } from "../transcript/types";
 
 function course(
@@ -75,93 +71,5 @@ describe("categorize", () => {
       unrecognized: [],
     };
     expect(out).toEqual(expected);
-  });
-});
-
-describe("buildImportPayload", () => {
-  it("includes passed + in-progress + transfer codes; omits skipped", () => {
-    const c: Categorized = {
-      passed: [course("cs135", "passed")],
-      inProgress: [course("cs136", "inProgress")],
-      transfer: [course("math137", "transfer")],
-      skipped: [course("cs999", "skipped")],
-      unrecognized: [],
-    };
-    const payload = buildImportPayload(result([]), c, new Set());
-    expect(payload.codes).toEqual(["cs135", "cs136", "math137"]);
-  });
-
-  it("omits unrecognized codes that are not in includedUnrecognized", () => {
-    const c: Categorized = {
-      passed: [course("cs135", "passed")],
-      inProgress: [],
-      transfer: [],
-      skipped: [],
-      unrecognized: [course("zzz999", "unrecognized")],
-    };
-    const payload = buildImportPayload(result([]), c, new Set());
-    expect(payload.codes).toEqual(["cs135"]);
-  });
-
-  it("includes unrecognized codes that ARE in includedUnrecognized", () => {
-    const c: Categorized = {
-      passed: [course("cs135", "passed")],
-      inProgress: [],
-      transfer: [],
-      skipped: [],
-      unrecognized: [
-        course("zzz999", "unrecognized"),
-        course("yyy888", "unrecognized"),
-      ],
-    };
-    const payload = buildImportPayload(result([]), c, new Set(["zzz999"]));
-    expect(payload.codes).toEqual(["cs135", "zzz999"]);
-  });
-
-  it("returns codes sorted and deduped", () => {
-    const c: Categorized = {
-      passed: [course("math137", "passed"), course("cs135", "passed")],
-      inProgress: [course("cs135", "inProgress")], // dup of passed
-      transfer: [course("math137", "transfer")], // dup of passed
-      skipped: [],
-      unrecognized: [],
-    };
-    const payload = buildImportPayload(result([]), c, new Set());
-    expect(payload.codes).toEqual(["cs135", "math137"]);
-  });
-
-  it("forwards detectedProgramId and detectedCurrentTerm from the parse result", () => {
-    const r = result([], {
-      detectedProgramId: "systems-design-engineering",
-      detectedCurrentTerm: "3A",
-    });
-    const empty: Categorized = {
-      passed: [],
-      inProgress: [],
-      transfer: [],
-      skipped: [],
-      unrecognized: [],
-    };
-    const payload = buildImportPayload(r, empty, new Set());
-    expect(payload.programId).toBe("systems-design-engineering");
-    expect(payload.currentTerm).toBe("3A");
-  });
-
-  it("forwards specialization and systemOfStudy from the parse result", () => {
-    const r = result([], {
-      detectedProgramId: "3g-english-literature-and-rhetoric",
-      detectedSpecializationSlug: "engl-communication-design",
-      detectedSystemOfStudy: "coop",
-    });
-    const empty: Categorized = {
-      passed: [],
-      inProgress: [],
-      transfer: [],
-      skipped: [],
-      unrecognized: [],
-    };
-    const payload = buildImportPayload(r, empty, new Set());
-    expect(payload.specializationId).toBe("engl-communication-design");
-    expect(payload.systemOfStudy).toBe("coop");
   });
 });

@@ -1,9 +1,5 @@
 /**
- * Sort state for the browse table. Kept out of PureFilters / StudentPassage
- * because it's presentation, not filtering, but encoded into the same URL
- * alongside them.
- *
- * URL keys:  s = sort column, d = direction.
+ * Sort state and comparator for course tables.
  */
 
 import { seatsAvailable } from "./filters";
@@ -19,21 +15,8 @@ export type SortKey =
   | "seats";
 export type SortDir = "asc" | "desc";
 
-const SORT_KEYS: ReadonlySet<SortKey> = new Set([
-  "code",
-  "name",
-  "useful",
-  "easy",
-  "liked",
-  "reviews",
-  "seats",
-]);
-
 export const DEFAULT_SORT_KEY: SortKey = "useful";
 export const DEFAULT_SORT_DIR: SortDir = "desc";
-
-export const PAGE_SIZE = 50;
-export const DEFAULT_PAGE = 1;
 
 const NUMERIC: Record<
   Exclude<SortKey, "code" | "name">,
@@ -70,21 +53,4 @@ export function compareCourses(
       return _exhaustive;
     }
   }
-}
-
-export function parseSortKey(raw: string | string[] | undefined): SortKey {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v && SORT_KEYS.has(v as SortKey) ? (v as SortKey) : DEFAULT_SORT_KEY;
-}
-
-export function parseSortDir(raw: string | string[] | undefined): SortDir {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v === "asc" ? "asc" : "desc";
-}
-
-export function parsePage(raw: string | string[] | undefined): number {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  if (!v || !/^\d+$/.test(v)) return DEFAULT_PAGE;
-  const n = parseInt(v, 10);
-  return n >= 1 ? n : DEFAULT_PAGE;
 }

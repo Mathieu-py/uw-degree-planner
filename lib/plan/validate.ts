@@ -28,7 +28,7 @@ import type { Course } from "../types";
 import { completedSetFromPlan } from "./derive";
 import type { LocalPlan } from "./types";
 
-export type ValidationKind = "prereq" | "antireq" | "coreq" | "overload";
+type ValidationKind = "prereq" | "antireq" | "coreq" | "overload";
 
 export interface ValidationIssue {
   slotId: string;

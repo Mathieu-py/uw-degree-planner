@@ -24,7 +24,6 @@ import type {
   TermLetter,
 } from "../programs";
 import { describeRule, getSpecialization, TERM_LETTERS } from "../programs";
-import type { TermId } from "../types";
 import type { Placement, PlacementMap } from "./placement";
 import { buildPlacementMap } from "./placement";
 
@@ -324,5 +323,3 @@ export function summarize(node: AuditNode): {
       return { needed: 0, satisfied: 0 };
   }
 }
-
-export type { TermId };

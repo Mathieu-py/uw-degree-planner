@@ -16,9 +16,6 @@ export type TermLetter = (typeof TERM_LETTERS)[number];
 /**
  * Recursive AST for program requirements. Mirrors the pattern in
  * `lib/prereqs/parse.ts` — discriminated union, walkable via `walkRule`.
- *
- * Tree-of-rules is the authoritative shape; `ChoiceGroup` is derived for
- * legacy consumers that haven't migrated yet.
  */
 export type RuleNode =
   | { kind: "all"; description?: string; children: RuleNode[] }
@@ -52,14 +49,6 @@ export type RuleNode =
 
 export type SubjectPoolNode = Extract<RuleNode, { kind: "subjectPool" }>;
 
-/** Derived view for consumers that pre-date the rule tree. */
-export interface ChoiceGroup {
-  description?: string;
-  selectMin?: number;
-  selectMax?: number;
-  options: string[];
-}
-
 export interface ElectiveCategory {
   description: string;
   unitRequirement?: number;
@@ -75,7 +64,7 @@ export interface Specialization {
   electives?: ElectiveCategory[];
 }
 
-export interface EngineeringProgram {
+interface EngineeringProgram {
   kind: "engineering";
   name: string;
   asOf: string;
@@ -85,7 +74,7 @@ export interface EngineeringProgram {
   specializations?: Specialization[];
 }
 
-export interface FlexibleProgram {
+interface FlexibleProgram {
   kind: "flexible";
   name: string;
   asOf: string;
@@ -324,70 +313,6 @@ export function inferCompleted(
     }
   }
   return [...out].sort();
-}
-
-/**
- * Flatten every `pick` node in the tree whose direct children are all
- * `courses` leaves into a legacy `ChoiceGroup`. Nested `pick`-of-`pick`
- * (parent-quota constraints) is NOT representable in the flat shape; the
- * inner picks still surface as their own ChoiceGroups. Order: tree-walk
- * order (DFS pre-order), stable across runs.
- */
-function flattenChoiceGroupsIn(node: RuleNode, out: ChoiceGroup[]): void {
-  if (node.kind === "pick") {
-    const leafCourses = node.children
-      .filter((c) => c.kind === "courses")
-      .flatMap((c) => (c.kind === "courses" ? c.courses : []));
-    if (
-      leafCourses.length > 0 &&
-      node.children.every((c) => c.kind === "courses")
-    ) {
-      const description = describeRule(node);
-      const group: ChoiceGroup = {
-        ...(description !== undefined ? { description } : {}),
-        ...(node.selectMin !== undefined ? { selectMin: node.selectMin } : {}),
-        ...(node.selectMax !== undefined ? { selectMax: node.selectMax } : {}),
-        options: [...new Set(leafCourses)].sort(),
-      };
-      out.push(group);
-      return;
-    }
-    for (const c of node.children) flattenChoiceGroupsIn(c, out);
-    return;
-  }
-  if (node.kind === "all") {
-    for (const c of node.children) flattenChoiceGroupsIn(c, out);
-  }
-}
-
-export function getChoiceGroups(program: Program): ChoiceGroup[] {
-  const out: ChoiceGroup[] = [];
-  if (program.kind === "engineering") {
-    for (const t of TERM_LETTERS) flattenChoiceGroupsIn(program.terms[t], out);
-  } else {
-    flattenChoiceGroupsIn(program.rules, out);
-  }
-  return out;
-}
-
-/** Choice groups inside a single rule tree. */
-export function flattenChoiceGroups(node: RuleNode): ChoiceGroup[] {
-  const out: ChoiceGroup[] = [];
-  flattenChoiceGroupsIn(node, out);
-  return out;
-}
-
-export function getChoiceGroupsByTerm(
-  program: Program,
-): Record<TermLetter, ChoiceGroup[]> | null {
-  if (program.kind !== "engineering") return null;
-  return Object.fromEntries(
-    TERM_LETTERS.map((t) => {
-      const groups: ChoiceGroup[] = [];
-      flattenChoiceGroupsIn(program.terms[t], groups);
-      return [t, groups];
-    }),
-  ) as Record<TermLetter, ChoiceGroup[]>;
 }
 
 export function getSubjectPools(program: Program): SubjectPoolNode[] {

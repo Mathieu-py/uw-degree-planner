@@ -1,4 +1,3 @@
-import type { TermLetter } from "../programs";
 import type { ParsedCourse, TranscriptParseResult } from "./types";
 
 export interface Categorized {
@@ -7,14 +6,6 @@ export interface Categorized {
   transfer: ParsedCourse[];
   skipped: ParsedCourse[];
   unrecognized: ParsedCourse[];
-}
-
-export interface TranscriptImportPayload {
-  codes: string[];
-  programId: string | null;
-  currentTerm: TermLetter | null;
-  specializationId: string | null;
-  systemOfStudy: "coop" | "regular" | null;
 }
 
 /**
@@ -47,31 +38,4 @@ export function categorize(
     else if (c.status === "transfer") out.transfer.push(c);
   }
   return out;
-}
-
-/**
- * Compose the apply payload. Skipped courses are always excluded.
- * Unrecognized codes are included only if they appear in
- * `includedUnrecognized` — that Set is the user's explicit opt-in.
- */
-export function buildImportPayload(
-  parseResult: TranscriptParseResult,
-  categorized: Categorized,
-  includedUnrecognized: ReadonlySet<string>,
-): TranscriptImportPayload {
-  const codes = new Set<string>([
-    ...categorized.passed.map((c) => c.code),
-    ...categorized.inProgress.map((c) => c.code),
-    ...categorized.transfer.map((c) => c.code),
-    ...categorized.unrecognized
-      .filter((c) => includedUnrecognized.has(c.code))
-      .map((c) => c.code),
-  ]);
-  return {
-    codes: [...codes].sort(),
-    programId: parseResult.detectedProgramId,
-    currentTerm: parseResult.detectedCurrentTerm,
-    specializationId: parseResult.detectedSpecializationSlug,
-    systemOfStudy: parseResult.detectedSystemOfStudy,
-  };
 }

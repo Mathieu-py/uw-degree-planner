@@ -5,7 +5,7 @@ import { completedSetFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { clearPlan, emptyPlan, loadPlan, savePlan } from "@/lib/plan/storage";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
-import type { LocalPlan, PlanSlot, Stream } from "@/lib/plan/types";
+import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { termInfo } from "@/lib/terms";
@@ -359,5 +359,3 @@ function planSubtitle(plan: LocalPlan): string {
     : "no start term";
   return `${stream} · ${start} · ${plan.slots.length} slots`;
 }
-
-export type { PlanSlot };
