@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { enumerateChoiceGroups } from "@/lib/choiceGroups";
 import {
-  baselineForPassage,
-  clearCompletedFromTranscriptFlag,
-  isCompletedFromTranscript,
-  markCompletedFromTranscript,
+  loadExtras,
   rebaseCompletedCourses,
+  saveExtras,
+  savePrimarySource,
 } from "@/lib/completedCourses";
 import {
   DEFAULT_STUDENT_PASSAGE,
@@ -28,6 +28,7 @@ import {
   type TranscriptImportPayload,
 } from "./filter/TranscriptImportModal";
 import { useFilterCommit } from "./filter/useFilterCommit";
+import { VariantPickerModal } from "./filter/VariantPickerModal";
 
 interface Props {
   passage: StudentPassage;
@@ -51,6 +52,7 @@ export function StudentPassagePanel({
 }: Props) {
   const commitPassage = useFilterCommit(mergeStudentPassageIntoParams);
   const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
+  const [variantModalOpen, setVariantModalOpen] = useState(false);
 
   // URL is source of truth for prog/term (router.replace is async; the prop
   // can lag in a transition). The live URL is decoded for those fields;
@@ -64,37 +66,38 @@ export function StudentPassagePanel({
         : passage;
     const next = { ...live, ...delta };
 
-    if (
+    const baselineChanged =
       delta.programId !== undefined ||
       delta.currentTerm !== undefined ||
-      delta.specializationId !== undefined
-    ) {
-      if (isCompletedFromTranscript()) {
-        // Explicit re-seed after transcript import: replace, don't preserve
-        // extras. The transcript was the source of truth until now; re-seeding
-        // signals the user wants the new program's baseline as a clean start.
-        // See issue #47.
-        onCompletedChange(
-          baselineForPassage(
-            next.programId,
-            next.currentTerm,
-            next.specializationId,
-          ),
-        );
-        clearCompletedFromTranscriptFlag();
-      } else {
-        onCompletedChange(
-          rebaseCompletedCourses(
-            { ...live, completedCourses },
-            next.programId,
-            next.currentTerm,
-            next.specializationId,
-          ),
-        );
-      }
+      delta.specializationId !== undefined ||
+      delta.choiceGroupSelections !== undefined;
+
+    if (baselineChanged) {
+      onCompletedChange(rebaseCompletedCourses(loadExtras(), next));
+      savePrimarySource("baseline");
     }
 
     commitPassage(next);
+  }
+
+  // Manual gesture (CompletedCoursesInput): diff against the current list to
+  // detect adds/removes, then keep the extras layer in sync. Adds become
+  // extras; removes from extras shrink it; removes of primary-layer courses
+  // (not in extras) leave extras alone — the removal is "local to current
+  // seed" and will be undone by the next re-seed if the new baseline still
+  // contains the course.
+  function handleManualCompletedChange(nextList: string[]) {
+    const prev = new Set(completedCourses);
+    const nextSet = new Set(nextList);
+    const added = nextList.filter((c) => !prev.has(c));
+    const removed = completedCourses.filter((c) => !nextSet.has(c));
+    if (added.length > 0 || removed.length > 0) {
+      const extrasSet = new Set(loadExtras());
+      for (const c of added) extrasSet.add(c);
+      for (const c of removed) extrasSet.delete(c);
+      saveExtras([...extrasSet]);
+    }
+    onCompletedChange(nextList);
   }
 
   // Explicit "wipe everything" path. Goes direct rather than through
@@ -103,19 +106,27 @@ export function StudentPassagePanel({
   // we don't want here.
   function clearPassage() {
     onCompletedChange([]);
+    saveExtras([]);
+    savePrimarySource(null);
     commitPassage(DEFAULT_STUDENT_PASSAGE);
-    clearCompletedFromTranscriptFlag();
   }
 
   // Transcript IS the source of truth — skip the prog/term rebase that
   // patchPassage would do. Replace passage in URL and completedCourses in
-  // localStorage with the payload, then close the modal.
+  // localStorage with the payload, then close the modal. Extras layer is
+  // reset; primarySource flips to 'transcript'.
   function handleTranscriptApply(payload: TranscriptImportPayload) {
     const next = applyTranscriptToStudentPassage(payload);
     commitPassage(next);
     onCompletedChange(payload.codes);
-    markCompletedFromTranscript();
+    saveExtras([]);
+    savePrimarySource("transcript");
     setTranscriptModalOpen(false);
+  }
+
+  function handleVariantApply(next: Record<string, string[]>) {
+    patchPassage({ choiceGroupSelections: next });
+    setVariantModalOpen(false);
   }
 
   const selectedProgram = passage.programId
@@ -123,6 +134,10 @@ export function StudentPassagePanel({
     : null;
   const isFlexible = selectedProgram?.kind === "flexible";
   const term = isTermLetter(passage.currentTerm) ? passage.currentTerm : null;
+  const variantCount = useMemo(
+    () => (selectedProgram ? enumerateChoiceGroups(selectedProgram).length : 0),
+    [selectedProgram],
+  );
   const hasPassageState =
     passage.programId !== null ||
     passage.currentTerm !== null ||
@@ -143,12 +158,14 @@ export function StudentPassagePanel({
                 const next = id ? PROGRAMS[id] : null;
                 // Flexible programs have no term schedule; clear any stale term
                 // so the URL state doesn't carry a value the UI no longer shows.
-                // Specialization belongs to a specific program, so it's cleared
-                // on every program change — the new program's specs won't match
-                // the old slug.
+                // Specialization and choice-group picks belong to a specific
+                // program (spec slug + AST path keys); both are cleared on every
+                // program change — the new program's tree won't match the old
+                // selections.
                 patchPassage({
                   programId: id,
                   specializationId: null,
+                  choiceGroupSelections: {},
                   ...(next?.kind === "flexible" ? { currentTerm: null } : {}),
                 });
               }}
@@ -196,6 +213,21 @@ export function StudentPassagePanel({
                 : `Sourced from UW calendar (as of ${selectedProgram.asOf}).`}
             </p>
           )}
+
+          {selectedProgram &&
+            (variantCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => setVariantModalOpen(true)}
+                className="self-start rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
+              >
+                Pick course variants ({variantCount})
+              </button>
+            ) : (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                No course variants to pick.
+              </p>
+            ))}
         </div>
       </Section>
 
@@ -203,7 +235,7 @@ export function StudentPassagePanel({
         <CompletedCoursesInput
           value={completedCourses}
           allCourseCodes={allCourseCodes}
-          onChange={onCompletedChange}
+          onChange={handleManualCompletedChange}
         />
         <button
           type="button"
@@ -230,6 +262,16 @@ export function StudentPassagePanel({
         allCourseCodes={allCourseCodes}
         currentCompletedCount={completedCourses.length}
       />
+
+      {selectedProgram && (
+        <VariantPickerModal
+          isOpen={variantModalOpen}
+          onClose={() => setVariantModalOpen(false)}
+          onApply={handleVariantApply}
+          program={selectedProgram}
+          initialSelections={passage.choiceGroupSelections}
+        />
+      )}
     </>
   );
 }

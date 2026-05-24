@@ -1,22 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { StudentPassage } from "../types";
 
 const storage = vi.hoisted(() => ({
   store: new Map<string, string>(),
 }));
-
-const BASE_PASSAGE: StudentPassage = {
-  programId: null,
-  currentTerm: null,
-  completedCourses: [],
-  specializationId: null,
-  choiceGroupSelections: {},
-  systemOfStudy: null,
-};
-
-function passage(p: Partial<StudentPassage>): StudentPassage {
-  return { ...BASE_PASSAGE, ...p };
-}
 
 vi.mock("../storage", () => ({
   safeGetItem: (key: string) => storage.store.get(key) ?? null,
@@ -28,7 +14,10 @@ vi.mock("../storage", () => ({
   },
 }));
 
-const KEY = "uwfinder.completedCourses";
+const COMPLETED_KEY = "uwfinder.completedCourses";
+const EXTRAS_KEY = "uwfinder.completedCoursesExtras";
+const PRIMARY_SOURCE_KEY = "uwfinder.completedCoursesPrimarySource";
+const LEGACY_FLAG_KEY = "uwfinder.completedCoursesFromTranscript";
 
 beforeEach(() => {
   storage.store.clear();
@@ -41,34 +30,34 @@ describe("loadCompletedCourses", () => {
   });
 
   it("parses a JSON array of course codes", async () => {
-    storage.store.set(KEY, JSON.stringify(["cs115", "math116"]));
+    storage.store.set(COMPLETED_KEY, JSON.stringify(["cs115", "math116"]));
     const { loadCompletedCourses } = await import("../completedCourses");
     expect(loadCompletedCourses()).toEqual(["cs115", "math116"]);
   });
 
   it("lowercases stored codes", async () => {
-    storage.store.set(KEY, JSON.stringify(["CS115", "Math116"]));
+    storage.store.set(COMPLETED_KEY, JSON.stringify(["CS115", "Math116"]));
     const { loadCompletedCourses } = await import("../completedCourses");
     expect(loadCompletedCourses()).toEqual(["cs115", "math116"]);
   });
 
   it("returns [] and clears the key on malformed JSON", async () => {
-    storage.store.set(KEY, "not-json{");
+    storage.store.set(COMPLETED_KEY, "not-json{");
     const { loadCompletedCourses } = await import("../completedCourses");
     expect(loadCompletedCourses()).toEqual([]);
-    expect(storage.store.has(KEY)).toBe(false);
+    expect(storage.store.has(COMPLETED_KEY)).toBe(false);
   });
 
   it("returns [] and clears the key when stored value is not an array", async () => {
-    storage.store.set(KEY, JSON.stringify({ codes: ["cs115"] }));
+    storage.store.set(COMPLETED_KEY, JSON.stringify({ codes: ["cs115"] }));
     const { loadCompletedCourses } = await import("../completedCourses");
     expect(loadCompletedCourses()).toEqual([]);
-    expect(storage.store.has(KEY)).toBe(false);
+    expect(storage.store.has(COMPLETED_KEY)).toBe(false);
   });
 
   it("filters out non-string items", async () => {
     storage.store.set(
-      KEY,
+      COMPLETED_KEY,
       JSON.stringify(["cs115", 42, null, "math116", true]),
     );
     const { loadCompletedCourses } = await import("../completedCourses");
@@ -76,224 +65,13 @@ describe("loadCompletedCourses", () => {
   });
 });
 
-describe("rebaseCompletedCourses", () => {
-  it("returns the new baseline on a first seed (null/null → syde/3A)", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted } = await import("../programs");
-    const rebased = rebaseCompletedCourses(
-      passage({}),
-      "systems-design-engineering",
-      "3A",
-      null,
-    );
-    expect(rebased).toEqual(inferCompleted("systems-design-engineering", "3A"));
-  });
-
-  it("returns the new baseline when prog stays the same but term advances", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted } = await import("../programs");
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: "systems-design-engineering",
-        currentTerm: "3A",
-        completedCourses: inferCompleted("systems-design-engineering", "3A"),
-      }),
-      "systems-design-engineering",
-      "3B",
-      null,
-    );
-    expect(rebased).toEqual(inferCompleted("systems-design-engineering", "3B"));
-  });
-
-  it("preserves extras the user added beyond the old baseline", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted } = await import("../programs");
-    const oldList = [
-      ...inferCompleted("systems-design-engineering", "3A"),
-      "econ101",
-    ].sort();
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: "systems-design-engineering",
-        currentTerm: "3A",
-        completedCourses: oldList,
-      }),
-      "systems-design-engineering",
-      "3B",
-      null,
-    );
-    expect(rebased).toContain("econ101");
-    for (const c of inferCompleted("systems-design-engineering", "3B")) {
-      expect(rebased).toContain(c);
-    }
-  });
-
-  it("preserves removals: a baseline course the user cleared stays cleared after rebase", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted } = await import("../programs");
-    const syde3A = inferCompleted("systems-design-engineering", "3A");
-    const syde3B = inferCompleted("systems-design-engineering", "3B");
-    const removed = syde3A[0];
-    expect(syde3B).toContain(removed);
-
-    const oldList = syde3A.filter((c) => c !== removed);
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: "systems-design-engineering",
-        currentTerm: "3A",
-        completedCourses: oldList,
-      }),
-      "systems-design-engineering",
-      "3B",
-      null,
-    );
-    expect(rebased).not.toContain(removed);
-  });
-
-  it("clearing prog/term drops baseline-derived courses but keeps manually-added extras", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted } = await import("../programs");
-    const oldList = [
-      ...inferCompleted("systems-design-engineering", "3A"),
-      "econ101",
-    ].sort();
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: "systems-design-engineering",
-        currentTerm: "3A",
-        completedCourses: oldList,
-      }),
-      null,
-      null,
-      null,
-    );
-    expect(rebased).toEqual(["econ101"]);
-  });
-
-  it("seeds full requiredCourses when switching to a flexible program with null term", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { PROGRAMS, getRequiredCourses } = await import("../programs");
-    const biology = PROGRAMS["h-biology"];
-    if (biology?.kind !== "flexible")
-      throw new Error("expected h-biology to be flexible after scrape");
-
-    const rebased = rebaseCompletedCourses(
-      passage({}),
-      "h-biology",
-      null,
-      null,
-    );
-    expect(rebased).toEqual(getRequiredCourses(biology));
-  });
-
-  it("preserves extras when rebasing between engineering and flexible programs", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted, PROGRAMS, getRequiredCourses } = await import(
-      "../programs"
-    );
-    const biology = PROGRAMS["h-biology"];
-    if (biology?.kind !== "flexible")
-      throw new Error("expected h-biology to be flexible after scrape");
-
-    const oldList = [
-      ...inferCompleted("systems-design-engineering", "2A"),
-      "extra101",
-    ];
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: "systems-design-engineering",
-        currentTerm: "2A",
-        completedCourses: oldList,
-      }),
-      "h-biology",
-      null,
-      null,
-    );
-    expect(rebased).toContain("extra101");
-    for (const c of getRequiredCourses(biology)) {
-      expect(rebased).toContain(c);
-    }
-  });
-
-  it("no-op rebase (same prog/term) returns the same effective list", async () => {
-    const { rebaseCompletedCourses } = await import("../completedCourses");
-    const { inferCompleted } = await import("../programs");
-    const list = [
-      ...inferCompleted("systems-design-engineering", "3A"),
-      "econ101",
-    ].sort();
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: "systems-design-engineering",
-        currentTerm: "3A",
-        completedCourses: list,
-      }),
-      "systems-design-engineering",
-      "3A",
-      null,
-    );
-    expect(rebased).toEqual(list);
-  });
-
-  it("adding a specialization unions in its required courses (parent stays the same)", async () => {
-    const { rebaseCompletedCourses, baselineForPassage } = await import(
-      "../completedCourses"
-    );
-    const parent = "3g-english-literature-and-rhetoric";
-    const spec = "engl-communication-design";
-
-    const parentOnly = baselineForPassage(parent, null, null);
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: parent,
-        currentTerm: null,
-        completedCourses: parentOnly,
-      }),
-      parent,
-      null,
-      spec,
-    );
-    const withSpec = baselineForPassage(parent, null, spec);
-    for (const c of withSpec) expect(rebased).toContain(c);
-  });
-
-  it("dropping a specialization removes its baseline-only courses (unless user added them as extras)", async () => {
-    const { rebaseCompletedCourses, baselineForPassage } = await import(
-      "../completedCourses"
-    );
-    const parent = "3g-english-literature-and-rhetoric";
-    const spec = "engl-communication-design";
-    const withSpec = baselineForPassage(parent, null, spec);
-    const parentOnly = baselineForPassage(parent, null, null);
-    const specExtras = withSpec.filter((c) => !parentOnly.includes(c));
-    // Fixture sanity: this test only proves anything if the spec contributes
-    // at least one required course the parent doesn't already require. If a
-    // future scrape drifts (e.g. the parent absorbs the spec's contributions
-    // or the spec's rule tree changes shape), the test must fail loudly
-    // rather than vacuously pass — pick a different fixture pair.
-    expect(specExtras.length).toBeGreaterThan(0);
-
-    const rebased = rebaseCompletedCourses(
-      passage({
-        programId: parent,
-        currentTerm: null,
-        completedCourses: withSpec,
-        specializationId: spec,
-      }),
-      parent,
-      null,
-      null,
-    );
-    for (const c of specExtras) expect(rebased).not.toContain(c);
-    for (const c of parentOnly) expect(rebased).toContain(c);
-  });
-});
-
 describe("saveCompletedCourses", () => {
   it("writes the list as a JSON array", async () => {
     const { saveCompletedCourses } = await import("../completedCourses");
     saveCompletedCourses(["cs115", "math116"]);
-    expect(storage.store.get(KEY)).toBe(JSON.stringify(["cs115", "math116"]));
+    expect(storage.store.get(COMPLETED_KEY)).toBe(
+      JSON.stringify(["cs115", "math116"]),
+    );
   });
 
   it("round-trips through load", async () => {
@@ -303,66 +81,304 @@ describe("saveCompletedCourses", () => {
     saveCompletedCourses(["cs115", "math116", "syde101"]);
     expect(loadCompletedCourses()).toEqual(["cs115", "math116", "syde101"]);
   });
+});
 
-  it("overwrites the previous value", async () => {
-    const { loadCompletedCourses, saveCompletedCourses } = await import(
-      "../completedCourses"
-    );
+describe("extras layer", () => {
+  it("loadExtras returns [] when nothing is stored", async () => {
+    const { loadExtras } = await import("../completedCourses");
+    expect(loadExtras()).toEqual([]);
+  });
+
+  it("saveExtras → loadExtras round-trip", async () => {
+    const { loadExtras, saveExtras } = await import("../completedCourses");
+    saveExtras(["econ101", "phil202"]);
+    expect(loadExtras()).toEqual(["econ101", "phil202"]);
+  });
+
+  it("loadExtras is defensive against malformed JSON", async () => {
+    storage.store.set(EXTRAS_KEY, "garbage{");
+    const { loadExtras } = await import("../completedCourses");
+    expect(loadExtras()).toEqual([]);
+    expect(storage.store.has(EXTRAS_KEY)).toBe(false);
+  });
+
+  it("loadExtras lowercases stored codes", async () => {
+    storage.store.set(EXTRAS_KEY, JSON.stringify(["ECON101", "Phil202"]));
+    const { loadExtras } = await import("../completedCourses");
+    expect(loadExtras()).toEqual(["econ101", "phil202"]);
+  });
+
+  it("extras storage is independent of completedCourses storage", async () => {
+    const { loadCompletedCourses, loadExtras, saveCompletedCourses, saveExtras } =
+      await import("../completedCourses");
     saveCompletedCourses(["cs115"]);
-    saveCompletedCourses(["math116"]);
-    expect(loadCompletedCourses()).toEqual(["math116"]);
+    saveExtras(["econ101"]);
+    expect(loadCompletedCourses()).toEqual(["cs115"]);
+    expect(loadExtras()).toEqual(["econ101"]);
   });
 });
 
-describe("transcript flag", () => {
-  const FLAG_KEY = "uwfinder.completedCoursesFromTranscript";
-
-  it("isCompletedFromTranscript returns false on a fresh store", async () => {
-    const { isCompletedFromTranscript } = await import("../completedCourses");
-    expect(isCompletedFromTranscript()).toBe(false);
+describe("primarySource", () => {
+  it("returns null on a fresh store", async () => {
+    const { loadPrimarySource } = await import("../completedCourses");
+    expect(loadPrimarySource()).toBeNull();
   });
 
-  it("mark → is → clear round-trip", async () => {
-    const {
-      clearCompletedFromTranscriptFlag,
-      isCompletedFromTranscript,
-      markCompletedFromTranscript,
-    } = await import("../completedCourses");
-    markCompletedFromTranscript();
-    expect(isCompletedFromTranscript()).toBe(true);
-    expect(storage.store.get(FLAG_KEY)).toBe("1");
-    clearCompletedFromTranscriptFlag();
-    expect(isCompletedFromTranscript()).toBe(false);
-    expect(storage.store.has(FLAG_KEY)).toBe(false);
+  it("save → load round-trip for 'transcript'", async () => {
+    const { loadPrimarySource, savePrimarySource } = await import(
+      "../completedCourses"
+    );
+    savePrimarySource("transcript");
+    expect(loadPrimarySource()).toBe("transcript");
+    expect(storage.store.get(PRIMARY_SOURCE_KEY)).toBe("transcript");
   });
 
-  it("is independent of the completedCourses list", async () => {
-    const {
-      clearCompletedFromTranscriptFlag,
-      isCompletedFromTranscript,
-      loadCompletedCourses,
-      markCompletedFromTranscript,
-      saveCompletedCourses,
-    } = await import("../completedCourses");
-
-    // Setting the flag does not touch the courses list.
-    markCompletedFromTranscript();
-    expect(loadCompletedCourses()).toEqual([]);
-
-    // Saving courses does not touch the flag.
-    saveCompletedCourses(["cs115"]);
-    expect(isCompletedFromTranscript()).toBe(true);
-
-    // Clearing the flag does not touch the courses list.
-    clearCompletedFromTranscriptFlag();
-    expect(loadCompletedCourses()).toEqual(["cs115"]);
+  it("save → load round-trip for 'baseline'", async () => {
+    const { loadPrimarySource, savePrimarySource } = await import(
+      "../completedCourses"
+    );
+    savePrimarySource("baseline");
+    expect(loadPrimarySource()).toBe("baseline");
   });
 
-  it("ignores stored values other than '1'", async () => {
-    const { isCompletedFromTranscript } = await import("../completedCourses");
-    storage.store.set(FLAG_KEY, "true");
-    expect(isCompletedFromTranscript()).toBe(false);
-    storage.store.set(FLAG_KEY, "0");
-    expect(isCompletedFromTranscript()).toBe(false);
+  it("saving null removes the key", async () => {
+    const { loadPrimarySource, savePrimarySource } = await import(
+      "../completedCourses"
+    );
+    savePrimarySource("transcript");
+    savePrimarySource(null);
+    expect(loadPrimarySource()).toBeNull();
+    expect(storage.store.has(PRIMARY_SOURCE_KEY)).toBe(false);
+  });
+
+  it("clears and ignores stored garbage values", async () => {
+    storage.store.set(PRIMARY_SOURCE_KEY, "junk");
+    const { loadPrimarySource } = await import("../completedCourses");
+    expect(loadPrimarySource()).toBeNull();
+    expect(storage.store.has(PRIMARY_SOURCE_KEY)).toBe(false);
+  });
+
+  it("migrates legacy '1' flag to 'transcript' and clears the legacy key", async () => {
+    storage.store.set(LEGACY_FLAG_KEY, "1");
+    const { loadPrimarySource } = await import("../completedCourses");
+    expect(loadPrimarySource()).toBe("transcript");
+    expect(storage.store.has(LEGACY_FLAG_KEY)).toBe(false);
+    expect(storage.store.get(PRIMARY_SOURCE_KEY)).toBe("transcript");
+  });
+
+  it("migrates other legacy flag values by clearing and falling back", async () => {
+    storage.store.set(LEGACY_FLAG_KEY, "true");
+    const { loadPrimarySource } = await import("../completedCourses");
+    expect(loadPrimarySource()).toBeNull();
+    expect(storage.store.has(LEGACY_FLAG_KEY)).toBe(false);
+  });
+
+  it("infers 'baseline' when no flag exists but completedCourses is non-empty", async () => {
+    storage.store.set(COMPLETED_KEY, JSON.stringify(["cs115", "math116"]));
+    const { loadPrimarySource } = await import("../completedCourses");
+    expect(loadPrimarySource()).toBe("baseline");
+    expect(storage.store.get(PRIMARY_SOURCE_KEY)).toBe("baseline");
+  });
+});
+
+describe("rebaseCompletedCourses (primary + extras)", () => {
+  it("returns just the baseline when extras is empty (first seed)", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { inferCompleted } = await import("../programs");
+    const rebased = rebaseCompletedCourses([], {
+      programId: "systems-design-engineering",
+      currentTerm: "3A",
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toEqual(inferCompleted("systems-design-engineering", "3A"));
+  });
+
+  it("unions extras into the baseline", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { inferCompleted } = await import("../programs");
+    const rebased = rebaseCompletedCourses(["econ101"], {
+      programId: "systems-design-engineering",
+      currentTerm: "3A",
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toContain("econ101");
+    for (const c of inferCompleted("systems-design-engineering", "3A")) {
+      expect(rebased).toContain(c);
+    }
+  });
+
+  it("preserves extras when the program changes", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { inferCompleted } = await import("../programs");
+    const rebased = rebaseCompletedCourses(["econ101"], {
+      programId: "systems-design-engineering",
+      currentTerm: "3B",
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toContain("econ101");
+    for (const c of inferCompleted("systems-design-engineering", "3B")) {
+      expect(rebased).toContain(c);
+    }
+  });
+
+  it("clearing program/term leaves only the extras (empty baseline)", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const rebased = rebaseCompletedCourses(["econ101", "phil202"], {
+      programId: null,
+      currentTerm: null,
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toEqual(["econ101", "phil202"]);
+  });
+
+  it("removals do NOT persist across a re-seed — a previously-removed baseline course reappears", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { inferCompleted } = await import("../programs");
+    // The user removed `removed` mid-seed; the only state preserved across
+    // re-seed is the extras layer, which does not contain `removed`. After
+    // rebase the new baseline brings the course back.
+    const syde3B = inferCompleted("systems-design-engineering", "3B");
+    const removed = syde3B[0];
+    const rebased = rebaseCompletedCourses([], {
+      programId: "systems-design-engineering",
+      currentTerm: "3B",
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toContain(removed);
+  });
+
+  it("seeds full requiredCourses when switching to a flexible program with null term", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { PROGRAMS, getRequiredCourses } = await import("../programs");
+    const biology = PROGRAMS["h-biology"];
+    if (biology?.kind !== "flexible")
+      throw new Error("expected h-biology to be flexible after scrape");
+
+    const rebased = rebaseCompletedCourses([], {
+      programId: "h-biology",
+      currentTerm: null,
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toEqual(getRequiredCourses(biology));
+  });
+
+  it("preserves extras when rebasing between engineering and flexible programs", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const { PROGRAMS, getRequiredCourses } = await import("../programs");
+    const biology = PROGRAMS["h-biology"];
+    if (biology?.kind !== "flexible")
+      throw new Error("expected h-biology to be flexible after scrape");
+
+    const rebased = rebaseCompletedCourses(["extra101"], {
+      programId: "h-biology",
+      currentTerm: null,
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).toContain("extra101");
+    for (const c of getRequiredCourses(biology)) {
+      expect(rebased).toContain(c);
+    }
+  });
+
+  it("dedupes when extras overlap with the baseline", async () => {
+    const { rebaseCompletedCourses, baselineForPassage } = await import(
+      "../completedCourses"
+    );
+    const baseline = baselineForPassage(
+      "systems-design-engineering",
+      "3A",
+      null,
+      {},
+    );
+    const shared = baseline[0];
+    const rebased = rebaseCompletedCourses([shared, "econ101"], {
+      programId: "systems-design-engineering",
+      currentTerm: "3A",
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased.filter((c) => c === shared)).toHaveLength(1);
+    expect(rebased).toContain("econ101");
+  });
+
+  it("adding a specialization unions in its required courses", async () => {
+    const { rebaseCompletedCourses, baselineForPassage } = await import(
+      "../completedCourses"
+    );
+    const parent = "3g-english-literature-and-rhetoric";
+    const spec = "engl-communication-design";
+    const rebased = rebaseCompletedCourses([], {
+      programId: parent,
+      currentTerm: null,
+      specializationId: spec,
+      choiceGroupSelections: {},
+    });
+    const withSpec = baselineForPassage(parent, null, spec, {});
+    for (const c of withSpec) expect(rebased).toContain(c);
+  });
+
+  it("dropping a specialization removes its baseline-only courses unless they're in extras", async () => {
+    const { rebaseCompletedCourses, baselineForPassage } = await import(
+      "../completedCourses"
+    );
+    const parent = "3g-english-literature-and-rhetoric";
+    const spec = "engl-communication-design";
+    const withSpec = baselineForPassage(parent, null, spec, {});
+    const parentOnly = baselineForPassage(parent, null, null, {});
+    const specOnly = withSpec.filter((c) => !parentOnly.includes(c));
+    // Fixture sanity: this test only proves anything if the spec contributes
+    // at least one required course the parent doesn't already require.
+    expect(specOnly.length).toBeGreaterThan(0);
+
+    const rebased = rebaseCompletedCourses([], {
+      programId: parent,
+      currentTerm: null,
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    for (const c of specOnly) expect(rebased).not.toContain(c);
+    for (const c of parentOnly) expect(rebased).toContain(c);
+  });
+
+  it("adding a choice-group pick unions it into the baseline", async () => {
+    const { rebaseCompletedCourses, baselineForPassage } = await import(
+      "../completedCourses"
+    );
+    const before = baselineForPassage("electrical-engineering", "2A", null, {});
+    expect(before).not.toContain("commst192");
+
+    const rebased = rebaseCompletedCourses([], {
+      programId: "electrical-engineering",
+      currentTerm: "2A",
+      specializationId: null,
+      choiceGroupSelections: { "1A.0.1": ["commst192"] },
+    });
+    expect(rebased).toContain("commst192");
+  });
+
+  it("clearing choice-group picks drops the picked codes", async () => {
+    const { rebaseCompletedCourses } = await import("../completedCourses");
+    const rebased = rebaseCompletedCourses([], {
+      programId: "electrical-engineering",
+      currentTerm: "2A",
+      specializationId: null,
+      choiceGroupSelections: {},
+    });
+    expect(rebased).not.toContain("commst192");
+  });
+
+  it("baselineForPassage drops stale paths that don't resolve in the current program", async () => {
+    const { baselineForPassage } = await import("../completedCourses");
+    const baseline = baselineForPassage("electrical-engineering", "2A", null, {
+      "9Z.99.99": ["fake-course"],
+    });
+    expect(baseline).not.toContain("fake-course");
   });
 });
