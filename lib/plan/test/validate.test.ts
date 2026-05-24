@@ -42,7 +42,7 @@ function mkPlan(
   }>,
 ): LocalPlan {
   return {
-    version: 1,
+    schemaVersion: 1,
     programId: null,
     specializationId: null,
     stream: "stream8",
@@ -231,6 +231,44 @@ describe("validatePlan — co-op slots", () => {
     const cat = catalog(mkCourse("cs246", { prereqs: "CS 136" }));
     const plan = mkPlan([
       { id: "s1", termId: 1245, isCoop: true, courses: ["cs246"] },
+    ]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+});
+
+describe("validatePlan — uncertain prereqs", () => {
+  it("does not flag uncertain prereqs (e.g. 'Level at least 2A')", () => {
+    // The parser turns "Level at least 2A" into a `level` node; the evaluator
+    // returns satisfied=true, uncertain=true when no student level is given.
+    // validate.ts must not treat that as an issue.
+    const cat = catalog(mkCourse("cs246", { prereqs: "Level at least 2A" }));
+    const plan = mkPlan([{ id: "s1", termId: 1239, courses: ["cs246"] }]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+});
+
+describe("validatePlan — pre slot", () => {
+  it("skips validation for slots with position='pre'", () => {
+    // Transfer credits sit in the pre slot. Even if they'd otherwise trip an
+    // antireq against an academic slot, the pre slot itself must not raise
+    // per-course issues.
+    const cat = catalog(
+      mkCourse("cs246", { prereqs: "CS 136" }),
+      mkCourse("cs136"),
+    );
+    const plan = mkPlan([
+      { id: "pre", termId: null, position: "pre", courses: ["cs246"] },
+    ]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+});
+
+describe("validatePlan — catalog miss", () => {
+  it("ignores codes not in the catalog", () => {
+    // No "weirdcourse" in the catalog → silently skipped, no issue raised.
+    const cat = catalog(mkCourse("cs115"));
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["cs115", "weirdcourse"] },
     ]);
     expect(validatePlan(plan, cat)).toEqual([]);
   });

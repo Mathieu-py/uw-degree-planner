@@ -6,7 +6,6 @@ import { buildEmptySlots } from "@/lib/plan/sequence";
 import { clearPlan, emptyPlan, loadPlan, savePlan } from "@/lib/plan/storage";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
-import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { termInfo } from "@/lib/terms";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
@@ -54,13 +53,29 @@ export function PlannerShell({
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [importBanner, setImportBanner] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   useEffect(() => {
     setPlan(loadPlan());
     setHydrated(true);
   }, []);
 
-  const allCourseCodes = useMemo(() => catalog.map((c) => c.code), [catalog]);
+  // Auto-dismiss the storage-failure banner after a short read; the user
+  // shouldn't have to chase down a × button to clear it. We re-arm on every
+  // new failure so consecutive failed saves keep the banner visible.
+  useEffect(() => {
+    if (!saveFailed) return;
+    const t = setTimeout(() => setSaveFailed(false), 8000);
+    return () => clearTimeout(t);
+  }, [saveFailed]);
+
+  // Catalog-derived lookups. Memoized on `catalog` identity so we don't
+  // rebuild the Set/Map every render; the transcript modal now consumes the
+  // Set directly instead of rebuilding it internally on every parse.
+  const allCourseCodesSet = useMemo(
+    () => new Set(catalog.map((c) => c.code)),
+    [catalog],
+  );
   const catalogByCode = useMemo(
     () => new Map(catalog.map((c) => [c.code, c])),
     [catalog],
@@ -74,11 +89,14 @@ export function PlannerShell({
   );
   const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
 
-  const mintSlotId = useCallback(() => {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return `slot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  // Centralized persist: every plan-write goes through here so a storage
+  // failure (quota, private mode) flips the saveFailed banner exactly once.
+  // Note: setPlan still runs even on failure — the in-memory state is the
+  // source of truth, the banner just tells the user a refresh will lose it.
+  const persist = useCallback((next: LocalPlan) => {
+    const ok = savePlan(next);
+    setPlan(next);
+    setSaveFailed(!ok);
   }, []);
 
   const handleApplyTranscript = useCallback(
@@ -95,10 +113,9 @@ export function PlannerShell({
       } = applyTranscriptToPlan(parseResult, {
         stream,
         includedUnrecognized: included,
-        mintId: mintSlotId,
+        mintId: () => crypto.randomUUID(),
       });
-      savePlan(next);
-      setPlan(next);
+      persist(next);
       setTranscriptOpen(false);
 
       const banner = buildImportBanner({
@@ -109,29 +126,24 @@ export function PlannerShell({
       });
       setImportBanner(banner);
     },
-    [mintSlotId],
+    [persist],
   );
 
   const handleCreatePlan = useCallback(
     (params: { programId: string; startTermId: number; stream: Stream }) => {
-      let counter = 0;
-      const mintId = () =>
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `slot-${Date.now()}-${counter++}`;
-      const slots = buildEmptySlots(params.startTermId, params.stream, mintId);
+      const slots = buildEmptySlots(params.startTermId, params.stream, () =>
+        crypto.randomUUID(),
+      );
       const next: LocalPlan = {
         ...emptyPlan(),
-        version: PLAN_SCHEMA_VERSION,
         programId: params.programId,
         stream: params.stream,
         startTermId: params.startTermId,
         slots,
       };
-      savePlan(next);
-      setPlan(next);
+      persist(next);
     },
-    [],
+    [persist],
   );
 
   const handleReset = useCallback(() => {
@@ -139,11 +151,7 @@ export function PlannerShell({
     setPlan(null);
     setPickerCtx(null);
     setImportBanner(null);
-  }, []);
-
-  const persist = useCallback((next: LocalPlan) => {
-    savePlan(next);
-    setPlan(next);
+    setSaveFailed(false);
   }, []);
 
   const handleSaveSettings = useCallback(
@@ -184,7 +192,10 @@ export function PlannerShell({
       if (!plan) return;
       const nextSlots = plan.slots.map((s) =>
         s.id === slotId
-          ? { ...s, courses: s.courses.filter((c) => c.code !== code) }
+          ? {
+              ...s,
+              courses: s.courses.filter((c) => c.code !== code.toLowerCase()),
+            }
           : s,
       );
       persist({ ...plan, slots: nextSlots });
@@ -223,6 +234,7 @@ export function PlannerShell({
   if (!plan) {
     return (
       <>
+        {saveFailed ? <SaveFailedBanner /> : null}
         <EmptyState
           programOptions={programOptions}
           onCreate={handleCreatePlan}
@@ -232,8 +244,7 @@ export function PlannerShell({
           isOpen={transcriptOpen}
           onClose={() => setTranscriptOpen(false)}
           onApplyPlan={handleApplyTranscript}
-          allCourseCodes={allCourseCodes}
-          currentCompletedCount={0}
+          catalogCodes={allCourseCodesSet}
         />
       </>
     );
@@ -244,6 +255,7 @@ export function PlannerShell({
 
   return (
     <div className="flex flex-col gap-5">
+      {saveFailed ? <SaveFailedBanner /> : null}
       <div className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-4 py-3">
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
@@ -345,6 +357,18 @@ function buildImportBanner(args: {
     );
   }
   return parts.join(" ");
+}
+
+function SaveFailedBanner() {
+  return (
+    <div
+      role="status"
+      className="rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/30 px-4 py-2.5 text-xs text-rose-900 dark:text-rose-200"
+    >
+      Could not save your plan — your browser storage may be full or blocked.
+      Recent changes are not persisted.
+    </div>
+  );
 }
 
 function planSubtitle(plan: LocalPlan): string {

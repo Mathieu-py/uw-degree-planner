@@ -6,7 +6,7 @@ import { buildPlacementMap } from "../placement";
 
 function makePlan(slots: LocalPlan["slots"]): LocalPlan {
   return {
-    version: 1,
+    schemaVersion: 1,
     programId: "test",
     specializationId: null,
     stream: "regular",
@@ -163,6 +163,67 @@ describe("compileAudit — pick with all-courses children (choice group)", () =>
   });
 });
 
+describe("compileAudit — pick selectMax", () => {
+  it("marks a pick as overSatisfied when count > selectMax", () => {
+    const rules: RuleNode = {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [{ kind: "courses", courses: ["opt1", "opt2"] }],
+    };
+    const program: Program = {
+      kind: "flexible",
+      name: "P",
+      asOf: "2026",
+      rules,
+    };
+    const plan = makePlan([slot("s1", 1239, ["opt1", "opt2"])]);
+    const audit = compileAudit(program, plan);
+    if (!audit.flexibleRoot) return;
+    expect(audit.flexibleRoot.status).toBe("overSatisfied");
+    expect(audit.flexibleRoot.satisfiedCount).toBe(2);
+  });
+});
+
+describe("compileAudit — subjectPool with maxLevel", () => {
+  it("excludes courses above the maxLevel cap", () => {
+    const rules: RuleNode = {
+      kind: "subjectPool",
+      selectCount: 2,
+      subjectCodes: ["MATH"],
+      minLevel: 200,
+      maxLevel: 300,
+    };
+    const program: Program = {
+      kind: "flexible",
+      name: "P",
+      asOf: "2026",
+      rules,
+    };
+    // math237 (200) and math337 (300) count; math405 (400) is above maxLevel.
+    const plan = makePlan([
+      slot("s1", 1239, ["math237", "math337", "math405"]),
+    ]);
+    const audit = compileAudit(program, plan);
+    if (!audit.flexibleRoot) return;
+    expect(audit.flexibleRoot.satisfiedCount).toBe(2);
+    expect(audit.flexibleRoot.status).toBe("met");
+  });
+});
+
+describe("compileAudit — no program", () => {
+  it("returns an empty AuditRoot with placement populated when program is null", () => {
+    const plan = makePlan([slot("s1", 1239, ["cs115", "math115"])]);
+    const audit = compileAudit(null, plan);
+    expect(audit.byTerm).toBeNull();
+    expect(audit.flexibleRoot).toBeNull();
+    expect(audit.specializationRoot).toBeNull();
+    // Placement is still useful for the picker / future audits.
+    expect(audit.placement.get("cs115")?.slotId).toBe("s1");
+    expect(audit.placement.get("math115")?.termId).toBe(1239);
+  });
+});
+
 describe("compileAudit — pick with mixed/nested children", () => {
   const rules: RuleNode = {
     kind: "pick",
@@ -303,7 +364,11 @@ describe("summarize", () => {
     const plan = makePlan([slot("s1", 1239, ["a"])]);
     const audit = compileAudit(program, plan);
     if (!audit.flexibleRoot) return;
-    expect(summarize(audit.flexibleRoot)).toEqual({ needed: 3, satisfied: 1 });
+    expect(summarize(audit.flexibleRoot)).toEqual({
+      needed: 3,
+      satisfied: 1,
+      excludedViolationCount: 0,
+    });
   });
 
   it("counts a pick as selectMin requirements", () => {
@@ -321,6 +386,63 @@ describe("summarize", () => {
     const plan = makePlan([slot("s1", 1239, ["a", "b"])]);
     const audit = compileAudit(program, plan);
     if (!audit.flexibleRoot) return;
-    expect(summarize(audit.flexibleRoot)).toEqual({ needed: 3, satisfied: 2 });
+    expect(summarize(audit.flexibleRoot)).toEqual({
+      needed: 3,
+      satisfied: 2,
+      excludedViolationCount: 0,
+    });
+  });
+
+  it("does NOT downgrade status when an excluded violation is present (status stays met)", () => {
+    // Behavior contract: excluded rules surface a count but never gate status.
+    const program: Program = {
+      kind: "flexible",
+      name: "P",
+      asOf: "2026",
+      rules: {
+        kind: "all",
+        children: [
+          { kind: "courses", courses: ["math115"] },
+          { kind: "excluded", courses: ["math103"] },
+        ],
+      },
+    };
+    const plan = makePlan([slot("s1", 1239, ["math115", "math103"])]);
+    const audit = compileAudit(program, plan);
+    if (!audit.flexibleRoot) return;
+    expect(audit.flexibleRoot.status).toBe("met");
+  });
+
+  it("rolls excludedViolationCount up through nested all/pick parents", () => {
+    const program: Program = {
+      kind: "flexible",
+      name: "P",
+      asOf: "2026",
+      rules: {
+        kind: "all",
+        children: [
+          { kind: "courses", courses: ["math115"] },
+          {
+            kind: "all",
+            children: [
+              { kind: "excluded", courses: ["math103", "math104"] },
+              { kind: "excluded", courses: ["chem120"] },
+            ],
+          },
+        ],
+      },
+    };
+    // Place math115 (legit) + two excluded violations (math103, chem120).
+    const plan = makePlan([
+      slot("s1", 1239, ["math115", "math103", "chem120"]),
+    ]);
+    const audit = compileAudit(program, plan);
+    if (!audit.flexibleRoot) return;
+    expect(summarize(audit.flexibleRoot)).toEqual({
+      needed: 1,
+      satisfied: 1,
+      excludedViolationCount: 2,
+    });
+    expect(audit.flexibleRoot.status).toBe("met");
   });
 });

@@ -22,7 +22,7 @@
  * they don't have courses).
  */
 
-import { parsePrereqs } from "../prereqs/parse";
+import { cachedParsePrereqs } from "../prereqs/cache";
 import { evaluate } from "../prereqs/satisfied";
 import type { Course } from "../types";
 import { completedSetFromPlan } from "./derive";
@@ -51,8 +51,14 @@ export function validatePlan(
 
   for (const slot of plan.slots) {
     if (slot.isCoop) continue;
+    // Pre-arrival transfer slots aren't real academic terms: they hold
+    // credits the student already has, often from another institution where
+    // our prereq/antireq strings don't apply. Skip validation entirely so we
+    // don't flag e.g. a transfer "MATH 137" against UW's "MATH 137" antireq
+    // list.
+    if (slot.position === "pre") continue;
 
-    if (slot.position !== "pre" && slot.courses.length > ACADEMIC_TERM_CAP) {
+    if (slot.courses.length > ACADEMIC_TERM_CAP) {
       issues.push({
         slotId: slot.id,
         courseCode: "",
@@ -78,7 +84,7 @@ export function validatePlan(
 
       // ---- Prereq ----
       if (courseData.prereqs) {
-        const ast = parsePrereqs(courseData.prereqs);
+        const ast = cachedParsePrereqs(courseData.prereqs);
         const result = evaluate(ast, { completed: completedBeforeSet });
         if (!result.satisfied) {
           const missing =
@@ -112,7 +118,7 @@ export function validatePlan(
 
       // ---- Coreq ----
       if (courseData.coreqs) {
-        const ast = parsePrereqs(courseData.coreqs);
+        const ast = cachedParsePrereqs(courseData.coreqs);
         const result = evaluate(ast, { completed: coreqContext });
         if (!result.satisfied) {
           const missing =
@@ -136,10 +142,11 @@ export function validatePlan(
  * Pull course codes out of a free-form requirement string. Matches sequences
  * like "ANTH 201", "MATH 137", "CS 246A" — letters followed by optional
  * whitespace and digits with an optional trailing letter. Returns lowercase
- * codes with whitespace stripped, deduplicated.
+ * codes with whitespace stripped, deduplicated. Case-insensitive so the
+ * helper survives a future scraper that emits mixed-case codes.
  */
 export function extractCourseCodes(text: string): string[] {
-  const re = /\b([A-Z]+)\s*(\d+[A-Z]*)\b/g;
+  const re = /\b([A-Za-z]+)\s*(\d+[A-Z]*)\b/gi;
   const out = new Set<string>();
   for (const m of text.matchAll(re)) {
     out.add(`${m[1]}${m[2]}`.toLowerCase());

@@ -150,6 +150,58 @@ describe("applyTranscriptToPlan — regular stream", () => {
   });
 });
 
+describe("applyTranscriptToPlan — stream4", () => {
+  it("places stream4 transcript courses into the alternating cadence", () => {
+    // Stream 4 starts co-op in January of 1st year. Starting Fall 2023:
+    //   1A=Fall23 → coop1=Winter24 → 1B=Spring24 → coop2=Fall24
+    //   → 2A=Winter25 → coop3=Spring25 → 2B=Fall25 → ...
+    // The "Winter 2024" course must land in unsortedCodes (a coop slot);
+    // every other course slots into its academic term.
+    const parse = mkParse([
+      mkCourse("cs115", "Fall 2023"),
+      mkCourse("cs136", "Spring 2024"),
+      mkCourse("cs246", "Winter 2025"),
+      mkCourse("cs350", "Fall 2025"),
+    ]);
+    const { plan, unsortedCodes } = applyTranscriptToPlan(parse, {
+      stream: "stream4",
+      includedUnrecognized: new Set(),
+      mintId: makeMint(),
+    });
+    expect(plan.stream).toBe("stream4");
+    expect(unsortedCodes).toEqual([]);
+    const byPos = (pos: string) =>
+      plan.slots.find((s) => s.position === pos)?.courses.map((c) => c.code) ??
+      [];
+    expect(byPos("1A")).toEqual(["cs115"]);
+    expect(byPos("1B")).toEqual(["cs136"]);
+    expect(byPos("2A")).toEqual(["cs246"]);
+    expect(byPos("2B")).toEqual(["cs350"]);
+  });
+});
+
+describe("applyTranscriptToPlan — undecodable term labels", () => {
+  it("puts courses with undecodable termLabel into unsortedCodes", () => {
+    const parse = mkParse([
+      mkCourse("cs115", "Fall 2023"),
+      mkCourse("mystery", "Whatever 9999"),
+    ]);
+    const { plan, unsortedCodes, unplacedTerms } = applyTranscriptToPlan(
+      parse,
+      {
+        stream: "regular",
+        includedUnrecognized: new Set(),
+        mintId: makeMint(),
+      },
+    );
+    expect(unsortedCodes).toEqual(["mystery"]);
+    expect(unplacedTerms).toEqual(["Whatever 9999"]);
+    expect(plan.slots.flatMap((s) => s.courses.map((c) => c.code))).toEqual([
+      "cs115",
+    ]);
+  });
+});
+
 describe("applyTranscriptToPlan — empty / degenerate cases", () => {
   it("returns an empty-slots plan when no parseable terms exist", () => {
     const parse = mkParse([mkCourse("xfer", "Transfer Credit", "transfer")]);

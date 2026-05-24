@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Categorized, categorize } from "../transcript/applyHelpers";
+import { type Categorized, categorize } from "../transcript/parse";
 import type { ParsedCourse, TranscriptParseResult } from "../transcript/types";
 
 function course(

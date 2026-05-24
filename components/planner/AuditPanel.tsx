@@ -14,6 +14,12 @@ interface Props {
   plan: LocalPlan;
 }
 
+interface SectionSummary {
+  needed: number;
+  satisfied: number;
+  excludedViolationCount: number;
+}
+
 export function AuditPanel({ plan }: Props) {
   const program = plan.programId ? (PROGRAMS[plan.programId] ?? null) : null;
 
@@ -21,6 +27,46 @@ export function AuditPanel({ plan }: Props) {
     () => compileAudit(program, plan, plan.specializationId),
     [plan, program],
   );
+
+  // Memoize every per-section summary in one pass so child renders never
+  // re-walk the tree. `summary` is keyed on the same identity as `audit`, so
+  // it only recomputes when the plan or program actually changes.
+  const summaries = useMemo(() => {
+    const byTerm: Partial<
+      Record<(typeof TERM_LETTERS)[number], SectionSummary>
+    > = {};
+    let totalNeeded = 0;
+    let totalSatisfied = 0;
+    if (audit.byTerm) {
+      for (const t of TERM_LETTERS) {
+        const s = summarize(audit.byTerm[t]);
+        byTerm[t] = s;
+        totalNeeded += s.needed;
+        totalSatisfied += s.satisfied;
+      }
+    }
+    const flexibleRoot = audit.flexibleRoot
+      ? summarize(audit.flexibleRoot)
+      : null;
+    if (flexibleRoot) {
+      totalNeeded += flexibleRoot.needed;
+      totalSatisfied += flexibleRoot.satisfied;
+    }
+    const specializationRoot = audit.specializationRoot
+      ? summarize(audit.specializationRoot)
+      : null;
+    if (specializationRoot) {
+      totalNeeded += specializationRoot.needed;
+      totalSatisfied += specializationRoot.satisfied;
+    }
+    return {
+      byTerm,
+      flexibleRoot,
+      specializationRoot,
+      totalNeeded,
+      totalSatisfied,
+    };
+  }, [audit]);
 
   if (!plan.programId) {
     return (
@@ -37,26 +83,6 @@ export function AuditPanel({ plan }: Props) {
     );
   }
 
-  // Rollup
-  let totalNeeded = 0;
-  let totalSatisfied = 0;
-  if (audit.byTerm) {
-    for (const t of TERM_LETTERS) {
-      const s = summarize(audit.byTerm[t]);
-      totalNeeded += s.needed;
-      totalSatisfied += s.satisfied;
-    }
-  } else if (audit.flexibleRoot) {
-    const s = summarize(audit.flexibleRoot);
-    totalNeeded += s.needed;
-    totalSatisfied += s.satisfied;
-  }
-  if (audit.specializationRoot) {
-    const s = summarize(audit.specializationRoot);
-    totalNeeded += s.needed;
-    totalSatisfied += s.satisfied;
-  }
-
   return (
     <aside className="w-full lg:w-80 shrink-0 flex flex-col gap-3">
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 px-4 py-3 bg-zinc-50/60 dark:bg-zinc-900/40">
@@ -64,10 +90,10 @@ export function AuditPanel({ plan }: Props) {
           Degree audit
         </div>
         <div className="text-2xl font-semibold tracking-tight">
-          {totalSatisfied}
+          {summaries.totalSatisfied}
           <span className="text-zinc-400 dark:text-zinc-500">
             {" "}
-            / {totalNeeded}
+            / {summaries.totalNeeded}
           </span>
         </div>
         <div className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -78,24 +104,43 @@ export function AuditPanel({ plan }: Props) {
       {audit.byTerm
         ? TERM_LETTERS.map((t) => {
             const node = audit.byTerm?.[t];
-            if (!node) return null;
-            return <AuditSection key={t} title={t} node={node} />;
+            const summary = summaries.byTerm[t];
+            if (!node || !summary) return null;
+            return (
+              <AuditSection key={t} title={t} node={node} summary={summary} />
+            );
           })
         : null}
 
-      {audit.flexibleRoot ? (
-        <AuditSection title="Program requirements" node={audit.flexibleRoot} />
+      {audit.flexibleRoot && summaries.flexibleRoot ? (
+        <AuditSection
+          title="Program requirements"
+          node={audit.flexibleRoot}
+          summary={summaries.flexibleRoot}
+        />
       ) : null}
 
-      {audit.specializationRoot ? (
-        <AuditSection title="Specialization" node={audit.specializationRoot} />
+      {audit.specializationRoot && summaries.specializationRoot ? (
+        <AuditSection
+          title="Specialization"
+          node={audit.specializationRoot}
+          summary={summaries.specializationRoot}
+        />
       ) : null}
     </aside>
   );
 }
 
-function AuditSection({ title, node }: { title: string; node: AuditNode }) {
-  const { needed, satisfied } = summarize(node);
+function AuditSection({
+  title,
+  node,
+  summary,
+}: {
+  title: string;
+  node: AuditNode;
+  summary: SectionSummary;
+}) {
+  const { needed, satisfied, excludedViolationCount } = summary;
   return (
     <details
       className="rounded-lg border border-zinc-200 dark:border-zinc-800 group"
@@ -105,6 +150,14 @@ function AuditSection({ title, node }: { title: string; node: AuditNode }) {
         <span className="flex items-center gap-2 min-w-0">
           <StatusDot status={node.status} />
           <span className="font-medium">{title}</span>
+          {excludedViolationCount > 0 ? (
+            <span
+              className="rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+              title={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} cannot count toward this section`}
+            >
+              ⚠ {excludedViolationCount}
+            </span>
+          ) : null}
         </span>
         <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
           {satisfied}/{needed}

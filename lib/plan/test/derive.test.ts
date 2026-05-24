@@ -3,7 +3,7 @@ import { completedCoursesFromPlan, completedSetFromPlan } from "../derive";
 import type { LocalPlan } from "../types";
 
 const PLAN: LocalPlan = {
-  version: 1,
+  schemaVersion: 1,
   programId: "software-engineering",
   specializationId: null,
   stream: "stream8",

@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   describeRule,
-  getExcludedCourses,
   getRequiredCourses,
   getSpecialization,
   getSubjectPools,
-  getTermSchedule,
-  inferCompleted,
   isKnownProgram,
   isKnownSpecialization,
   isTermLetter,
@@ -25,66 +22,6 @@ function hasAnyPick(node: RuleNode): boolean {
   });
   return found;
 }
-
-describe("inferCompleted (engineering)", () => {
-  it("returns [] for an unknown program", () => {
-    expect(inferCompleted("not-a-program", "3A")).toEqual([]);
-  });
-
-  it("returns [] when currentTerm is 1A (nothing before it)", () => {
-    expect(inferCompleted("systems-design-engineering", "1A")).toEqual([]);
-  });
-
-  it("returns [] when currentTerm is null on an engineering program", () => {
-    expect(inferCompleted("systems-design-engineering", null)).toEqual([]);
-  });
-
-  it("seeds SYDE 2A with 1A + 1B core courses", () => {
-    const seeded = inferCompleted("systems-design-engineering", "2A");
-    const syde = PROGRAMS["systems-design-engineering"];
-    if (syde.kind !== "engineering")
-      throw new Error("SYDE should be engineering");
-    const expected = new Set([
-      ...requiredCoursesIn(syde.terms["1A"]),
-      ...requiredCoursesIn(syde.terms["1B"]),
-    ]);
-    expect(new Set(seeded)).toEqual(expected);
-  });
-
-  it("seeds SYDE 3A with 1A through 2B", () => {
-    const seeded = new Set(inferCompleted("systems-design-engineering", "3A"));
-    expect(seeded.has("syde101")).toBe(true);
-    expect(seeded.has("syde161")).toBe(true);
-    expect(seeded.has("math115")).toBe(true);
-    expect(seeded.has("syde321")).toBe(false);
-  });
-
-  it("returns sorted unique codes", () => {
-    const seeded = inferCompleted("systems-design-engineering", "4B");
-    const sorted = [...seeded].sort();
-    expect(seeded).toEqual(sorted);
-    expect(new Set(seeded).size).toBe(seeded.length);
-  });
-});
-
-describe("inferCompleted (flexible)", () => {
-  const flexibleSlugs = Object.entries(PROGRAMS)
-    .filter(([, p]) => p.kind === "flexible")
-    .map(([id]) => id);
-
-  it.runIf(flexibleSlugs.length > 0)(
-    "returns all requiredCourses regardless of currentTerm",
-    () => {
-      const id = flexibleSlugs[0];
-      const program = PROGRAMS[id];
-      if (program.kind !== "flexible") throw new Error("expected flexible");
-      const withNull = inferCompleted(id, null);
-      const with2A = inferCompleted(id, "2A");
-      expect(withNull).toEqual(requiredCoursesIn(program.rules));
-      expect(with2A).toEqual(withNull);
-    },
-  );
-});
 
 describe("programs.json schema integrity", () => {
   it("every entry has a kind field", () => {
@@ -133,8 +70,8 @@ describe("programs.json schema integrity", () => {
   });
 });
 
-describe("getRequiredCourses / getTermSchedule", () => {
-  it("getRequiredCourses returns union of terms for engineering", () => {
+describe("getRequiredCourses", () => {
+  it("returns union of terms for engineering", () => {
     const syde = PROGRAMS["systems-design-engineering"];
     if (syde.kind !== "engineering")
       throw new Error("SYDE should be engineering");
@@ -142,23 +79,6 @@ describe("getRequiredCourses / getTermSchedule", () => {
     expect(required).toContain("syde101");
     expect(required).toEqual([...required].sort());
     expect(new Set(required).size).toBe(required.length);
-  });
-
-  it("getTermSchedule returns null for flexible programs", () => {
-    const flex = Object.values(PROGRAMS).find((p) => p.kind === "flexible");
-    if (flex) expect(getTermSchedule(flex)).toBeNull();
-  });
-
-  it("getTermSchedule returns a record of per-term flat course lists for engineering", () => {
-    const syde = PROGRAMS["systems-design-engineering"];
-    if (syde.kind !== "engineering")
-      throw new Error("SYDE should be engineering");
-    const schedule = getTermSchedule(syde);
-    expect(schedule).not.toBeNull();
-    if (schedule === null) return;
-    for (const t of TERM_LETTERS) {
-      expect(schedule[t]).toEqual(requiredCoursesIn(syde.terms[t]));
-    }
   });
 });
 
@@ -219,42 +139,6 @@ describe("isKnownSpecialization / getSpecialization", () => {
 
   it("rejects all specs when the program is unknown", () => {
     expect(isKnownSpecialization("not-a-program", spec)).toBe(false);
-  });
-});
-
-describe("inferCompleted (with specialization)", () => {
-  const parent = "3g-english-literature-and-rhetoric";
-  const spec = "engl-communication-design";
-
-  it("unions the specialization's required courses with the parent's", () => {
-    const program = PROGRAMS[parent];
-    if (program.kind !== "flexible")
-      throw new Error("expected English Lit to be flexible");
-    const parentOnly = inferCompleted(parent, null);
-    const withSpec = inferCompleted(parent, null, spec);
-    const specReq = requiredCoursesIn(
-      getSpecialization(parent, spec)?.rules ?? { kind: "all", children: [] },
-    );
-    for (const c of parentOnly) expect(withSpec).toContain(c);
-    for (const c of specReq) expect(withSpec).toContain(c);
-  });
-
-  it("falls back to parent-only behavior when the spec slug is unknown", () => {
-    expect(inferCompleted(parent, null, "not-a-spec")).toEqual(
-      inferCompleted(parent, null),
-    );
-  });
-
-  it("falls back to parent-only behavior when specializationId is null (default arg)", () => {
-    expect(inferCompleted(parent, null, null)).toEqual(
-      inferCompleted(parent, null),
-    );
-  });
-
-  it("returns sorted unique codes when a spec adds required courses", () => {
-    const seeded = inferCompleted(parent, null, spec);
-    expect(seeded).toEqual([...seeded].sort());
-    expect(new Set(seeded).size).toBe(seeded.length);
   });
 });
 
@@ -388,41 +272,6 @@ describe("getSubjectPools", () => {
   it("returns [] when no subjectPool nodes are present", () => {
     const program = flexible({ kind: "courses", courses: ["cs100"] });
     expect(getSubjectPools(program)).toEqual([]);
-  });
-});
-
-describe("getExcludedCourses", () => {
-  it("returns courses from excluded nodes, deduped and sorted", () => {
-    const program = flexible({
-      kind: "all",
-      children: [
-        { kind: "courses", courses: ["cs100"] },
-        { kind: "excluded", courses: ["chem266", "chem266l"] },
-        { kind: "excluded", courses: ["chem266", "chem267"] },
-      ],
-    });
-    expect(getExcludedCourses(program)).toEqual([
-      "chem266",
-      "chem266l",
-      "chem267",
-    ]);
-  });
-
-  it("returns [] when no excluded nodes are present", () => {
-    const program = flexible({ kind: "courses", courses: ["cs100"] });
-    expect(getExcludedCourses(program)).toEqual([]);
-  });
-
-  it("does not surface excluded courses through getRequiredCourses", () => {
-    const program = flexible({
-      kind: "all",
-      children: [
-        { kind: "courses", courses: ["cs100"] },
-        { kind: "excluded", courses: ["chem266"] },
-      ],
-    });
-    expect(getRequiredCourses(program)).toEqual(["cs100"]);
-    expect(getExcludedCourses(program)).toEqual(["chem266"]);
   });
 });
 

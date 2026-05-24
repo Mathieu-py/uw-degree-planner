@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attachEligibility, type BrowseRow } from "../browse";
+import { attachEligibility, type EligibilityRow } from "../eligibility";
 import { enrichCourse } from "../filters";
 import type { Course, UWFlowCourse } from "../types";
 
@@ -19,7 +19,7 @@ function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
 }
 
 describe("attachEligibility", () => {
-  function makeRows(courses: Course[]): BrowseRow[] {
+  function makeRows(courses: Course[]): EligibilityRow[] {
     return courses.map((course) => ({ course, eligibility: null }));
   }
 

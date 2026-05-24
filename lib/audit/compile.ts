@@ -288,10 +288,17 @@ export function compileAudit(
  * "requirement slot" once: a `courses` leaf under all = N requirements, a
  * `pick` = selectMin requirements, a `subjectPool` = selectCount, and an
  * `all` propagates the sum of its children. Used for headline numbers.
+ *
+ * `excludedViolationCount` is the total number of placed courses that hit
+ * an `excluded` rule anywhere in this subtree. Excluded rules deliberately
+ * do NOT change `status` (see "Semantics" comment at the top of this file);
+ * the count is surfaced so the panel can render a small warning badge
+ * without re-walking the tree.
  */
 export function summarize(node: AuditNode): {
   needed: number;
   satisfied: number;
+  excludedViolationCount: number;
 } {
   const r = node.ruleNode;
   switch (r.kind) {
@@ -299,27 +306,45 @@ export function summarize(node: AuditNode): {
       return {
         needed: r.courses.length,
         satisfied: node.satisfiers.length,
+        excludedViolationCount: 0,
       };
     case "all": {
       let needed = 0;
       let satisfied = 0;
+      let excludedViolationCount = 0;
       for (const c of node.children) {
         const s = summarize(c);
         needed += s.needed;
         satisfied += s.satisfied;
+        excludedViolationCount += s.excludedViolationCount;
       }
-      return { needed, satisfied };
+      return { needed, satisfied, excludedViolationCount };
     }
     case "pick": {
       const min = r.selectMin ?? 0;
       const got = Math.min(node.satisfiedCount ?? 0, min);
-      return { needed: min, satisfied: got };
+      // Pick children are subordinate: an excluded leaf can sit underneath
+      // a pick when the program wraps "either A or B" choices around a
+      // shared excluded note. Fold counts up the same way as `all`.
+      let excludedViolationCount = 0;
+      for (const c of node.children) {
+        excludedViolationCount += summarize(c).excludedViolationCount;
+      }
+      return { needed: min, satisfied: got, excludedViolationCount };
     }
     case "subjectPool": {
       const got = Math.min(node.satisfiedCount ?? 0, r.selectCount);
-      return { needed: r.selectCount, satisfied: got };
+      return {
+        needed: r.selectCount,
+        satisfied: got,
+        excludedViolationCount: 0,
+      };
     }
     case "excluded":
-      return { needed: 0, satisfied: 0 };
+      return {
+        needed: 0,
+        satisfied: 0,
+        excludedViolationCount: node.excludedViolations?.length ?? 0,
+      };
   }
 }

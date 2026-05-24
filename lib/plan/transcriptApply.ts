@@ -20,8 +20,13 @@ import { termLabelToTermId } from "../terms";
 import type { TranscriptParseResult } from "../transcript/types";
 import type { TermId } from "../types";
 import { sequenceTerms } from "./sequence";
-import type { LocalPlan, PlanSlot, SlotCourse, Stream } from "./types";
-import { PLAN_SCHEMA_VERSION } from "./types";
+import {
+  type LocalPlan,
+  PLAN_SCHEMA_VERSION,
+  type PlanSlot,
+  type SlotCourse,
+  type Stream,
+} from "./types";
 
 export interface TranscriptToPlanOptions {
   /** Stream to use for the cadence. */
@@ -126,7 +131,7 @@ export function applyTranscriptToPlan(
   }
 
   const plan: LocalPlan = {
-    version: PLAN_SCHEMA_VERSION,
+    schemaVersion: PLAN_SCHEMA_VERSION,
     programId: parseResult.detectedProgramId,
     specializationId: parseResult.detectedSpecializationSlug,
     stream,
@@ -159,7 +164,7 @@ function bareplan(
   slots: PlanSlot[],
 ): LocalPlan {
   return {
-    version: PLAN_SCHEMA_VERSION,
+    schemaVersion: PLAN_SCHEMA_VERSION,
     programId: parseResult.detectedProgramId,
     specializationId: parseResult.detectedSpecializationSlug,
     stream,

@@ -1,7 +1,7 @@
 import { PlannerShell } from "@/components/planner/PlannerShell";
 import { loadTerm } from "@/lib/data";
 import { PROGRAMS } from "@/lib/programs";
-import { PINNED_TERM } from "@/lib/terms";
+import { PINNED_TERM, termInfo } from "@/lib/terms";
 
 export const metadata = {
   title: "Plan your degree · UW Degree Planner",
@@ -31,15 +31,24 @@ export default async function PlanPage() {
   );
 
   // Catalog for the slot picker. Today we ship a single pinned term; once a
-  // term picker / multi-term snapshots land (Phase 5), this expands to a map.
+  // term picker / multi-term snapshots land, this expands to a map.
   const catalog = await loadTerm(PINNED_TERM);
+  const catalogLabel = termInfo(PINNED_TERM)?.label ?? `Term ${PINNED_TERM}`;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-10 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          Beta
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Beta
+          </span>
+          <a
+            href="mailto:feedback@example.com?subject=UW%20Degree%20Planner%20feedback"
+            className="text-xs text-zinc-500 dark:text-zinc-400 underline-offset-4 hover:underline hover:text-zinc-950 dark:hover:text-zinc-50"
+          >
+            Report an issue
+          </a>
+        </div>
         <h1 className="text-3xl font-semibold tracking-tight">
           Plan your degree
         </h1>
@@ -54,6 +63,10 @@ export default async function PlanPage() {
         specializationsByProgram={specializationsByProgram}
         catalog={catalog}
       />
+
+      <footer className="text-xs text-zinc-500 dark:text-zinc-500 pt-2 border-t border-zinc-200 dark:border-zinc-900">
+        Catalog: {catalogLabel}
+      </footer>
     </div>
   );
 }

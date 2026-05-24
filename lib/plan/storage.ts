@@ -1,27 +1,14 @@
+import { z } from "zod";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "../storage";
-import type {
-  LocalPlan,
-  PlanSlot,
-  SlotCourse,
-  SlotPosition,
-  Stream,
-} from "./types";
-import { PLAN_SCHEMA_VERSION } from "./types";
+import { type LocalPlan, PLAN_SCHEMA_VERSION } from "./types";
 
-/**
- * localStorage key for the current plan. Versioned in the key so that a
- * future schema bump doesn't silently overwrite or misread old data — the
- * old key remains intact for one-shot migration on first load.
- */
 export const PLAN_STORAGE_KEY = "uwfinder.plan.v1";
+/** Sibling key where unreadable plans get parked so we can build a migrator. */
+export const PLAN_BROKEN_BACKUP_KEY = `${PLAN_STORAGE_KEY}.broken`;
 
-const VALID_STREAMS: ReadonlySet<Stream> = new Set<Stream>([
-  "regular",
-  "stream4",
-  "stream8",
-]);
+const StreamSchema = z.enum(["regular", "stream4", "stream8"]);
 
-const VALID_POSITIONS: ReadonlySet<SlotPosition> = new Set<SlotPosition>([
+const SlotPositionSchema = z.enum([
   "1A",
   "1B",
   "2A",
@@ -39,62 +26,80 @@ const VALID_POSITIONS: ReadonlySet<SlotPosition> = new Set<SlotPosition>([
   "pre",
 ]);
 
-function isString(v: unknown): v is string {
-  return typeof v === "string";
-}
+const SlotCourseSchema = z.object({
+  code: z.string(),
+  grade: z.string().optional(),
+});
 
-function isStream(v: unknown): v is Stream {
-  return typeof v === "string" && VALID_STREAMS.has(v as Stream);
-}
+const PlanSlotSchema = z.object({
+  id: z.string(),
+  termId: z.number().nullable(),
+  position: SlotPositionSchema,
+  isCoop: z.boolean(),
+  courses: z.array(SlotCourseSchema),
+});
 
-function isSlotCourse(v: unknown): v is SlotCourse {
-  if (typeof v !== "object" || v === null) return false;
-  const c = v as { code?: unknown; grade?: unknown };
-  if (!isString(c.code)) return false;
-  if (c.grade !== undefined && !isString(c.grade)) return false;
-  return true;
-}
+const LocalPlanSchema = z.object({
+  schemaVersion: z.literal(PLAN_SCHEMA_VERSION),
+  programId: z.string().nullable(),
+  specializationId: z.string().nullable(),
+  stream: StreamSchema,
+  startTermId: z.number().nullable(),
+  slots: z.array(PlanSlotSchema),
+  updatedAt: z.string(),
+});
 
-function isPlanSlot(v: unknown): v is PlanSlot {
-  if (typeof v !== "object" || v === null) return false;
-  const s = v as Partial<PlanSlot>;
-  if (!isString(s.id)) return false;
-  if (s.termId !== null && typeof s.termId !== "number") return false;
-  if (!VALID_POSITIONS.has(s.position as SlotPosition)) return false;
-  if (typeof s.isCoop !== "boolean") return false;
-  if (!Array.isArray(s.courses)) return false;
-  return s.courses.every(isSlotCourse);
-}
-
-function isLocalPlan(v: unknown): v is LocalPlan {
-  if (typeof v !== "object" || v === null) return false;
-  const p = v as Partial<LocalPlan>;
-  if (p.version !== PLAN_SCHEMA_VERSION) return false;
-  if (p.programId !== null && !isString(p.programId)) return false;
-  if (p.specializationId !== null && !isString(p.specializationId))
-    return false;
-  if (!isStream(p.stream)) return false;
-  if (p.startTermId !== null && typeof p.startTermId !== "number") return false;
-  if (!Array.isArray(p.slots)) return false;
-  if (!p.slots.every(isPlanSlot)) return false;
-  if (!isString(p.updatedAt)) return false;
-  return true;
-}
-
+/**
+ * Read a `LocalPlan` from localStorage. Returns `null` when nothing is stored
+ * OR when the stored value can't be parsed (malformed JSON, shape drift,
+ * wrong `schemaVersion`). On any parse/validation failure the raw blob is
+ * stashed under `<key>.broken` (overwriting any previous backup) so future
+ * code can build a migrator without the user having already lost their data.
+ */
 export function loadPlan(): LocalPlan | null {
   const raw = safeGetItem(PLAN_STORAGE_KEY);
   if (!raw) return null;
   try {
-    const parsed: unknown = JSON.parse(raw);
-    return isLocalPlan(parsed) ? parsed : null;
-  } catch {
+    const parsed = JSON.parse(raw);
+    return LocalPlanSchema.parse(parsed);
+  } catch (err) {
+    safeSetItem(PLAN_BROKEN_BACKUP_KEY, raw);
+    console.warn(
+      "loadPlan: stored plan failed to parse; raw backup written to localStorage key",
+      PLAN_BROKEN_BACKUP_KEY,
+      err,
+    );
     return null;
   }
 }
 
-export function savePlan(plan: LocalPlan): void {
-  const stamped: LocalPlan = { ...plan, updatedAt: new Date().toISOString() };
-  safeSetItem(PLAN_STORAGE_KEY, JSON.stringify(stamped));
+/**
+ * Persist a `LocalPlan`. Returns `true` on a successful write, `false` when
+ * localStorage is unavailable or rejected the write (quota, private mode).
+ * `schemaVersion` and `updatedAt` are always re-stamped, and per-slot
+ * duplicate courses are removed (keeping the first occurrence) so a stale
+ * caller can't push a shape that crashes React's key uniqueness check —
+ * callers don't need to set or normalize any of these.
+ */
+export function savePlan(plan: LocalPlan): boolean {
+  const stamped: LocalPlan = {
+    ...plan,
+    schemaVersion: PLAN_SCHEMA_VERSION,
+    updatedAt: new Date().toISOString(),
+    slots: plan.slots.map(dedupSlotCourses),
+  };
+  return safeSetItem(PLAN_STORAGE_KEY, JSON.stringify(stamped));
+}
+
+function dedupSlotCourses(slot: LocalPlan["slots"][number]) {
+  const seen = new Set<string>();
+  const courses: typeof slot.courses = [];
+  for (const c of slot.courses) {
+    if (seen.has(c.code)) continue;
+    seen.add(c.code);
+    courses.push(c);
+  }
+  return courses.length === slot.courses.length ? slot : { ...slot, courses };
 }
 
 export function clearPlan(): void {
@@ -108,7 +113,7 @@ export function clearPlan(): void {
  */
 export function emptyPlan(): LocalPlan {
   return {
-    version: PLAN_SCHEMA_VERSION,
+    schemaVersion: PLAN_SCHEMA_VERSION,
     programId: null,
     specializationId: null,
     stream: "regular",

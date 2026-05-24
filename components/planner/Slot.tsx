@@ -35,7 +35,7 @@ export function Slot({ slot, issuesByCourse, onAdd, onRemoveCourse }: Props) {
         const issueTitle = courseIssues.map((i) => i.message).join("\n");
         return (
           <div
-            key={c.code}
+            key={`${slot.id}:${c.code}`}
             className={
               "rounded border px-2 py-1 text-xs font-mono flex items-center justify-between gap-2 group " +
               (hasIssue
@@ -51,7 +51,7 @@ export function Slot({ slot, issuesByCourse, onAdd, onRemoveCourse }: Props) {
                   title={issueTitle}
                   className="text-rose-600 dark:text-rose-400 cursor-help"
                 >
-                  ⚠
+                  <span aria-hidden="true">⚠</span>
                 </span>
               ) : null}
               <Link

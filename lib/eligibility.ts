@@ -4,23 +4,11 @@
  * tree walk) and only the picker view needs it.
  */
 
-import { type PrereqNode, parsePrereqs } from "./prereqs/parse";
+import { cachedParsePrereqs } from "./prereqs/cache";
 import { type EligibilityResult, evaluate } from "./prereqs/satisfied";
 import type { Course } from "./types";
 
-const prereqCache = new Map<string, PrereqNode | null>();
-
-function cachedParsePrereqs(
-  text: string | null | undefined,
-): PrereqNode | null {
-  const key = text ?? "";
-  if (prereqCache.has(key)) return prereqCache.get(key) ?? null;
-  const parsed = parsePrereqs(text);
-  prereqCache.set(key, parsed);
-  return parsed;
-}
-
-export interface BrowseRow {
+export interface EligibilityRow {
   course: Course;
   eligibility: EligibilityResult | null;
 }
@@ -32,14 +20,14 @@ export interface BrowseRow {
  * "unmet").
  */
 export function attachEligibility(
-  rows: BrowseRow[],
+  rows: EligibilityRow[],
   completed: string[],
   hideUnmetPrereqs: boolean,
-): BrowseRow[] {
+): EligibilityRow[] {
   if (completed.length === 0) return rows;
   const completedSet = new Set(completed);
   return rows
-    .map<BrowseRow>((r) => ({
+    .map<EligibilityRow>((r) => ({
       course: r.course,
       eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), {
         completed: completedSet,

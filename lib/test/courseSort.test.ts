@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { compareCourses } from "../courseSort";
 import { enrichCourse } from "../filters";
-import { compareCourses } from "../sort";
 import type { Course, UWFlowCourse, UWFlowRating } from "../types";
 
 function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {

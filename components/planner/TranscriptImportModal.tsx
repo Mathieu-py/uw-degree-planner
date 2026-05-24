@@ -2,8 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
-import { type Categorized, categorize } from "@/lib/transcript/applyHelpers";
-import { type ParsedCourse, parseTranscript } from "@/lib/transcript/parse";
+import {
+  type Categorized,
+  categorize,
+  type ParsedCourse,
+  parseTranscript,
+} from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 
@@ -15,16 +19,15 @@ interface Props {
     parseResult: TranscriptParseResult,
     includedUnrecognized: ReadonlySet<string>,
   ) => void;
-  allCourseCodes: string[];
-  currentCompletedCount: number;
+  /** Catalog codes used to flag "unrecognized" courses in the parse result. */
+  catalogCodes: ReadonlySet<string>;
 }
 
 export function TranscriptImportModal({
   isOpen,
   onClose,
   onApplyPlan,
-  allCourseCodes,
-  currentCompletedCount,
+  catalogCodes,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,10 +81,9 @@ export function TranscriptImportModal({
   }
 
   const parseResult = useMemo(() => parseTranscript(text), [text]);
-  const catalog = useMemo(() => new Set(allCourseCodes), [allCourseCodes]);
   const categorized = useMemo<Categorized>(
-    () => categorize(parseResult, catalog),
-    [parseResult, catalog],
+    () => categorize(parseResult, catalogCodes),
+    [parseResult, catalogCodes],
   );
 
   // `included` is the set of unrecognized codes the user has opted IN. The
@@ -257,13 +259,6 @@ export function TranscriptImportModal({
                     <p key={w}>⚠ {w}</p>
                   ))}
                 </div>
-              )}
-
-              {currentCompletedCount > 0 && (
-                <p className="text-amber-700 dark:text-amber-400">
-                  ⚠ Replaces your current {currentCompletedCount} completed
-                  course{currentCompletedCount === 1 ? "" : "s"}.
-                </p>
               )}
             </div>
           )}

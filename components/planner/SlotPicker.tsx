@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { attachEligibility, type BrowseRow } from "@/lib/browse";
-import { applyFilters, seatsAvailable } from "@/lib/filters";
+import { useMemo, useState } from "react";
+import type { SortDir, SortKey } from "@/lib/courseSort";
+import type { EligibilityRow } from "@/lib/eligibility";
+import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
-import {
-  compareCourses,
-  DEFAULT_SORT_DIR,
-  DEFAULT_SORT_KEY,
-  type SortDir,
-  type SortKey,
-} from "@/lib/sort";
 import type { Course } from "@/lib/types";
+import { useEscape } from "./useEscape";
+import {
+  PICKER_PAGE_SIZE,
+  type PickerFilters,
+  useFilteredCourses,
+} from "./useFilteredCourses";
 
 interface Props {
   targetTermLabel: string;
@@ -29,34 +29,11 @@ interface Props {
 }
 
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
-const PAGE = 50;
-
-interface PickerFilters {
-  query: string;
-  levels: number[];
-  excludePrefixes: string[];
-  minUseful: number | null;
-  minEasy: number | null;
-  hasSeatsOnly: boolean;
-  hideUnmetPrereqs: boolean;
-}
-
-const DEFAULT_FILTERS: PickerFilters = {
-  query: "",
-  levels: [],
-  excludePrefixes: [],
-  minUseful: null,
-  minEasy: null,
-  hasSeatsOnly: false,
-  hideUnmetPrereqs: true,
-};
 
 /**
- * Modal slot picker. The default view auto-filters the catalog to candidates
- * for the target slot (not placed, prereqs satisfied) and surfaces every
- * UWFlow column in a sortable table. A sidebar of filter controls lets the
- * student adjust levels, exclude prefixes, set rating floors, and toggle
- * seats / prereq hiding.
+ * Modal slot picker. Filter+sort+paginate pipeline lives in
+ * {@link useFilteredCourses}; this component owns layout, focus handling,
+ * and the table presentation.
  */
 export function SlotPicker({
   targetTermLabel,
@@ -67,105 +44,37 @@ export function SlotPicker({
   onPick,
   onClose,
 }: Props) {
-  const [filters, setFilters] = useState<PickerFilters>(DEFAULT_FILTERS);
-  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT_KEY);
-  const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT_DIR);
-  const [limit, setLimit] = useState(PAGE);
+  const {
+    filters,
+    sortKey,
+    sortDir,
+    knownPrefixes,
+    sorted,
+    visible,
+    hasMore,
+    patchFilters,
+    resetFilters,
+    onSort,
+    showMore,
+  } = useFilteredCourses({
+    catalog,
+    placedCodes,
+    completedBefore,
+    focusCodes,
+  });
 
-  // Close on Escape.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const knownPrefixes = useMemo(
-    () => [...new Set(catalog.map((c) => c.prefix))].sort(),
-    [catalog],
-  );
-
-  // Apply: focus codes → not-placed → user filters → search → eligibility →
-  // sort. Each step is pure and memoised against its inputs.
-  const candidates = useMemo<Course[]>(() => {
-    if (focusCodes && focusCodes.length > 0) {
-      const want = new Set(focusCodes.map((c) => c.toLowerCase()));
-      return catalog.filter(
-        (c) => want.has(c.code) && !placedCodes.has(c.code),
-      );
-    }
-    return catalog.filter((c) => !placedCodes.has(c.code));
-  }, [catalog, focusCodes, placedCodes]);
-
-  const userFiltered = useMemo<Course[]>(
-    () =>
-      applyFilters(candidates, {
-        excludePrefixes: filters.excludePrefixes,
-        levels: filters.levels,
-        hasSeatsAvailable: filters.hasSeatsOnly,
-        hideUnmetPrereqs: false, // prereq filtering happens in attachEligibility
-        minUseful: filters.minUseful,
-        minEasy: filters.minEasy,
-      }),
-    [candidates, filters],
-  );
-
-  const searched = useMemo(() => {
-    const q = filters.query.trim().toLowerCase().replace(/\s+/g, "");
-    if (!q) return userFiltered;
-    return userFiltered.filter(
-      (c) =>
-        c.code.toLowerCase().replace(/\s+/g, "").includes(q) ||
-        c.name.toLowerCase().includes(q),
-    );
-  }, [userFiltered, filters.query]);
-
-  const completedList = useMemo(() => [...completedBefore], [completedBefore]);
-
-  const annotated = useMemo<BrowseRow[]>(() => {
-    const baseRows = searched.map((course) => ({ course, eligibility: null }));
-    return attachEligibility(baseRows, completedList, filters.hideUnmetPrereqs);
-  }, [searched, completedList, filters.hideUnmetPrereqs]);
-
-  const sorted = useMemo(
-    () =>
-      [...annotated].sort((a, b) =>
-        compareCourses(a.course, b.course, sortKey, sortDir),
-      ),
-    [annotated, sortKey, sortDir],
-  );
-
-  const visible = sorted.slice(0, limit);
-  const hasMore = sorted.length > limit;
-
-  function patchFilters(p: Partial<PickerFilters>) {
-    setFilters((prev) => ({ ...prev, ...p }));
-    setLimit(PAGE);
-  }
-
-  function resetFilters() {
-    setFilters(DEFAULT_FILTERS);
-    setSortKey(DEFAULT_SORT_KEY);
-    setSortDir(DEFAULT_SORT_DIR);
-    setLimit(PAGE);
-  }
-
-  function onSort(key: SortKey) {
-    if (key === sortKey) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir(key === "code" || key === "name" ? "asc" : "desc");
-    }
-    setLimit(PAGE);
-  }
+  useEscape(onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/*
+       * Click-to-dismiss backdrop. tabIndex={-1} keeps keyboard focus out
+       * of the backdrop so the dialog content takes the initial focus.
+       */}
       <button
         type="button"
         aria-label="Close dialog"
+        tabIndex={-1}
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
@@ -222,88 +131,92 @@ export function SlotPicker({
                   No matching courses.
                 </div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
-                    <tr className="text-left">
-                      <Th
-                        label="Code"
-                        col="code"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                      />
-                      <Th
-                        label="Course"
-                        col="name"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                      />
-                      <Th
-                        label="Useful"
-                        col="useful"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Easy"
-                        col="easy"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Liked"
-                        col="liked"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Rev."
-                        col="reviews"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Seats"
-                        col="seats"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <th className="px-2 py-2 text-zinc-500 text-xs font-medium">
-                        {/* details link column */}
-                        <span className="sr-only">Details</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((r) => (
-                      <Row
-                        key={r.course.id}
-                        row={r}
-                        onPick={() => onPick(r.course.code)}
-                      />
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
+                      <tr className="text-left">
+                        <Th
+                          label="Code"
+                          col="code"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                        />
+                        <Th
+                          label="Course"
+                          col="name"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                        />
+                        <Th
+                          label="Useful"
+                          col="useful"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                          align="right"
+                        />
+                        <Th
+                          label="Easy"
+                          col="easy"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                          align="right"
+                        />
+                        <Th
+                          label="Liked"
+                          col="liked"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                          align="right"
+                        />
+                        <Th
+                          label="Rev."
+                          col="reviews"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                          align="right"
+                        />
+                        <Th
+                          label="Seats"
+                          col="seats"
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                          onSort={onSort}
+                          align="right"
+                        />
+                        <th className="px-2 py-2 text-zinc-500 text-xs font-medium">
+                          {/* details link column */}
+                          <span className="sr-only">Details</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visible.map((r) => (
+                        <Row
+                          key={r.course.id}
+                          row={r}
+                          onPick={() => onPick(r.course.code)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
               {hasMore ? (
                 <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">
                   <button
                     type="button"
-                    onClick={() => setLimit((n) => n + PAGE)}
+                    onClick={showMore}
                     className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-4 hover:underline"
                   >
-                    Show {Math.min(PAGE, sorted.length - limit)} more
+                    Show{" "}
+                    {Math.min(PICKER_PAGE_SIZE, sorted.length - visible.length)}{" "}
+                    more
                   </button>
                 </div>
               ) : null}
@@ -568,7 +481,7 @@ function Th({
   );
 }
 
-function Row({ row, onPick }: { row: BrowseRow; onPick: () => void }) {
+function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
   const { course, eligibility } = row;
   const reviews = course.rating?.filled_count ?? 0;
   const seats = seatsAvailable(course);

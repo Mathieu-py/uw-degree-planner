@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { termInfo } from "@/lib/terms";
 import type { ProgramOption } from "./PlannerShell";
+import { useEscape } from "./useEscape";
 
 interface SpecOption {
   slug: string;
@@ -49,13 +50,7 @@ export function PlanSettings({
     plan.specializationId,
   );
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  useEscape(onClose);
 
   // Available specs follow the selected program. Clearing program nulls spec.
   const specs = useMemo<SpecOption[]>(() => {

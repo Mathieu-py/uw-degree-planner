@@ -1,6 +1,14 @@
 import type { TermId } from "../types";
 
 /**
+ * Schema version stamped on every persisted `LocalPlan`. Bump when introducing
+ * a breaking shape change (renamed field, removed field, changed semantics).
+ * `loadPlan` rejects payloads with any other value and stashes the raw blob
+ * under `<key>.broken` so we can build a migrator before users lose data.
+ */
+export const PLAN_SCHEMA_VERSION = 1;
+
+/**
  * Co-op stream determines the cadence of academic and work terms.
  * - "regular": eight contiguous academic terms (1A–4B), no work terms.
  * - "stream8": 1A 1B [WT] 2A [WT] 2B [WT] 3A [WT] 3B [WT] 4A [WT] 4B.
@@ -40,8 +48,7 @@ export interface PlanSlot {
 }
 
 export interface LocalPlan {
-  /** Schema version. Bumped on breaking storage changes; never repurpose a number. */
-  version: 1;
+  schemaVersion: typeof PLAN_SCHEMA_VERSION;
   programId: string | null;
   specializationId: string | null;
   stream: Stream;
@@ -51,5 +58,3 @@ export interface LocalPlan {
   /** ISO-8601 timestamp of last save. */
   updatedAt: string;
 }
-
-export const PLAN_SCHEMA_VERSION = 1 as const;

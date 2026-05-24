@@ -1,3 +1,4 @@
+import { z } from "zod";
 import programsData from "../data/programs.json";
 
 export const TERM_LETTERS = [
@@ -16,7 +17,47 @@ export type TermLetter = (typeof TERM_LETTERS)[number];
 /**
  * Recursive AST for program requirements. Mirrors the pattern in
  * `lib/prereqs/parse.ts` — discriminated union, walkable via `walkRule`.
+ *
+ * Schemas below use `z.lazy` for the self-reference. `selectCount` on
+ * `subjectPool` is exactly-N (semantically `selectMin === selectMax === N`
+ * on `pick`); the field name differs because Kuali emits subject pools as
+ * "Complete N additional <SUBJECT> courses …" with no range form.
  */
+const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
+  z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("all"),
+      description: z.string().optional(),
+      children: z.array(RuleNodeSchema),
+    }),
+    z.object({
+      kind: z.literal("pick"),
+      description: z.string().optional(),
+      selectMin: z.number().optional(),
+      selectMax: z.number().optional(),
+      children: z.array(RuleNodeSchema),
+    }),
+    z.object({
+      kind: z.literal("subjectPool"),
+      description: z.string().optional(),
+      selectCount: z.number(),
+      subjectCodes: z.array(z.string()),
+      minLevel: z.number().optional(),
+      maxLevel: z.number().optional(),
+      exclusions: z.array(z.string()).optional(),
+    }),
+    z.object({
+      kind: z.literal("courses"),
+      courses: z.array(z.string()),
+    }),
+    z.object({
+      kind: z.literal("excluded"),
+      description: z.string().optional(),
+      courses: z.array(z.string()),
+    }),
+  ]),
+);
+
 export type RuleNode =
   | { kind: "all"; description?: string; children: RuleNode[] }
   | {
@@ -28,20 +69,11 @@ export type RuleNode =
     }
   | {
       kind: "subjectPool";
-      // Optional — present only when the parser couldn't derive the prose
-      // structurally (rare, defensive escape hatch). The standard display
-      // string is reconstructed by `describeRule(node)`.
       description?: string;
-      // `selectCount` is always exactly-N (semantically equivalent to
-      // `selectMin === selectMax === N` on `pick`). The field name differs
-      // because subject pools never carry a range in Kuali's prose — they're
-      // emitted as "Complete N additional <SUBJECT> courses …".
       selectCount: number;
       subjectCodes: string[];
       minLevel?: number;
       maxLevel?: number;
-      // Free-form prose clauses (e.g. "excluding courses cross-listed with a
-      // CO course"). Human-readable, not machine-actionable — display verbatim.
       exclusions?: string[];
     }
   | { kind: "courses"; courses: string[] }
@@ -49,48 +81,62 @@ export type RuleNode =
 
 export type SubjectPoolNode = Extract<RuleNode, { kind: "subjectPool" }>;
 
-export interface ElectiveCategory {
-  description: string;
-  unitRequirement?: number;
-  approvedCourses?: string[];
-}
+const ElectiveCategorySchema = z.object({
+  description: z.string(),
+  unitRequirement: z.number().optional(),
+  approvedCourses: z.array(z.string()).optional(),
+});
 
-export interface Specialization {
-  slug: string;
-  name: string;
-  kualiId: string;
-  source?: string;
-  rules?: RuleNode;
-  electives?: ElectiveCategory[];
-}
+export type ElectiveCategory = z.infer<typeof ElectiveCategorySchema>;
 
-interface EngineeringProgram {
-  kind: "engineering";
-  name: string;
-  asOf: string;
-  source?: string;
-  terms: Record<TermLetter, RuleNode>;
-  electives?: ElectiveCategory[];
-  specializations?: Specialization[];
-}
+const SpecializationSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  kualiId: z.string(),
+  source: z.string().optional(),
+  rules: RuleNodeSchema.optional(),
+  electives: z.array(ElectiveCategorySchema).optional(),
+});
 
-interface FlexibleProgram {
-  kind: "flexible";
-  name: string;
-  asOf: string;
-  source?: string;
-  rules: RuleNode;
-  electives?: ElectiveCategory[];
-  specializations?: Specialization[];
-}
+export type Specialization = z.infer<typeof SpecializationSchema>;
 
-export type Program = EngineeringProgram | FlexibleProgram;
+const TermsSchema = z.object({
+  "1A": RuleNodeSchema,
+  "1B": RuleNodeSchema,
+  "2A": RuleNodeSchema,
+  "2B": RuleNodeSchema,
+  "3A": RuleNodeSchema,
+  "3B": RuleNodeSchema,
+  "4A": RuleNodeSchema,
+  "4B": RuleNodeSchema,
+});
 
-// `resolveJsonModule` widens string literals from imported JSON, so the `kind`
-// field comes in as `string` rather than `"engineering" | "flexible"` and the
-// discriminated union won't accept it without a cast.
-export const PROGRAMS: Record<string, Program> =
-  programsData as unknown as Record<string, Program>;
+const ProgramSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("engineering"),
+    name: z.string(),
+    asOf: z.string(),
+    source: z.string().optional(),
+    terms: TermsSchema,
+    electives: z.array(ElectiveCategorySchema).optional(),
+    specializations: z.array(SpecializationSchema).optional(),
+  }),
+  z.object({
+    kind: z.literal("flexible"),
+    name: z.string(),
+    asOf: z.string(),
+    source: z.string().optional(),
+    rules: RuleNodeSchema,
+    electives: z.array(ElectiveCategorySchema).optional(),
+    specializations: z.array(SpecializationSchema).optional(),
+  }),
+]);
+
+export type Program = z.infer<typeof ProgramSchema>;
+
+export const PROGRAMS: Record<string, Program> = z
+  .record(z.string(), ProgramSchema)
+  .parse(programsData);
 
 export function isTermLetter(s: string | null | undefined): s is TermLetter {
   return s != null && (TERM_LETTERS as readonly string[]).includes(s);
@@ -265,56 +311,6 @@ export function getRequiredCourses(program: Program): string[] {
   return requiredCoursesIn(program.rules);
 }
 
-export function getTermSchedule(
-  program: Program,
-): Record<TermLetter, string[]> | null {
-  if (program.kind !== "engineering") return null;
-  return Object.fromEntries(
-    TERM_LETTERS.map((t) => [t, requiredCoursesIn(program.terms[t])]),
-  ) as Record<TermLetter, string[]>;
-}
-
-/**
- * For engineering programs, returns the union of required courses from every
- * term strictly before `currentTerm`. For flexible programs, returns all
- * required courses (the `currentTerm` argument is ignored since flexible
- * programs have no temporal schedule). Codes are deduped and sorted.
- *
- * `currentTerm: null` means "no term selected" — engineering returns []
- * (nothing seeded yet); flexible still returns the full required list.
- *
- * If `specializationId` resolves on the program, the spec's tree-derived
- * required courses are unioned in regardless of term (specs are thematic
- * focuses, not temporal schedules).
- *
- * Unknown program → []. Unknown specialization (or program with no specs) →
- * parent-only result.
- */
-export function inferCompleted(
-  programId: string,
-  currentTerm: TermLetter | null,
-  specializationId: string | null = null,
-): string[] {
-  const program = PROGRAMS[programId];
-  if (!program) return [];
-  const out = new Set<string>();
-  if (program.kind === "flexible") {
-    for (const c of getRequiredCourses(program)) out.add(c);
-  } else if (currentTerm != null) {
-    const cutoff = TERM_LETTERS.indexOf(currentTerm);
-    for (const t of TERM_LETTERS.slice(0, cutoff)) {
-      for (const c of requiredCoursesIn(program.terms[t])) out.add(c);
-    }
-  }
-  if (specializationId) {
-    const spec = getSpecialization(programId, specializationId);
-    if (spec?.rules) {
-      for (const c of requiredCoursesIn(spec.rules)) out.add(c);
-    }
-  }
-  return [...out].sort();
-}
-
 export function getSubjectPools(program: Program): SubjectPoolNode[] {
   const out: SubjectPoolNode[] = [];
   const visit = (n: RuleNode) => {
@@ -326,22 +322,4 @@ export function getSubjectPools(program: Program): SubjectPoolNode[] {
     walkRule(program.rules, visit);
   }
   return out;
-}
-
-/**
- * Courses explicitly excluded from counting towards the program (Kuali's
- * "The following cannot be used towards this academic plan" rule). The
- * seeder should warn — not auto-complete — if a student claims any of these.
- */
-export function getExcludedCourses(program: Program): string[] {
-  const out = new Set<string>();
-  const visit = (n: RuleNode) => {
-    if (n.kind === "excluded") for (const c of n.courses) out.add(c);
-  };
-  if (program.kind === "engineering") {
-    for (const t of TERM_LETTERS) walkRule(program.terms[t], visit);
-  } else {
-    walkRule(program.rules, visit);
-  }
-  return [...out].sort();
 }

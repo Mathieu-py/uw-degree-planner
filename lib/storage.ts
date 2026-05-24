@@ -18,13 +18,20 @@ export function safeGetItem(key: string): string | null {
   }
 }
 
-export function safeSetItem(key: string, value: string): void {
-  if (typeof window === "undefined") return;
+/**
+ * Returns `true` on a successful write, `false` if storage is unavailable or
+ * the write threw (QuotaExceededError, SecurityError in Safari private mode,
+ * SSR). Callers that need to surface a "couldn't save" affordance should check
+ * the return value; callers that only want best-effort persistence can ignore
+ * it.
+ */
+export function safeSetItem(key: string, value: string): boolean {
+  if (typeof window === "undefined") return false;
   try {
     window.localStorage.setItem(key, value);
+    return true;
   } catch {
-    // Quota exceeded or storage disabled (Safari private mode). The caller's
-    // primary state path (URL, in-memory) is already authoritative.
+    return false;
   }
 }
 
