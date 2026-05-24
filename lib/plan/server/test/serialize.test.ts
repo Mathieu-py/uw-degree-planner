@@ -116,6 +116,33 @@ describe("assembleServerPlan", () => {
     expect("grade" in result.slots[0].courses[0]).toBe(false);
   });
 
+  it("preserves an empty-string grade rather than dropping the field", () => {
+    // The save RPC normalizes '' to null via `nullif(..., '')`, so this case
+    // should never originate from our own writes — but the read path must not
+    // assume that. If a row somehow has grade='' the field should round-trip.
+    const slots: PlanSlotRow[] = [
+      {
+        id: "s1",
+        plan_id: "plan-1",
+        term_id: 1239,
+        position: "1A",
+        is_coop: false,
+        ordinal: 0,
+      },
+    ];
+    const courses: PlanCourseRow[] = [
+      {
+        id: "c1",
+        slot_id: "s1",
+        course_code: "cs115",
+        grade: "",
+        ordinal: 0,
+      },
+    ];
+    const result = assembleServerPlan(PLAN, slots, courses);
+    expect(result.slots[0].courses[0]).toEqual({ code: "cs115", grade: "" });
+  });
+
   it("returns slots with empty courses array when no courses match", () => {
     const slots: PlanSlotRow[] = [
       {

@@ -67,9 +67,14 @@ export function assembleServerPlan(
   );
   for (const c of sortedCourses) {
     const bucket = coursesBySlot.get(c.slot_id);
-    const entry: SlotCourse = c.grade
-      ? { code: c.course_code, grade: c.grade }
-      : { code: c.course_code };
+    // Explicit null check: only DB nulls should drop the field. An empty
+    // string is a valid (if semantically odd) grade and must round-trip,
+    // since the save RPC's `nullif(..., '')` is the only place that should
+    // normalize empties to null — the read path stays faithful to the row.
+    const entry: SlotCourse =
+      c.grade !== null
+        ? { code: c.course_code, grade: c.grade }
+        : { code: c.course_code };
     if (bucket) bucket.push(entry);
     else coursesBySlot.set(c.slot_id, [entry]);
   }

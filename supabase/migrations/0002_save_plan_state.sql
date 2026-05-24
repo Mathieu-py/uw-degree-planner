@@ -62,6 +62,11 @@ begin
   -- Cascade clears plan_courses too.
   delete from public.plan_slots where plan_id = p_plan_id;
 
+  -- `coalesce(p_snapshot->'slots', '[]')` only catches SQL NULL; a JSON null
+  -- (`{"slots": null}`) or a non-array (`{"slots": "broken"}`) would still
+  -- make jsonb_array_elements raise "cannot extract elements from a non-array".
+  -- Force the input to '[]' when the type isn't 'array' so the iteration is
+  -- always safe — the slot count then drives whether anything gets inserted.
   insert into public.plan_slots (id, plan_id, term_id, position, is_coop, ordinal)
   select
     (slot->>'id')::uuid,
@@ -74,8 +79,12 @@ begin
     slot->>'position',
     coalesce((slot->>'isCoop')::boolean, false),
     (ord - 1)::smallint
-  from jsonb_array_elements(coalesce(p_snapshot->'slots', '[]'::jsonb))
-    with ordinality as t(slot, ord);
+  from jsonb_array_elements(
+    case when jsonb_typeof(p_snapshot->'slots') = 'array'
+      then p_snapshot->'slots'
+      else '[]'::jsonb
+    end
+  ) with ordinality as t(slot, ord);
 
   insert into public.plan_courses (slot_id, course_code, grade, ordinal)
   select
@@ -83,9 +92,18 @@ begin
     course->>'code',
     nullif(course->>'grade', ''),
     (course_ord - 1)::smallint
-  from jsonb_array_elements(coalesce(p_snapshot->'slots', '[]'::jsonb)) as slot,
-       jsonb_array_elements(coalesce(slot->'courses', '[]'::jsonb))
-         with ordinality as t(course, course_ord);
+  from jsonb_array_elements(
+    case when jsonb_typeof(p_snapshot->'slots') = 'array'
+      then p_snapshot->'slots'
+      else '[]'::jsonb
+    end
+  ) as slot,
+  jsonb_array_elements(
+    case when jsonb_typeof(slot->'courses') = 'array'
+      then slot->'courses'
+      else '[]'::jsonb
+    end
+  ) with ordinality as t(course, course_ord);
 end;
 $$;
 
