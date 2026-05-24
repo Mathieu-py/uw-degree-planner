@@ -9,7 +9,9 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { z } from "zod";
 import type { UWFlowCourse } from "../lib/types";
+import { CourseSchema } from "../lib/validation";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 
@@ -38,10 +40,10 @@ const COURSES_QUERY = `
   }
 `;
 
-interface GraphQLResponse {
-  data?: { course: UWFlowCourse[] };
-  errors?: Array<{ message: string }>;
-}
+const GraphQLResponseSchema = z.object({
+  data: z.object({ course: z.array(CourseSchema) }).optional(),
+  errors: z.array(z.object({ message: z.string() })).optional(),
+});
 
 async function fetchTerm(termId: number): Promise<UWFlowCourse[]> {
   const res = await fetch(GRAPHQL_ENDPOINT, {
@@ -57,7 +59,7 @@ async function fetchTerm(termId: number): Promise<UWFlowCourse[]> {
     throw new Error(`UWFlow HTTP ${res.status} for term ${termId}`);
   }
 
-  const json = (await res.json()) as GraphQLResponse;
+  const json = GraphQLResponseSchema.parse(await res.json());
   if (json.errors?.length) {
     throw new Error(`UWFlow GraphQL errors: ${JSON.stringify(json.errors)}`);
   }

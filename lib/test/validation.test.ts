@@ -97,10 +97,10 @@ describe("validateCoursesFile", () => {
     );
   });
 
-  it("includes the offending course code in the error message", () => {
-    const c = validCourse({ code: "math115", name: 42 });
+  it("includes the field path in the error message", () => {
+    const c = validCourse({ name: 42 });
     expect(() => validateCoursesFile(validFile({ courses: [c] }))).toThrow(
-      /math115/,
+      /courses\.0\.name/,
     );
   });
 });

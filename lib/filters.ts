@@ -4,6 +4,20 @@ const LEVEL_RE = /\d+/;
 const PREFIX_RE = /^[A-Z]+/;
 
 /**
+ * A `PureFilters` with all rules disabled — every course passes. Useful as
+ * a starting point in tests and as the picker's "no user filters applied"
+ * sentinel.
+ */
+export const DEFAULT_PURE_FILTERS: PureFilters = {
+  excludePrefixes: [],
+  levels: [],
+  hasSeatsAvailable: false,
+  hideUnmetPrereqs: false,
+  minUseful: null,
+  minEasy: null,
+};
+
+/**
  * Sum of remaining capacity across all sections, or null when the course has
  * no scheduled sections (distinct from "0 seats open"). Lives here because it
  * derives from the same enrollment data as `enrichCourse`'s `hasSeats`.

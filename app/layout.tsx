@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UW Elective Finder",
+  title: "UW Degree Planner",
   description:
-    "Browse and filter UWaterloo elective courses by usefulness, easiness, and prerequisites.",
+    "Plan every term of your UWaterloo degree on one screen, with live requirement audit, prereq checks, and UWFlow ratings.",
 };
 
 export default function RootLayout({
@@ -33,14 +33,14 @@ export default function RootLayout({
         <header className="border-b border-zinc-200 dark:border-zinc-800">
           <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-semibold tracking-tight">
-              UW Elective Finder
+              UW Degree Planner
             </Link>
             <nav className="flex items-center gap-5 text-sm text-zinc-600 dark:text-zinc-400">
               <Link
-                href="/browse"
+                href="/plan"
                 className="hover:text-zinc-950 dark:hover:text-zinc-50"
               >
-                Browse
+                Plan
               </Link>
               <a
                 href="https://github.com/Mathieu-py/uw-elective-finder"

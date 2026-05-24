@@ -63,12 +63,11 @@ export interface FlexibleProgram {
 
 `Specialization` gains the same `rules?: RuleNode` shape.
 
-**Derived helpers** in [`lib/programs.ts`](../../lib/programs.ts) preserve the legacy API surface so callers don't break:
+**Derived helpers** in [`lib/programs.ts`](../../lib/programs.ts):
 - `getRequiredCourses(program)` — walks the tree under `all`-only paths. Also promotes a `pick(N, N)` whose total course-leaf options equal `N` (single-option mandatory rules) to required, since Kuali emits some mandatory rules as `pick(1,1)` over one course instead of `all`.
-- `getChoiceGroups` / `getChoiceGroupsByTerm` — flatten leaf-`pick` nodes back into the legacy `ChoiceGroup[]` shape for any consumer not yet tree-aware.
 - `getSubjectPools` — list of `subjectPool` nodes for UI.
 - `getExcludedCourses` — flat union of courses across `excluded` nodes; the seeder uses this to warn rather than auto-complete when a student claims a barred course.
-- `walkRule`, `requiredCoursesIn`, `flattenChoiceGroups` — tree-level helpers.
+- `walkRule`, `requiredCoursesIn` — tree-level helpers.
 
 **Correctness note (not a regression).** The old parser used `cheerio.find('a')` which recurses into descendant rules; for any `Complete all` rule that DOM-wrapped nested `Complete N of` rules, it incorrectly slurped the nested options into `requiredCourses`. The new hierarchical walker correctly classifies them as `pick` children. Effect: 32 programs see fewer "required" courses post-refactor (h-science, mathematical-finance, 4g-political-science, etc.) — those courses were over-seeded before and are now correctly recognized as choice options.
 
@@ -78,7 +77,7 @@ export interface FlexibleProgram {
 - 18 `Choose any` picks + 13 `Complete no more than` picks (already captured by #43; now structurally nested where applicable)
 - 12 `excluded` nodes (42 course-mentions) — programs like H-Chemistry, H-Computer-Science-BMath, and several Earth Sciences specializations that explicitly bar certain intro-level courses from counting toward the degree. Surfaced via a one-shot audit of `DEFERRED_PROSE_RE` rules with `<a>` links.
 
-`ChoiceGroup` and `ElectiveCategory` types are retained for derived views; the live source of truth is the tree. The inline schema in the Decision block below is left intact for historical accuracy; the live types are in `lib/programs.ts`.
+`ElectiveCategory` is retained as a derived view; the live source of truth is the tree. The inline schema in the Decision block below is left intact for historical accuracy; the live types are in `lib/programs.ts`.
 
 Dependency notes:
 - #39 (variant-picker modal) should consume `RuleNode` directly. Render `pick` with bounds-aware controls, `subjectPool` with a subject-code filter UI, `all` by recursing, `courses` as a required-course list.
