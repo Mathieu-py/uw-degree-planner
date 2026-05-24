@@ -121,6 +121,7 @@ export function SlotPicker({
                 onChange={(e) => patchFilters({ query: e.target.value })}
                 // biome-ignore lint/a11y/noAutofocus: search is the primary action when the modal opens
                 autoFocus
+                aria-label="Search by code or name"
                 placeholder="Search by code or name…"
                 className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-zinc-200"
               />

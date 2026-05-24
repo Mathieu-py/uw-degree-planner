@@ -107,7 +107,7 @@ export function useFilteredCourses({
     return userFiltered.filter(
       (c) =>
         c.code.toLowerCase().replace(/\s+/g, "").includes(q) ||
-        c.name.toLowerCase().includes(q),
+        c.name.toLowerCase().replace(/\s+/g, "").includes(q),
     );
   }, [userFiltered, filters.query]);
 

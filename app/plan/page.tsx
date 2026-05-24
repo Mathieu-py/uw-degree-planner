@@ -43,7 +43,7 @@ export default async function PlanPage() {
             Beta
           </span>
           <a
-            href="mailto:feedback@example.com?subject=UW%20Degree%20Planner%20feedback"
+            href="mailto:mathieu.sevestre@gmail.com?subject=UW%20Degree%20Planner%20feedback"
             className="text-xs text-zinc-500 dark:text-zinc-400 underline-offset-4 hover:underline hover:text-zinc-950 dark:hover:text-zinc-50"
           >
             Report an issue

@@ -63,7 +63,7 @@ To export the PDF: Quest → Student Center → *Other Academic…* → *Transcr
 
 ## Tests
 
-Unit tests live in `**/test/*.test.ts` next to the code they cover (Vitest default discovery picks them up). E2E specs live in `e2e/` (Playwright).
+Unit tests live in `test/` subfolders next to the code they cover (e.g. `lib/test/`, `lib/prereqs/test/`); Vitest default discovery finds anything matching `**/test/**/*.test.{ts,tsx}` with no extra config. E2E specs live in `e2e/` (Playwright).
 
 ## Notes
 

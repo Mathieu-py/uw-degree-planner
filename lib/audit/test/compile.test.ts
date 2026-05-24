@@ -149,6 +149,7 @@ describe("compileAudit — pick with all-courses children (choice group)", () =>
   it("is partial when some options are placed but selectMin is not reached", () => {
     const plan = makePlan([slot("s1", 1239, ["a1"])]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("partial");
     expect(audit.flexibleRoot.satisfiedCount).toBe(1);
@@ -157,6 +158,7 @@ describe("compileAudit — pick with all-courses children (choice group)", () =>
   it("is unmet when nothing in the pool is placed", () => {
     const plan = makePlan([]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("unmet");
     expect(audit.flexibleRoot.satisfiedCount).toBe(0);
@@ -179,6 +181,7 @@ describe("compileAudit — pick selectMax", () => {
     };
     const plan = makePlan([slot("s1", 1239, ["opt1", "opt2"])]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("overSatisfied");
     expect(audit.flexibleRoot.satisfiedCount).toBe(2);
@@ -205,6 +208,7 @@ describe("compileAudit — subjectPool with maxLevel", () => {
       slot("s1", 1239, ["math237", "math337", "math405"]),
     ]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.satisfiedCount).toBe(2);
     expect(audit.flexibleRoot.status).toBe("met");
@@ -250,11 +254,13 @@ describe("compileAudit — pick with mixed/nested children", () => {
   it("counts a nested 'all' as 1 only when fully met", () => {
     // Only 'a' placed — the all child is partial, doesn't count.
     let audit = compileAudit(program, makePlan([slot("s1", 1239, ["a"])]));
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("partial");
 
     // Both 'a' and 'b' placed — the all child is met, count = 1 ≥ min.
     audit = compileAudit(program, makePlan([slot("s1", 1239, ["a", "b"])]));
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("met");
   });
@@ -279,6 +285,7 @@ describe("compileAudit — subjectPool", () => {
       slot("s1", 1239, ["anth201", "anth210", "anth102"]),
     ]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     // anth102 is below the 200 level cutoff; only anth201 + anth210 count.
     expect(audit.flexibleRoot.satisfiedCount).toBe(2);
@@ -304,6 +311,7 @@ describe("compileAudit — excluded courses", () => {
   it("does not gate status but records violations", () => {
     const plan = makePlan([slot("s1", 1239, ["math115", "math103"])]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("met"); // math115 is the only requirement
     const exclChild = audit.flexibleRoot.children.find(
@@ -363,6 +371,7 @@ describe("summarize", () => {
     };
     const plan = makePlan([slot("s1", 1239, ["a"])]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(summarize(audit.flexibleRoot)).toEqual({
       needed: 3,
@@ -385,6 +394,7 @@ describe("summarize", () => {
     };
     const plan = makePlan([slot("s1", 1239, ["a", "b"])]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(summarize(audit.flexibleRoot)).toEqual({
       needed: 3,
@@ -409,6 +419,7 @@ describe("summarize", () => {
     };
     const plan = makePlan([slot("s1", 1239, ["math115", "math103"])]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(audit.flexibleRoot.status).toBe("met");
   });
@@ -437,6 +448,7 @@ describe("summarize", () => {
       slot("s1", 1239, ["math115", "math103", "chem120"]),
     ]);
     const audit = compileAudit(program, plan);
+    expect(audit.flexibleRoot).not.toBeNull();
     if (!audit.flexibleRoot) return;
     expect(summarize(audit.flexibleRoot)).toEqual({
       needed: 1,

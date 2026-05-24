@@ -9,10 +9,13 @@ import type { TermId } from "../types";
 export const PLAN_SCHEMA_VERSION = 1;
 
 /**
- * Co-op stream determines the cadence of academic and work terms.
+ * Co-op stream determines the cadence of academic and work terms. See
+ * `CADENCE` in plan/sequence.ts for the authoritative tables.
  * - "regular": eight contiguous academic terms (1A–4B), no work terms.
- * - "stream8": 1A 1B [WT] 2A [WT] 2B [WT] 3A [WT] 3B [WT] 4A [WT] 4B.
- * - "stream4": 1A 1B 2A [WT WT WT WT WT] 2B 3A 3B 4A 4B (rare, mostly Math).
+ * - "stream4": 1A [WT] 1B [WT] 2A [WT] 2B [WT] 3A [WT] 3B [WT] 4A 4B (six WTs
+ *   interleaved between every academic term until 3B; January starts).
+ * - "stream8": 1A 1B [WT] 2A [WT] 2B [WT] 3A [WT] 3B [WT] [WT] 4A 4B (six WTs;
+ *   two back-to-back before 4A; May starts).
  */
 export type Stream = "regular" | "stream4" | "stream8";
 
