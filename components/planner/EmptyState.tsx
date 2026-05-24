@@ -36,9 +36,14 @@ export function EmptyState({
   const [programId, setProgramId] = useState<string>(
     programOptions[0]?.id ?? "",
   );
-  const [startTermId, setStartTermId] = useState<number>(() =>
-    makeTermId(new Date().getFullYear(), "Fall"),
-  );
+  // Default to the current calendar year's Fall term if KNOWN_TERMS covers it;
+  // otherwise fall back to the first available Fall option so the controlled
+  // <select>'s value always matches an actual <option>.
+  const [startTermId, setStartTermId] = useState<number>(() => {
+    const currentFall = makeTermId(new Date().getFullYear(), "Fall");
+    if (fallTerms.some((t) => t.id === currentFall)) return currentFall;
+    return fallTerms[0]?.id ?? currentFall;
+  });
   const [stream, setStream] = useState<Stream>("regular");
 
   const canSubmit = programId && startTermId > 0;
