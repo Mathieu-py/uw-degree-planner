@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { enumerateChoiceGroups } from "@/lib/choiceGroups";
 import {
   loadExtras,
   rebaseCompletedCourses,
@@ -13,6 +14,7 @@ import {
   mergeStudentPassageIntoParams,
 } from "@/lib/filterState";
 import { isTermLetter, PROGRAMS } from "@/lib/programs";
+import { safeGetItem, safeSetItem } from "@/lib/storage";
 import { applyTranscriptToStudentPassage } from "@/lib/transcript/applyHelpers";
 import type { StudentPassage } from "@/lib/types";
 import { CompletedCoursesInput } from "./filter/CompletedCoursesInput";
@@ -41,6 +43,30 @@ const SORTED_PROGRAMS = Object.entries(PROGRAMS).sort(([, a], [, b]) =>
 const SELECT_CLASS =
   "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs";
 
+const GET_STARTED_DISMISSED_KEY = "uwfinder.getStartedDismissed";
+
+/**
+ * True if the program has any choice group with more matches in
+ * `completedCourses` than its `selectMax` permits — i.e. the student
+ * picked-1 group has two satisfiers and the picker can't infer which
+ * one counts toward the requirement. Used to decide whether to nudge
+ * the user into the setup modal after a transcript apply.
+ */
+function hasOverSatisfiedGroup(
+  programId: string,
+  completedCourses: string[],
+): boolean {
+  const program = PROGRAMS[programId];
+  if (!program) return false;
+  const completedSet = new Set(completedCourses);
+  for (const entry of enumerateChoiceGroups(program)) {
+    if (entry.selectMax === undefined) continue;
+    const matches = entry.options.filter((o) => completedSet.has(o));
+    if (matches.length > entry.selectMax) return true;
+  }
+  return false;
+}
+
 export function StudentPassagePanel({
   passage,
   completedCourses,
@@ -50,6 +76,22 @@ export function StudentPassagePanel({
   const commitPassage = useFilterCommit(mergeStudentPassageIntoParams);
   const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
   const [setupModalOpen, setSetupModalOpen] = useState(false);
+  const [getStartedDismissed, setGetStartedDismissed] = useState(true);
+
+  // Hydrate the "Get started" dismissed flag from localStorage. Initial
+  // state is `true` (hidden) so SSR + first paint don't flash the card to
+  // returning users; the effect flips it to `false` only if the user has
+  // never dismissed it.
+  useEffect(() => {
+    setGetStartedDismissed(
+      safeGetItem(GET_STARTED_DISMISSED_KEY) === "1",
+    );
+  }, []);
+
+  function dismissGetStarted() {
+    safeSetItem(GET_STARTED_DISMISSED_KEY, "1");
+    setGetStartedDismissed(true);
+  }
 
   // URL is source of truth for prog/term (router.replace is async; the prop
   // can lag in a transition). The live URL is decoded for those fields;
@@ -112,6 +154,11 @@ export function StudentPassagePanel({
   // patchPassage would do. Replace passage in URL and completedCourses in
   // localStorage with the payload, then close the modal. Extras layer is
   // reset; primarySource flips to 'transcript'.
+  //
+  // Per D4: auto-open the setup modal only if variant pre-fill discovers
+  // over-satisfied groups (a "pick 1" group where the student took two
+  // options). User needs to disambiguate; otherwise the inferred picks
+  // are unambiguous and we don't disturb the user.
   function handleTranscriptApply(payload: TranscriptImportPayload) {
     const next = applyTranscriptToStudentPassage(payload);
     commitPassage(next);
@@ -119,6 +166,9 @@ export function StudentPassagePanel({
     saveExtras([]);
     savePrimarySource("transcript");
     setTranscriptModalOpen(false);
+    if (next.programId && hasOverSatisfiedGroup(next.programId, payload.codes)) {
+      setSetupModalOpen(true);
+    }
   }
 
   function handleSetupApply(next: SetupModalApplyPayload) {
@@ -138,9 +188,33 @@ export function StudentPassagePanel({
     passage.programId !== null ||
     passage.currentTerm !== null ||
     completedCourses.length > 0;
+  const showGetStarted =
+    !getStartedDismissed &&
+    passage.programId === null &&
+    completedCourses.length === 0;
 
   return (
     <>
+      {showGetStarted && (
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-xs font-semibold">Get started</h3>
+            <button
+              type="button"
+              onClick={dismissGetStarted}
+              aria-label="Dismiss"
+              className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50 text-base leading-none -mt-0.5"
+            >
+              ×
+            </button>
+          </div>
+          <p className="text-xs text-zinc-700 dark:text-zinc-300">
+            Pick your program below to seed your completed courses, or
+            upload your transcript (PDF) to import them from Quest.
+          </p>
+        </div>
+      )}
+
       <Section title="Program">
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1">
