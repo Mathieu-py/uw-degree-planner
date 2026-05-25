@@ -13,6 +13,9 @@ interface Props {
     stream: Stream;
   }) => void;
   onUploadTranscript: () => void;
+  /** While true, all create-flow buttons are disabled so a double-click
+   * during the network round-trip can't spawn duplicate server plans. */
+  busy?: boolean;
 }
 
 const STREAM_LABELS: Array<{ value: Stream; label: string }> = [
@@ -28,6 +31,7 @@ export function EmptyState({
   programOptions,
   onCreate,
   onUploadTranscript,
+  busy = false,
 }: Props) {
   const fallTerms = useMemo(
     () => KNOWN_TERMS.filter((t) => t.season === "Fall"),
@@ -59,7 +63,8 @@ export function EmptyState({
         <button
           type="button"
           onClick={onUploadTranscript}
-          className="self-start rounded bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 text-sm font-medium px-4 py-2"
+          disabled={busy}
+          className="self-start rounded bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 text-sm font-medium px-4 py-2 disabled:opacity-50"
         >
           Upload transcript
         </button>
@@ -129,13 +134,13 @@ export function EmptyState({
 
         <button
           type="button"
-          disabled={!canSubmit}
+          disabled={!canSubmit || busy}
           onClick={() =>
-            canSubmit && onCreate({ programId, startTermId, stream })
+            canSubmit && !busy && onCreate({ programId, startTermId, stream })
           }
           className="self-start rounded bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 text-sm font-medium px-4 py-2 disabled:opacity-50"
         >
-          Create empty plan
+          {busy ? "Creating…" : "Create empty plan"}
         </button>
       </div>
     </div>

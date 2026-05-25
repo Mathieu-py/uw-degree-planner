@@ -1,9 +1,15 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuthState } from "@/lib/auth/store";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
-import { clearPlan, emptyPlan, loadPlan, savePlan } from "@/lib/plan/storage";
+import { toSnapshot } from "@/lib/plan/server/serialize";
+import { emptyPlan } from "@/lib/plan/storage";
+import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
+import { usePlanList } from "@/lib/plan/sync/usePlanList";
+import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
@@ -12,7 +18,10 @@ import type { TranscriptParseResult } from "@/lib/transcript/types";
 import type { Course } from "@/lib/types";
 import { AuditPanel } from "./AuditPanel";
 import { EmptyState } from "./EmptyState";
+import { HandoffModal } from "./HandoffModal";
+import { PlannerToolbar } from "./PlannerToolbar";
 import { PlanSettings } from "./PlanSettings";
+import { PlansSidebar } from "./PlansSidebar";
 import { SlotPicker } from "./SlotPicker";
 import { Timeline } from "./Timeline";
 import { TranscriptImportModal } from "./TranscriptImportModal";
@@ -37,41 +46,105 @@ interface PickerContext {
   focusCodes?: string[];
 }
 
+const NEW_PLAN_NAME = "Untitled plan";
+
 /**
- * Client root for the planner. Owns the in-memory plan state, hydrates from
- * localStorage on mount, persists on every mutation, and routes slot-picker
- * open/close through a single shared modal.
+ * Client root for the planner. Branches on auth state: signed-out plans
+ * live in localStorage (via usePlanSync's local path); signed-in plans
+ * live on Supabase and are keyed by the `?planId=uuid` URL param. The
+ * mutation surface (slot picker, transcript import, settings) is identical
+ * across both modes — usePlanSync routes the writes.
+ *
+ * Mounting the inner shell is gated on `ready` from the shared auth store.
+ * Without that gate, a returning signed-in user briefly renders the anon
+ * branch (and any stale localStorage plan) before the `getUser()` round-trip
+ * flips `isAuthed` true and triggers the server load — a visible flicker on
+ * every page load. Showing a single skeleton until the auth state resolves
+ * makes the loaded-plan branch the first render the user sees.
  */
-export function PlannerShell({
+export function PlannerShell(props: Props) {
+  const { isAuthed, ready } = useAuthState();
+  if (!ready) {
+    return (
+      <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+    );
+  }
+  return <PlannerShellInner {...props} isAuthed={isAuthed} />;
+}
+
+interface InnerProps extends Props {
+  isAuthed: boolean;
+}
+
+function PlannerShellInner({
   programOptions,
   specializationsByProgram,
   catalog,
-}: Props) {
-  const [hydrated, setHydrated] = useState(false);
-  const [plan, setPlan] = useState<LocalPlan | null>(null);
+  isAuthed,
+}: InnerProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("planId");
+  // `?new=1` lets the user reach the EmptyState (with manual setup +
+  // transcript upload) even when they already have plans. Without it, the
+  // sidebar's "+ New plan" button would have nowhere to land.
+  const newRequested = searchParams.get("new") === "1";
+
+  const {
+    plan,
+    source,
+    hydrated,
+    saveStatus,
+    setPlan,
+    clearLocalPlan,
+    flushSave,
+  } = usePlanSync({ isAuthed, planId });
+  const { plans, create } = usePlanList({ isAuthed });
+  const activePlanName =
+    isAuthed && planId
+      ? (plans?.find((p) => p.id === planId)?.name ?? "Untitled plan")
+      : "Local plan";
+  const { conflict, resolveConflict } = useAnonHandoff({
+    isAuthed,
+    createPlanWithSeed: create,
+    onImported: (newPlanId) => {
+      router.replace(`/plan?planId=${newPlanId}`);
+      setImportBanner("Plan imported to your account.");
+    },
+  });
+
   const [pickerCtx, setPickerCtx] = useState<PickerContext | null>(null);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [importBanner, setImportBanner] = useState<string | null>(null);
-  const [saveFailed, setSaveFailed] = useState(false);
+  // Guards the EmptyState's create + transcript flows against the
+  // double-click duplicate-plan bug — without it, a second click during the
+  // network round-trip creates a second server plan.
+  const [creating, setCreating] = useState(false);
 
+  // Signed-in with no planId but at least one server plan: route to the most
+  // recently updated one so the user lands on a real plan instead of the
+  // empty state. listPlans returns `updated_at desc`. `?new=1` opts out so
+  // the user can explicitly reach EmptyState from the "+ New plan" entry
+  // point even when other plans exist.
   useEffect(() => {
-    setPlan(loadPlan());
-    setHydrated(true);
-  }, []);
+    if (!isAuthed || planId !== null || newRequested) return;
+    if (!plans || plans.length === 0) return;
+    router.replace(`/plan?planId=${plans[0].id}`);
+  }, [isAuthed, planId, newRequested, plans, router]);
 
-  // Auto-dismiss the storage-failure banner after a short read; the user
-  // shouldn't have to chase down a × button to clear it. We re-arm on every
-  // new failure so consecutive failed saves keep the banner visible.
+  // After a successful create the URL still carries `?new=1`. Drop it when
+  // we land on a planId so a future visit to /plan?planId=X behaves normally.
+  // Done in a useEffect rather than during create itself so any code path
+  // that ends up at a plan (handoff, auto-redirect, manual nav) sheds the
+  // flag uniformly.
   useEffect(() => {
-    if (!saveFailed) return;
-    const t = setTimeout(() => setSaveFailed(false), 8000);
-    return () => clearTimeout(t);
-  }, [saveFailed]);
+    if (planId !== null && newRequested) {
+      router.replace(`/plan?planId=${planId}`);
+    }
+  }, [planId, newRequested, router]);
 
-  // Catalog-derived lookups. Memoized on `catalog` identity so we don't
-  // rebuild the Set/Map every render; the transcript modal now consumes the
-  // Set directly instead of rebuilding it internally on every parse.
+  // Catalog-derived lookups.
   const allCourseCodesSet = useMemo(
     () => new Set(catalog.map((c) => c.code)),
     [catalog],
@@ -81,89 +154,117 @@ export function PlannerShell({
     [catalog],
   );
 
-  // Run validation whenever the plan changes. Issues are grouped by slotId
-  // so the timeline can render badges per-slot without scanning the full list.
   const issues = useMemo(
     () => (plan ? validatePlan(plan, catalogByCode) : []),
     [plan, catalogByCode],
   );
   const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
 
-  // Centralized persist: every plan-write goes through here so a storage
-  // failure (quota, private mode) flips the saveFailed banner exactly once.
-  // Note: setPlan still runs even on failure — the in-memory state is the
-  // source of truth, the banner just tells the user a refresh will lose it.
-  const persist = useCallback((next: LocalPlan) => {
-    const ok = savePlan(next);
-    setPlan(next);
-    setSaveFailed(!ok);
-  }, []);
+  // Bridge: writes route to setPlan when there's a current plan, or to
+  // create+navigate when the user is authed without a planId (first server
+  // plan after sign-in / empty server account / explicit "+ New plan" via
+  // /plan?new=1).
+  const persistOrCreate = useCallback(
+    async (next: LocalPlan, name: string = NEW_PLAN_NAME) => {
+      if (isAuthed && planId === null) {
+        const newId = await create(name, toSnapshot(next));
+        if (newId) router.replace(`/plan?planId=${newId}`);
+        return;
+      }
+      setPlan(next);
+      // Anon path: when the user just created via /plan?new=1, the URL still
+      // carries that flag and the `newRequested` branch keeps EmptyState on
+      // screen even though the local plan now exists. Strip the flag so the
+      // loaded-plan branch wins on the next render. (The signed-in path
+      // doesn't need this — `create` above replaces the URL wholesale.)
+      if (!isAuthed && newRequested) {
+        router.replace("/plan");
+      }
+    },
+    [isAuthed, planId, newRequested, create, router, setPlan],
+  );
 
   const handleApplyTranscript = useCallback(
-    (parseResult: TranscriptParseResult, included: ReadonlySet<string>) => {
-      // Co-op detected → default to stream 8 (most common at UW for the
-      // programs that surface "Co-operative Program" in the Plan line).
-      // The user can reset and re-import if their actual stream is 4.
-      const stream: Stream =
-        parseResult.detectedSystemOfStudy === "coop" ? "stream8" : "regular";
-      const {
-        plan: next,
-        unsortedCodes,
-        unplacedTerms,
-      } = applyTranscriptToPlan(parseResult, {
-        stream,
-        includedUnrecognized: included,
-        mintId: () => crypto.randomUUID(),
-      });
-      persist(next);
-      setTranscriptOpen(false);
+    async (
+      parseResult: TranscriptParseResult,
+      included: ReadonlySet<string>,
+    ) => {
+      if (creating) return;
+      setCreating(true);
+      try {
+        const stream: Stream =
+          parseResult.detectedSystemOfStudy === "coop" ? "stream8" : "regular";
+        const {
+          plan: next,
+          unsortedCodes,
+          unplacedTerms,
+        } = applyTranscriptToPlan(parseResult, {
+          stream,
+          includedUnrecognized: included,
+          mintId: () => crypto.randomUUID(),
+        });
+        await persistOrCreate(next, "Imported plan");
+        setTranscriptOpen(false);
 
-      const banner = buildImportBanner({
-        stream,
-        unsortedCodes,
-        unplacedTerms,
-        startTermId: next.startTermId,
-      });
-      setImportBanner(banner);
+        const banner = buildImportBanner({
+          stream,
+          unsortedCodes,
+          unplacedTerms,
+          startTermId: next.startTermId,
+        });
+        setImportBanner(banner);
+      } finally {
+        setCreating(false);
+      }
     },
-    [persist],
+    [creating, persistOrCreate],
   );
 
   const handleCreatePlan = useCallback(
-    (params: { programId: string; startTermId: number; stream: Stream }) => {
-      const slots = buildEmptySlots(params.startTermId, params.stream, () =>
-        crypto.randomUUID(),
-      );
-      const next: LocalPlan = {
-        ...emptyPlan(),
-        programId: params.programId,
-        stream: params.stream,
-        startTermId: params.startTermId,
-        slots,
-      };
-      persist(next);
+    async (params: {
+      programId: string;
+      startTermId: number;
+      stream: Stream;
+    }) => {
+      if (creating) return;
+      setCreating(true);
+      try {
+        const slots = buildEmptySlots(params.startTermId, params.stream, () =>
+          crypto.randomUUID(),
+        );
+        const next: LocalPlan = {
+          ...emptyPlan(),
+          programId: params.programId,
+          stream: params.stream,
+          startTermId: params.startTermId,
+          slots,
+        };
+        await persistOrCreate(next);
+      } finally {
+        setCreating(false);
+      }
     },
-    [persist],
+    [creating, persistOrCreate],
   );
 
   const handleReset = useCallback(() => {
-    clearPlan();
-    setPlan(null);
+    // Signed-out only — for signed-in users, the PlanSwitcher provides
+    // per-plan delete, which is the equivalent action.
+    clearLocalPlan();
     setPickerCtx(null);
     setImportBanner(null);
-    setSaveFailed(false);
-  }, []);
+  }, [clearLocalPlan]);
 
   const handleSaveSettings = useCallback(
     (next: { programId: string | null; specializationId: string | null }) => {
       if (!plan) return;
-      persist({
+      setPlan({
         ...plan,
         programId: next.programId,
         specializationId: next.specializationId,
       });
     },
-    [plan, persist],
+    [plan, setPlan],
   );
 
   const handleOpenPicker = useCallback((slotId: string) => {
@@ -181,10 +282,10 @@ export function PlannerShell({
           ? { ...s, courses: [...s.courses, { code: lc }] }
           : s,
       );
-      persist({ ...plan, slots: nextSlots });
+      setPlan({ ...plan, slots: nextSlots });
       setPickerCtx(null);
     },
-    [plan, pickerCtx, persist],
+    [plan, pickerCtx, setPlan],
   );
 
   const handleRemoveCourse = useCallback(
@@ -198,13 +299,15 @@ export function PlannerShell({
             }
           : s,
       );
-      persist({ ...plan, slots: nextSlots });
+      setPlan({ ...plan, slots: nextSlots });
     },
-    [plan, persist],
+    [plan, setPlan],
   );
 
-  // Derive: completed set BEFORE the target slot, used for prereq evaluation
-  // inside the picker, and metadata about the target slot's term.
+  const handleRetrySave = useCallback(() => {
+    void flushSave();
+  }, [flushSave]);
+
   const pickerMeta = useMemo(() => {
     if (!plan || !pickerCtx) return null;
     const slot = plan.slots.find((s) => s.id === pickerCtx.slotId);
@@ -223,67 +326,155 @@ export function PlannerShell({
     return { slot, completedBefore, placedCodes, termLabel };
   }, [plan, pickerCtx]);
 
-  // Hold the layout stable across SSR/hydration to avoid a flash of empty
-  // state for returning users.
+  // Rendered alongside every branch below: the handoff modal can appear over
+  // the loading skeleton, the not-found banner, the empty state, or the
+  // populated planner — whichever branch happens to be live when the user
+  // signs in.
+  const handoffElement = conflict ? (
+    <HandoffModal localPlan={conflict.localPlan} onResolve={resolveConflict} />
+  ) : null;
+
+  // `?new=1` overrides everything: the user explicitly asked for the create
+  // flow. Skip the plan load + not-found branches entirely so they see
+  // EmptyState immediately, even if a planId is also present (which can
+  // happen if they hit "+ New plan" while on a loaded plan).
+  if (newRequested) {
+    return (
+      <PlannerLayout
+        isAuthed={isAuthed}
+        overlays={
+          <>
+            <TranscriptImportModal
+              isOpen={transcriptOpen}
+              onClose={() => setTranscriptOpen(false)}
+              onApplyPlan={handleApplyTranscript}
+              catalogCodes={allCourseCodesSet}
+            />
+            {handoffElement}
+          </>
+        }
+      >
+        <EmptyState
+          programOptions={programOptions}
+          onCreate={handleCreatePlan}
+          onUploadTranscript={() => setTranscriptOpen(true)}
+          busy={creating}
+        />
+      </PlannerLayout>
+    );
+  }
+
   if (!hydrated) {
     return (
-      <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+        <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+      </PlannerLayout>
+    );
+  }
+
+  const isLocalSource = source === "local";
+  // Signed-in with a planId that loaded nothing: the row doesn't exist for
+  // this user (deleted, never theirs, bad URL). Surface it explicitly so the
+  // user doesn't think their plan vanished.
+  const planNotFound =
+    isAuthed &&
+    planId !== null &&
+    plan === null &&
+    source !== null &&
+    typeof source !== "string";
+
+  if (planNotFound) {
+    return (
+      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+        <div className="rounded-lg border border-amber-300 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 px-4 py-6 text-sm text-amber-900 dark:text-amber-200">
+          <p>
+            We couldn't find a plan with that id. Pick a different plan from the
+            sidebar, or create a new one.
+          </p>
+        </div>
+      </PlannerLayout>
     );
   }
 
   if (!plan) {
     return (
-      <>
-        {saveFailed ? <SaveFailedBanner /> : null}
+      <PlannerLayout
+        isAuthed={isAuthed}
+        overlays={
+          <>
+            <TranscriptImportModal
+              isOpen={transcriptOpen}
+              onClose={() => setTranscriptOpen(false)}
+              onApplyPlan={handleApplyTranscript}
+              catalogCodes={allCourseCodesSet}
+            />
+            {handoffElement}
+          </>
+        }
+      >
         <EmptyState
           programOptions={programOptions}
           onCreate={handleCreatePlan}
           onUploadTranscript={() => setTranscriptOpen(true)}
+          busy={creating}
         />
-        <TranscriptImportModal
-          isOpen={transcriptOpen}
-          onClose={() => setTranscriptOpen(false)}
-          onApplyPlan={handleApplyTranscript}
-          catalogCodes={allCourseCodesSet}
-        />
-      </>
+      </PlannerLayout>
     );
   }
 
   const programName =
     programOptions.find((p) => p.id === plan.programId)?.name ?? "—";
+  const summary = `${programName} · ${planSubtitle(plan)}`;
 
   return (
-    <div className="flex flex-col gap-5">
-      {saveFailed ? <SaveFailedBanner /> : null}
-      <div className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-4 py-3">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            Current plan
-          </span>
-          <span className="font-medium truncate">{programName}</span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {planSubtitle(plan)}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-4 hover:underline"
-          >
-            Settings
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-xs text-zinc-500 hover:text-red-600 dark:hover:text-red-400 underline-offset-4 hover:underline"
-          >
-            Reset plan
-          </button>
-        </div>
-      </div>
+    <PlannerLayout
+      isAuthed={isAuthed}
+      toolbar={
+        <PlannerToolbar
+          planName={activePlanName}
+          summary={summary}
+          saveStatus={isAuthed ? saveStatus : null}
+          onRetrySave={handleRetrySave}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onUploadTranscript={() => setTranscriptOpen(true)}
+          onReset={isLocalSource ? handleReset : undefined}
+        />
+      }
+      overlays={
+        <>
+          {pickerCtx && pickerMeta ? (
+            <SlotPicker
+              targetTermLabel={pickerMeta.termLabel}
+              catalog={catalog}
+              placedCodes={pickerMeta.placedCodes}
+              completedBefore={pickerMeta.completedBefore}
+              focusCodes={pickerCtx.focusCodes}
+              onPick={handlePickCode}
+              onClose={handleClosePicker}
+            />
+          ) : null}
 
+          {settingsOpen ? (
+            <PlanSettings
+              plan={plan}
+              programOptions={programOptions}
+              specializationsByProgram={specializationsByProgram}
+              onClose={() => setSettingsOpen(false)}
+              onSave={handleSaveSettings}
+            />
+          ) : null}
+
+          <TranscriptImportModal
+            isOpen={transcriptOpen}
+            onClose={() => setTranscriptOpen(false)}
+            onApplyPlan={handleApplyTranscript}
+            catalogCodes={allCourseCodesSet}
+          />
+
+          {handoffElement}
+        </>
+      }
+    >
       {importBanner ? (
         <div
           role="status"
@@ -314,29 +505,42 @@ export function PlannerShell({
         </div>
         <AuditPanel plan={plan} />
       </div>
+    </PlannerLayout>
+  );
+}
 
-      {pickerCtx && pickerMeta ? (
-        <SlotPicker
-          targetTermLabel={pickerMeta.termLabel}
-          catalog={catalog}
-          placedCodes={pickerMeta.placedCodes}
-          completedBefore={pickerMeta.completedBefore}
-          focusCodes={pickerCtx.focusCodes}
-          onPick={handlePickCode}
-          onClose={handleClosePicker}
-        />
-      ) : null}
-
-      {settingsOpen ? (
-        <PlanSettings
-          plan={plan}
-          programOptions={programOptions}
-          specializationsByProgram={specializationsByProgram}
-          onClose={() => setSettingsOpen(false)}
-          onSave={handleSaveSettings}
-        />
-      ) : null}
-    </div>
+/**
+ * Three-column shell wrapping every branch of PlannerShellInner. At lg+ the
+ * PlansSidebar sits as a 240px column at left and the branch's children fill
+ * the rest, with the Audit column rendered as the rightmost inspector inside
+ * the children. Below lg the sidebar collapses to a top dropdown and the
+ * columns stack. Anon users get no sidebar at all (PlansSidebar returns null
+ * when isAuthed is false). The optional `toolbar` sits sticky above the row
+ * — populated only by the loaded-plan branch. Overlays render outside the
+ * flex container so fixed-position modals don't become flex items.
+ */
+function PlannerLayout({
+  isAuthed,
+  children,
+  toolbar,
+  overlays,
+}: {
+  isAuthed: boolean;
+  children: React.ReactNode;
+  toolbar?: React.ReactNode;
+  overlays?: React.ReactNode;
+}) {
+  return (
+    <>
+      <div className="flex flex-col gap-3">
+        {toolbar}
+        <div className="flex flex-col lg:flex-row gap-5">
+          <PlansSidebar isAuthed={isAuthed} />
+          <div className="flex-1 min-w-0 flex flex-col gap-5">{children}</div>
+        </div>
+      </div>
+      {overlays}
+    </>
   );
 }
 
@@ -362,18 +566,6 @@ function buildImportBanner(args: {
     );
   }
   return parts.join(" ");
-}
-
-function SaveFailedBanner() {
-  return (
-    <div
-      role="status"
-      className="rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/30 px-4 py-2.5 text-xs text-rose-900 dark:text-rose-200"
-    >
-      Could not save your plan — your browser storage may be full or blocked.
-      Recent changes are not persisted.
-    </div>
-  );
 }
 
 function planSubtitle(plan: LocalPlan): string {
