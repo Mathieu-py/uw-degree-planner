@@ -178,6 +178,45 @@ describe("usePlanSync — signed-in, with planId (load)", () => {
     });
   });
 
+  it("reloading is true with the stale plan still in state while a switch loads", async () => {
+    // Initial load resolves immediately, then a switch holds resolution
+    // until we let it go. The invariant under test: between the planId
+    // change and the next resolution, `plan` still holds the previous
+    // plan and `reloading` is true — that's what lets PlannerShell keep
+    // the old content on screen instead of unmounting to a skeleton.
+    loadServerPlanMock.mockResolvedValueOnce({ ok: true, data: SERVER_PLAN });
+    let resolveSecond!: (v: unknown) => void;
+    loadServerPlanMock.mockImplementationOnce(
+      () => new Promise((res) => (resolveSecond = res)),
+    );
+
+    const { result, rerender } = renderHook(
+      ({ planId }: { planId: string }) =>
+        usePlanSync({ isAuthed: true, planId }),
+      { initialProps: { planId: "p1" } },
+    );
+
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.plan?.programId).toBe("h-cs");
+    expect(result.current.reloading).toBe(false);
+
+    rerender({ planId: "p2" });
+    await waitFor(() => expect(result.current.reloading).toBe(true));
+    // The previous plan is still in state — that's what keeps the UI
+    // populated while p2 loads.
+    expect(result.current.plan?.programId).toBe("h-cs");
+    expect(result.current.hydrated).toBe(false);
+
+    const second = { ...SERVER_PLAN, id: "p2", programId: "h-se" };
+    await act(async () => {
+      resolveSecond({ ok: true, data: second });
+      await Promise.resolve();
+    });
+    expect(result.current.plan?.programId).toBe("h-se");
+    expect(result.current.hydrated).toBe(true);
+    expect(result.current.reloading).toBe(false);
+  });
+
   it("rapid planId changes don't let a stale load clobber the new plan", async () => {
     let resolveFirst!: (v: unknown) => void;
     loadServerPlanMock.mockImplementationOnce(
