@@ -4,6 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import {
   createPlan,
   deletePlan,
+  duplicatePlan,
   listPlans,
   renamePlan,
 } from "../server/actions";
@@ -34,6 +35,13 @@ export interface UsePlanListResult {
    * failure (preserving its original position).
    */
   remove: (id: string) => Promise<boolean>;
+  /**
+   * Pessimistic duplicate: waits for the server to copy the plan before
+   * prepending an optimistic summary to the cache (matches the `create`
+   * pattern — the new id is only known after the round trip). Returns the
+   * new plan id on success, null on failure.
+   */
+  duplicate: (id: string) => Promise<string | null>;
 }
 
 /**
@@ -184,6 +192,41 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
     [],
   );
 
+  const duplicate = useCallback(async (id: string): Promise<string | null> => {
+    // Look up the source from cache so the optimistic row carries the same
+    // program/spec/stream/start-term as what's about to land on the server.
+    // The button only renders inside the populated sidebar, so cache miss is
+    // a defensive case (e.g. mid-refetch); fall back to refetch in that case.
+    const source = state.plans?.find((p) => p.id === id);
+    const name = source ? `${source.name} (copy)` : undefined;
+
+    const result = await duplicatePlan(id, name);
+    if (!result.ok) {
+      setState({ error: result.error });
+      return null;
+    }
+
+    if (!source) {
+      await refetchInternal(currentIsAuthed ?? true);
+      return result.data.id;
+    }
+
+    const optimistic: PlanSummary = {
+      id: result.data.id,
+      name: name ?? source.name,
+      programId: source.programId,
+      specializationId: source.specializationId,
+      stream: source.stream,
+      startTermId: source.startTermId,
+      updatedAt: new Date().toISOString(),
+    };
+    setState({
+      plans: state.plans ? [optimistic, ...state.plans] : [optimistic],
+      error: null,
+    });
+    return result.data.id;
+  }, []);
+
   const remove = useCallback(async (id: string): Promise<boolean> => {
     let removed: { row: PlanSummary; index: number } | null = null;
     if (state.plans) {
@@ -219,5 +262,6 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
     create,
     rename,
     remove,
+    duplicate,
   };
 }

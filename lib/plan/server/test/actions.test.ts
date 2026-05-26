@@ -16,6 +16,7 @@ vi.mock("@/lib/supabase/server", () => ({
 import {
   createPlan,
   deletePlan,
+  duplicatePlan,
   listPlans,
   loadServerPlan,
   renamePlan,
@@ -120,6 +121,7 @@ describe("auth guard", () => {
     ["renamePlan", () => renamePlan("plan-1", "new name")],
     ["deletePlan", () => deletePlan("plan-1")],
     ["createPlan", () => createPlan({ name: "P" })],
+    ["duplicatePlan", () => duplicatePlan("plan-1")],
   ])("%s returns not_authenticated when no session", async (_name, run) => {
     installClient({ user: null });
     const result = await run();
@@ -449,6 +451,152 @@ describe("loadServerPlan", () => {
     // is empty (avoids a wasted round trip on every freshly-created plan).
     expect(client.from).toHaveBeenCalledTimes(2);
     expect(client.from).not.toHaveBeenCalledWith("plan_courses");
+  });
+});
+
+describe("duplicatePlan", () => {
+  // Helper: a non-empty source plan that exercises both slot + course copying.
+  function installSourcePlanThenInsert(opts: {
+    sourceName?: string;
+    newId?: string;
+  } = {}) {
+    return installClient({
+      tableQueues: {
+        plans: [
+          // 1) loadServerPlan's plans.select
+          {
+            data: {
+              id: "src",
+              name: opts.sourceName ?? "Source",
+              program_id: "h-cs",
+              specialization_id: null,
+              system_of_study: "regular",
+              start_term_id: 1239,
+              program_scrape_version: "2026-05-01",
+              updated_at: "2026-05-24T00:00:00.000Z",
+            },
+            error: null,
+          },
+          // 2) createPlan's plans.insert
+          { data: { id: opts.newId ?? "new-plan" }, error: null },
+        ],
+        plan_slots: [
+          {
+            data: [
+              {
+                id: "s1",
+                plan_id: "src",
+                term_id: 1239,
+                position: "1A",
+                is_coop: false,
+                ordinal: 0,
+              },
+            ],
+            error: null,
+          },
+        ],
+        plan_courses: [
+          {
+            data: [
+              {
+                id: "c1",
+                slot_id: "s1",
+                course_code: "cs115",
+                grade: null,
+                ordinal: 0,
+              },
+            ],
+            error: null,
+          },
+        ],
+      },
+    });
+  }
+
+  it("returns not_found when the source plan is missing", async () => {
+    installClient({
+      tables: { plans: { data: null, error: null } },
+    });
+    expect(await duplicatePlan("missing")).toEqual({
+      ok: false,
+      error: "not_found",
+    });
+  });
+
+  it("seeds the new plan via save_plan_state with the source's snapshot", async () => {
+    const { client } = installSourcePlanThenInsert();
+    const result = await duplicatePlan("src");
+    expect(result).toEqual({ ok: true, data: { id: "new-plan" } });
+    // The seeded snapshot carries the source's slots/courses and preserves
+    // programScrapeVersion — that's the "faithful clone" invariant.
+    expect(client.rpc).toHaveBeenCalledWith("save_plan_state", {
+      p_plan_id: "new-plan",
+      p_snapshot: expect.objectContaining({
+        programId: "h-cs",
+        specializationId: null,
+        stream: "regular",
+        startTermId: 1239,
+        programScrapeVersion: "2026-05-01",
+        slots: [
+          expect.objectContaining({
+            position: "1A",
+            courses: [{ code: "cs115" }],
+          }),
+        ],
+      }),
+    });
+  });
+
+  it("mints fresh slot ids in the seed so save_plan_state doesn't PK-conflict with the source", async () => {
+    // save_plan_state preserves client-supplied slot UUIDs (by design — see
+    // migrations/0002). Without remapping, duplicate would try to re-insert
+    // rows with the source's slot ids and hit a PK conflict. This test
+    // locks in the remap.
+    const { client } = installSourcePlanThenInsert();
+    await duplicatePlan("src");
+    const rpcCall = client.rpc.mock.calls.find(
+      (c: unknown[]) => c[0] === "save_plan_state",
+    );
+    // biome-ignore lint/suspicious/noExplicitAny: rpc args are loosely typed in this test
+    const snapshot = (rpcCall?.[1] as any)?.p_snapshot;
+    const slotIds = snapshot.slots.map((s: { id: string }) => s.id);
+    expect(slotIds).toHaveLength(1);
+    expect(slotIds[0]).not.toBe("s1"); // source slot id
+    expect(slotIds[0]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+  });
+
+  it("defaults the new name to `<source> (copy)` when no override is given", async () => {
+    const { client } = installSourcePlanThenInsert({ sourceName: "My plan" });
+    await duplicatePlan("src");
+    // The `.insert(...)` payload is the 2nd-to-last call on the plans builder.
+    // Pull every insert call across all chains and find the plans insert.
+    // biome-ignore lint/suspicious/noExplicitAny: each chain is the fluent any-typed builder from makeChain
+    const chains: any[] = client.from.mock.results.map(
+      (r: { value: unknown }) => r.value,
+    );
+    const insertCalls = chains.flatMap(
+      (chain) => chain.insert?.mock?.calls ?? [],
+    );
+    expect(insertCalls).toContainEqual([
+      expect.objectContaining({ name: "My plan (copy)" }),
+    ]);
+  });
+
+  it("uses the nameOverride when provided (trimmed)", async () => {
+    const { client } = installSourcePlanThenInsert({ sourceName: "Source" });
+    await duplicatePlan("src", "  Renamed  ");
+    // biome-ignore lint/suspicious/noExplicitAny: each chain is the fluent any-typed builder from makeChain
+    const chains: any[] = client.from.mock.results.map(
+      (r: { value: unknown }) => r.value,
+    );
+    const insertCalls = chains.flatMap(
+      (chain) => chain.insert?.mock?.calls ?? [],
+    );
+    expect(insertCalls).toContainEqual([
+      expect.objectContaining({ name: "Renamed" }),
+    ]);
   });
 });
 

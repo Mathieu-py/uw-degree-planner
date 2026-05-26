@@ -47,6 +47,7 @@ function mount(opts: {
   create?: ReturnType<typeof vi.fn>;
   rename?: ReturnType<typeof vi.fn>;
   remove?: ReturnType<typeof vi.fn>;
+  duplicate?: ReturnType<typeof vi.fn>;
   isAuthed?: boolean;
 }) {
   searchParamsRef.current = new URLSearchParams(
@@ -63,6 +64,7 @@ function mount(opts: {
     create: opts.create ?? vi.fn(),
     rename: opts.rename ?? vi.fn(),
     remove: opts.remove ?? vi.fn(),
+    duplicate: opts.duplicate ?? vi.fn(),
   });
 
   render(<PlansSidebar isAuthed={opts.isAuthed ?? true} />);
@@ -204,6 +206,45 @@ describe("PlansSidebar — delete", () => {
       fireEvent.click(sidebar.getByRole("button", { name: "Delete" }));
     });
     expect(routerReplaceMock).toHaveBeenCalledWith("/plan");
+  });
+});
+
+describe("PlansSidebar — duplicate", () => {
+  it("calls duplicate then navigates to the new plan id on success", async () => {
+    const duplicateMock = vi.fn().mockResolvedValue("copy-1");
+    mount({
+      plans: [
+        mkSummary({ id: "a", name: "Plan A" }),
+        mkSummary({ id: "b", name: "Plan B" }),
+      ],
+      currentPlanId: "a",
+      duplicate: duplicateMock,
+    });
+    await act(async () => {
+      fireEvent.click(
+        desktop().getByRole("button", { name: /duplicate plan b/i }),
+      );
+    });
+    expect(duplicateMock).toHaveBeenCalledWith("b");
+    expect(routerReplaceMock).toHaveBeenCalledWith("/plan?planId=copy-1");
+  });
+
+  it("does not navigate when duplicate fails (returns null)", async () => {
+    const duplicateMock = vi.fn().mockResolvedValue(null);
+    mount({
+      plans: [mkSummary({ id: "a", name: "Plan A" })],
+      currentPlanId: "a",
+      duplicate: duplicateMock,
+    });
+    await act(async () => {
+      fireEvent.click(
+        desktop().getByRole("button", { name: /duplicate plan a/i }),
+      );
+    });
+    expect(duplicateMock).toHaveBeenCalledWith("a");
+    // Only the URL-effects from the initial mount run; no navigation kicked off
+    // by the failed duplicate.
+    expect(routerReplaceMock).not.toHaveBeenCalled();
   });
 });
 

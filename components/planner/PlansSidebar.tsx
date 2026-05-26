@@ -39,7 +39,7 @@ function PlansSidebarAuthed() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentPlanId = searchParams.get("planId");
-  const { plans, rename, remove } = usePlanList({ isAuthed: true });
+  const { plans, rename, remove, duplicate } = usePlanList({ isAuthed: true });
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -111,6 +111,14 @@ function PlansSidebarAuthed() {
     await rename(editingId, editingName);
     setBusy(false);
     setEditingId(null);
+  }
+
+  async function handleDuplicate(id: string) {
+    dismissTransient();
+    setBusy(true);
+    const newId = await duplicate(id);
+    setBusy(false);
+    if (newId) navigateToPlan(newId);
   }
 
   async function confirmDelete(id: string) {
@@ -214,6 +222,15 @@ function PlansSidebarAuthed() {
                 className="hover:bg-zinc-200 dark:hover:bg-zinc-800"
               >
                 ✏️
+              </Button>
+              <Button
+                variant="icon"
+                disabled={busy}
+                onClick={() => handleDuplicate(p.id)}
+                aria-label={`Duplicate ${p.name}`}
+                className="hover:bg-zinc-200 dark:hover:bg-zinc-800"
+              >
+                ⧉
               </Button>
               <Button
                 variant="icon"
