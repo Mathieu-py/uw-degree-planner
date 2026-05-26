@@ -7,6 +7,7 @@ import {
   type PlanRow,
   type PlanSlotRow,
   planRowToSummary,
+  toSnapshot,
 } from "./serialize";
 import type {
   ActionResult,
@@ -108,6 +109,34 @@ export async function createPlan(
   }
 
   return { ok: true, data: { id: data.id } };
+}
+
+// ---------------------------------------------------------------------------
+// Duplicate
+// ---------------------------------------------------------------------------
+
+export async function duplicatePlan(
+  planId: string,
+  nameOverride?: string,
+): Promise<ActionResult<{ id: string }>> {
+  const loaded = await loadServerPlan(planId);
+  if (!loaded.ok) return loaded;
+  if (!loaded.data) return { ok: false, error: "not_found" };
+
+  const source = loaded.data;
+  const name = (nameOverride ?? `${source.name} (copy)`).trim();
+  // `save_plan_state` inserts plan_slots using the snapshot's slot UUIDs —
+  // a deliberate choice so the UI's in-flight slot identity survives a save
+  // (see migrations/0002_save_plan_state.sql). For duplicate that's the
+  // wrong default: the source's slot rows still own those UUIDs, so reusing
+  // them PK-conflicts. Mint fresh slot ids; course rows are keyed by
+  // (slot_id, course_code) and don't carry client ids, so they're already fine.
+  const seed = toSnapshot(source);
+  const seedWithFreshSlotIds: PlanSnapshot = {
+    ...seed,
+    slots: seed.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
+  };
+  return createPlan({ name, seed: seedWithFreshSlotIds });
 }
 
 // ---------------------------------------------------------------------------
