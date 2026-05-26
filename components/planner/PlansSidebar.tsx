@@ -12,6 +12,7 @@ import {
 import type { PlanSummary } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { Button } from "../ui/Button";
+import { ShareModal } from "./ShareModal";
 import { useEscape } from "./useEscape";
 
 function focusOnMount(el: HTMLInputElement | null) {
@@ -39,7 +40,9 @@ function PlansSidebarAuthed() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentPlanId = searchParams.get("planId");
-  const { plans, rename, remove, duplicate } = usePlanList({ isAuthed: true });
+  const { plans, rename, remove, duplicate, share } = usePlanList({
+    isAuthed: true,
+  });
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -47,16 +50,19 @@ function PlansSidebarAuthed() {
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
     null,
   );
+  const [sharingId, setSharingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const mobileContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Closes transient UI: mobile dropdown, in-progress rename, in-progress
-  // delete confirm. Wired to the window-level Escape handler so any of
-  // those can be dismissed with one key regardless of where focus lives.
+  // delete confirm, open share popover. Wired to the window-level Escape
+  // handler so any of those can be dismissed with one key regardless of
+  // where focus lives.
   const dismissTransient = useCallback(() => {
     setMobileOpen(false);
     setEditingId(null);
     setConfirmingDeleteId(null);
+    setSharingId(null);
   }, []);
 
   useEscape(dismissTransient);
@@ -119,6 +125,19 @@ function PlansSidebarAuthed() {
     const newId = await duplicate(id);
     setBusy(false);
     if (newId) navigateToPlan(newId);
+  }
+
+  function openShareModal(p: PlanSummary) {
+    setSharingId(p.id);
+    setEditingId(null);
+    setConfirmingDeleteId(null);
+    // Auto-mint a token on first open so the modal shows the URL right
+    // away — no "Enable sharing" step. If the plan is already shared we
+    // skip the round trip and reuse the existing token.
+    if (!p.shareToken) {
+      setBusy(true);
+      void share(p.id, true).finally(() => setBusy(false));
+    }
   }
 
   async function confirmDelete(id: string) {
@@ -234,6 +253,14 @@ function PlansSidebarAuthed() {
               </Button>
               <Button
                 variant="icon"
+                onClick={() => openShareModal(p)}
+                aria-label={`Share ${p.name}`}
+                className="hover:bg-zinc-200 dark:hover:bg-zinc-800"
+              >
+                🔗
+              </Button>
+              <Button
+                variant="icon"
                 onClick={() => {
                   setConfirmingDeleteId(p.id);
                   setEditingId(null);
@@ -270,8 +297,20 @@ function PlansSidebarAuthed() {
     </button>
   );
 
+  const sharingPlan = sharingId
+    ? (plans?.find((p) => p.id === sharingId) ?? null)
+    : null;
+
   return (
     <>
+      {sharingPlan ? (
+        <ShareModal
+          planName={sharingPlan.name}
+          shareToken={sharingPlan.shareToken}
+          onClose={() => setSharingId(null)}
+        />
+      ) : null}
+
       {/* lg+: full sidebar column */}
       <aside
         aria-labelledby="plans-sidebar-header"

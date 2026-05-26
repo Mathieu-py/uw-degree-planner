@@ -17,6 +17,7 @@ import { termInfo } from "@/lib/terms";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import type { Course } from "@/lib/types";
 import { AuditPanel } from "./AuditPanel";
+import { BottomSheet } from "./BottomSheet";
 import { EmptyState } from "./EmptyState";
 import { HandoffModal } from "./HandoffModal";
 import { PlannerToolbar } from "./PlannerToolbar";
@@ -118,6 +119,7 @@ function PlannerShellInner({
   const [pickerCtx, setPickerCtx] = useState<PickerContext | null>(null);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [auditSheetOpen, setAuditSheetOpen] = useState(false);
   const [importBanner, setImportBanner] = useState<string | null>(null);
   // Guards the EmptyState's create + transcript flows against the
   // double-click duplicate-plan bug — without it, a second click during the
@@ -491,6 +493,27 @@ function PlannerShellInner({
             />
           ) : null}
 
+          {auditSheetOpen ? (
+            <BottomSheet
+              onClose={() => setAuditSheetOpen(false)}
+              titleId="audit-sheet-title"
+              title="Degree audit"
+            >
+              <AuditPanel plan={plan} />
+            </BottomSheet>
+          ) : null}
+
+          {/* Sticky audit trigger — phone widths only. Sits above the
+              keyboard/safe area so it doesn't collide with iOS home bar. */}
+          <button
+            type="button"
+            onClick={() => setAuditSheetOpen(true)}
+            className="lg:hidden fixed left-1/2 -translate-x-1/2 z-40 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 px-4 py-2 text-xs font-medium shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-200"
+            aria-label="Open degree audit"
+          >
+            Audit
+          </button>
+
           {handoffElement}
         </>
       }
@@ -526,7 +549,11 @@ function PlannerShellInner({
             onRemoveCourse={handleRemoveCourse}
           />
         </div>
-        <AuditPanel plan={plan} />
+        {/* Inline at lg+, hidden below — the bottom sheet replaces it on
+            phone widths so the timeline gets full vertical real estate. */}
+        <div className="hidden lg:block">
+          <AuditPanel plan={plan} />
+        </div>
       </div>
     </PlannerLayout>
   );
@@ -591,7 +618,7 @@ function buildImportBanner(args: {
   return parts.join(" ");
 }
 
-function planSubtitle(plan: LocalPlan): string {
+export function planSubtitle(plan: LocalPlan): string {
   const stream =
     plan.stream === "stream4"
       ? "Stream 4 co-op"

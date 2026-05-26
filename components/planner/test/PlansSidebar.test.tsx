@@ -36,6 +36,7 @@ function mkSummary(overrides: Partial<PlanSummary> = {}): PlanSummary {
     specializationId: null,
     stream: null,
     startTermId: null,
+    shareToken: null,
     updatedAt: "2026-05-24T00:00:00.000Z",
     ...overrides,
   };

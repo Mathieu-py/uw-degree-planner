@@ -143,6 +143,7 @@ describe("listPlans", () => {
               system_of_study: "regular",
               start_term_id: 1239,
               program_scrape_version: null,
+              share_token: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
           ],
@@ -161,6 +162,7 @@ describe("listPlans", () => {
           specializationId: null,
           stream: "regular",
           startTermId: 1239,
+          shareToken: null,
           updatedAt: "2026-05-24T00:00:00.000Z",
         },
       ],
@@ -456,10 +458,9 @@ describe("loadServerPlan", () => {
 
 describe("duplicatePlan", () => {
   // Helper: a non-empty source plan that exercises both slot + course copying.
-  function installSourcePlanThenInsert(opts: {
-    sourceName?: string;
-    newId?: string;
-  } = {}) {
+  function installSourcePlanThenInsert(
+    opts: { sourceName?: string; newId?: string } = {},
+  ) {
     return installClient({
       tableQueues: {
         plans: [

@@ -9,6 +9,7 @@ interface Props {
   issuesPerSlot: ReadonlyMap<string, ValidationIssue[]>;
   onSlotClick: (slotId: string) => void;
   onRemoveCourse: (slotId: string, code: string) => void;
+  readOnly?: boolean;
 }
 
 /**
@@ -23,13 +24,14 @@ export function Timeline({
   issuesPerSlot,
   onSlotClick,
   onRemoveCourse,
+  readOnly = false,
 }: Props) {
   const preSlot = plan.slots.find((s) => s.position === "pre");
   const orderedSlots = plan.slots.filter((s) => s.position !== "pre");
   const hasTransfer = !!preSlot && preSlot.courses.length > 0;
 
   return (
-    <div className="overflow-x-auto -mx-2 pb-2">
+    <div className="overflow-x-auto overscroll-x-contain -mx-2 pb-2 [-webkit-overflow-scrolling:touch]">
       <div className="flex gap-3 px-2 min-w-min">
         {hasTransfer && preSlot ? <PreArrivalColumn slot={preSlot} /> : null}
         {orderedSlots.map((slot) => (
@@ -39,6 +41,7 @@ export function Timeline({
             issues={issuesPerSlot.get(slot.id) ?? []}
             onClick={() => onSlotClick(slot.id)}
             onRemoveCourse={(code) => onRemoveCourse(slot.id, code)}
+            readOnly={readOnly}
           />
         ))}
       </div>

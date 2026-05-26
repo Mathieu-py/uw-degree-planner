@@ -9,6 +9,7 @@ interface Props {
   issuesByCourse: ReadonlyMap<string, ValidationIssue[]>;
   onAdd: () => void;
   onRemoveCourse: (code: string) => void;
+  readOnly?: boolean;
 }
 
 /**
@@ -18,7 +19,13 @@ interface Props {
  *
  * Co-op slots are inert — no courses, no picker.
  */
-export function Slot({ slot, issuesByCourse, onAdd, onRemoveCourse }: Props) {
+export function Slot({
+  slot,
+  issuesByCourse,
+  onAdd,
+  onRemoveCourse,
+  readOnly = false,
+}: Props) {
   if (slot.isCoop) {
     return (
       <div className="min-h-32 rounded-md border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/30 px-3 py-3 text-xs text-blue-800 dark:text-blue-200">
@@ -70,31 +77,41 @@ export function Slot({ slot, issuesByCourse, onAdd, onRemoveCourse }: Props) {
                   {c.grade}
                 </span>
               ) : null}
-              <button
-                type="button"
-                onClick={() => onRemoveCourse(c.code)}
-                aria-label={`Remove ${c.code}`}
-                title={`Remove ${c.code}`}
-                className="text-zinc-300 hover:text-rose-600 dark:text-zinc-700 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
+              {readOnly ? null : (
+                <button
+                  type="button"
+                  onClick={() => onRemoveCourse(c.code)}
+                  aria-label={`Remove ${c.code}`}
+                  title={`Remove ${c.code}`}
+                  className="text-zinc-300 hover:text-rose-600 dark:text-zinc-700 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              )}
             </div>
           </div>
         );
       })}
-      <button
-        type="button"
-        onClick={onAdd}
-        className={
-          "text-xs rounded border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 hover:border-zinc-400 dark:hover:text-zinc-50 dark:hover:border-zinc-500 transition-colors " +
-          (slot.courses.length === 0
-            ? "flex-1 flex items-center justify-center"
-            : "py-1")
-        }
-      >
-        + Add course
-      </button>
+      {readOnly ? (
+        slot.courses.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-xs text-zinc-400 dark:text-zinc-600">
+            —
+          </div>
+        ) : null
+      ) : (
+        <button
+          type="button"
+          onClick={onAdd}
+          className={
+            "text-xs rounded border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 hover:border-zinc-400 dark:hover:text-zinc-50 dark:hover:border-zinc-500 transition-colors " +
+            (slot.courses.length === 0
+              ? "flex-1 flex items-center justify-center"
+              : "py-1")
+          }
+        >
+          + Add course
+        </button>
+      )}
     </div>
   );
 }

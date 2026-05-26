@@ -13,6 +13,7 @@ interface Props {
   issues: ValidationIssue[];
   onClick: () => void;
   onRemoveCourse: (code: string) => void;
+  readOnly?: boolean;
 }
 
 function positionLabel(position: PlanSlot["position"]): string {
@@ -24,7 +25,13 @@ function positionLabel(position: PlanSlot["position"]): string {
   return position;
 }
 
-export function TermColumn({ slot, issues, onClick, onRemoveCourse }: Props) {
+export function TermColumn({
+  slot,
+  issues,
+  onClick,
+  onRemoveCourse,
+  readOnly = false,
+}: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
   const isCoop = slot.isCoop;
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
@@ -57,6 +64,7 @@ export function TermColumn({ slot, issues, onClick, onRemoveCourse }: Props) {
         issuesByCourse={byCourse}
         onAdd={onClick}
         onRemoveCourse={onRemoveCourse}
+        readOnly={readOnly}
       />
     </div>
   );

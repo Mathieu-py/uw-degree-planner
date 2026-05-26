@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assembleServerPlan,
+  mapSharedPlanJson,
   type PlanCourseRow,
   type PlanRow,
   type PlanSlotRow,
@@ -16,6 +17,7 @@ const PLAN: PlanRow = {
   system_of_study: "stream8",
   start_term_id: 1239,
   program_scrape_version: "2026-05-01",
+  share_token: null,
   updated_at: "2026-05-24T12:00:00.000Z",
 };
 
@@ -28,7 +30,14 @@ describe("planRowToSummary", () => {
       specializationId: null,
       stream: "stream8",
       startTermId: 1239,
+      shareToken: null,
       updatedAt: "2026-05-24T12:00:00.000Z",
+    });
+  });
+
+  it("surfaces a non-null share_token as shareToken", () => {
+    expect(planRowToSummary({ ...PLAN, share_token: "abc123" })).toMatchObject({
+      shareToken: "abc123",
     });
   });
 });
@@ -226,5 +235,110 @@ describe("toSnapshot", () => {
       slots: [],
     });
     expect(snap.programScrapeVersion).toBeNull();
+  });
+});
+
+describe("mapSharedPlanJson", () => {
+  // Mirror the shape returned by the `get_shared_plan(token)` RPC defined
+  // in supabase/migrations/0001_initial.sql:132-191. Keys are snake_case
+  // (Postgres) and slots/courses are pre-ordered by ordinal.
+  const RPC_JSON = {
+    id: "plan-1",
+    name: "Shared plan",
+    program_id: "h-software-engineering-beng",
+    specialization_id: null,
+    system_of_study: "stream8",
+    start_term_id: 1239,
+    program_scrape_version: "2026-05-01",
+    updated_at: "2026-05-24T12:00:00.000Z",
+    slots: [
+      {
+        id: "s1",
+        term_id: 1239,
+        position: "1A",
+        is_coop: false,
+        ordinal: 0,
+        courses: [
+          { code: "cs115", grade: "87", ordinal: 0 },
+          { code: "math115", grade: null, ordinal: 1 },
+        ],
+      },
+      {
+        id: "s2",
+        term_id: 1245,
+        position: "1B",
+        is_coop: false,
+        ordinal: 1,
+        courses: [],
+      },
+    ],
+  };
+
+  it("returns null for null/undefined input", () => {
+    expect(mapSharedPlanJson(null)).toBeNull();
+    expect(mapSharedPlanJson(undefined)).toBeNull();
+  });
+
+  it("maps snake_case to camelCase across plan, slots, and courses", () => {
+    const result = mapSharedPlanJson(RPC_JSON);
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: "plan-1",
+      name: "Shared plan",
+      programId: "h-software-engineering-beng",
+      specializationId: null,
+      stream: "stream8",
+      startTermId: 1239,
+      programScrapeVersion: "2026-05-01",
+      updatedAt: "2026-05-24T12:00:00.000Z",
+    });
+    expect(result?.slots).toEqual([
+      {
+        id: "s1",
+        termId: 1239,
+        position: "1A",
+        isCoop: false,
+        courses: [{ code: "cs115", grade: "87" }, { code: "math115" }],
+      },
+      {
+        id: "s2",
+        termId: 1245,
+        position: "1B",
+        isCoop: false,
+        courses: [],
+      },
+    ]);
+  });
+
+  it("omits the grade field on SlotCourse when null (matches read-path semantics)", () => {
+    const result = mapSharedPlanJson({
+      ...RPC_JSON,
+      slots: [
+        {
+          ...RPC_JSON.slots[0],
+          courses: [{ code: "cs115", grade: null, ordinal: 0 }],
+        },
+      ],
+    });
+    const course = result?.slots[0].courses[0];
+    expect(course).toEqual({ code: "cs115" });
+    expect(course && "grade" in course).toBe(false);
+  });
+
+  it("trusts the RPC's slot/course ordering (no client-side resort)", () => {
+    // The RPC orders by ordinal before serializing; the mapper must not
+    // re-order, so an out-of-order payload (defensively constructed here)
+    // should round-trip as-is. If the RPC ever ships unsorted, that's an
+    // RPC bug, not a mapper concern.
+    const result = mapSharedPlanJson({
+      ...RPC_JSON,
+      slots: [RPC_JSON.slots[1], RPC_JSON.slots[0]],
+    });
+    expect(result?.slots.map((s) => s.id)).toEqual(["s2", "s1"]);
+  });
+
+  it("throws on non-object input so callers see the shape mismatch early", () => {
+    expect(() => mapSharedPlanJson("not json")).toThrow();
+    expect(() => mapSharedPlanJson(42)).toThrow();
   });
 });

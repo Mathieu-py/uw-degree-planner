@@ -12,6 +12,7 @@ export interface PlanSummary {
   specializationId: string | null;
   stream: Stream | null;
   startTermId: TermId | null;
+  shareToken: string | null;
   updatedAt: string;
 }
 
