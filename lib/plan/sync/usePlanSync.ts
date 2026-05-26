@@ -22,6 +22,7 @@ export interface UsePlanSyncResult {
   plan: LocalPlan | null;
   source: PlanSource | null;
   hydrated: boolean;
+  reloading: boolean;
   saveStatus: SaveStatus;
   loadError: string | null;
   /**
@@ -237,10 +238,13 @@ export function usePlanSync({
     setPlanState(null);
   }, []);
 
+  const reloading = !hydrated && plan !== null;
+
   return {
     plan,
     source,
     hydrated,
+    reloading,
     saveStatus,
     loadError,
     setPlan,

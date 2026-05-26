@@ -26,6 +26,7 @@ const { usePlanSyncMock, setPlanMock } = vi.hoisted(() => {
       plan: null,
       source: "local" as const,
       hydrated: true,
+      reloading: false,
       saveStatus: { kind: "idle" as const },
       setPlan,
       clearLocalPlan: vi.fn(),

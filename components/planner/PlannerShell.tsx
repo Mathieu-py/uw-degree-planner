@@ -94,6 +94,7 @@ function PlannerShellInner({
     plan,
     source,
     hydrated,
+    reloading,
     saveStatus,
     loadError,
     setPlan,
@@ -366,7 +367,7 @@ function PlannerShellInner({
     );
   }
 
-  if (!hydrated) {
+  if (!hydrated && !plan) {
     return (
       <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
         <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
@@ -513,7 +514,10 @@ function PlannerShellInner({
         </div>
       ) : null}
 
-      <div className="flex flex-col lg:flex-row gap-5">
+      <div
+        aria-busy={reloading}
+        className={`flex flex-col lg:flex-row gap-5 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
+      >
         <div className="flex-1 min-w-0">
           <Timeline
             plan={plan}
