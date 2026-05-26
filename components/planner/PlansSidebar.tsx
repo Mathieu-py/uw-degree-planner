@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { PlanSummary } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
+import { Button } from "../ui/Button";
 import { useEscape } from "./useEscape";
 
 function focusOnMount(el: HTMLInputElement | null) {
@@ -158,40 +159,40 @@ function PlansSidebarAuthed() {
               className="flex-1 min-w-0 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs"
               aria-label="New plan name"
             />
-            <button
+            <Button
               type="submit"
+              size="sm"
               disabled={busy || !editingName.trim()}
-              className="rounded bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 px-2 py-1 text-[11px] font-medium disabled:opacity-50"
             >
               Save
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setEditingId(null)}
-              className="rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-[11px]"
             >
               Cancel
-            </button>
+            </Button>
           </form>
         ) : isConfirming ? (
           <div className="flex items-center justify-between gap-2 px-3 py-1.5">
             <span className="text-xs truncate">Delete "{p.name}"?</span>
             <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="xs"
                 onClick={() => setConfirmingDeleteId(null)}
-                className="rounded border border-zinc-300 dark:border-zinc-700 px-2 py-0.5 text-[11px]"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="destructive"
+                size="xs"
                 disabled={busy}
                 onClick={() => confirmDelete(p.id)}
-                className="rounded bg-rose-600 text-white px-2 py-0.5 text-[11px] font-medium disabled:opacity-50"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -206,25 +207,25 @@ function PlansSidebarAuthed() {
               {p.name}
             </button>
             <div className="flex items-center gap-0.5 shrink-0 text-zinc-500">
-              <button
-                type="button"
+              <Button
+                variant="icon"
                 onClick={() => startRename(p.id, p.name)}
                 aria-label={`Rename ${p.name}`}
-                className="rounded p-1 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                className="hover:bg-zinc-200 dark:hover:bg-zinc-800"
               >
                 ✏️
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="icon"
                 onClick={() => {
                   setConfirmingDeleteId(p.id);
                   setEditingId(null);
                 }}
                 aria-label={`Delete ${p.name}`}
-                className="rounded p-1 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                className="hover:!text-rose-600 dark:hover:!text-rose-400 hover:bg-zinc-200 dark:hover:bg-zinc-800"
               >
                 🗑
-              </button>
+              </Button>
             </div>
           </div>
         )}

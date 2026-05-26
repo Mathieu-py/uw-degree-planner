@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { SortDir, SortKey } from "@/lib/courseSort";
 import type { EligibilityRow } from "@/lib/eligibility";
 import { seatsAvailable } from "@/lib/filters";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import type { Course } from "@/lib/types";
-import { useEscape } from "./useEscape";
+import { Button } from "../ui/Button";
+import { Modal } from "./Modal";
 import {
   PICKER_PAGE_SIZE,
   type PickerFilters,
   useFilteredCourses,
 } from "./useFilteredCourses";
+import { useModalExit } from "./useModalExit";
 
 interface Props {
   targetTermLabel: string;
@@ -44,6 +46,7 @@ export function SlotPicker({
   onPick,
   onClose,
 }: Props) {
+  const { isClosing, handleClose, animateOut } = useModalExit(onClose);
   const {
     filters,
     sortKey,
@@ -63,173 +66,164 @@ export function SlotPicker({
     focusCodes,
   });
 
-  useEscape(onClose);
+  // Row clicks forward the picked code AFTER the exit animation. animateOut
+  // returns once EXIT_MS has elapsed (or immediately if a close was already
+  // in flight), so pick-during-close and rapid double-pick are deduped.
+  const handlePick = useCallback(
+    async (code: string) => {
+      await animateOut();
+      onPick(code);
+    },
+    [animateOut, onPick],
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/*
-       * Click-to-dismiss backdrop. tabIndex={-1} keeps keyboard focus out
-       * of the backdrop so the dialog content takes the initial focus.
-       */}
-      <button
-        type="button"
-        aria-label="Close dialog"
-        tabIndex={-1}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="slot-picker-title"
-        className="relative bg-white dark:bg-zinc-950 rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-zinc-200 dark:border-zinc-800"
-      >
-        <header className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Add a course to
-            </div>
-            <h2 id="slot-picker-title" className="text-sm font-medium truncate">
-              {targetTermLabel}
-              {focusCodes && focusCodes.length > 0
-                ? " · filtered to requirement options"
-                : null}
-            </h2>
+    <Modal
+      isClosing={isClosing}
+      onClose={handleClose}
+      titleId="slot-picker-title"
+      // The search input inside autoFocuses on mount; keeping the backdrop
+      // out of tab order ensures the first Tab moves within the table, not
+      // back to the invisible close button.
+      backdropTabIndex={-1}
+      className="max-w-5xl max-h-[90vh]"
+    >
+      <header className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Add a course to
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded p-1 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 dark:hover:text-zinc-50 dark:hover:bg-zinc-800"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
-        </header>
+          <h2 id="slot-picker-title" className="text-sm font-medium truncate">
+            {targetTermLabel}
+            {focusCodes && focusCodes.length > 0
+              ? " · filtered to requirement options"
+              : null}
+          </h2>
+        </div>
+        <Button variant="icon" onClick={handleClose} aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </Button>
+      </header>
 
-        <div className="flex-1 flex flex-col md:flex-row min-h-0">
-          <FilterSidebar
-            filters={filters}
-            knownPrefixes={knownPrefixes}
-            onPatch={patchFilters}
-            onReset={resetFilters}
-          />
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => patchFilters({ query: e.target.value })}
-                // biome-ignore lint/a11y/noAutofocus: search is the primary action when the modal opens
-                autoFocus
-                aria-label="Search by code or name"
-                placeholder="Search by code or name…"
-                className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-zinc-200"
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {visible.length === 0 ? (
-                <div className="px-4 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                  No matching courses.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
-                      <tr className="text-left">
-                        <Th
-                          label="Code"
-                          col="code"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                        />
-                        <Th
-                          label="Course"
-                          col="name"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                        />
-                        <Th
-                          label="Useful"
-                          col="useful"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                          align="right"
-                        />
-                        <Th
-                          label="Easy"
-                          col="easy"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                          align="right"
-                        />
-                        <Th
-                          label="Liked"
-                          col="liked"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                          align="right"
-                        />
-                        <Th
-                          label="Rev."
-                          col="reviews"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                          align="right"
-                        />
-                        <Th
-                          label="Seats"
-                          col="seats"
-                          sortKey={sortKey}
-                          sortDir={sortDir}
-                          onSort={onSort}
-                          align="right"
-                        />
-                        <th className="px-2 py-2 text-zinc-500 text-xs font-medium">
-                          {/* details link column */}
-                          <span className="sr-only">Details</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visible.map((r) => (
-                        <Row
-                          key={r.course.id}
-                          row={r}
-                          onPick={() => onPick(r.course.code)}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {hasMore ? (
-                <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={showMore}
-                    className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-4 hover:underline"
-                  >
-                    Show{" "}
-                    {Math.min(PICKER_PAGE_SIZE, sorted.length - visible.length)}{" "}
-                    more
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            <footer className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
-              {sorted.length.toLocaleString()} candidate
-              {sorted.length === 1 ? "" : "s"} · click a row to add to the slot
-            </footer>
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        <FilterSidebar
+          filters={filters}
+          knownPrefixes={knownPrefixes}
+          onPatch={patchFilters}
+          onReset={resetFilters}
+        />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+            <input
+              type="search"
+              value={filters.query}
+              onChange={(e) => patchFilters({ query: e.target.value })}
+              // biome-ignore lint/a11y/noAutofocus: search is the primary action when the modal opens
+              autoFocus
+              aria-label="Search by code or name"
+              placeholder="Search by code or name…"
+              className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-zinc-200"
+            />
           </div>
+          <div className="flex-1 overflow-y-auto">
+            {visible.length === 0 ? (
+              <div className="px-4 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                No matching courses.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
+                    <tr className="text-left">
+                      <Th
+                        label="Code"
+                        col="code"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                      />
+                      <Th
+                        label="Course"
+                        col="name"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                      />
+                      <Th
+                        label="Useful"
+                        col="useful"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                        align="right"
+                      />
+                      <Th
+                        label="Easy"
+                        col="easy"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                        align="right"
+                      />
+                      <Th
+                        label="Liked"
+                        col="liked"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                        align="right"
+                      />
+                      <Th
+                        label="Rev."
+                        col="reviews"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                        align="right"
+                      />
+                      <Th
+                        label="Seats"
+                        col="seats"
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                        align="right"
+                      />
+                      <th className="px-2 py-2 text-zinc-500 text-xs font-medium">
+                        {/* details link column */}
+                        <span className="sr-only">Details</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((r) => (
+                      <Row
+                        key={r.course.id}
+                        row={r}
+                        onPick={() => handlePick(r.course.code)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {hasMore ? (
+              <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">
+                <Button variant="ghost" onClick={showMore}>
+                  Show{" "}
+                  {Math.min(PICKER_PAGE_SIZE, sorted.length - visible.length)}{" "}
+                  more
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          <footer className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+            {sorted.length.toLocaleString()} candidate
+            {sorted.length === 1 ? "" : "s"} · click a row to add to the slot
+          </footer>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -263,13 +257,13 @@ function FilterSidebar({
         <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
           Filters
         </h3>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={onReset}
-          className="text-xs text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-2 hover:underline"
+          className="underline-offset-2"
         >
           Reset
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-1.5">

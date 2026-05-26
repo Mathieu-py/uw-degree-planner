@@ -1,6 +1,7 @@
 "use client";
 
 import type { SaveStatus } from "@/lib/plan/sync/types";
+import { Button } from "../ui/Button";
 import { SaveStatusBadge } from "./SaveStatusBadge";
 
 interface Props {
@@ -44,38 +45,34 @@ export function PlannerToolbar({
         ) : null}
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={onOpenSettings}
-        className="flex-1 min-w-0 text-center text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-4 hover:underline truncate"
         title="Plan settings"
+        className="flex-1 min-w-0 text-center truncate"
       >
         {summary}
-      </button>
+      </Button>
 
       <div className="flex items-center gap-3 shrink-0">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={onUploadTranscript}
-          className="text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-4 hover:underline"
+          className="text-zinc-700 dark:text-zinc-300"
         >
           Import transcript
-        </button>
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 underline-offset-4 hover:underline"
-        >
+        </Button>
+        <Button variant="ghost" onClick={onOpenSettings}>
           Settings
-        </button>
+        </Button>
         {onReset ? (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={onReset}
-            className="text-xs text-zinc-500 hover:text-red-600 dark:hover:text-red-400 underline-offset-4 hover:underline"
+            className="text-zinc-500 hover:text-red-600 dark:hover:text-red-400"
           >
             Reset plan
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>

@@ -344,12 +344,13 @@ function PlannerShellInner({
         isAuthed={isAuthed}
         overlays={
           <>
-            <TranscriptImportModal
-              isOpen={transcriptOpen}
-              onClose={() => setTranscriptOpen(false)}
-              onApplyPlan={handleApplyTranscript}
-              catalogCodes={allCourseCodesSet}
-            />
+            {transcriptOpen ? (
+              <TranscriptImportModal
+                onClose={() => setTranscriptOpen(false)}
+                onApplyPlan={handleApplyTranscript}
+                catalogCodes={allCourseCodesSet}
+              />
+            ) : null}
             {handoffElement}
           </>
         }
@@ -402,12 +403,13 @@ function PlannerShellInner({
         isAuthed={isAuthed}
         overlays={
           <>
-            <TranscriptImportModal
-              isOpen={transcriptOpen}
-              onClose={() => setTranscriptOpen(false)}
-              onApplyPlan={handleApplyTranscript}
-              catalogCodes={allCourseCodesSet}
-            />
+            {transcriptOpen ? (
+              <TranscriptImportModal
+                onClose={() => setTranscriptOpen(false)}
+                onApplyPlan={handleApplyTranscript}
+                catalogCodes={allCourseCodesSet}
+              />
+            ) : null}
             {handoffElement}
           </>
         }
@@ -464,12 +466,13 @@ function PlannerShellInner({
             />
           ) : null}
 
-          <TranscriptImportModal
-            isOpen={transcriptOpen}
-            onClose={() => setTranscriptOpen(false)}
-            onApplyPlan={handleApplyTranscript}
-            catalogCodes={allCourseCodesSet}
-          />
+          {transcriptOpen ? (
+            <TranscriptImportModal
+              onClose={() => setTranscriptOpen(false)}
+              onApplyPlan={handleApplyTranscript}
+              catalogCodes={allCourseCodesSet}
+            />
+          ) : null}
 
           {handoffElement}
         </>

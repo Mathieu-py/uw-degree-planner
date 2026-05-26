@@ -4,12 +4,11 @@ test("planner front door renders empty state with manual-setup form", async ({
   page,
 }) => {
   // Empty localStorage on a fresh Playwright context → planner shows the
-  // empty state (upload-transcript card + manual-setup form).
+  // empty state (upload-transcript card + manual-setup form). The page-
+  // level "Plan your degree" h1 was dropped in the PR-3 IU refactor (the
+  // PlannerToolbar now owns the active-plan label); the EmptyState's two
+  // section headings + the Create button are the durable front-door anchors.
   await page.goto("/plan");
-
-  await expect(
-    page.getByRole("heading", { name: "Plan your degree" }),
-  ).toBeVisible();
 
   await expect(
     page.getByRole("heading", { name: "Upload your Quest transcript" }),

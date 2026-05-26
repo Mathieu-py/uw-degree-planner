@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Course } from "@/lib/types";
 import { SlotPicker } from "../SlotPicker";
@@ -35,7 +41,7 @@ const NO_PLACED = new Set<string>();
 const NO_COMPLETED = new Set<string>();
 
 describe("SlotPicker", () => {
-  it("invokes onPick with the clicked course code", () => {
+  it("invokes onPick with the clicked course code (after exit animation)", async () => {
     const onPick = vi.fn();
     render(
       <SlotPicker
@@ -49,10 +55,12 @@ describe("SlotPicker", () => {
     );
     // The picker renders course codes as clickable buttons inside the table.
     fireEvent.click(screen.getByRole("button", { name: /CS\s*115/i }));
-    expect(onPick).toHaveBeenCalledWith("cs115");
+    // onPick is deferred by the modal's exit animation (setTimeout EXIT_MS),
+    // so we wait for the call to land rather than asserting synchronously.
+    await waitFor(() => expect(onPick).toHaveBeenCalledWith("cs115"));
   });
 
-  it("calls onClose when Escape is pressed", () => {
+  it("calls onClose when Escape is pressed (after exit animation)", async () => {
     const onClose = vi.fn();
     render(
       <SlotPicker
@@ -65,7 +73,7 @@ describe("SlotPicker", () => {
       />,
     );
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
   it("filters to focusCodes when provided", () => {
