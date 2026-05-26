@@ -1,20 +1,15 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { SUPABASE_CONFIGURED, useAuthState } from "@/lib/auth/store";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-// NEXT_PUBLIC_* vars are inlined at build time, so this is a true constant per
-// build. When unset (fresh clone with no .env.local), we hide the menu instead
-// of throwing on mount — the planner's signed-out flow works fine without auth.
-const SUPABASE_CONFIGURED =
-  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * Header sign-in / sign-out button. Shows the user's email when signed in,
- * a "Sign in with Google" link otherwise. Subscribes to auth-state changes
- * so the UI flips immediately after the OAuth callback redirects back.
+ * a "Sign in with Google" link otherwise. The auth state is read from the
+ * shared store ([lib/auth/store.ts](../../lib/auth/store.ts)) so this and
+ * PlannerShell observe the same subscription — no duplicate getUser() round
+ * trip at mount.
  */
 export function UserMenu() {
   if (!SUPABASE_CONFIGURED) return null;
@@ -22,40 +17,8 @@ export function UserMenu() {
 }
 
 function UserMenuInner() {
-  const [user, setUser] = useState<User | null>(null);
-  const [ready, setReady] = useState(false);
+  const { user, ready } = useAuthState();
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    let cancelled = false;
-
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setUser(data.user ?? null);
-      })
-      .catch((err) => {
-        console.warn("UserMenu: getUser failed", err);
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setReady(true);
-      });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, []);
 
   async function signIn() {
     setBusy(true);
@@ -76,7 +39,8 @@ function UserMenuInner() {
   async function signOut() {
     setBusy(true);
     const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) window.alert(`Sign out failed: ${error.message}`);
     setBusy(false);
   }
 

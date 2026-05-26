@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Stream } from "@/lib/plan/types";
 import { KNOWN_TERMS, makeTermId } from "@/lib/terms";
+import { Button } from "../ui/Button";
 import type { ProgramOption } from "./PlannerShell";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
     stream: Stream;
   }) => void;
   onUploadTranscript: () => void;
+  busy?: boolean;
 }
 
 const STREAM_LABELS: Array<{ value: Stream; label: string }> = [
@@ -28,6 +30,7 @@ export function EmptyState({
   programOptions,
   onCreate,
   onUploadTranscript,
+  busy = false,
 }: Props) {
   const fallTerms = useMemo(
     () => KNOWN_TERMS.filter((t) => t.season === "Fall"),
@@ -56,13 +59,14 @@ export function EmptyState({
           Get an instant degree plan with every past term pre-filled. The PDF is
           parsed locally in your browser; nothing is uploaded.
         </p>
-        <button
-          type="button"
+        <Button
+          size="lg"
           onClick={onUploadTranscript}
-          className="self-start rounded bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 text-sm font-medium px-4 py-2"
+          disabled={busy}
+          className="self-start"
         >
           Upload transcript
-        </button>
+        </Button>
       </div>
 
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 px-6 py-6 flex flex-col gap-4">
@@ -127,16 +131,16 @@ export function EmptyState({
           </label>
         </div>
 
-        <button
-          type="button"
-          disabled={!canSubmit}
+        <Button
+          size="lg"
+          disabled={!canSubmit || busy}
           onClick={() =>
-            canSubmit && onCreate({ programId, startTermId, stream })
+            canSubmit && !busy && onCreate({ programId, startTermId, stream })
           }
-          className="self-start rounded bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 text-sm font-medium px-4 py-2 disabled:opacity-50"
+          className="self-start"
         >
-          Create empty plan
-        </button>
+          {busy ? "Creating…" : "Create empty plan"}
+        </Button>
       </div>
     </div>
   );

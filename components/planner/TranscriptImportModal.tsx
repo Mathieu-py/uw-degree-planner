@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
 import {
   type Categorized,
@@ -10,9 +10,16 @@ import {
 } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
+import { Button } from "../ui/Button";
+import { Modal } from "./Modal";
+import { useModalExit } from "./useModalExit";
 
 interface Props {
-  isOpen: boolean;
+  /**
+   * Called after the exit animation completes so the parent can unmount
+   * us. Mount/unmount is driven by the parent's conditional render — this
+   * component is always considered "open" while mounted.
+   */
   onClose: () => void;
   /** Hands the parsed transcript to the planner to build a `LocalPlan`. */
   onApplyPlan: (
@@ -24,12 +31,11 @@ interface Props {
 }
 
 export function TranscriptImportModal({
-  isOpen,
   onClose,
   onApplyPlan,
   catalogCodes,
 }: Props) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { isClosing, handleClose } = useModalExit(onClose);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -55,29 +61,6 @@ export function TranscriptImportModal({
     } finally {
       setIsExtracting(false);
     }
-  }
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) {
-      dialog.showModal();
-    } else if (!isOpen && dialog.open) {
-      dialog.close();
-    }
-  }, [isOpen]);
-
-  // Reset internal state on close so a stale upload doesn't leak into the
-  // next open. Driven by user action (Cancel / Esc / Apply), not a render
-  // effect. Also clear the file input so re-selecting the same file fires
-  // an onChange.
-  function handleClose() {
-    setText("");
-    setFileName(null);
-    setExtractError(null);
-    setIncluded(new Set());
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    onClose();
   }
 
   const parseResult = useMemo(() => parseTranscript(text), [text]);
@@ -121,45 +104,29 @@ export function TranscriptImportModal({
     });
   }
 
-  // Esc fires `cancel` AND then `close` on <dialog>. Wiring both events to
-  // handleClose would run it twice. preventDefault() on cancel suppresses
-  // the native close, then we trigger it programmatically so only the
-  // `close` event reaches handleClose.
-  function handleCancel(e: React.SyntheticEvent<HTMLDialogElement>) {
-    e.preventDefault();
-    dialogRef.current?.close();
-  }
-
   function handleApply() {
     onApplyPlan(parseResult, included);
-    setText("");
-    setFileName(null);
-    setExtractError(null);
-    setIncluded(new Set());
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    handleClose();
   }
 
   const hasInput = text.trim().length > 0;
   const hasResults = parseResult.courses.length > 0;
 
   return (
-    <dialog
-      ref={dialogRef}
+    <Modal
+      isClosing={isClosing}
       onClose={handleClose}
-      onCancel={handleCancel}
-      className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 p-0 backdrop:bg-black/40 max-w-2xl w-[min(640px,calc(100vw-2rem))]"
+      titleId="transcript-import-title"
+      className="max-w-2xl"
     >
       <div className="flex flex-col gap-4 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Import from transcript</h2>
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close"
-            className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50 text-lg leading-none"
-          >
-            ×
-          </button>
+          <h2 id="transcript-import-title" className="text-sm font-semibold">
+            Import from transcript
+          </h2>
+          <Button variant="icon" onClick={handleClose} aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </Button>
         </div>
 
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -265,24 +232,15 @@ export function TranscriptImportModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="rounded border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900"
-          >
+          <Button variant="secondary" onClick={handleClose}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            disabled={includedCount === 0}
-            className="rounded bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900 px-3 py-1.5 text-xs font-medium disabled:opacity-40"
-          >
+          </Button>
+          <Button onClick={handleApply} disabled={includedCount === 0}>
             Apply {includedCount} course{includedCount === 1 ? "" : "s"}
-          </button>
+          </Button>
         </div>
       </div>
-    </dialog>
+    </Modal>
   );
 }
 
