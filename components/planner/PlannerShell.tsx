@@ -382,10 +382,7 @@ function PlannerShellInner({
   //   - loadError !== null → network/auth/DB failure. Show a retryable
   //     error banner; don't gaslight the user about their plan being gone.
   const onServerPath =
-    isAuthed &&
-    planId !== null &&
-    plan === null &&
-    typeof source !== "string";
+    isAuthed && planId !== null && plan === null && typeof source !== "string";
   const planNotFound = onServerPath && loadError === null;
   const planLoadFailed = onServerPath && loadError !== null;
 
