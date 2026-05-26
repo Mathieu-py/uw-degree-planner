@@ -95,6 +95,7 @@ function PlannerShellInner({
     source,
     hydrated,
     saveStatus,
+    loadError,
     setPlan,
     clearLocalPlan,
     flushSave,
@@ -374,15 +375,33 @@ function PlannerShellInner({
   }
 
   const isLocalSource = source === "local";
-  // Signed-in with a planId that loaded nothing: the row doesn't exist for
-  // this user (deleted, never theirs, bad URL). Surface it explicitly so the
-  // user doesn't think their plan vanished.
-  const planNotFound =
+  // Signed-in with a planId that finished loading but produced no plan. Two
+  // distinct outcomes both end up here:
+  //   - loadError === null → server returned ok with no row: genuinely
+  //     missing (deleted, never theirs, bad URL). Show the not-found note.
+  //   - loadError !== null → network/auth/DB failure. Show a retryable
+  //     error banner; don't gaslight the user about their plan being gone.
+  const onServerPath =
     isAuthed &&
     planId !== null &&
     plan === null &&
-    source !== null &&
     typeof source !== "string";
+  const planNotFound = onServerPath && loadError === null;
+  const planLoadFailed = onServerPath && loadError !== null;
+
+  if (planLoadFailed) {
+    return (
+      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+        <div className="rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 px-4 py-6 text-sm text-rose-900 dark:text-rose-200">
+          <p className="font-medium">We couldn't load this plan.</p>
+          <p className="mt-1 text-xs opacity-80">{loadError}</p>
+          <p className="mt-2 text-xs opacity-80">
+            Reload the page or pick a different plan from the sidebar.
+          </p>
+        </div>
+      </PlannerLayout>
+    );
+  }
 
   if (planNotFound) {
     return (

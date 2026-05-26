@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const EXIT_MS = 300;
 
@@ -40,20 +40,26 @@ export interface UseModalExitResult {
  */
 export function useModalExit(onClose?: () => void): UseModalExitResult {
   const [isClosing, setIsClosing] = useState(false);
+  const isClosingRef = useRef(false);
 
   const handleClose = useCallback(() => {
-    if (isClosing) return;
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
     setIsClosing(true);
     if (onClose) setTimeout(onClose, EXIT_MS);
-  }, [isClosing, onClose]);
+  }, [onClose]);
 
   const animateOut = useCallback((): Promise<void> => {
-    if (isClosing) return Promise.resolve();
+    if (isClosingRef.current) return Promise.resolve();
+    isClosingRef.current = true;
     setIsClosing(true);
     return new Promise((r) => setTimeout(r, EXIT_MS));
-  }, [isClosing]);
+  }, []);
 
-  const reset = useCallback(() => setIsClosing(false), []);
+  const reset = useCallback(() => {
+    isClosingRef.current = false;
+    setIsClosing(false);
+  }, []);
 
   return { isClosing, handleClose, animateOut, reset };
 }

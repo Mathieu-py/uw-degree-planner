@@ -272,13 +272,15 @@ function PlansSidebarAuthed() {
         </div>
       </aside>
 
-      {/* <lg: dropdown trigger + inline panel */}
+      {/* <lg: dropdown trigger + inline panel. Not a menu pattern — the rows
+          are switch/rename/delete buttons, not single-action menuitems — so
+          we use plain region semantics rather than role="menu". */}
       <div ref={mobileContainerRef} className="lg:hidden relative">
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          aria-haspopup="menu"
           aria-expanded={mobileOpen}
+          aria-controls="plans-sidebar-mobile-panel"
           aria-label={`Plans: ${triggerLabel}`}
           className="flex w-full items-center justify-between gap-2 rounded border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
         >
@@ -292,8 +294,8 @@ function PlansSidebarAuthed() {
         </button>
 
         {mobileOpen ? (
-          <div
-            role="menu"
+          <section
+            id="plans-sidebar-mobile-panel"
             aria-label="Plans"
             className="absolute left-0 right-0 top-full z-40 mt-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-lg text-sm overflow-hidden"
           >
@@ -301,7 +303,7 @@ function PlansSidebarAuthed() {
             <div className="border-t border-zinc-200 dark:border-zinc-800">
               {newButton}
             </div>
-          </div>
+          </section>
         ) : null}
       </div>
     </>

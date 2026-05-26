@@ -39,7 +39,8 @@ function UserMenuInner() {
   async function signOut() {
     setBusy(true);
     const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) window.alert(`Sign out failed: ${error.message}`);
     setBusy(false);
   }
 

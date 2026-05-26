@@ -120,17 +120,15 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
 
   const create = useCallback(
     async (name: string, seed?: PlanSnapshot): Promise<string | null> => {
-      const result = await createPlan({ name, seed });
+      const normalizedName = name.trim();
+      const result = await createPlan({ name: normalizedName, seed });
       if (!result.ok) {
         setState({ error: result.error });
         return null;
       }
-      // Prepend an optimistic summary so the dropdown reflects the new plan
-      // before the next refetch. The next listPlans call will overwrite
-      // this with the canonical server row, including its real updated_at.
       const optimistic: PlanSummary = {
         id: result.data.id,
-        name,
+        name: normalizedName,
         programId: seed?.programId ?? null,
         specializationId: seed?.specializationId ?? null,
         stream: seed?.stream ?? null,

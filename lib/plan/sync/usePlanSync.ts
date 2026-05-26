@@ -23,6 +23,7 @@ export interface UsePlanSyncResult {
   source: PlanSource | null;
   hydrated: boolean;
   saveStatus: SaveStatus;
+  loadError: string | null;
   /**
    * Update the in-memory plan and persist it. Signed-out: synchronous
    * localStorage write. Signed-in with a planId: schedule a debounced server
@@ -52,6 +53,7 @@ export function usePlanSync({
   const [source, setSource] = useState<PlanSource | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({ kind: "idle" });
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // All save orchestration runs through refs — mutations during async work
   // would otherwise trigger renders that reset the in-flight state.
@@ -142,6 +144,7 @@ export function usePlanSync({
       setPlanState(loaded);
       setSource("local");
       setSaveStatus({ kind: "idle" });
+      setLoadError(null);
       setHydrated(true);
       return;
     }
@@ -150,18 +153,23 @@ export function usePlanSync({
       setPlanState(null);
       setSource(null);
       setSaveStatus({ kind: "idle" });
+      setLoadError(null);
       setHydrated(true);
       return;
     }
 
     setSource({ kind: "server", planId });
     setSaveStatus({ kind: "idle" });
+    setLoadError(null);
     void (async () => {
       const result = await loadServerPlan(planId);
       if (loadTokenRef.current !== token) return;
-      setPlanState(
-        result.ok && result.data ? serverPlanToLocal(result.data) : null,
-      );
+      if (result.ok) {
+        setPlanState(result.data ? serverPlanToLocal(result.data) : null);
+      } else {
+        setPlanState(null);
+        setLoadError(result.error);
+      }
       setHydrated(true);
     })();
 
@@ -234,6 +242,7 @@ export function usePlanSync({
     source,
     hydrated,
     saveStatus,
+    loadError,
     setPlan,
     clearLocalPlan,
     flushSave,

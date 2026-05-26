@@ -56,6 +56,15 @@ vi.mock("@/lib/plan/sync/useAnonHandoff", () => ({
   useAnonHandoff: () => ({ conflict: null, resolveConflict: vi.fn() }),
 }));
 
+// Stub the shared auth store so the test doesn't depend on initAuth's real
+// behavior (which relies on NEXT_PUBLIC_SUPABASE_URL being unset to flip
+// ready=true synchronously). Returning ready: true / isAuthed: false up front
+// also lets us drop the awaited findByRole pre-amble below.
+vi.mock("@/lib/auth/store", () => ({
+  SUPABASE_CONFIGURED: false,
+  useAuthState: () => ({ user: null, ready: true, isAuthed: false }),
+}));
+
 import { PlannerShell } from "../PlannerShell";
 
 const PROGRAM_OPTIONS: ProgramOption[] = [
