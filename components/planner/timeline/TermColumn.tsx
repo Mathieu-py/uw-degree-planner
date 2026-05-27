@@ -50,7 +50,7 @@ export function TermColumn({
             }
           >
             <span className="mr-2">·</span>
-            {positionLabel(slot.position)}
+            <span>{positionLabel(slot.position)}</span>
           </span>
         </span>
         {slotLevel.length > 0 ? (
