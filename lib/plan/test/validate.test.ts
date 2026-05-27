@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Course } from "../../types";
+import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "../types";
 import {
   ACADEMIC_TERM_CAP,

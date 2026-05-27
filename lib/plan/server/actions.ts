@@ -1,8 +1,10 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   assembleServerPlan,
+  mapSharedPlanJson,
   type PlanCourseRow,
   type PlanRow,
   type PlanSlotRow,
@@ -17,7 +19,7 @@ import type {
 } from "./types";
 
 const PLAN_COLUMNS =
-  "id, name, program_id, specialization_id, system_of_study, start_term_id, program_scrape_version, updated_at";
+  "id, name, program_id, specialization_id, system_of_study, start_term_id, program_scrape_version, share_token, updated_at";
 
 const SLOT_COLUMNS = "id, plan_id, term_id, position, is_coop, ordinal";
 
@@ -238,6 +240,75 @@ export async function renamePlan(
     return { ok: false, error: "not_found_or_unauthorized" };
   }
   return { ok: true, data: undefined };
+}
+
+// ---------------------------------------------------------------------------
+// Share toggle
+// ---------------------------------------------------------------------------
+
+/**
+ * Mint or revoke the public share token for a plan. Returns the new token
+ * (or null when sharing is disabled). On the off-chance of a UNIQUE collision
+ * — `share_token` is a 128-bit URL-safe random, so this is astronomically
+ * unlikely — we retry once before surfacing the error.
+ */
+export async function setPlanShare(
+  planId: string,
+  enable: boolean,
+): Promise<ActionResult<{ shareToken: string | null }>> {
+  const auth = await requireUser();
+  if (!auth.ok) return { ok: false, error: auth.error };
+
+  if (!enable) {
+    const { data, error } = await auth.client
+      .from("plans")
+      .update({ share_token: null })
+      .eq("id", planId)
+      .select("id");
+    if (error) return { ok: false, error: error.message };
+    if (!data || data.length === 0) {
+      return { ok: false, error: "not_found_or_unauthorized" };
+    }
+    return { ok: true, data: { shareToken: null } };
+  }
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const token = randomBytes(16).toString("base64url");
+    const { data, error } = await auth.client
+      .from("plans")
+      .update({ share_token: token })
+      .eq("id", planId)
+      .select("id");
+    if (error) {
+      // Postgres unique_violation; retry once before bubbling up.
+      if (error.code === "23505" && attempt === 0) continue;
+      return { ok: false, error: error.message };
+    }
+    if (!data || data.length === 0) {
+      return { ok: false, error: "not_found_or_unauthorized" };
+    }
+    return { ok: true, data: { shareToken: token } };
+  }
+  return { ok: false, error: "share_token_collision" };
+}
+
+// ---------------------------------------------------------------------------
+// Shared plan read (anon-callable via SECURITY DEFINER RPC)
+// ---------------------------------------------------------------------------
+
+/**
+ * Load a plan by its public share token. Calls the `get_shared_plan` RPC
+ * which is SECURITY DEFINER and granted to `anon` + `authenticated`, so
+ * this works without a session. Returns null when the token is unknown.
+ */
+export async function loadSharedPlan(
+  token: string,
+): Promise<ActionResult<ServerPlan | null>> {
+  if (!token) return { ok: true, data: null };
+  const client = await createSupabaseServerClient();
+  const { data, error } = await client.rpc("get_shared_plan", { token });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: mapSharedPlanJson(data) };
 }
 
 // ---------------------------------------------------------------------------

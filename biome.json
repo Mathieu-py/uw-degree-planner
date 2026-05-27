@@ -14,7 +14,7 @@
       "!scripts/diagnostic/raw",
       "!scripts/diagnostic/raw-specs",
       "!scripts/diagnostic/parsed",
-      "!app/tailwind.css",
+      "!app/globals.css",
       "!data/*.json"
     ]
   },

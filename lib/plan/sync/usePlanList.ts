@@ -7,6 +7,7 @@ import {
   duplicatePlan,
   listPlans,
   renamePlan,
+  setPlanShare,
 } from "../server/actions";
 import type { PlanSnapshot, PlanSummary } from "../server/types";
 
@@ -42,13 +43,19 @@ export interface UsePlanListResult {
    * new plan id on success, null on failure.
    */
   duplicate: (id: string) => Promise<string | null>;
+  /**
+   * Mint or revoke the plan's public share token. Updates the cached row
+   * optimistically and reverts on server failure. Returns the new token
+   * (or null when sharing was disabled) on success, undefined on failure.
+   */
+  share: (id: string, enable: boolean) => Promise<string | null | undefined>;
 }
 
 /**
  * Module-level store backing usePlanList. The previous implementation kept
  * state inside the hook itself, which meant every component that called
  * usePlanList got its own independent copy — so a create() in PlannerShell
- * would not propagate to PlansSidebar's instance. Hoisting state here lets
+ * would not propagate to PlanToolbar's instance. Hoisting state here lets
  * useSyncExternalStore broadcast every mutation to every subscriber.
  */
 interface StoreState {
@@ -141,6 +148,7 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
         specializationId: seed?.specializationId ?? null,
         stream: seed?.stream ?? null,
         startTermId: seed?.startTermId ?? null,
+        shareToken: null,
         updatedAt: new Date().toISOString(),
       };
       setState({
@@ -218,6 +226,7 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
       specializationId: source.specializationId,
       stream: source.stream,
       startTermId: source.startTermId,
+      shareToken: null,
       updatedAt: new Date().toISOString(),
     };
     setState({
@@ -226,6 +235,54 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
     });
     return result.data.id;
   }, []);
+
+  const share = useCallback(
+    async (id: string, enable: boolean): Promise<string | null | undefined> => {
+      let previousToken: string | null | undefined;
+      if (state.plans) {
+        setState({
+          plans: state.plans.map((p) => {
+            if (p.id !== id) return p;
+            previousToken = p.shareToken;
+            // Optimistically clear when disabling; when enabling we don't
+            // know the token yet, so leave the previous value and patch
+            // once the server replies.
+            return enable ? p : { ...p, shareToken: null };
+          }),
+        });
+      }
+
+      const result = await setPlanShare(id, enable);
+      if (!result.ok) {
+        if (state.plans && previousToken !== undefined) {
+          const restore = previousToken;
+          setState({
+            plans: state.plans.map((p) =>
+              p.id === id ? { ...p, shareToken: restore } : p,
+            ),
+            error: result.error,
+          });
+        } else {
+          setState({ error: result.error });
+        }
+        return undefined;
+      }
+
+      const newToken = result.data.shareToken;
+      if (state.plans) {
+        setState({
+          plans: state.plans.map((p) =>
+            p.id === id ? { ...p, shareToken: newToken } : p,
+          ),
+          error: null,
+        });
+      } else {
+        setState({ error: null });
+      }
+      return newToken;
+    },
+    [],
+  );
 
   const remove = useCallback(async (id: string): Promise<boolean> => {
     let removed: { row: PlanSummary; index: number } | null = null;
@@ -263,5 +320,6 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
     rename,
     remove,
     duplicate,
+    share,
   };
 }

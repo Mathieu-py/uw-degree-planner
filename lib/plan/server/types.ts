@@ -1,4 +1,4 @@
-import type { TermId } from "../../types";
+import type { TermId } from "@/lib/terms";
 import type { PlanSlot, Stream } from "../types";
 
 /**
@@ -12,6 +12,7 @@ export interface PlanSummary {
   specializationId: string | null;
   stream: Stream | null;
   startTermId: TermId | null;
+  shareToken: string | null;
   updatedAt: string;
 }
 

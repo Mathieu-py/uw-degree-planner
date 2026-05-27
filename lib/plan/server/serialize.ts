@@ -14,6 +14,7 @@ export interface PlanRow {
   system_of_study: Stream | null;
   start_term_id: number | null;
   program_scrape_version: string | null;
+  share_token: string | null;
   updated_at: string;
 }
 
@@ -46,6 +47,7 @@ export function planRowToSummary(row: PlanRow): PlanSummary {
     specializationId: row.specialization_id,
     stream: row.system_of_study,
     startTermId: row.start_term_id,
+    shareToken: row.share_token,
     updatedAt: row.updated_at,
   };
 }
@@ -100,6 +102,54 @@ export function assembleServerPlan(
     programScrapeVersion: plan.program_scrape_version,
     slots,
     updatedAt: plan.updated_at,
+  };
+}
+
+/**
+ * Map the JSONB payload returned by the `get_shared_plan(token)` RPC into a
+ * `ServerPlan`. The RPC pre-orders slots by `ordinal` and courses by
+ * `(ordinal, course_code)` (see migrations/0001_initial.sql:155-176), so we
+ * don't re-sort here. Returns null when the input is null (RPC's null-token
+ * path) so callers can pattern-match without an extra check.
+ */
+export function mapSharedPlanJson(input: unknown): ServerPlan | null {
+  if (input === null || input === undefined) return null;
+  if (typeof input !== "object") {
+    throw new Error("mapSharedPlanJson: expected object");
+  }
+  const j = input as Record<string, unknown>;
+
+  const rawSlots = Array.isArray(j.slots) ? (j.slots as unknown[]) : [];
+  const slots: PlanSlot[] = rawSlots.map((raw) => {
+    const s = raw as Record<string, unknown>;
+    const rawCourses = Array.isArray(s.courses) ? (s.courses as unknown[]) : [];
+    const courses: SlotCourse[] = rawCourses.map((rc) => {
+      const c = rc as Record<string, unknown>;
+      const code = String(c.code);
+      const grade = c.grade;
+      return grade === null || grade === undefined
+        ? { code }
+        : { code, grade: String(grade) };
+    });
+    return {
+      id: String(s.id),
+      termId: (s.term_id ?? null) as number | null,
+      position: s.position as PlanSlot["position"],
+      isCoop: Boolean(s.is_coop),
+      courses,
+    };
+  });
+
+  return {
+    id: String(j.id),
+    name: String(j.name),
+    programId: (j.program_id ?? null) as string | null,
+    specializationId: (j.specialization_id ?? null) as string | null,
+    stream: (j.system_of_study ?? null) as Stream | null,
+    startTermId: (j.start_term_id ?? null) as number | null,
+    programScrapeVersion: (j.program_scrape_version ?? null) as string | null,
+    slots,
+    updatedAt: String(j.updated_at),
   };
 }
 

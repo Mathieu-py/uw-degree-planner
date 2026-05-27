@@ -21,6 +21,7 @@ import {
   loadServerPlan,
   renamePlan,
   savePlanState,
+  setPlanShare,
 } from "../actions";
 import type { PlanSnapshot } from "../types";
 
@@ -122,6 +123,7 @@ describe("auth guard", () => {
     ["deletePlan", () => deletePlan("plan-1")],
     ["createPlan", () => createPlan({ name: "P" })],
     ["duplicatePlan", () => duplicatePlan("plan-1")],
+    ["setPlanShare", () => setPlanShare("plan-1", true)],
   ])("%s returns not_authenticated when no session", async (_name, run) => {
     installClient({ user: null });
     const result = await run();
@@ -143,6 +145,7 @@ describe("listPlans", () => {
               system_of_study: "regular",
               start_term_id: 1239,
               program_scrape_version: null,
+              share_token: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
           ],
@@ -161,6 +164,7 @@ describe("listPlans", () => {
           specializationId: null,
           stream: "regular",
           startTermId: 1239,
+          shareToken: null,
           updatedAt: "2026-05-24T00:00:00.000Z",
         },
       ],
@@ -456,10 +460,9 @@ describe("loadServerPlan", () => {
 
 describe("duplicatePlan", () => {
   // Helper: a non-empty source plan that exercises both slot + course copying.
-  function installSourcePlanThenInsert(opts: {
-    sourceName?: string;
-    newId?: string;
-  } = {}) {
+  function installSourcePlanThenInsert(
+    opts: { sourceName?: string; newId?: string } = {},
+  ) {
     return installClient({
       tableQueues: {
         plans: [
@@ -617,5 +620,64 @@ describe("savePlanState", () => {
     });
     const result = await savePlanState("p1", SNAPSHOT);
     expect(result).toEqual({ ok: false, error: "rls denied" });
+  });
+});
+
+describe("setPlanShare", () => {
+  it("disables sharing by nulling the token", async () => {
+    installClient({
+      tables: { plans: { data: [{ id: "plan-1" }], error: null } },
+    });
+    const result = await setPlanShare("plan-1", false);
+    expect(result).toEqual({ ok: true, data: { shareToken: null } });
+  });
+
+  it("returns not_found_or_unauthorized when disabling updates zero rows", async () => {
+    installClient({
+      tables: { plans: { data: [], error: null } },
+    });
+    expect(await setPlanShare("plan-1", false)).toEqual({
+      ok: false,
+      error: "not_found_or_unauthorized",
+    });
+  });
+
+  it("enables sharing by minting a base64url token", async () => {
+    installClient({
+      tables: { plans: { data: [{ id: "plan-1" }], error: null } },
+    });
+    const result = await setPlanShare("plan-1", true);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(typeof result.data.shareToken).toBe("string");
+    // randomBytes(16).toString("base64url") → URL-safe alphabet only.
+    expect(result.data.shareToken).toMatch(/^[A-Za-z0-9_-]+$/);
+  });
+
+  it("returns not_found_or_unauthorized when enabling updates zero rows", async () => {
+    installClient({
+      tables: { plans: { data: [], error: null } },
+    });
+    expect(await setPlanShare("plan-1", true)).toEqual({
+      ok: false,
+      error: "not_found_or_unauthorized",
+    });
+  });
+
+  it("retries once on a unique-token collision, then succeeds", async () => {
+    // First attempt hits a Postgres unique_violation (23505); the second
+    // attempt mints a fresh token and updates the row.
+    installClient({
+      tableQueues: {
+        plans: [
+          { data: null, error: { code: "23505", message: "duplicate key" } },
+          { data: [{ id: "plan-1" }], error: null },
+        ],
+      },
+    });
+    const result = await setPlanShare("plan-1", true);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.shareToken).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 });

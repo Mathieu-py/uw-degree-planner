@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { PlannerShell } from "@/components/planner/PlannerShell";
-import { loadTerm } from "@/lib/data";
+import { PlannerShell } from "@/components/planner/shell/PlannerShell";
+import { loadTerm } from "@/lib/courses/data";
 import { PROGRAMS } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
 
@@ -36,7 +36,7 @@ export default async function PlanPage() {
   const catalog = await loadTerm(PINNED_TERM);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 lg:px-6 py-4 flex flex-col gap-3">
+    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-3">
       {/*
         Next 16 requires a Suspense boundary around any subtree that calls
         useSearchParams (PlannerShell reads `?planId=…`), otherwise the

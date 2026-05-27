@@ -1,5 +1,4 @@
-import { nextTerm, type TermInfo, termInfo } from "../terms";
-import type { TermId } from "../types";
+import { nextTerm, type TermId, type TermInfo, termInfo } from "@/lib/terms";
 import type {
   CoopLabel,
   PlanSlot,
@@ -126,4 +125,56 @@ export function buildEmptySlots(
     isCoop: s.isCoop,
     courses: [],
   }));
+}
+
+/**
+ * Re-sequence an existing plan's slots for a new stream while preserving
+ * course placements by slot position. Used when the student changes stream
+ * mid-plan in PlanSettingsModal.
+ *
+ * Strategy: match each new slot to the old slot with the same `position`
+ * (e.g. "1A" → "1A", "coop1" → "coop1") and copy its courses. Positions
+ * that exist in the old cadence but not the new one (e.g. coop slots when
+ * switching to "regular") have their courses returned as `droppedCodes` so
+ * the caller can surface a banner. The "pre" slot (transfer credits) is
+ * passed through untouched — it's independent of stream.
+ */
+export function rebuildSlotsForStream(
+  oldSlots: PlanSlot[],
+  startTermId: TermId,
+  newStream: Stream,
+  mintId: () => string,
+): { slots: PlanSlot[]; droppedCodes: string[] } {
+  const preSlot = oldSlots.find((s) => s.position === "pre");
+  const coursesByPosition = new Map<string, PlanSlot["courses"]>();
+  for (const slot of oldSlots) {
+    if (slot.position === "pre") continue;
+    coursesByPosition.set(slot.position, slot.courses);
+  }
+
+  const sequenced = sequenceTerms(startTermId, newStream);
+  const newSlots: PlanSlot[] = [];
+  if (preSlot) newSlots.push(preSlot);
+
+  const usedPositions = new Set<string>();
+  for (const s of sequenced) {
+    const carried = coursesByPosition.get(s.position) ?? [];
+    if (carried.length > 0) usedPositions.add(s.position);
+    newSlots.push({
+      id: mintId(),
+      termId: s.termId,
+      position: s.position,
+      isCoop: s.isCoop,
+      courses: carried,
+    });
+  }
+
+  const droppedCodes: string[] = [];
+  for (const [pos, courses] of coursesByPosition.entries()) {
+    if (!usedPositions.has(pos)) {
+      droppedCodes.push(...courses.map((c) => c.code));
+    }
+  }
+
+  return { slots: newSlots, droppedCodes };
 }

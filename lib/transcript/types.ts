@@ -1,4 +1,4 @@
-import type { TermLetter } from "../programs";
+import type { TermLetter } from "@/lib/programs";
 
 export type CourseStatus =
   | "passed"
