@@ -65,7 +65,10 @@ export function ShareModal({ planName, shareToken, onClose }: Props) {
       </header>
 
       <div className="px-4 py-4 flex flex-col gap-3">
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p
+          id="share-link-desc"
+          className="text-xs text-zinc-600 dark:text-zinc-400"
+        >
           Anyone with this link can view this plan (read-only).
         </p>
         {url ? (
@@ -75,6 +78,7 @@ export function ShareModal({ planName, shareToken, onClose }: Props) {
             value={url}
             onFocus={(e) => e.currentTarget.select()}
             aria-label="Share URL"
+            aria-describedby="share-link-desc"
             className="w-full rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-2 text-xs font-mono"
           />
         ) : (

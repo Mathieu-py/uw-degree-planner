@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEscape } from "@/lib/hooks/useEscape";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { Button } from "./Button";
 import { Icon } from "./Icon";
@@ -28,6 +29,8 @@ export function BottomSheet({
   children,
 }: BottomSheetProps) {
   const { isClosing, handleClose } = useModalExit(onClose);
+
+  useEscape(handleClose);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">

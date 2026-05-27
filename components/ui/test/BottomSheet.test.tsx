@@ -53,6 +53,12 @@ describe("BottomSheet", () => {
     expect(mockHandleClose).toHaveBeenCalledOnce();
   });
 
+  it("calls handleClose when Escape is pressed", () => {
+    renderSheet();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(mockHandleClose).toHaveBeenCalledOnce();
+  });
+
   it("wires aria-labelledby on the dialog to the title element", () => {
     renderSheet();
     const dialog = screen.getByRole("dialog");

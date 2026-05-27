@@ -9,9 +9,13 @@ import { useEffect } from "react";
  * unmount; passing a fresh `onClose` reference re-registers, so callers
  * should `useCallback` the handler if it would otherwise re-create per
  * render.
+ *
+ * Pass `null` to skip registration entirely — lets callers (e.g. a closed
+ * dropdown) avoid holding a global listener when there's nothing to close.
  */
-export function useEscape(onClose: () => void): void {
+export function useEscape(onClose: (() => void) | null): void {
   useEffect(() => {
+    if (!onClose) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };

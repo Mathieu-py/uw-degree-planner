@@ -144,15 +144,19 @@ function PlanToolbarAuthed({
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [pickerOpen]);
 
-  const closePicker = useCallback(() => setPickerOpen(false), []);
-  useEscape(closePicker);
-
   const dismissInline = useCallback(() => {
     setEditing(false);
     setConfirmingDelete(false);
   }, []);
 
-  useEscape(dismissInline);
+  // Single Escape handler: close the plan picker and dismiss any inline
+  // edit/confirm in one listener. Both actions are no-ops when their state
+  // is already cleared, so running both is safe.
+  const handleEscape = useCallback(() => {
+    setPickerOpen(false);
+    dismissInline();
+  }, [dismissInline]);
+  useEscape(handleEscape);
 
   const navigateToPlan = useCallback(
     (planId: string | null) => {
@@ -180,8 +184,13 @@ function PlanToolbarAuthed({
   async function submitRename(e: FormEvent) {
     e.preventDefault();
     if (!currentPlanId) return;
+    const name = editingName.trim();
+    if (!name) {
+      setEditing(false);
+      return;
+    }
     setBusy(true);
-    await rename(currentPlanId, editingName);
+    await rename(currentPlanId, name);
     setBusy(false);
     setEditing(false);
   }

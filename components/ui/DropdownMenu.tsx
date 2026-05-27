@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useEscape } from "@/lib/hooks/useEscape";
 
@@ -39,7 +39,9 @@ export function DropdownMenu({ label, icon, items }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
 
-  useEscape(() => setOpen(false));
+  // Only hold the global Escape listener while the menu is open.
+  const closeMenu = useCallback(() => setOpen(false), []);
+  useEscape(open ? closeMenu : null);
 
   useEffect(() => {
     if (!open) return;
