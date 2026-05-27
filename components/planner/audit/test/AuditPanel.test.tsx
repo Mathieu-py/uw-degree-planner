@@ -35,9 +35,8 @@ describe("AuditPanel", () => {
     const engId = Object.entries(PROGRAMS).find(
       ([, p]) => p.kind === "engineering",
     )?.[0];
-    if (!engId) {
-      return;
-    }
+    expect(engId, "engineering program id not found in PROGRAMS fixture").toBeDefined();
+    if (!engId) return;
     const plan = mkPlan({ programId: engId });
     const { container } = render(<AuditPanel plan={plan} />);
 
@@ -54,6 +53,7 @@ describe("AuditPanel", () => {
     const engId = Object.entries(PROGRAMS).find(
       ([, p]) => p.kind === "engineering",
     )?.[0];
+    expect(engId, "engineering program id not found in PROGRAMS fixture").toBeDefined();
     if (!engId) return;
     render(<AuditPanel plan={mkPlan({ programId: engId })} />);
 

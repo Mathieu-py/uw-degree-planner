@@ -87,7 +87,7 @@ export function SlotPicker({
       // out of tab order ensures the first Tab moves within the table, not
       // back to the invisible close button.
       backdropTabIndex={-1}
-      className="max-w-none sm:max-w-5xl h-full sm:h-auto sm:max-h-[90vh] !rounded-none sm:!rounded-lg"
+      className="max-w-none sm:max-w-5xl h-full sm:h-auto sm:max-h-[90vh] rounded-none! sm:rounded-lg!"
     >
       <header className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between gap-3">
         <div className="min-w-0">

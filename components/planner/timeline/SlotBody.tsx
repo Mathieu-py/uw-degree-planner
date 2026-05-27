@@ -40,7 +40,12 @@ export function SlotBody({
     );
   }
 
-  const placeholderCount = Math.max(0, PLACEHOLDER_ROWS - slot.courses.length);
+  // Keep the typical 5-row visual when the term has slack, but always render
+  // at least one row so a fully-loaded term still exposes an "+ Add course"
+  // affordance for adding overload courses.
+  const placeholderCount = readOnly
+    ? 0
+    : Math.max(1, PLACEHOLDER_ROWS - slot.courses.length);
 
   return (
     <div className="flex flex-col gap-1.5">

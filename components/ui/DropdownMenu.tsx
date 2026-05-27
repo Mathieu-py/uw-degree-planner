@@ -56,7 +56,7 @@ export function DropdownMenu({ label, icon, items }: Props) {
       <Button
         variant="secondary"
         size="lg"
-        aria-haspopup="menu"
+        aria-haspopup="true"
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
@@ -71,15 +71,12 @@ export function DropdownMenu({ label, icon, items }: Props) {
       {open ? (
         <div
           id={menuId}
-          role="menu"
-          aria-label={label}
           className="absolute right-0 top-full mt-1 z-20 min-w-[10rem] rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-lg py-1"
         >
           {items.map((item) => (
             <button
               key={item.key}
               type="button"
-              role="menuitem"
               disabled={item.disabled}
               onClick={() => {
                 setOpen(false);

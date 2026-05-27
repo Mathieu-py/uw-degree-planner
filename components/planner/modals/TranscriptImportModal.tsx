@@ -223,7 +223,12 @@ export function TranscriptImportModal({
               )}
               {categorized.skipped.length > 0 && (
                 <CategoryDetails
-                  title={`✗ Skipped (failed/withdrawn) (${categorized.skipped.length})`}
+                  title={
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="close" size="xs" aria-hidden="true" />
+                      Skipped (failed/withdrawn) ({categorized.skipped.length})
+                    </span>
+                  }
                   items={categorized.skipped}
                   muted
                 />

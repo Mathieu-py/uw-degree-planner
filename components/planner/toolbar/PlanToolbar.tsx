@@ -539,7 +539,7 @@ function PlanToolbarAuthed({
           disabled={busy}
           onClick={handleCreate}
           aria-label="New plan"
-          className="h-10 w-10 !p-0 inline-flex items-center justify-center"
+          className="h-10 w-10 p-0! inline-flex items-center justify-center"
         >
           <Icon name="plusSign" size="lg" />
         </Button>

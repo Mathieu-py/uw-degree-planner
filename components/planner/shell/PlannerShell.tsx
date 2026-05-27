@@ -434,7 +434,7 @@ function PlannerShellInner({
           <p className="font-medium">We couldn't load this plan.</p>
           <p className="mt-1 text-xs opacity-80">{loadError}</p>
           <p className="mt-2 text-xs opacity-80">
-            Reload the page or pick a different plan from the sidebar.
+            Reload the page or pick a different plan from the toolbar.
           </p>
         </div>
       </PlannerLayout>
@@ -447,7 +447,7 @@ function PlannerShellInner({
         <div className="rounded-lg border border-amber-300 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 px-4 py-6 text-sm text-amber-900 dark:text-amber-200">
           <p>
             We couldn't find a plan with that id. Pick a different plan from the
-            sidebar, or create a new one.
+            toolbar, or create a new one.
           </p>
         </div>
       </PlannerLayout>
@@ -569,7 +569,7 @@ function PlannerShellInner({
                 onClick={() => setSettingsOpen(true)}
                 aria-label="Plan settings"
                 title="Plan settings"
-                className="!px-2.5 aspect-square inline-flex items-center justify-center"
+                className="px-2.5! aspect-square inline-flex items-center justify-center"
               >
                 <Icon name="settings" size="md" />
               </Button>

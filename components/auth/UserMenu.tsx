@@ -52,13 +52,10 @@ function UserMenuInner() {
     return (
       <div className="flex items-center gap-3">
         <span
-          className="truncate max-w-[14rem] inline-flex items-center gap-1"
+          className="truncate max-w-[14rem]"
           title={user.email ?? undefined}
         >
           {user.email ?? "Signed in"}
-          <span aria-hidden="true" className="text-zinc-500">
-            ▾
-          </span>
         </span>
         <button
           type="button"

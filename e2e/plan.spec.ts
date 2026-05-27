@@ -33,9 +33,10 @@ test("creating an empty plan via manual setup renders the timeline", async ({
   // we just click through.
   await page.getByRole("button", { name: "Create empty plan" }).click();
 
-  // After creation: the "Reset plan" button appears in the planner header,
-  // and the empty-state form is gone.
-  await expect(page.getByRole("button", { name: "Reset plan" })).toBeVisible();
+  // After creation: the "Edit plan" dropdown trigger appears in the planner
+  // header (the IU refactor folded Reset plan into this menu), and the
+  // empty-state form is gone.
+  await expect(page.getByRole("button", { name: "Edit plan" })).toBeVisible();
 
   // At least one academic term column rendered — the regular cadence puts
   // 1A in the first position.
