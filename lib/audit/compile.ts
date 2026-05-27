@@ -16,14 +16,16 @@
  *  - `excluded`: never gates status; the UI surfaces violations as warnings.
  */
 
-import type { LocalPlan } from "../plan/types";
-import type {
-  Program,
-  RuleNode,
-  Specialization,
-  TermLetter,
-} from "../programs";
-import { describeRule, getSpecialization, TERM_LETTERS } from "../programs";
+import type { LocalPlan } from "@/lib/plan/types";
+import {
+  describeRule,
+  getSpecialization,
+  type Program,
+  type RuleNode,
+  type Specialization,
+  TERM_LETTERS,
+  type TermLetter,
+} from "@/lib/programs";
 import type { Placement, PlacementMap } from "./placement";
 import { buildPlacementMap } from "./placement";
 

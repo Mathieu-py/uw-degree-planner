@@ -55,7 +55,7 @@ export interface UsePlanListResult {
  * Module-level store backing usePlanList. The previous implementation kept
  * state inside the hook itself, which meant every component that called
  * usePlanList got its own independent copy — so a create() in PlannerShell
- * would not propagate to PlansSidebar's instance. Hoisting state here lets
+ * would not propagate to PlanToolbar's instance. Hoisting state here lets
  * useSyncExternalStore broadcast every mutation to every subscriber.
  */
 interface StoreState {

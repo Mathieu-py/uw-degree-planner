@@ -22,9 +22,9 @@
  * they don't have courses).
  */
 
-import { cachedParsePrereqs } from "../prereqs/cache";
-import { evaluate } from "../prereqs/satisfied";
-import type { Course } from "../types";
+import type { Course } from "@/lib/courses/types";
+import { cachedParsePrereqs } from "@/lib/prereqs/cache";
+import { evaluate } from "@/lib/prereqs/satisfied";
 import { completedSetFromPlan } from "./derive";
 import type { LocalPlan } from "./types";
 

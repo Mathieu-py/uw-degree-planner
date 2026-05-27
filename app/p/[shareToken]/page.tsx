@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SharedPlanView } from "@/components/planner/SharedPlanView";
-import { loadTerm } from "@/lib/data";
+import { SharedPlanView } from "@/components/planner/viewer/SharedPlanView";
+import { loadTerm } from "@/lib/courses/data";
 import { loadSharedPlan } from "@/lib/plan/server/actions";
 import { PROGRAMS } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";

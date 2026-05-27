@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { UserMenu } from "@/components/auth/UserMenu";
-import "./tailwind.css";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,26 +31,27 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header className="border-b border-zinc-200 dark:border-zinc-800">
-          <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="font-semibold tracking-tight">
+        <header className="bg-black text-zinc-100 border-b border-zinc-800">
+          <div className="px-6 sm:px-8 lg:px-12 py-5 flex items-center justify-between">
+            <Link
+              href="/"
+              className="font-semibold tracking-tight text-zinc-50"
+            >
               UW Degree Planner
             </Link>
-            <nav className="flex items-center gap-5 text-sm text-zinc-600 dark:text-zinc-400">
-              <Link
-                href="/plan"
-                className="hover:text-zinc-950 dark:hover:text-zinc-50"
-              >
+            <nav className="flex items-center gap-5 text-sm text-zinc-400">
+              <Link href="/plan" className="hover:text-zinc-50">
                 Plan
               </Link>
               <a
                 href="https://github.com/Mathieu-py/uw-elective-finder"
                 target="_blank"
                 rel="noreferrer noopener"
-                className="hover:text-zinc-950 dark:hover:text-zinc-50"
+                className="hover:text-zinc-50"
               >
                 GitHub
               </a>
+              <span aria-hidden="true" className="h-5 w-px bg-zinc-700" />
               <UserMenu />
             </nav>
           </div>

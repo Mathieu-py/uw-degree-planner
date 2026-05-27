@@ -45,23 +45,26 @@ function UserMenuInner() {
   }
 
   if (!ready) {
-    return <span className="text-xs text-zinc-400">…</span>;
+    return <span className="text-xs text-zinc-500">…</span>;
   }
 
   if (user) {
     return (
       <div className="flex items-center gap-3">
         <span
-          className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-[12rem]"
+          className="truncate max-w-[14rem] inline-flex items-center gap-1"
           title={user.email ?? undefined}
         >
           {user.email ?? "Signed in"}
+          <span aria-hidden="true" className="text-zinc-500">
+            ▾
+          </span>
         </span>
         <button
           type="button"
           onClick={signOut}
           disabled={busy}
-          className="hover:text-zinc-950 dark:hover:text-zinc-50 disabled:opacity-50"
+          className="hover:text-zinc-50 disabled:opacity-50"
         >
           Sign out
         </button>
@@ -74,7 +77,7 @@ function UserMenuInner() {
       type="button"
       onClick={signIn}
       disabled={busy}
-      className="hover:text-zinc-950 dark:hover:text-zinc-50 disabled:opacity-50"
+      className="hover:text-zinc-50 disabled:opacity-50"
     >
       Sign in
     </button>

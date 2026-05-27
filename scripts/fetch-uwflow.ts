@@ -10,8 +10,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import type { UWFlowCourse } from "../lib/types";
-import { CourseSchema } from "../lib/validation";
+import type { UWFlowCourse } from "../lib/courses/types";
+import { CourseSchema } from "../lib/courses/validation";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 

@@ -1,4 +1,4 @@
-import type { TermId } from "../../types";
+import type { TermId } from "@/lib/terms";
 import type { PlanSlot, Stream } from "../types";
 
 /**

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { safeGetItem, safeRemoveItem, safeSetItem } from "../storage";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import { type LocalPlan, PLAN_SCHEMA_VERSION } from "./types";
 
 export const PLAN_STORAGE_KEY = "uwfinder.plan.v1";

@@ -1,4 +1,4 @@
-import type { TermId } from "../types";
+import type { TermId } from "@/lib/terms";
 
 /**
  * Schema version stamped on every persisted `LocalPlan`. Bump when introducing

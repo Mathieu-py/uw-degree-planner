@@ -1,11 +1,11 @@
-import type { TermId } from "./types";
-
 /**
  * UWFlow term IDs are `1<YY><season>` where YY is the last two digits of the
  * calendar year and the season digit is 1 = Winter, 5 = Spring, 9 = Fall.
  * This holds for every term we've fetched (1255 / 1259 / 1261 / 1265 / 1269)
  * and matches UW's documented Quest term-number scheme.
  */
+export type TermId = number;
+
 export type TermSeason = "Winter" | "Spring" | "Fall";
 
 export interface TermInfo {

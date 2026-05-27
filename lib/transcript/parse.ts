@@ -1,4 +1,4 @@
-import { PROGRAMS, TERM_LETTERS, type TermLetter } from "../programs";
+import { PROGRAMS, TERM_LETTERS, type TermLetter } from "@/lib/programs";
 import type {
   CourseStatus,
   ParsedCourse,

@@ -1,5 +1,5 @@
-import type { LocalPlan, SlotPosition } from "../plan/types";
-import type { TermId } from "../types";
+import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
+import type { TermId } from "@/lib/terms";
 
 /**
  * Location of a placed course within a plan: which slot it sits in.

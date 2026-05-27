@@ -16,9 +16,8 @@
  * only if their code is in `includedUnrecognized` (caller opt-in).
  */
 
-import { termLabelToTermId } from "../terms";
-import type { TranscriptParseResult } from "../transcript/types";
-import type { TermId } from "../types";
+import { type TermId, termLabelToTermId } from "@/lib/terms";
+import type { TranscriptParseResult } from "@/lib/transcript/types";
 import { sequenceTerms } from "./sequence";
 import {
   type LocalPlan,
