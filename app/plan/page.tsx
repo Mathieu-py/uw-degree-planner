@@ -36,7 +36,7 @@ export default async function PlanPage() {
   const catalog = await loadTerm(PINNED_TERM);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-3">
+    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
       {/*
         Next 16 requires a Suspense boundary around any subtree that calls
         useSearchParams (PlannerShell reads `?planId=…`), otherwise the

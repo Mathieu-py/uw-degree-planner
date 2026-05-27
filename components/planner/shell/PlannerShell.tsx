@@ -550,9 +550,9 @@ function PlannerShellInner({
     >
       <div
         aria-busy={reloading}
-        className={`flex flex-col lg:flex-row gap-5 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
+        className={`flex flex-col lg:flex-row gap-5 lg:flex-1 lg:min-h-0 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
       >
-        <div className="flex-1 min-w-0 flex flex-col gap-4">
+        <div className="flex-1 min-w-0 flex flex-col gap-4 lg:min-h-0">
           <div className="flex items-center justify-between gap-3">
             <ProgramHeader programName={programName} plan={plan} />
             <div className="flex items-center gap-2 shrink-0 mr-4">
@@ -640,7 +640,7 @@ function PlannerShellInner({
             phone widths so the timeline gets full vertical real estate.
             Lives outside the left column so it aligns with the header at
             the very top of the page, not below the controls row. */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block lg:min-h-0">
           <AuditPanel plan={plan} />
         </div>
       </div>
@@ -677,9 +677,9 @@ function PlannerLayout({
 }) {
   return (
     <>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
         {toolbar === undefined ? <PlanToolbar isAuthed={isAuthed} /> : toolbar}
-        <div className="flex flex-col gap-5">{children}</div>
+        <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0">{children}</div>
       </div>
       {overlays}
     </>

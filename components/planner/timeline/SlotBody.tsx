@@ -13,11 +13,6 @@ interface Props {
   readOnly?: boolean;
 }
 
-// Visual placeholder rows shown in an empty term, sized to roughly the
-// typical UW course load. Each row opens the same picker; the data model is
-// still one slot per term.
-const PLACEHOLDER_ROWS = 5;
-
 /**
  * One term's worth of courses. Empty area is clickable to open the picker;
  * each placed course shows a small × to remove it and a ⚠ if it has any
@@ -39,13 +34,6 @@ export function SlotBody({
       </div>
     );
   }
-
-  // Keep the typical 5-row visual when the term has slack, but always render
-  // at least one row so a fully-loaded term still exposes an "+ Add course"
-  // affordance for adding overload courses.
-  const placeholderCount = readOnly
-    ? 0
-    : Math.max(1, PLACEHOLDER_ROWS - slot.courses.length);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -112,19 +100,13 @@ export function SlotBody({
           </div>
         ) : null
       ) : (
-        Array.from({ length: placeholderCount }, (_, i) => (
-          <button
-            // Placeholder index keys are stable for a given term — the row
-            // count only changes when the user adds/removes a course.
-            // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
-            key={`add-${i}`}
-            type="button"
-            onClick={onAdd}
-            className="text-xs rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 hover:border-zinc-400 hover:bg-zinc-50 dark:hover:text-zinc-50 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/40 transition-colors py-3 px-2 text-center"
-          >
-            + Add course
-          </button>
-        ))
+        <button
+          type="button"
+          onClick={onAdd}
+          className="text-xs rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 hover:border-zinc-400 hover:bg-zinc-50 dark:hover:text-zinc-50 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/40 transition-colors py-2 px-2 text-center"
+        >
+          + Add course
+        </button>
       )}
     </div>
   );
