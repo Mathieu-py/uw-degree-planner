@@ -44,59 +44,59 @@ export function SlotBody({
         }
       >
         {slot.courses.map((c) => {
-        const courseIssues = issuesByCourse.get(c.code) ?? [];
-        const hasIssue = courseIssues.length > 0;
-        const issueTitle = courseIssues.map((i) => i.message).join("\n");
-        return (
-          <div
-            key={`${slot.id}:${c.code}`}
-            className={
-              "rounded border px-2 py-1 text-xs font-mono flex items-center justify-between gap-2 group " +
-              (hasIssue
-                ? "border-rose-300 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20"
-                : "border-zinc-200 dark:border-zinc-800")
-            }
-          >
-            <span className="truncate flex items-center gap-1.5 min-w-0">
-              {hasIssue ? (
-                <span
-                  role="img"
-                  aria-label={`Validation issue: ${issueTitle}`}
-                  title={issueTitle}
-                  className="text-rose-600 dark:text-rose-400 cursor-help"
+          const courseIssues = issuesByCourse.get(c.code) ?? [];
+          const hasIssue = courseIssues.length > 0;
+          const issueTitle = courseIssues.map((i) => i.message).join("\n");
+          return (
+            <div
+              key={`${slot.id}:${c.code}`}
+              className={
+                "rounded border px-2 py-1 text-xs font-mono flex items-center justify-between gap-2 group " +
+                (hasIssue
+                  ? "border-rose-300 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20"
+                  : "border-zinc-200 dark:border-zinc-800")
+              }
+            >
+              <span className="truncate flex items-center gap-1.5 min-w-0">
+                {hasIssue ? (
+                  <span
+                    role="img"
+                    aria-label={`Validation issue: ${issueTitle}`}
+                    title={issueTitle}
+                    className="text-rose-600 dark:text-rose-400 cursor-help"
+                  >
+                    <span aria-hidden="true">⚠</span>
+                  </span>
+                ) : null}
+                <Link
+                  href={`/course/${c.code}`}
+                  target="_blank"
+                  rel="noopener"
+                  title={`Open ${c.code} details (new tab)`}
+                  className="truncate hover:underline underline-offset-2"
                 >
-                  <span aria-hidden="true">⚠</span>
-                </span>
-              ) : null}
-              <Link
-                href={`/course/${c.code}`}
-                target="_blank"
-                rel="noopener"
-                title={`Open ${c.code} details (new tab)`}
-                className="truncate hover:underline underline-offset-2"
-              >
-                {c.code}
-              </Link>
-            </span>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {c.grade ? (
-                <span className="text-zinc-500 dark:text-zinc-400">
-                  {c.grade}
-                </span>
-              ) : null}
-              {readOnly ? null : (
-                <button
-                  type="button"
-                  onClick={() => onRemoveCourse(c.code)}
-                  aria-label={`Remove ${c.code}`}
-                  title={`Remove ${c.code}`}
-                  className="text-zinc-300 hover:text-rose-600 dark:text-zinc-700 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-                >
-                  <Icon name="close" size="xs" aria-hidden="true" />
-                </button>
-              )}
+                  {c.code}
+                </Link>
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {c.grade ? (
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    {c.grade}
+                  </span>
+                ) : null}
+                {readOnly ? null : (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveCourse(c.code)}
+                    aria-label={`Remove ${c.code}`}
+                    title={`Remove ${c.code}`}
+                    className="text-zinc-300 hover:text-rose-600 dark:text-zinc-700 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                  >
+                    <Icon name="close" size="xs" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
           );
         })}
         {readOnly && slot.courses.length === 0 ? (

@@ -74,7 +74,12 @@ export function DropdownMenu({ label, icon, items }: Props) {
       >
         {icon ? <span aria-hidden="true">{icon}</span> : null}
         <span>{label}</span>
-        <Icon name="chevronDown" size="xs" aria-hidden="true" className="opacity-70" />
+        <Icon
+          name="chevronDown"
+          size="xs"
+          aria-hidden="true"
+          className="opacity-70"
+        />
       </Button>
       {open ? (
         <div
