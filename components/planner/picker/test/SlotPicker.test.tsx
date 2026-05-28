@@ -12,11 +12,12 @@ import { SlotPicker } from "../SlotPicker";
 
 afterEach(cleanup);
 
+let nextCourseId = 1;
 function mkCourse(code: string, name: string): Course {
   const prefix = (code.match(/^[a-z]+/i)?.[0] ?? "").toUpperCase();
   const level = Math.floor(Number(code.replace(/[^\d]/g, "") || 0) / 100) * 100;
   return {
-    id: code.length + name.length,
+    id: nextCourseId++,
     code,
     name,
     description: null,
