@@ -559,9 +559,11 @@ function PlannerShellInner({
               <Button
                 variant="secondary"
                 size="lg"
+                className="inline-flex items-center gap-2"
                 onClick={() => setTranscriptOpen(true)}
               >
-                ⬆ Import transcript
+                <Icon name="import" size="md" />
+                Import transcript
               </Button>
               <Button
                 variant="secondary"
@@ -596,7 +598,7 @@ function PlannerShellInner({
                 <div className="ml-auto flex items-center gap-2">
                   <DropdownMenu
                     label="Edit plan"
-                    icon="✏"
+                    icon={<Icon name="edit" size="sm" />}
                     items={[
                       {
                         key: "reset",
@@ -679,7 +681,9 @@ function PlannerLayout({
     <>
       <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
         {toolbar === undefined ? <PlanToolbar isAuthed={isAuthed} /> : toolbar}
-        <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0">{children}</div>
+        <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0">
+          {children}
+        </div>
       </div>
       {overlays}
     </>

@@ -11,7 +11,7 @@ import {
 } from "react";
 import { ShareModal } from "@/components/planner/modals/ShareModal";
 import { Button } from "@/components/ui/Button";
-import type { MenuItem } from "@/components/ui/DropdownMenu";
+import { DropdownMenu, type MenuItem } from "@/components/ui/DropdownMenu";
 import { Icon } from "@/components/ui/Icon";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
@@ -51,7 +51,7 @@ function focusOnMount(el: HTMLInputElement | null) {
 }
 
 /**
- * Compact plan switcher: dropdown of the user's plans, a "Plan options"
+ * Compact plan switcher: dropdown of the user's plans, an "Edit plan"
  * overflow menu (rename / duplicate / share / delete), and a primary
  * "+ New plan" button. The four CRUD actions used to render as inline
  * buttons; folding them into a menu keeps the header quiet so the plan
@@ -313,26 +313,26 @@ function PlanToolbarAuthed({
     {
       key: "rename",
       label: "Rename",
-      icon: "✏️",
+      icon: <Icon name="rename" size="md" />,
       onSelect: () => startRename(currentPlan.name),
     },
     {
       key: "duplicate",
       label: "Duplicate",
-      icon: "⧉",
+      icon: <Icon name="duplicate" size="md" />,
       disabled: busy,
       onSelect: () => void duplicatePlanById(currentPlan.id),
     },
     {
       key: "share",
       label: "Share",
-      icon: "🔗",
+      icon: <Icon name="share" size="md" />,
       onSelect: () => openShareModal(currentPlan.id, currentPlan.shareToken),
     },
     {
       key: "delete",
       label: "Delete",
-      icon: "🗑",
+      icon: <Icon name="delete" size="lg" />,
       destructive: true,
       onSelect: () => setConfirmingDelete(true),
     },
@@ -340,26 +340,11 @@ function PlanToolbarAuthed({
   ];
 
   const optionsMenu = (
-    <div className="flex items-center gap-1">
-      {actionItems.map((item) => (
-        <button
-          key={item.key}
-          type="button"
-          aria-label={item.label}
-          title={item.label}
-          disabled={item.disabled}
-          onClick={item.onSelect}
-          className={
-            "h-10 w-10 inline-flex items-center justify-center rounded text-xl transition-colors disabled:opacity-50 " +
-            (item.destructive
-              ? "text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-              : "text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800")
-          }
-        >
-          <span aria-hidden="true">{item.icon}</span>
-        </button>
-      ))}
-    </div>
+    <DropdownMenu
+      label="Edit plan"
+      icon={<Icon name="edit" size="sm" />}
+      items={actionItems}
+    />
   );
 
   return (
@@ -383,12 +368,12 @@ function PlanToolbarAuthed({
             className="appearance-none rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 pl-3 pr-9 py-2.5 text-sm w-64 text-left truncate relative"
           >
             {currentPlan.name}
-            <span
+            <Icon
+              name="chevronDown"
+              size="xs"
               aria-hidden="true"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-70"
-            >
-              ▾
-            </span>
+              className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70"
+            />
           </button>
           {pickerOpen ? (
             <div
@@ -519,7 +504,7 @@ function PlanToolbarAuthed({
                           title="Rename"
                           className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-opacity"
                         >
-                          <span aria-hidden="true">✏️</span>
+                          <Icon name="rename" size="md" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
@@ -532,7 +517,7 @@ function PlanToolbarAuthed({
                           title="Delete"
                           className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-opacity disabled:opacity-50"
                         >
-                          <span aria-hidden="true">🗑</span>
+                          <Icon name="delete" size="lg" aria-hidden="true" />
                         </button>
                       </>
                     )}

@@ -37,7 +37,12 @@ export function TermColumn({
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
 
   return (
-    <div className="w-full lg:h-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 p-3 flex flex-col gap-3">
+    <div
+      className={
+        "w-full lg:h-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 p-3 flex flex-col " +
+        (slot.courses.length === 0 ? "gap-1" : "gap-2")
+      }
+    >
       <div className="flex flex-col">
         <span className="text-base font-semibold">
           {info?.label ?? "—"}

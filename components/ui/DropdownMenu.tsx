@@ -1,14 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { useEscape } from "@/lib/hooks/useEscape";
 
 export interface MenuItem {
   /** Stable test/aria id (e.g. "rename", "delete"). */
   key: string;
   label: string;
-  icon: string;
+  icon: ReactNode;
   onSelect: () => void;
   disabled?: boolean;
   destructive?: boolean;
@@ -17,8 +25,8 @@ export interface MenuItem {
 interface Props {
   /** Visible label on the trigger button. Doubles as the menu's aria-label. */
   label: string;
-  /** Optional single-character glyph rendered before the label. */
-  icon?: string;
+  /** Optional glyph or icon element rendered before the label. */
+  icon?: ReactNode;
   items: MenuItem[];
 }
 
@@ -66,9 +74,7 @@ export function DropdownMenu({ label, icon, items }: Props) {
       >
         {icon ? <span aria-hidden="true">{icon}</span> : null}
         <span>{label}</span>
-        <span aria-hidden="true" className="text-[10px] opacity-70">
-          ▾
-        </span>
+        <Icon name="chevronDown" size="xs" aria-hidden="true" className="opacity-70" />
       </Button>
       {open ? (
         <div

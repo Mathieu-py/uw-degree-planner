@@ -1,17 +1,31 @@
 import type { SVGProps } from "react";
 import Check from "./icons/check.svg";
+import ChevronDown from "./icons/chevronDown.svg";
 import Close from "./icons/close.svg";
-import PlusSign from "./icons/plus-sign.svg";
+import Delete from "./icons/delete.svg";
+import Duplicate from "./icons/duplicate.svg";
+import Edit from "./icons/edit.svg";
+import Import from "./icons/import.svg";
+import PlusSign from "./icons/plusSign.svg";
+import Rename from "./icons/rename.svg";
 import Settings from "./icons/settings.svg";
+import Share from "./icons/share.svg";
 
 // Add new icons here as: name → component. Names are camelCase strings the
 // rest of the app uses via <Icon name="..." />. Keep each icon component
 // drawing in its own viewBox; the wrapper just applies size + color classes.
 const REGISTRY = {
   check: Check,
+  chevronDown: ChevronDown,
   close: Close,
+  delete: Delete,
+  duplicate: Duplicate,
+  edit: Edit,
+  import: Import,
   plusSign: PlusSign,
+  rename: Rename,
   settings: Settings,
+  share: Share,
 } as const;
 
 export type IconName = keyof typeof REGISTRY;

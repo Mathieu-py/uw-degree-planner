@@ -36,8 +36,14 @@ export function SlotBody({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {slot.courses.map((c) => {
+    <div className="flex flex-col gap-1.5 min-h-0 flex-1">
+      <div
+        className={
+          "min-h-0 overflow-y-auto flex flex-col gap-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+          (slot.courses.length === 0 ? "" : "flex-1")
+        }
+      >
+        {slot.courses.map((c) => {
         const courseIssues = issuesByCourse.get(c.code) ?? [];
         const hasIssue = courseIssues.length > 0;
         const issueTitle = courseIssues.map((i) => i.message).join("\n");
@@ -91,19 +97,22 @@ export function SlotBody({
               )}
             </div>
           </div>
-        );
-      })}
-      {readOnly ? (
-        slot.courses.length === 0 ? (
+          );
+        })}
+        {readOnly && slot.courses.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-xs text-zinc-400 dark:text-zinc-600">
             —
           </div>
-        ) : null
-      ) : (
+        ) : null}
+      </div>
+      {readOnly ? null : (
         <button
           type="button"
           onClick={onAdd}
-          className="text-xs rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 hover:border-zinc-400 hover:bg-zinc-50 dark:hover:text-zinc-50 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/40 transition-colors py-2 px-2 text-center"
+          className={
+            "text-xs rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 hover:border-zinc-400 hover:bg-zinc-50 dark:hover:text-zinc-50 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/40 transition-colors py-3 px-2 text-center " +
+            (slot.courses.length === 0 ? "flex-1" : "shrink-0")
+          }
         >
           + Add course
         </button>
