@@ -260,23 +260,27 @@ function PlanToolbarAuthed({
             onKeyDown={(e) => {
               if (e.key === "Escape") setEditing(false);
             }}
-            className="flex-1 min-w-0 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-xs"
+            className="flex-1 min-w-0 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2.5 text-sm"
             aria-label="New plan name"
           />
-          <Button
+          <button
             type="submit"
-            size="sm"
             disabled={busy || !editingName.trim()}
+            aria-label="Save rename"
+            title="Save"
+            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50"
           >
-            Save
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
+            <Icon name="check" size="sm" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
             onClick={() => setEditing(false)}
+            aria-label="Cancel rename"
+            title="Cancel"
+            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
           >
-            Cancel
-          </Button>
+            <Icon name="close" size="md" aria-hidden="true" />
+          </button>
         </form>
       </div>
     );
@@ -286,18 +290,18 @@ function PlanToolbarAuthed({
     return (
       <div className={containerClass}>
         <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
-          <span className="text-xs truncate">Delete "{currentPlan.name}"?</span>
+          <span className="text-sm truncate">Delete "{currentPlan.name}"?</span>
           <div className="flex items-center gap-1 shrink-0">
             <Button
               variant="secondary"
-              size="xs"
+              size="lg"
               onClick={() => setConfirmingDelete(false)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              size="xs"
+              size="lg"
               disabled={busy}
               onClick={confirmDelete}
             >
@@ -332,7 +336,7 @@ function PlanToolbarAuthed({
     {
       key: "delete",
       label: "Delete",
-      icon: <Icon name="delete" size="lg" />,
+      icon: <Icon name="delete" size="md" />,
       destructive: true,
       onSelect: () => setConfirmingDelete(true),
     },
@@ -456,7 +460,7 @@ function PlanToolbarAuthed({
                           title="Cancel"
                           className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
                         >
-                          <Icon name="close" size="sm" aria-hidden="true" />
+                          <Icon name="close" size="md" aria-hidden="true" />
                         </button>
                       </>
                     ) : deletingThis ? (
@@ -487,7 +491,7 @@ function PlanToolbarAuthed({
                           title="Cancel"
                           className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
                         >
-                          <Icon name="close" size="sm" aria-hidden="true" />
+                          <Icon name="close" size="md" aria-hidden="true" />
                         </button>
                       </>
                     ) : (
@@ -517,7 +521,7 @@ function PlanToolbarAuthed({
                           title="Delete"
                           className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-opacity disabled:opacity-50"
                         >
-                          <Icon name="delete" size="lg" aria-hidden="true" />
+                          <Icon name="delete" size="md" aria-hidden="true" />
                         </button>
                       </>
                     )}

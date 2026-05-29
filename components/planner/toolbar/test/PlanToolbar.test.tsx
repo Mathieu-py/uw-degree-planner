@@ -173,7 +173,7 @@ describe("PlanToolbar — rename", () => {
     fireEvent.change(input, { target: { value: "Fresh" } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+      fireEvent.click(screen.getByRole("button", { name: /save rename/i }));
     });
     expect(renameMock).toHaveBeenCalledWith("a", "Fresh");
   });
