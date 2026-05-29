@@ -18511,6 +18511,20 @@
                 {
                   "kind": "courses",
                   "courses": [
+                    "commst193",
+                    "engl193"
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "pick",
+              "selectMin": 1,
+              "selectMax": 1,
+              "children": [
+                {
+                  "kind": "courses",
+                  "courses": [
                     "cive222",
                     "enve223",
                     "geoe223",
