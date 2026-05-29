@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   type AuditNode,
   type AuditRoot,
@@ -29,7 +29,7 @@ interface Section {
   summary: SectionSummary;
 }
 
-export function AuditPanel({ plan }: Props) {
+export const AuditPanel = memo(function AuditPanel({ plan }: Props) {
   const program = plan.programId ? (PROGRAMS[plan.programId] ?? null) : null;
   const [filter, setFilter] = useState<FilterMode>("missing");
 
@@ -59,8 +59,8 @@ export function AuditPanel({ plan }: Props) {
   }
 
   return (
-    <aside className="w-full lg:w-80 shrink-0">
-      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 overflow-hidden">
+    <aside className="w-full lg:w-80 shrink-0 lg:h-full lg:flex lg:flex-col">
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 overflow-hidden lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
         <div className="px-4 py-4">
           <div className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
             Degree audit
@@ -81,7 +81,7 @@ export function AuditPanel({ plan }: Props) {
           <FilterTabs value={filter} onChange={setFilter} />
         </div>
 
-        <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2 flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+        <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2 flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800 lg:flex-1 lg:min-h-0 lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {programSections.map((s, i) => (
             <AuditSection
               // biome-ignore lint/suspicious/noArrayIndexKey: stable order
@@ -106,7 +106,7 @@ export function AuditPanel({ plan }: Props) {
       </div>
     </aside>
   );
-}
+});
 
 const FILTER_LABEL: Record<FilterMode, string> = {
   missing: "Missing",

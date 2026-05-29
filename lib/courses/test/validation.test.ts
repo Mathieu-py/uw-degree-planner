@@ -6,7 +6,6 @@ function validCourse(overrides: Record<string, unknown> = {}) {
     id: 1,
     code: "cs115",
     name: "Intro CS",
-    description: null,
     prereqs: null,
     coreqs: null,
     antireqs: null,
@@ -69,14 +68,6 @@ describe("validateCoursesFile", () => {
     expect(() => validateCoursesFile(validFile({ courses: [c] }))).toThrow(
       /id/,
     );
-  });
-
-  it("rejects a non-string description", () => {
-    expect(() =>
-      validateCoursesFile(
-        validFile({ courses: [validCourse({ description: 42 })] }),
-      ),
-    ).toThrow(/description/);
   });
 
   it("rejects a section missing enrollment_capacity", () => {

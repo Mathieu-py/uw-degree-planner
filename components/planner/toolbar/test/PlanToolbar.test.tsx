@@ -166,13 +166,14 @@ describe("PlanToolbar — rename", () => {
       currentPlanId: "a",
       rename: renameMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /rename/i }));
 
     const input = screen.getByLabelText("New plan name") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "Fresh" } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+      fireEvent.click(screen.getByRole("button", { name: /save rename/i }));
     });
     expect(renameMock).toHaveBeenCalledWith("a", "Fresh");
   });
@@ -189,6 +190,7 @@ describe("PlanToolbar — delete", () => {
       currentPlanId: "a",
       remove: removeMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
     // First click just shows the confirmation row — no server call yet.
     expect(removeMock).not.toHaveBeenCalled();
@@ -209,6 +211,7 @@ describe("PlanToolbar — delete", () => {
       currentPlanId: "a",
       remove: removeMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -223,6 +226,7 @@ describe("PlanToolbar — delete", () => {
       currentPlanId: "a",
       remove: removeMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -242,6 +246,7 @@ describe("PlanToolbar — duplicate", () => {
       currentPlanId: "a",
       duplicate: duplicateMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /duplicate/i }));
     });
@@ -256,6 +261,7 @@ describe("PlanToolbar — duplicate", () => {
       currentPlanId: "a",
       duplicate: duplicateMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /duplicate/i }));
     });
@@ -289,6 +295,7 @@ describe("PlanToolbar — share", () => {
       currentPlanId: "a",
       share: shareMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /share/i }));
     expect(shareMock).toHaveBeenCalledWith("a", true);
     // The modal is mounted; its dialog has aria-label "Close dialog" on the
@@ -303,6 +310,7 @@ describe("PlanToolbar — share", () => {
       currentPlanId: "a",
       share: shareMock,
     });
+    fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /share/i }));
     expect(shareMock).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeTruthy();

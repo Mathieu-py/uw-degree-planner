@@ -57,8 +57,8 @@ export default function RootLayout({
           </div>
         </header>
         <main className="flex-1 flex flex-col">{children}</main>
-        <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-12">
-          <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-3 justify-between">
+        <footer className="border-t border-zinc-200 dark:border-zinc-800">
+          <div className="mx-auto max-w-6xl px-6 py-3 text-xs text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-3 justify-between">
             <p>
               Data from{" "}
               <a

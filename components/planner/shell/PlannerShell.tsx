@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
 import { HandoffModal } from "@/components/planner/modals/HandoffModal";
 import { PlanSettingsModal } from "@/components/planner/modals/PlanSettingsModal";
@@ -120,6 +127,12 @@ function PlannerShellInner({
     },
   });
 
+  // Latest plan, read by the edit handlers so they don't have to list `plan`
+  // in their dep arrays — keeping the handlers referentially stable across
+  // edits so the memoized timeline columns aren't invalidated every keystroke.
+  const planRef = useRef(plan);
+  planRef.current = plan;
+
   const [pickerCtx, setPickerCtx] = useState<PickerContext | null>(null);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -167,6 +180,12 @@ function PlannerShellInner({
     [plan, catalogByCode],
   );
   const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
+
+  // The audit panel recompiles the full rule tree on every plan change and is
+  // non-interactive, so feed it a deferred copy of the plan: the timeline (the
+  // surface the user is actually editing) updates synchronously while React
+  // recomputes the audit in a lower-priority pass, keeping edits snappy.
+  const deferredPlan = useDeferredValue(plan);
 
   // Bridge: writes route to setPlan when there's a current plan, or to
   // create+navigate when the user is authed without a planId (first server
@@ -328,8 +347,9 @@ function PlannerShellInner({
 
   const handleRemoveCourse = useCallback(
     (slotId: string, code: string) => {
-      if (!plan) return;
-      const nextSlots = plan.slots.map((s) =>
+      const current = planRef.current;
+      if (!current) return;
+      const nextSlots = current.slots.map((s) =>
         s.id === slotId
           ? {
               ...s,
@@ -337,9 +357,9 @@ function PlannerShellInner({
             }
           : s,
       );
-      setPlan({ ...plan, slots: nextSlots });
+      setPlan({ ...current, slots: nextSlots });
     },
-    [plan, setPlan],
+    [setPlan],
   );
 
   const handleRetrySave = useCallback(() => {
@@ -454,6 +474,26 @@ function PlannerShellInner({
     );
   }
 
+  // Signed-in, no planId yet, and either the plan list is still loading or it
+  // has entries we're about to redirect into (see the router.replace effect
+  // above). Show the skeleton rather than EmptyState so the user never sees the
+  // create-plan UI flash before landing on their most recently updated plan.
+  // EmptyState is reserved for the genuine zero-plan case (plans fetched, empty)
+  // and the explicit `?new=1` entry point (handled by its own branch above).
+  const awaitingPlanRedirect =
+    isAuthed &&
+    planId === null &&
+    !newRequested &&
+    (plans === null || plans.length > 0);
+
+  if (awaitingPlanRedirect) {
+    return (
+      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+        <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+      </PlannerLayout>
+    );
+  }
+
   if (!plan) {
     return (
       <PlannerLayout
@@ -529,7 +569,7 @@ function PlannerShellInner({
               titleId="audit-sheet-title"
               title="Degree audit"
             >
-              <AuditPanel plan={plan} />
+              <AuditPanel plan={deferredPlan ?? plan} />
             </BottomSheet>
           ) : null}
 
@@ -550,18 +590,20 @@ function PlannerShellInner({
     >
       <div
         aria-busy={reloading}
-        className={`flex flex-col lg:flex-row gap-5 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
+        className={`flex flex-col lg:flex-row gap-5 lg:flex-1 lg:min-h-0 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
       >
-        <div className="flex-1 min-w-0 flex flex-col gap-4">
+        <div className="flex-1 min-w-0 flex flex-col gap-4 lg:min-h-0">
           <div className="flex items-center justify-between gap-3">
             <ProgramHeader programName={programName} plan={plan} />
             <div className="flex items-center gap-2 shrink-0 mr-4">
               <Button
                 variant="secondary"
                 size="lg"
+                className="inline-flex items-center gap-2"
                 onClick={() => setTranscriptOpen(true)}
               >
-                ⬆ Import transcript
+                <Icon name="import" size="md" />
+                Import transcript
               </Button>
               <Button
                 variant="secondary"
@@ -596,7 +638,7 @@ function PlannerShellInner({
                 <div className="ml-auto flex items-center gap-2">
                   <DropdownMenu
                     label="Edit plan"
-                    icon="✏"
+                    icon={<Icon name="edit" size="sm" />}
                     items={[
                       {
                         key: "reset",
@@ -640,8 +682,8 @@ function PlannerShellInner({
             phone widths so the timeline gets full vertical real estate.
             Lives outside the left column so it aligns with the header at
             the very top of the page, not below the controls row. */}
-        <div className="hidden lg:block">
-          <AuditPanel plan={plan} />
+        <div className="hidden lg:block lg:min-h-0">
+          <AuditPanel plan={deferredPlan ?? plan} />
         </div>
       </div>
     </PlannerLayout>
@@ -677,9 +719,11 @@ function PlannerLayout({
 }) {
   return (
     <>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
         {toolbar === undefined ? <PlanToolbar isAuthed={isAuthed} /> : toolbar}
-        <div className="flex flex-col gap-5">{children}</div>
+        <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0">
+          {children}
+        </div>
       </div>
       {overlays}
     </>

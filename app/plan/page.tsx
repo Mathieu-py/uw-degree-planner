@@ -32,11 +32,12 @@ export default async function PlanPage() {
   );
 
   // Catalog for the slot picker. Today we ship a single pinned term; once a
-  // term picker / multi-term snapshots land, this expands to a map.
+  // term picker / multi-term snapshots land, this expands to a map. Course
+  // descriptions are split into a sibling file, so this catalog stays lean.
   const catalog = await loadTerm(PINNED_TERM);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-3">
+    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
       {/*
         Next 16 requires a Suspense boundary around any subtree that calls
         useSearchParams (PlannerShell reads `?planId=…`), otherwise the

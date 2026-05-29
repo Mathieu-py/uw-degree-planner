@@ -19,8 +19,8 @@ interface Props {
 
 const STREAM_LABELS: Array<{ value: Stream; label: string }> = [
   { value: "regular", label: "Regular (no co-op)" },
-  { value: "stream4", label: "Stream 4 co-op (January start)" },
-  { value: "stream8", label: "Stream 8 co-op (May start)" },
+  { value: "stream4", label: "Stream 4 co-op" },
+  { value: "stream8", label: "Stream 8 co-op" },
 ];
 
 const INPUT =

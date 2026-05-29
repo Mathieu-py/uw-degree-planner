@@ -102,7 +102,7 @@ export function SlotPicker({
           </h2>
         </div>
         <Button variant="icon" onClick={handleClose} aria-label="Close">
-          <Icon name="close" size="sm" aria-hidden="true" />
+          <Icon name="close" size="md" aria-hidden="true" />
         </Button>
       </header>
 

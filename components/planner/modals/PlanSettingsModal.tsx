@@ -32,8 +32,8 @@ const INPUT =
 
 const STREAM_LABELS: Record<Stream, string> = {
   regular: "Regular (no co-op)",
-  stream4: "Stream 4 co-op (January start)",
-  stream8: "Stream 8 co-op (May start)",
+  stream4: "Stream 4 co-op",
+  stream8: "Stream 8 co-op",
 };
 
 /**
@@ -87,7 +87,7 @@ export function PlanSettingsModal({
           Plan settings
         </h2>
         <Button variant="icon" onClick={handleClose} aria-label="Close">
-          <Icon name="close" size="sm" aria-hidden="true" />
+          <Icon name="close" size="md" aria-hidden="true" />
         </Button>
       </header>
 
@@ -151,9 +151,9 @@ export function PlanSettingsModal({
           </select>
           {streamDirty ? (
             <span className="text-amber-700 dark:text-amber-300 mt-0.5">
-              Saving will re-sequence terms. Courses on slots that don't exist
-              in the new stream (e.g. co-op terms when switching to Regular)
-              will be removed.
+              Saving will re-sequence terms — your courses stay on the same
+              academic term (1A, 2B, …) but may shift to different calendar
+              months.
             </span>
           ) : null}
         </label>

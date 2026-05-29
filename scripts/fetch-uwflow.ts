@@ -10,10 +10,22 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import type { UWFlowCourse } from "../lib/courses/types";
-import { CourseSchema } from "../lib/courses/validation";
+import type { CatalogCourse } from "../lib/courses/types";
+import {
+  CourseSchema,
+  type CoursesFile,
+  type DescriptionsFile,
+} from "../lib/courses/validation";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
+
+// UWFlow returns the calendar description; we keep it through the fetch and
+// then split it into a sibling descriptions file so the committed catalog
+// (and the client payload built from it) stays lean.
+const FetchedCourseSchema = CourseSchema.extend({
+  description: z.string().nullable(),
+});
+type FetchedCourse = z.infer<typeof FetchedCourseSchema>;
 
 const COURSES_QUERY = `
   query GetCourses($termId: Int!) {
@@ -41,11 +53,11 @@ const COURSES_QUERY = `
 `;
 
 const GraphQLResponseSchema = z.object({
-  data: z.object({ course: z.array(CourseSchema) }).optional(),
+  data: z.object({ course: z.array(FetchedCourseSchema) }).optional(),
   errors: z.array(z.object({ message: z.string() })).optional(),
 });
 
-async function fetchTerm(termId: number): Promise<UWFlowCourse[]> {
+async function fetchTerm(termId: number): Promise<FetchedCourse[]> {
   const res = await fetch(GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,25 +79,43 @@ async function fetchTerm(termId: number): Promise<UWFlowCourse[]> {
   return json.data.course;
 }
 
-interface CoursesFile {
-  termId: number;
-  fetchedAt: string;
-  courseCount: number;
-  courses: UWFlowCourse[];
-}
-
-async function writeSnapshot(termId: number, courses: UWFlowCourse[]) {
+async function writeSnapshot(termId: number, courses: FetchedCourse[]) {
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
-  const file: CoursesFile = {
+  const fetchedAt = new Date().toISOString();
+
+  // Split each fetched course into the lean catalog record and the keyed
+  // description, then write them to sibling files.
+  const lean: CatalogCourse[] = [];
+  const descriptions: Record<string, string> = {};
+  for (const { description, ...rest } of courses) {
+    lean.push(rest);
+    if (description && description.trim() !== "") {
+      descriptions[rest.code] = description;
+    }
+  }
+
+  const coursesFile: CoursesFile = {
     termId,
-    fetchedAt: new Date().toISOString(),
-    courseCount: courses.length,
-    courses,
+    fetchedAt,
+    courseCount: lean.length,
+    courses: lean,
   };
-  const outPath = path.join(dataDir, `courses.${termId}.json`);
-  await writeFile(outPath, JSON.stringify(file, null, 2), "utf-8");
-  return outPath;
+  const descriptionsFile: DescriptionsFile = {
+    termId,
+    fetchedAt,
+    descriptions,
+  };
+
+  const coursesPath = path.join(dataDir, `courses.${termId}.json`);
+  const descriptionsPath = path.join(dataDir, `descriptions.${termId}.json`);
+  await writeFile(coursesPath, JSON.stringify(coursesFile, null, 2), "utf-8");
+  await writeFile(
+    descriptionsPath,
+    JSON.stringify(descriptionsFile, null, 2),
+    "utf-8",
+  );
+  return { coursesPath, descriptionsPath };
 }
 
 async function main() {
@@ -99,9 +129,12 @@ async function main() {
     process.stdout.write(`Fetching term ${term}... `);
     const raw = await fetchTerm(term);
     const courses = raw.filter((c) => !/xxx$/i.test(c.code));
-    const out = await writeSnapshot(term, courses);
+    const { coursesPath, descriptionsPath } = await writeSnapshot(
+      term,
+      courses,
+    );
     console.log(
-      `${courses.length} courses → ${path.relative(process.cwd(), out)}`,
+      `${courses.length} courses → ${path.relative(process.cwd(), coursesPath)} + ${path.relative(process.cwd(), descriptionsPath)}`,
     );
   }
 }

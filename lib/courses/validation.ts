@@ -27,7 +27,6 @@ export const CourseSchema = z.object({
   id: z.number(),
   code: z.string().min(1),
   name: z.string(),
-  description: z.string().nullable(),
   prereqs: z.string().nullable(),
   coreqs: z.string().nullable(),
   antireqs: z.string().nullable(),
@@ -44,6 +43,16 @@ const CoursesFileSchema = z.object({
 
 export type CoursesFile = z.infer<typeof CoursesFileSchema>;
 
+// Calendar descriptions, split out of the catalog so the planner payload
+// stays lean. Keyed by course code; only courses with prose appear.
+const DescriptionsFileSchema = z.object({
+  termId: z.number(),
+  fetchedAt: z.string(),
+  descriptions: z.record(z.string(), z.string()),
+});
+
+export type DescriptionsFile = z.infer<typeof DescriptionsFileSchema>;
+
 export class CoursesFileError extends Error {
   constructor(message: string) {
     super(`Invalid courses file: ${message}`);
@@ -53,6 +62,14 @@ export class CoursesFileError extends Error {
 
 export function validateCoursesFile(raw: unknown): CoursesFile {
   const result = CoursesFileSchema.safeParse(raw);
+  if (result.success) return result.data;
+  const issue = result.error.issues[0];
+  const path = issue.path.join(".") || "top-level";
+  throw new CoursesFileError(`${path}: ${issue.message}`);
+}
+
+export function validateDescriptionsFile(raw: unknown): DescriptionsFile {
+  const result = DescriptionsFileSchema.safeParse(raw);
   if (result.success) return result.data;
   const issue = result.error.issues[0];
   const path = issue.path.join(".") || "top-level";

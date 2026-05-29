@@ -13,9 +13,9 @@ export const PLAN_SCHEMA_VERSION = 1;
  * `CADENCE` in plan/sequence.ts for the authoritative tables.
  * - "regular": eight contiguous academic terms (1A–4B), no work terms.
  * - "stream4": 1A [WT] 1B [WT] 2A [WT] 2B [WT] 3A [WT] 3B [WT] 4A 4B (six WTs
- *   interleaved between every academic term until 3B; January starts).
+ *   interleaved between every academic term until 3B).
  * - "stream8": 1A 1B [WT] 2A [WT] 2B [WT] 3A [WT] 3B [WT] [WT] 4A 4B (six WTs;
- *   two back-to-back before 4A; May starts).
+ *   two back-to-back before 4A).
  */
 export type Stream = "regular" | "stream4" | "stream8";
 
