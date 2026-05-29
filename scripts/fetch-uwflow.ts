@@ -12,8 +12,8 @@ import path from "node:path";
 import { z } from "zod";
 import type { CatalogCourse } from "../lib/courses/types";
 import {
-  type CoursesFile,
   CourseSchema,
+  type CoursesFile,
   type DescriptionsFile,
 } from "../lib/courses/validation";
 
@@ -109,11 +109,7 @@ async function writeSnapshot(termId: number, courses: FetchedCourse[]) {
 
   const coursesPath = path.join(dataDir, `courses.${termId}.json`);
   const descriptionsPath = path.join(dataDir, `descriptions.${termId}.json`);
-  await writeFile(
-    coursesPath,
-    JSON.stringify(coursesFile, null, 2),
-    "utf-8",
-  );
+  await writeFile(coursesPath, JSON.stringify(coursesFile, null, 2), "utf-8");
   await writeFile(
     descriptionsPath,
     JSON.stringify(descriptionsFile, null, 2),

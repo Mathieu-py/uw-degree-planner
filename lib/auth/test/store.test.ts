@@ -6,16 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Set env BEFORE importing the store so SUPABASE_CONFIGURED is true at
 // module-load time. The store reads NEXT_PUBLIC_* once via process.env and
 // caches the result as a const.
-const { createSupabaseBrowserClientMock, getSessionMock, onAuthStateChangeMock } =
-  vi.hoisted(() => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-    return {
-      createSupabaseBrowserClientMock: vi.fn(),
-      getSessionMock: vi.fn(),
-      onAuthStateChangeMock: vi.fn(),
-    };
-  });
+const {
+  createSupabaseBrowserClientMock,
+  getSessionMock,
+  onAuthStateChangeMock,
+} = vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+  return {
+    createSupabaseBrowserClientMock: vi.fn(),
+    getSessionMock: vi.fn(),
+    onAuthStateChangeMock: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: createSupabaseBrowserClientMock,

@@ -41,7 +41,10 @@ export const TermColumn = memo(function TermColumn({
   // across edits (they take a slotId) while SlotBody still gets the simple
   // zero/one-arg callbacks it expects — both stable, so SlotBody's memo holds.
   const slotId = slot.id;
-  const handleAdd = useCallback(() => onSlotClick(slotId), [onSlotClick, slotId]);
+  const handleAdd = useCallback(
+    () => onSlotClick(slotId),
+    [onSlotClick, slotId],
+  );
   const handleRemoveCourse = useCallback(
     (code: string) => onRemoveCourse(slotId, code),
     [onRemoveCourse, slotId],
