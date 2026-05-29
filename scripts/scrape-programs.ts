@@ -22,6 +22,7 @@ import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Program, Specialization } from "../lib/programs";
+import { applyRuleOverrides } from "./scrape-programs.overrides";
 import {
   buildConflictCounts,
   buildProgramSlug,
@@ -363,7 +364,7 @@ async function runPhaseA(
           : {
               kind: "flexible",
               ...base,
-              rules: result.rules,
+              rules: applyRuleOverrides(slug, result.rules),
               ...electivesField,
             };
       const specRefs = parseSpecializationsList(detail.specializationsList);
