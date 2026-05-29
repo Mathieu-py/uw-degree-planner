@@ -32,7 +32,8 @@ export default async function PlanPage() {
   );
 
   // Catalog for the slot picker. Today we ship a single pinned term; once a
-  // term picker / multi-term snapshots land, this expands to a map.
+  // term picker / multi-term snapshots land, this expands to a map. Course
+  // descriptions are split into a sibling file, so this catalog stays lean.
   const catalog = await loadTerm(PINNED_TERM);
 
   return (

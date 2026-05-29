@@ -6,13 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Set env BEFORE importing the store so SUPABASE_CONFIGURED is true at
 // module-load time. The store reads NEXT_PUBLIC_* once via process.env and
 // caches the result as a const.
-const { createSupabaseBrowserClientMock, getUserMock, onAuthStateChangeMock } =
+const { createSupabaseBrowserClientMock, getSessionMock, onAuthStateChangeMock } =
   vi.hoisted(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
     return {
       createSupabaseBrowserClientMock: vi.fn(),
-      getUserMock: vi.fn(),
+      getSessionMock: vi.fn(),
       onAuthStateChangeMock: vi.fn(),
     };
   });
@@ -44,12 +44,12 @@ beforeEach(() => {
 
   createSupabaseBrowserClientMock.mockReturnValue({
     auth: {
-      getUser: getUserMock,
+      getSession: getSessionMock,
       onAuthStateChange: onAuthStateChangeMock,
     },
   });
-  getUserMock.mockReset();
-  getUserMock.mockResolvedValue({ data: { user: null } });
+  getSessionMock.mockReset();
+  getSessionMock.mockResolvedValue({ data: { session: null } });
   onAuthStateChangeMock.mockReset();
   onAuthStateChangeMock.mockImplementation((cb) => {
     authChangeCallback = cb;
@@ -62,8 +62,8 @@ afterEach(() => {
 });
 
 describe("useAuthState — auth store via useSyncExternalStore", () => {
-  it("starts as { user: null, ready: false } and flips ready=true after getUser resolves", async () => {
-    getUserMock.mockResolvedValueOnce({ data: { user: null } });
+  it("starts as { user: null, ready: false } and flips ready=true after getSession resolves", async () => {
+    getSessionMock.mockResolvedValueOnce({ data: { session: null } });
 
     const { result } = renderHook(() => useAuthState());
 
@@ -78,9 +78,9 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
     expect(result.current.isAuthed).toBe(false);
   });
 
-  it("populates user from getUser when a session exists at mount", async () => {
+  it("populates user from getSession when a session exists at mount", async () => {
     const user = mkUser();
-    getUserMock.mockResolvedValueOnce({ data: { user } });
+    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
 
     const { result } = renderHook(() => useAuthState());
 
@@ -104,7 +104,7 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
 
   it("nulls user when onAuthStateChange fires with null session (sign out)", async () => {
     const user = mkUser();
-    getUserMock.mockResolvedValueOnce({ data: { user } });
+    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.user).not.toBeNull());
@@ -124,7 +124,7 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
     await waitFor(() => expect(r1.current.ready).toBe(true));
     expect(r2.current.ready).toBe(true);
 
-    expect(getUserMock).toHaveBeenCalledTimes(1);
+    expect(getSessionMock).toHaveBeenCalledTimes(1);
     expect(onAuthStateChangeMock).toHaveBeenCalledTimes(1);
   });
 
@@ -142,8 +142,8 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
     expect(r2.current.user).toEqual(signedIn);
   });
 
-  it("still flips ready=true when getUser rejects (network/auth error)", async () => {
-    getUserMock.mockRejectedValueOnce(new Error("network down"));
+  it("still flips ready=true when getSession rejects (network/auth error)", async () => {
+    getSessionMock.mockRejectedValueOnce(new Error("network down"));
 
     const { result } = renderHook(() => useAuthState());
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import type { PlanSlot } from "@/lib/plan/types";
 import {
   issuesByCourseInSlot,
@@ -11,8 +12,8 @@ import { SlotBody } from "./SlotBody";
 interface Props {
   slot: PlanSlot;
   issues: ValidationIssue[];
-  onClick: () => void;
-  onRemoveCourse: (code: string) => void;
+  onSlotClick: (slotId: string) => void;
+  onRemoveCourse: (slotId: string, code: string) => void;
   readOnly?: boolean;
 }
 
@@ -25,16 +26,26 @@ function positionLabel(position: PlanSlot["position"]): string {
   return position;
 }
 
-export function TermColumn({
+export const TermColumn = memo(function TermColumn({
   slot,
   issues,
-  onClick,
+  onSlotClick,
   onRemoveCourse,
   readOnly = false,
 }: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
   const isCoop = slot.isCoop;
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
+
+  // Bind the slot id here so the parent's handlers stay referentially stable
+  // across edits (they take a slotId) while SlotBody still gets the simple
+  // zero/one-arg callbacks it expects — both stable, so SlotBody's memo holds.
+  const slotId = slot.id;
+  const handleAdd = useCallback(() => onSlotClick(slotId), [onSlotClick, slotId]);
+  const handleRemoveCourse = useCallback(
+    (code: string) => onRemoveCourse(slotId, code),
+    [onRemoveCourse, slotId],
+  );
 
   return (
     <div
@@ -70,13 +81,13 @@ export function TermColumn({
       <SlotBody
         slot={slot}
         issuesByCourse={byCourse}
-        onAdd={onClick}
-        onRemoveCourse={onRemoveCourse}
+        onAdd={handleAdd}
+        onRemoveCourse={handleRemoveCourse}
         readOnly={readOnly}
       />
     </div>
   );
-}
+});
 
 function labelForKind(kind: ValidationIssue["kind"]): string {
   switch (kind) {

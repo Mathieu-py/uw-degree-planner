@@ -114,8 +114,6 @@ export function useFilteredCourses({
     );
   }, [userFiltered, filters.query]);
 
-  const completedList = useMemo(() => [...completedBefore], [completedBefore]);
-
   // Eligibility annotation is the most expensive step (parsing every
   // course's prereq AST + walking it against the completed set). It splits
   // by mode:
@@ -134,7 +132,7 @@ export function useFilteredCourses({
         course,
         eligibility: null,
       }));
-      const annotated = attachEligibility(baseRows, completedList, true);
+      const annotated = attachEligibility(baseRows, completedBefore, true);
       return [...annotated].sort((a, b) =>
         compareCourses(a.course, b.course, sortKey, sortDir),
       );
@@ -146,15 +144,15 @@ export function useFilteredCourses({
     return baseRows.sort((a, b) =>
       compareCourses(a.course, b.course, sortKey, sortDir),
     );
-  }, [searched, completedList, filters.hideUnmetPrereqs, sortKey, sortDir]);
+  }, [searched, completedBefore, filters.hideUnmetPrereqs, sortKey, sortDir]);
 
   const visible = useMemo<EligibilityRow[]>(() => {
     const slice = sortedCourses.slice(0, limit);
     // In gating mode, slice rows already carry annotations from the
     // pre-pagination pass — re-annotating would be wasted work.
     if (filters.hideUnmetPrereqs) return slice;
-    return attachEligibility(slice, completedList, false);
-  }, [sortedCourses, limit, completedList, filters.hideUnmetPrereqs]);
+    return attachEligibility(slice, completedBefore, false);
+  }, [sortedCourses, limit, completedBefore, filters.hideUnmetPrereqs]);
 
   // `sorted` is exposed for the candidate-count display and hasMore math;
   // nothing downstream reads `eligibility` off the off-page rows.

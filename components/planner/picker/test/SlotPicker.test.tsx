@@ -20,7 +20,6 @@ function mkCourse(code: string, name: string): Course {
     id: nextCourseId++,
     code,
     name,
-    description: null,
     prereqs: null,
     coreqs: null,
     antireqs: null,

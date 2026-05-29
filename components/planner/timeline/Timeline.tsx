@@ -4,6 +4,10 @@ import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import { TermColumn } from "./TermColumn";
 
+// Stable reference for slots with no issues so memoized TermColumns aren't
+// invalidated by a fresh `[]` literal on every render of the timeline.
+const EMPTY_ISSUES: ValidationIssue[] = [];
+
 interface Props {
   plan: LocalPlan;
   issuesPerSlot: ReadonlyMap<string, ValidationIssue[]>;
@@ -42,9 +46,9 @@ export function Timeline({
         <TermColumn
           key={slot.id}
           slot={slot}
-          issues={issuesPerSlot.get(slot.id) ?? []}
-          onClick={() => onSlotClick(slot.id)}
-          onRemoveCourse={(code) => onRemoveCourse(slot.id, code)}
+          issues={issuesPerSlot.get(slot.id) ?? EMPTY_ISSUES}
+          onSlotClick={onSlotClick}
+          onRemoveCourse={onRemoveCourse}
           readOnly={readOnly}
         />
       ))}

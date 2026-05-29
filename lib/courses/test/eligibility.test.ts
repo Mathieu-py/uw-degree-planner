@@ -25,25 +25,25 @@ describe("attachEligibility", () => {
 
   it("returns the same array reference when completed is empty", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    expect(attachEligibility(rows, [], false)).toBe(rows);
+    expect(attachEligibility(rows, new Set(), false)).toBe(rows);
   });
 
   it("computes non-null eligibility for every row when completed is non-empty", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const result = attachEligibility(rows, ["cs135"], false);
+    const result = attachEligibility(rows, new Set(["cs135"]), false);
     expect(result[0].eligibility).not.toBeNull();
     expect(result[0].eligibility?.satisfied).toBe(true);
   });
 
   it("filters out rows with unmet prereqs when hideUnmetPrereqs=true", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const result = attachEligibility(rows, ["math137"], true);
+    const result = attachEligibility(rows, new Set(["math137"]), true);
     expect(result).toHaveLength(0);
   });
 
   it("keeps rows with unmet prereqs when hideUnmetPrereqs=false", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const result = attachEligibility(rows, ["math137"], false);
+    const result = attachEligibility(rows, new Set(["math137"]), false);
     expect(result).toHaveLength(1);
     expect(result[0].eligibility?.satisfied).toBe(false);
   });

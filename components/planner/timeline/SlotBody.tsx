@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { memo } from "react";
 import { Icon } from "@/components/ui/Icon";
 import type { PlanSlot } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
@@ -20,7 +21,7 @@ interface Props {
  *
  * Co-op slots are inert — no courses, no picker.
  */
-export function SlotBody({
+export const SlotBody = memo(function SlotBody({
   slot,
   issuesByCourse,
   onAdd,
@@ -119,4 +120,4 @@ export function SlotBody({
       )}
     </div>
   );
-}
+});

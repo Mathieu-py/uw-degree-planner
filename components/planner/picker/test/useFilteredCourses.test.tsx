@@ -15,7 +15,6 @@ function mkCourse(
     id: code.length + name.length,
     code,
     name,
-    description: null,
     prereqs: null,
     coreqs: null,
     antireqs: null,

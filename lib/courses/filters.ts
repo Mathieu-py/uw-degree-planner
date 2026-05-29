@@ -1,4 +1,4 @@
-import type { Course, PureFilters, UWFlowCourse } from "./types";
+import type { CatalogCourse, Course, PureFilters } from "./types";
 
 const LEVEL_RE = /\d+/;
 const PREFIX_RE = /^[A-Z]+/;
@@ -30,7 +30,7 @@ export function seatsAvailable(course: Course): number | null {
   );
 }
 
-export function enrichCourse(raw: UWFlowCourse): Course {
+export function enrichCourse(raw: CatalogCourse): Course {
   const upper = raw.code.toUpperCase();
   const prefix = upper.match(PREFIX_RE)?.[0] ?? "";
   const levelMatch = upper.match(LEVEL_RE);

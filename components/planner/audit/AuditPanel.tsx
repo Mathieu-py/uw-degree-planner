@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   type AuditNode,
   type AuditRoot,
@@ -29,7 +29,7 @@ interface Section {
   summary: SectionSummary;
 }
 
-export function AuditPanel({ plan }: Props) {
+export const AuditPanel = memo(function AuditPanel({ plan }: Props) {
   const program = plan.programId ? (PROGRAMS[plan.programId] ?? null) : null;
   const [filter, setFilter] = useState<FilterMode>("missing");
 
@@ -106,7 +106,7 @@ export function AuditPanel({ plan }: Props) {
       </div>
     </aside>
   );
-}
+});
 
 const FILTER_LABEL: Record<FilterMode, string> = {
   missing: "Missing",

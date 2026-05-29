@@ -21,16 +21,15 @@ export interface EligibilityRow {
  */
 export function attachEligibility(
   rows: EligibilityRow[],
-  completed: string[],
+  completed: ReadonlySet<string>,
   hideUnmetPrereqs: boolean,
 ): EligibilityRow[] {
-  if (completed.length === 0) return rows;
-  const completedSet = new Set(completed);
+  if (completed.size === 0) return rows;
   return rows
     .map<EligibilityRow>((r) => ({
       course: r.course,
       eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), {
-        completed: completedSet,
+        completed,
       }),
     }))
     .filter(

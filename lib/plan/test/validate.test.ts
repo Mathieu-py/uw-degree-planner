@@ -16,7 +16,6 @@ function mkCourse(
     id: 0,
     code,
     name: code,
-    description: null,
     prereqs: opts.prereqs ?? null,
     coreqs: opts.coreqs ?? null,
     antireqs: opts.antireqs ?? null,

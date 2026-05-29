@@ -28,13 +28,27 @@ export interface UWFlowCourse {
 }
 
 /**
+ * A course as persisted in the committed catalog snapshot. `description` is
+ * deliberately excluded — that prose is the bulk of the file and is only read
+ * by the /course/[code] route, so it lives in a sibling descriptions file
+ * instead of being shipped with every catalog payload.
+ */
+export type CatalogCourse = Omit<UWFlowCourse, "description">;
+
+/**
  * Course enriched with derived fields used by filters and UI.
  */
-export interface Course extends UWFlowCourse {
+export interface Course extends CatalogCourse {
   prefix: string;
   level: number;
   hasSeats: boolean;
 }
+
+/**
+ * A catalog course re-joined with its calendar description, for the course
+ * detail page. Everywhere else uses the lean {@link Course}.
+ */
+export type CourseDetail = Course & { description: string | null };
 
 /**
  * Filter predicates that act on a Course in isolation. `hideUnmetPrereqs` is
