@@ -1,15 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { SUPABASE_CONFIGURED, useAuthState } from "@/lib/auth/store";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
- * Header sign-in / sign-out button. Shows the user's email when signed in,
- * a "Sign in with Google" link otherwise. The auth state is read from the
- * shared store ([lib/auth/store.ts](../../lib/auth/store.ts)) so this and
- * PlannerShell observe the same subscription — no duplicate getUser() round
- * trip at mount.
+ * Header sign-in / sign-out control. Shows the user's display name (username,
+ * falling back to email) when signed in, and a link to the /login page
+ * otherwise. The auth state is read from the shared store
+ * ([lib/auth/store.ts](../../lib/auth/store.ts)) so this and PlannerShell
+ * observe the same subscription — no duplicate getUser() round trip at mount.
  */
 export function UserMenu() {
   if (!SUPABASE_CONFIGURED) return null;
@@ -17,24 +18,8 @@ export function UserMenu() {
 }
 
 function UserMenuInner() {
-  const { user, ready } = useAuthState();
+  const { user, displayName, ready } = useAuthState();
   const [busy, setBusy] = useState(false);
-
-  async function signIn() {
-    setBusy(true);
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/plan`,
-      },
-    });
-    if (error) {
-      setBusy(false);
-      window.alert(`Sign in failed: ${error.message}`);
-    }
-    // On success the browser navigates to Google; no further state to set.
-  }
 
   async function signOut() {
     setBusy(true);
@@ -55,13 +40,13 @@ function UserMenuInner() {
           className="truncate max-w-[14rem]"
           title={user.email ?? undefined}
         >
-          {user.email ?? "Signed in"}
+          {displayName ?? "Signed in"}
         </span>
         <button
           type="button"
           onClick={signOut}
           disabled={busy}
-          className="hover:text-zinc-50 disabled:opacity-50"
+          className="cursor-pointer hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Sign out
         </button>
@@ -70,13 +55,8 @@ function UserMenuInner() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={signIn}
-      disabled={busy}
-      className="hover:text-zinc-50 disabled:opacity-50"
-    >
+    <Link href="/login" className="hover:text-zinc-50">
       Sign in
-    </button>
+    </Link>
   );
 }

@@ -21,7 +21,8 @@ interface ButtonProps
   type?: "button" | "submit" | "reset";
 }
 
-const BASE = "rounded transition-colors disabled:opacity-50";
+const BASE =
+  "rounded transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
