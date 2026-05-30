@@ -16,10 +16,11 @@ export const SUPABASE_CONFIGURED =
 
 interface AuthState {
   user: User | null;
+  username: string | null;
   ready: boolean;
 }
 
-let state: AuthState = { user: null, ready: false };
+let state: AuthState = { user: null, username: null, ready: false };
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -40,6 +41,9 @@ function subscribe(listener: () => void) {
 function getUserSnapshot(): User | null {
   return state.user;
 }
+function getUsernameSnapshot(): string | null {
+  return state.username;
+}
 function getReadySnapshot(): boolean {
   return state.ready;
 }
@@ -53,6 +57,9 @@ function getReadySnapshot(): boolean {
 // against the skeleton the server emitted. After hydration React switches to
 // the live getters and re-renders if auth has since resolved.
 function getUserServerSnapshot(): User | null {
+  return null;
+}
+function getUsernameServerSnapshot(): string | null {
   return null;
 }
 function getReadyServerSnapshot(): boolean {
@@ -77,6 +84,30 @@ function initAuth(): void {
 
   const supabase = createSupabaseBrowserClient();
 
+  // Refresh the username from the canonical profiles row. Best-effort and only
+  // ever *upgrades* to a non-null DB value — a failed/empty fetch leaves the
+  // metadata-seeded username (below) in place rather than clobbering it. Guarded
+  // by id so a stale response for a previous user can't win.
+  function syncProfile(user: User | null): void {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const dbUsername = data?.username ?? null;
+        if (
+          dbUsername &&
+          state.user?.id === user.id &&
+          state.username !== dbUsername
+        ) {
+          state = { ...state, username: dbUsername };
+          notify();
+        }
+      });
+  }
+
   // getSession() reads the persisted session from local storage (no network
   // round-trip), so `ready` flips almost immediately and the planner can paint
   // the correct branch on first render. getUser() would block first paint on a
@@ -85,8 +116,10 @@ function initAuth(): void {
   supabase.auth
     .getSession()
     .then(({ data }) => {
-      state = { ...state, user: data.session?.user ?? null };
+      const user = data.session?.user ?? null;
+      state = { ...state, user, username: usernameFromMetadata(user) };
       notify();
+      syncProfile(user);
     })
     .catch(() => {})
     .finally(() => {
@@ -95,13 +128,35 @@ function initAuth(): void {
     });
 
   supabase.auth.onAuthStateChange((_event, session) => {
-    state = { ...state, user: session?.user ?? null };
+    const nextUser = session?.user ?? null;
+    const userChanged = state.user?.id !== nextUser?.id;
+    state = {
+      ...state,
+      user: nextUser,
+      username: usernameFromMetadata(nextUser),
+    };
     notify();
+    if (userChanged) syncProfile(nextUser);
   });
+}
+
+/**
+ * The username is stored in user_metadata at sign-up, so it rides along on the
+ * user object and is available synchronously — no profiles round-trip. Seeding
+ * from here is what stops the header briefly showing the email before the DB
+ * fetch resolves. Returns null for OAuth users (no username set).
+ */
+function usernameFromMetadata(user: User | null): string | null {
+  const raw = user?.user_metadata?.username;
+  return typeof raw === "string" && raw.length > 0 ? raw : null;
 }
 
 export interface UseAuthStateResult {
   user: User | null;
+  /** Profile username, or null when unset / not yet fetched. */
+  username: string | null;
+  /** Username if set, else the user's email — what the header should show. */
+  displayName: string | null;
   ready: boolean;
   isAuthed: boolean;
 }
@@ -121,12 +176,23 @@ export function useAuthState(): UseAuthStateResult {
     getUserSnapshot,
     getUserServerSnapshot,
   );
+  const username = useSyncExternalStore(
+    subscribe,
+    getUsernameSnapshot,
+    getUsernameServerSnapshot,
+  );
   const ready = useSyncExternalStore(
     subscribe,
     getReadySnapshot,
     getReadyServerSnapshot,
   );
-  return { user, ready, isAuthed: user !== null };
+  return {
+    user,
+    username,
+    displayName: username ?? user?.email ?? null,
+    ready,
+    isAuthed: user !== null,
+  };
 }
 
 /**
@@ -135,7 +201,7 @@ export function useAuthState(): UseAuthStateResult {
  * "don't call this from app code".
  */
 export function __resetAuthStoreForTests(): void {
-  state = { user: null, ready: false };
+  state = { user: null, username: null, ready: false };
   listeners.clear();
   initialized = false;
 }
