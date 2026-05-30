@@ -90,7 +90,10 @@ export function validatePlan(
         if (!result.satisfied) {
           const missing =
             result.missingCourses.length > 0
-              ? result.missingCourses.slice(0, 3).map(formatCourseCode).join(", ")
+              ? result.missingCourses
+                  .slice(0, 3)
+                  .map(formatCourseCode)
+                  .join(", ")
               : "prereqs not met";
           issues.push({
             slotId: slot.id,
@@ -124,7 +127,10 @@ export function validatePlan(
         if (!result.satisfied) {
           const missing =
             result.missingCourses.length > 0
-              ? result.missingCourses.slice(0, 3).map(formatCourseCode).join(", ")
+              ? result.missingCourses
+                  .slice(0, 3)
+                  .map(formatCourseCode)
+                  .join(", ")
               : "coreqs not met";
           issues.push({
             slotId: slot.id,
