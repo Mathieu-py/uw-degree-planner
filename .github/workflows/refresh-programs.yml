@@ -1,0 +1,47 @@
+name: Refresh program requirements
+
+# Re-scrapes undergraduate degree requirements from UW's calendar pages and opens
+# a PR with any diff in data/programs.json. Unlike the UWFlow ratings/seats
+# snapshot (which drifts daily), program requirements track the undergraduate
+# calendar and change roughly once a year, so a monthly refresh is plenty to
+# catch catalog updates and the occasional mid-year correction without spamming
+# no-op PRs. The scraped programs are whatever scripts/scrape-programs.ts targets.
+#
+# NOTE: opening the PR requires "Allow GitHub Actions to create and approve pull
+# requests" under Settings → Actions → General. If the first run fails at the
+# create-pull-request step, enable that setting.
+
+on:
+  schedule:
+    # 07:00 UTC ≈ 03:00 ET on the 1st of each month — off-peak, monthly cadence.
+    - cron: "0 7 1 * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm scrape-programs
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/refresh-programs
+          delete-branch: true
+          add-paths: data/programs.json
+          commit-message: "chore(data): refresh program requirements snapshot"
+          title: "chore(data): refresh program requirements snapshot"
+          body: |
+            Automated monthly refresh of the program requirements snapshot
+            (`data/programs.json`) scraped from UW's undergraduate calendar.
+
+            Triggered by the `Refresh program requirements` workflow. Re-runs
+            update this same branch/PR rather than opening duplicates.
