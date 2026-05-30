@@ -92,7 +92,7 @@ describe("validatePlan — prereq", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].kind).toBe("prereq");
     expect(issues[0].courseCode).toBe("cs246");
-    expect(issues[0].message).toContain("cs136");
+    expect(issues[0].message).toContain("CS 136");
   });
 
   it("does not flag when prereq is placed in an earlier slot", () => {
@@ -133,7 +133,7 @@ describe("validatePlan — antireq", () => {
     const issues = validatePlan(plan, cat);
     expect(issues.map((i) => i.kind)).toEqual(["antireq", "antireq"]);
     const m115 = issues.find((i) => i.courseCode === "math115");
-    expect(m115?.message).toContain("math117");
+    expect(m115?.message).toContain("MATH 117");
   });
 
   it("does not flag a course's antireq list against itself", () => {
