@@ -3,7 +3,7 @@
  * and writes a per-term JSON snapshot under data/.
  *
  * Usage:
- *   pnpm tsx scripts/fetch-uwflow.ts              # default term 1261
+ *   pnpm tsx scripts/fetch-uwflow.ts              # default term = PINNED_TERM
  *   pnpm tsx scripts/fetch-uwflow.ts 1265 1269    # multiple terms
  */
 
@@ -16,6 +16,7 @@ import {
   type CoursesFile,
   type DescriptionsFile,
 } from "../lib/courses/validation";
+import { PINNED_TERM } from "../lib/terms";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 
@@ -120,7 +121,8 @@ async function writeSnapshot(termId: number, courses: FetchedCourse[]) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const terms = args.length > 0 ? args.map((a) => parseInt(a, 10)) : [1261];
+  const terms =
+    args.length > 0 ? args.map((a) => parseInt(a, 10)) : [PINNED_TERM];
   for (const term of terms) {
     if (!Number.isInteger(term)) {
       console.error(`Skipping non-numeric term arg: ${term}`);
