@@ -23,6 +23,7 @@
  */
 
 import type { Course } from "@/lib/courses/types";
+import { formatCourseCode } from "@/lib/format";
 import { cachedParsePrereqs } from "@/lib/prereqs/cache";
 import { evaluate } from "@/lib/prereqs/satisfied";
 import { completedSetFromPlan } from "./derive";
@@ -89,7 +90,10 @@ export function validatePlan(
         if (!result.satisfied) {
           const missing =
             result.missingCourses.length > 0
-              ? result.missingCourses.slice(0, 3).join(", ")
+              ? result.missingCourses
+                  .slice(0, 3)
+                  .map(formatCourseCode)
+                  .join(", ")
               : "prereqs not met";
           issues.push({
             slotId: slot.id,
@@ -111,7 +115,7 @@ export function validatePlan(
             slotId: slot.id,
             courseCode: c.code,
             kind: "antireq",
-            message: `Antireq conflict: ${collisions.join(", ")}`,
+            message: `Antireq conflict: ${collisions.map(formatCourseCode).join(", ")}`,
           });
         }
       }
@@ -123,7 +127,10 @@ export function validatePlan(
         if (!result.satisfied) {
           const missing =
             result.missingCourses.length > 0
-              ? result.missingCourses.slice(0, 3).join(", ")
+              ? result.missingCourses
+                  .slice(0, 3)
+                  .map(formatCourseCode)
+                  .join(", ")
               : "coreqs not met";
           issues.push({
             slotId: slot.id,

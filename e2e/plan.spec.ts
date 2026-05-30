@@ -69,8 +69,9 @@ test("opening the slot picker on an empty 1A slot lets the user add a course", a
     .click();
 
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  // CS 115 now appears as a placed course inside the 1A slot column.
-  await expect(page.getByText("cs115", { exact: true })).toBeVisible();
+  // CS 115 now appears as a placed course inside the 1A slot column. The chip
+  // renders the formatted code ("CS 115"), not the raw catalog key ("cs115").
+  await expect(page.getByText("CS 115", { exact: true })).toBeVisible();
 });
 
 // Transcript-upload scenario intentionally deferred: faithfully reproducing a

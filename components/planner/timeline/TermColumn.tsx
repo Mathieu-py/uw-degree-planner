@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback } from "react";
+import { Icon } from "@/components/ui/Icon";
 import type { PlanSlot } from "@/lib/plan/types";
 import {
   issuesByCourseInSlot,
@@ -57,8 +58,8 @@ export const TermColumn = memo(function TermColumn({
         (slot.courses.length === 0 ? "gap-1" : "gap-2")
       }
     >
-      <div className="flex flex-col">
-        <span className="text-base font-semibold">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-base font-semibold truncate min-w-0">
           {info?.label ?? "—"}
           <span
             className={
@@ -74,10 +75,11 @@ export const TermColumn = memo(function TermColumn({
         </span>
         {slotLevel.length > 0 ? (
           <span
-            className="text-[10px] mt-0.5 text-rose-700 dark:text-rose-300"
+            className="shrink-0 inline-flex items-center gap-1 text-sm font-semibold text-rose-700 dark:text-rose-300"
             title={slotLevel.map((i) => i.message).join("\n")}
           >
-            ⚠ {slotLevel.map((i) => labelForKind(i.kind)).join(", ")}
+            <Icon name="warning" size="sm" aria-hidden="true" />
+            {slotLevel.map((i) => labelForKind(i.kind)).join(", ")}
           </span>
         ) : null}
       </div>
@@ -95,12 +97,12 @@ export const TermColumn = memo(function TermColumn({
 function labelForKind(kind: ValidationIssue["kind"]): string {
   switch (kind) {
     case "overload":
-      return "overload";
+      return "Overload";
     case "prereq":
-      return "prereq";
+      return "Prereq";
     case "antireq":
-      return "antireq";
+      return "Antireq";
     case "coreq":
-      return "coreq";
+      return "Coreq";
   }
 }

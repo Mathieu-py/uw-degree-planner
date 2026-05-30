@@ -244,7 +244,15 @@ export function TranscriptImportModal({
               {parseResult.warnings.length > 0 && (
                 <div className="text-amber-700 dark:text-amber-400 text-xs">
                   {parseResult.warnings.map((w) => (
-                    <p key={w}>⚠ {w}</p>
+                    <p key={w} className="flex items-start gap-1">
+                      <Icon
+                        name="warning"
+                        size="xs"
+                        aria-hidden="true"
+                        className="mt-0.5 shrink-0"
+                      />
+                      <span>{w}</span>
+                    </p>
                   ))}
                 </div>
               )}
@@ -333,7 +341,13 @@ function UnrecognizedDetails({
   return (
     <details open className="text-amber-700 dark:text-amber-400">
       <summary className="cursor-pointer select-none">
-        ⚠ Unrecognized codes ({items.length}) — check to include
+        <Icon
+          name="warning"
+          size="xs"
+          aria-hidden="true"
+          className="inline-block align-[-0.125em] mr-1"
+        />
+        Unrecognized codes ({items.length}) — check to include
       </summary>
       <ul className="mt-1 ml-4 space-y-1">
         {items.map((c) => (
