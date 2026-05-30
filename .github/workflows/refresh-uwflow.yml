@@ -6,9 +6,9 @@ name: Refresh UWFlow data
 # of truth. The active term is whatever scripts/fetch-uwflow.ts defaults to,
 # i.e. PINNED_TERM in lib/terms.ts — no term config lives here.
 #
-# NOTE: opening the PR requires "Allow GitHub Actions to create and approve pull
-# requests" under Settings → Actions → General. If the first run fails at the
-# create-pull-request step, enable that setting.
+# Commits any diff directly to main using the built-in GITHUB_TOKEN (no PR).
+# NOTE: if main has branch protection requiring PRs/reviews, the push will be
+# rejected — either exempt github-actions or switch back to a PR step.
 
 on:
   schedule:
@@ -21,27 +21,23 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm fetch-courses
-      - uses: peter-evans/create-pull-request@v7
-        with:
-          branch: chore/refresh-uwflow
-          delete-branch: true
-          add-paths: data/*.json
-          commit-message: "chore(data): refresh UWFlow snapshot"
-          title: "chore(data): refresh UWFlow snapshot"
-          body: |
-            Automated daily refresh of the UWFlow course snapshot
-            (`data/courses.*.json` + `data/descriptions.*.json`) for the
-            pinned term.
-
-            Triggered by the `Refresh UWFlow data` workflow. Re-runs update
-            this same branch/PR rather than opening duplicates.
+      - name: Commit refreshed snapshot to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.json
+          if git diff --staged --quiet; then
+            echo "No changes — UWFlow snapshot is already up to date."
+          else
+            git commit -m "chore(data): refresh UWFlow snapshot"
+            git push
+          fi
