@@ -18,7 +18,7 @@ interface Props {
 /**
  * One term's worth of courses. Empty area is clickable to open the picker;
  * each placed course shows a small × to remove it and, if it has any
- * validation issues (prereq, antireq, coreq), a ⚠ on the code row plus
+ * validation issues (prereq, antireq, coreq), a warning icon on the code row plus
  * the issue message(s) listed underneath. Hover for the full text.
  *
  * Co-op slots are inert — no courses, no picker.
@@ -69,7 +69,7 @@ export const SlotBody = memo(function SlotBody({
                       title={issueTitle}
                       className="shrink-0 text-rose-600 dark:text-rose-400 cursor-help"
                     >
-                      <span aria-hidden="true">⚠</span>
+                      <Icon name="warning" size="sm" aria-hidden="true" />
                     </span>
                   ) : null}
                   <Link

@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback } from "react";
+import { Icon } from "@/components/ui/Icon";
 import type { PlanSlot } from "@/lib/plan/types";
 import {
   issuesByCourseInSlot,
@@ -77,7 +78,7 @@ export const TermColumn = memo(function TermColumn({
             className="shrink-0 inline-flex items-center gap-1 text-sm font-semibold text-rose-700 dark:text-rose-300"
             title={slotLevel.map((i) => i.message).join("\n")}
           >
-            <span aria-hidden="true">⚠</span>
+            <Icon name="warning" size="sm" aria-hidden="true" />
             {slotLevel.map((i) => labelForKind(i.kind)).join(", ")}
           </span>
         ) : null}

@@ -10,6 +10,7 @@ import PlusSign from "./icons/plusSign.svg";
 import Rename from "./icons/rename.svg";
 import Settings from "./icons/settings.svg";
 import Share from "./icons/share.svg";
+import Warning from "./icons/warning.svg";
 
 // Add new icons here as: name → component. Names are camelCase strings the
 // rest of the app uses via <Icon name="..." />. Keep each icon component
@@ -26,6 +27,7 @@ const REGISTRY = {
   rename: Rename,
   settings: Settings,
   share: Share,
+  warning: Warning,
 } as const;
 
 export type IconName = keyof typeof REGISTRY;

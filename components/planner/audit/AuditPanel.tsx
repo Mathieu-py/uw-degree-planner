@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useMemo, useState } from "react";
+import { Icon } from "@/components/ui/Icon";
 import {
   type AuditNode,
   type AuditRoot,
@@ -176,10 +177,11 @@ function AuditSection({
           <span className="truncate font-medium">{title}</span>
           {excludedViolationCount > 0 ? (
             <span
-              className="rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+              className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
               title={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} cannot count toward this section`}
             >
-              ⚠ {excludedViolationCount}
+              <Icon name="warning" size="xs" aria-hidden="true" />
+              {excludedViolationCount}
             </span>
           ) : null}
         </span>
@@ -274,9 +276,17 @@ function LeafChips({ node, filter }: { node: AuditNode; filter: FilterMode }) {
         </ChipRow>
       ) : null}
       {hasExclusionViolations ? (
-        <div className="text-amber-700 dark:text-amber-300">
-          ⚠ Cannot count toward plan:{" "}
-          {node.excludedViolations?.map((v) => v.code).join(", ")}
+        <div className="flex items-start gap-1 text-amber-700 dark:text-amber-300">
+          <Icon
+            name="warning"
+            size="xs"
+            aria-hidden="true"
+            className="mt-0.5 shrink-0"
+          />
+          <span>
+            Cannot count toward plan:{" "}
+            {node.excludedViolations?.map((v) => v.code).join(", ")}
+          </span>
         </div>
       ) : null}
     </div>
