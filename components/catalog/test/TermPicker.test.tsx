@@ -50,7 +50,9 @@ function makeCourse(over: Partial<Course> = {}): Course {
   };
 }
 
-function slot(over: Partial<PlanSlot> & Pick<PlanSlot, "id" | "position">): PlanSlot {
+function slot(
+  over: Partial<PlanSlot> & Pick<PlanSlot, "id" | "position">,
+): PlanSlot {
   return {
     termId: null,
     isCoop: false,
@@ -87,9 +89,7 @@ describe("TermPicker", () => {
     loadPlanMock.mockReturnValue(null);
     render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
 
-    expect(
-      screen.getByText(/don't have a local plan yet/i),
-    ).toBeTruthy();
+    expect(screen.getByText(/don't have a local plan yet/i)).toBeTruthy();
     expect(
       screen.getByRole("link", { name: /open the planner/i }),
     ).toBeTruthy();
@@ -142,12 +142,14 @@ describe("TermPicker", () => {
     render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
 
     expect(screen.getByText(/Already placed in Fall 2025/)).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: /Fall 2025/ }),
-    ).toHaveProperty("disabled", true);
-    expect(
-      screen.getByRole("button", { name: /Winter 2025/ }),
-    ).toHaveProperty("disabled", true);
+    expect(screen.getByRole("button", { name: /Fall 2025/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    expect(screen.getByRole("button", { name: /Winter 2025/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
   });
 
   it("does not write a duplicate when the course is already placed", () => {
@@ -175,12 +177,16 @@ describe("TermPicker", () => {
       makePlan([slot({ id: "a", position: "1A", termId: FALL_2025 })]),
     );
     render(
-      <TermPicker course={makeCourse({ prereqs: "MATH116" })} onClose={vi.fn()} />,
+      <TermPicker
+        course={makeCourse({ prereqs: "MATH116" })}
+        onClose={vi.fn()}
+      />,
     );
 
     // MATH116 sits nowhere in the plan, so the term is ineligible.
-    expect(
-      screen.getByRole("button", { name: /Fall 2025/ }),
-    ).toHaveProperty("disabled", true);
+    expect(screen.getByRole("button", { name: /Fall 2025/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
   });
 });

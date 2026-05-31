@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
@@ -28,15 +28,19 @@ export function Hero() {
             prereq-aware picks from UWFlow.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <Button asChild variant="primary" size="lg">
-              <Link href="/plan">
-                Try the demo
-                <Icon name="arrow" size="sm" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/login">Sign in</Link>
-            </Button>
+            <Link
+              href="/plan"
+              className={buttonClasses({ variant: "primary", size: "lg" })}
+            >
+              Try the demo
+              <Icon name="arrow" size="sm" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/login"
+              className={buttonClasses({ variant: "outline", size: "lg" })}
+            >
+              Sign in
+            </Link>
           </div>
           <p className="u-small">
             For UWaterloo undergrads — any program our catalog covers. No
