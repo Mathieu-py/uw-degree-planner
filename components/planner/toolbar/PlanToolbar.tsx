@@ -225,12 +225,13 @@ function PlanToolbarAuthed({
 
   function handleCreate() {
     dismissInline();
-    router.replace("/plan?new=1");
+    // Plan creation lives in the /plan/new stepper.
+    router.push("/plan/new");
   }
 
-  // Loading + empty: EmptyState handles the "no plans yet" path on its own,
-  // and the planner shell shows a skeleton while plans is loading. The bar
-  // would be either duplicative or confusing in those states, so hide it.
+  // Loading + empty: the planner redirects "no plans yet" to /plan/new and
+  // shows a skeleton while plans load. The bar would be duplicative or
+  // confusing in those states, so hide it.
   if (plans === null || plans.length === 0) return null;
 
   const currentPlan = plans.find((p) => p.id === currentPlanId) ?? null;
@@ -531,13 +532,13 @@ function PlanToolbarAuthed({
         </div>
         <Button
           variant="brand"
-          size="lg"
+          size="md"
           disabled={busy}
           onClick={handleCreate}
           aria-label="New plan"
-          className="h-10 w-10 p-0! inline-flex items-center justify-center"
+          className="h-[42px]! w-[42px] p-0! inline-flex items-center justify-center shrink-0"
         >
-          <Icon name="plusSign" size="lg" />
+          <Icon name="plusSign" size="md" />
         </Button>
         {children}
         <div className="ml-auto flex items-center gap-3">

@@ -9,7 +9,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 type Mode = "signin" | "signup";
 
 const INPUT_CLASS =
-  "w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30";
+  "w-full h-[42px] rounded-[9px] border border-line-2 bg-bg px-[13px] text-sm text-ink placeholder:text-ink-3 outline-none transition-[border-color,box-shadow] focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 const usernameSchema = z
   .string()
@@ -187,12 +187,12 @@ export function LoginForm() {
         <h1 className="text-xl font-semibold tracking-tight">
           {isSignUp ? "Create your account" : "Welcome back"}
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-ink-2">
           {isSignUp ? "Already have an account? " : "Don't have an account? "}
           <button
             type="button"
             onClick={() => switchMode(isSignUp ? "signin" : "signup")}
-            className="cursor-pointer font-medium text-violet-600 hover:text-violet-500 hover:underline"
+            className="cursor-pointer font-medium text-accent hover:underline"
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
@@ -271,7 +271,7 @@ export function LoginForm() {
         )}
 
         {errors.form && (
-          <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+          <p className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger">
             {errors.form}
           </p>
         )}
@@ -287,10 +287,10 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <div className="flex items-center gap-3 text-xs text-zinc-400 dark:text-zinc-500">
-        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+      <div className="flex items-center gap-3 text-xs text-ink-3">
+        <span className="h-px flex-1 bg-line" />
         OR
-        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <Button
@@ -343,13 +343,9 @@ function Field({
 }) {
   return (
     <label htmlFor={htmlFor} className="flex flex-col gap-1.5 text-xs">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">
-        {label}
-      </span>
+      <span className="font-semibold text-ink-2">{label}</span>
       {children}
-      {error && (
-        <span className="text-rose-600 dark:text-rose-400">{error}</span>
-      )}
+      {error && <span className="text-danger">{error}</span>}
     </label>
   );
 }

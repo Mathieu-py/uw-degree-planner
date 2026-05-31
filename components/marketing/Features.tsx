@@ -1,7 +1,9 @@
+import { Eyebrow } from "@/components/ui/Eyebrow";
+
 const FEATURES: Array<{ title: string; body: string }> = [
   {
     title: "Multi-term timeline",
-    body: "See your whole degree at once — every academic and co-op term laid out in order, with drag-free slot placement.",
+    body: "See your whole degree at once — every academic and co-op term laid out in order, with one-click slot placement.",
   },
   {
     title: "Live degree audit",
@@ -13,7 +15,7 @@ const FEATURES: Array<{ title: string; body: string }> = [
   },
   {
     title: "Smart catalog picker",
-    body: "Click an empty slot to get courses filtered to what's offered, what you're eligible for, and what fits your program — UWFlow ratings included.",
+    body: "Open an empty slot for courses filtered to what's offered, what you're eligible for, and what fits your program — UWFlow ratings included.",
   },
   {
     title: "Share links",
@@ -27,28 +29,19 @@ const FEATURES: Array<{ title: string; body: string }> = [
 
 export function Features() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-16 border-t border-zinc-200 dark:border-zinc-800">
-      <h2 className="text-2xl font-semibold tracking-tight">
-        Everything in one planner
-      </h2>
-      <dl className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map((f) => (
-          <Feature key={f.title} title={f.title} body={f.body} />
-        ))}
-      </dl>
+    <section className="section border-t border-line">
+      <div className="container-lg">
+        <Eyebrow>What you get</Eyebrow>
+        <h2 className="u-h2 mt-3">Everything in one planner</h2>
+        <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-[14px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="flex flex-col gap-2 bg-bg p-6">
+              <h3 className="u-h3 text-[16px]">{f.title}</h3>
+              <p className="u-body text-[14px]">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
-  );
-}
-
-function Feature({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <dt className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
-        {title}
-      </dt>
-      <dd className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-        {body}
-      </dd>
-    </div>
   );
 }

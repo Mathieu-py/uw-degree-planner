@@ -56,7 +56,7 @@ export const TermColumn = memo(function TermColumn({
               className="inline-flex items-center text-partial"
               title={slotLevel.map((i) => i.message).join("\n")}
             >
-              <Icon name="warning" size="xs" aria-hidden="true" />
+              <Icon name="warning" size="sm" aria-hidden="true" />
             </span>
           ) : null}
           <span

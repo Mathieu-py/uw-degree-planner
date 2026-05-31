@@ -36,12 +36,13 @@ function UserMenuInner() {
   if (user) {
     return (
       <div className="flex items-center gap-3 text-sm text-ink-2">
-        <span
-          className="truncate max-w-[14rem]"
+        <Link
+          href="/settings"
+          className="truncate max-w-[14rem] hover:text-ink"
           title={user.email ?? undefined}
         >
           {displayName ?? "Signed in"}
-        </span>
+        </Link>
         <button
           type="button"
           onClick={signOut}

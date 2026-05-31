@@ -9,12 +9,15 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanSummary } from "@/lib/plan/server/types";
 
-const { routerReplaceMock, searchParamsRef } = vi.hoisted(() => ({
-  routerReplaceMock: vi.fn(),
-  searchParamsRef: { current: new URLSearchParams() },
-}));
+const { routerReplaceMock, routerPushMock, searchParamsRef } = vi.hoisted(
+  () => ({
+    routerReplaceMock: vi.fn(),
+    routerPushMock: vi.fn(),
+    searchParamsRef: { current: new URLSearchParams() },
+  }),
+);
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: routerReplaceMock }),
+  useRouter: () => ({ replace: routerReplaceMock, push: routerPushMock }),
   useSearchParams: () => searchParamsRef.current,
 }));
 
@@ -271,10 +274,10 @@ describe("PlanToolbar — duplicate", () => {
 });
 
 describe("PlanToolbar — create", () => {
-  it("routes to ?new=1 so EmptyState collects program/start-term metadata", () => {
-    // Regression carried from PlanSwitcher: previously create() ran with no
-    // seed, which produced an empty server plan with no slots. Now it routes
-    // to EmptyState so the user picks metadata first.
+  it("routes to /plan/new so the create stepper collects metadata", () => {
+    // Previously create() ran with no seed, producing an empty server plan
+    // with no slots. Now "New plan" routes to the /plan/new stepper where the
+    // user picks program/term (or imports a transcript) first.
     const createMock = vi.fn();
     mount({
       plans: [mkSummary({ id: "a", name: "Plan A" })],
@@ -283,7 +286,7 @@ describe("PlanToolbar — create", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /^new plan$/i }));
     expect(createMock).not.toHaveBeenCalled();
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan?new=1");
+    expect(routerPushMock).toHaveBeenCalledWith("/plan/new");
   });
 });
 

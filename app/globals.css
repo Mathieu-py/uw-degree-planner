@@ -586,6 +586,23 @@ body {
 }
 
 /* ============================================================
+   PAGE SCAFFOLD — section padding + centered containers.
+   NB: `.container` is avoided (collides with Tailwind v4's built-in
+   `container` utility); use `.container-lg` / `.container-sm`.
+   ============================================================ */
+.section {
+  padding: 56px 28px;
+}
+.container-lg {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.container-sm {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ============================================================
    CARD
    ============================================================ */
 .card {
@@ -768,7 +785,14 @@ body {
 .pw-slot-actions {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 3px;
+  /* Reserve the exact footprint of the two 18px hover buttons (width + height)
+     so swapping the status glyph for the view/remove actions on hover never
+     reflows the slot in either axis. */
+  min-width: 39px;
+  height: 18px;
+  flex: none;
 }
 .pw-slot-btn {
   display: none;

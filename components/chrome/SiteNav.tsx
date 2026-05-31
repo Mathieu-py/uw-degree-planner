@@ -18,12 +18,17 @@ const BASE_LINKS: NavLink[] = [
   { label: "Course catalog", href: "/catalog", match: "/catalog" },
 ];
 
-// Signed-out visitors are in demo mode (local plan), so surface a direct link
-// to the demo planner.
+// Signed-out visitors go to the planner, which shows the create flow when
+// there's no local plan yet. Signed-in visitors get their plans dashboard.
 const DEMO_LINK: NavLink = {
   label: "Demo planner",
   href: "/plan",
   match: "/plan",
+};
+const MY_PLANS_LINK: NavLink = {
+  label: "My plans",
+  href: "/plans",
+  match: "/plans",
 };
 
 /**
@@ -31,15 +36,20 @@ const DEMO_LINK: NavLink = {
  * Left: wordmark + section links (active state from the pathname). Right:
  * appearance toggle + the sign-in/account control. Visual styling (blur,
  * hairline, height) lives in the `.nav` class in globals.css.
+ *
+ * The wordmark is the app's "home": the plans dashboard when signed in, the
+ * marketing landing when signed out.
  */
 export function SiteNav() {
   const pathname = usePathname();
   const { isAuthed } = useAuthState();
-  const links = isAuthed ? BASE_LINKS : [...BASE_LINKS, DEMO_LINK];
+  const links = isAuthed
+    ? [...BASE_LINKS, MY_PLANS_LINK]
+    : [...BASE_LINKS, DEMO_LINK];
   return (
     <header className="nav sticky top-0 z-40">
       <div className="flex items-center gap-8">
-        <Brand />
+        <Brand href={isAuthed ? "/plans" : "/"} />
         <nav className="nav-links hidden md:flex">
           {links.map((l) => (
             <Link

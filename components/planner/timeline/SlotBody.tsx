@@ -55,7 +55,7 @@ export const SlotBody = memo(function SlotBody({
             title={status === "warn" ? issueText : code}
           >
             <div className="flex items-center justify-between gap-1.5">
-              <span className="u-mono pw-code truncate">{code}</span>
+              <span className="u-mono pw-code truncate min-w-0">{code}</span>
               <span className="pw-slot-actions">
                 {status === "done" ? (
                   <span
@@ -89,7 +89,7 @@ export const SlotBody = memo(function SlotBody({
                     title={`Remove ${code}`}
                     className="pw-slot-btn pw-slot-x"
                   >
-                    <Icon name="close" size="xs" aria-hidden="true" />
+                    <Icon name="close" size="sm" aria-hidden="true" />
                   </button>
                 )}
               </span>

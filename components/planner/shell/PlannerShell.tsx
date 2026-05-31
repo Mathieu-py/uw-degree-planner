@@ -25,9 +25,8 @@ import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { completedSetFromPlan } from "@/lib/plan/derive";
-import { buildEmptySlots, rebuildSlotsForStream } from "@/lib/plan/sequence";
+import { rebuildSlotsForStream } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
-import { emptyPlan } from "@/lib/plan/storage";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
@@ -36,7 +35,6 @@ import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { termInfo } from "@/lib/terms";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
-import { EmptyState } from "./EmptyState";
 import { ProgramHeader } from "./ProgramHeader";
 
 export interface ProgramOption {
@@ -79,7 +77,7 @@ export function PlannerShell(props: Props) {
   const { isAuthed, ready } = useAuthState();
   if (!ready) {
     return (
-      <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+      <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
     );
   }
   return <PlannerShellInner {...props} isAuthed={isAuthed} />;
@@ -98,10 +96,6 @@ function PlannerShellInner({
   const router = useRouter();
   const searchParams = useSearchParams();
   const planId = searchParams.get("planId");
-  // `?new=1` lets the user reach the EmptyState (with manual setup +
-  // transcript upload) even when they already have plans. Without it, the
-  // sidebar's "+ New plan" button would have nowhere to land.
-  const newRequested = searchParams.get("new") === "1";
 
   const {
     plan,
@@ -139,32 +133,31 @@ function PlannerShellInner({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [auditSheetOpen, setAuditSheetOpen] = useState(false);
   const [importBanner, setImportBanner] = useState<string | null>(null);
-  // Guards the EmptyState's create + transcript flows against the
-  // double-click duplicate-plan bug — without it, a second click during the
-  // network round-trip creates a second server plan.
+  // Guards the in-planner transcript import against the double-click
+  // duplicate-plan bug — without it, a second click during the network
+  // round-trip creates a second server plan.
   const [creating, setCreating] = useState(false);
 
-  // Signed-in with no planId but at least one server plan: route to the most
-  // recently updated one so the user lands on a real plan instead of the
-  // empty state. listPlans returns `updated_at desc`. `?new=1` opts out so
-  // the user can explicitly reach EmptyState from the "+ New plan" entry
-  // point even when other plans exist.
+  // /plan resolves to either the planner or the create flow:
+  //   - viewing a specific plan (?planId) → render it (below)
+  //   - signed in, no planId → open the most recent plan, or /plan/new if none
+  //   - signed out, no local plan once hydrated → /plan/new
+  // Plan creation itself lives at /plan/new, so there's no inline empty state.
   useEffect(() => {
-    if (!isAuthed || planId !== null || newRequested) return;
-    if (!plans || plans.length === 0) return;
-    router.replace(`/plan?planId=${plans[0].id}`);
-  }, [isAuthed, planId, newRequested, plans, router]);
-
-  // After a successful create the URL still carries `?new=1`. Drop it when
-  // we land on a planId so a future visit to /plan?planId=X behaves normally.
-  // Done in a useEffect rather than during create itself so any code path
-  // that ends up at a plan (handoff, auto-redirect, manual nav) sheds the
-  // flag uniformly.
-  useEffect(() => {
-    if (planId !== null && newRequested) {
-      router.replace(`/plan?planId=${planId}`);
+    if (planId !== null) return;
+    if (isAuthed) {
+      if (!plans) return; // still loading
+      if (plans.length === 0) {
+        router.replace("/plan/new");
+        return;
+      }
+      router.replace(`/plan?planId=${plans[0].id}`);
+      return;
     }
-  }, [planId, newRequested, router]);
+    // Signed out: redirect to the create flow only once we know there's no
+    // local plan (hydrated && null), never mid-load.
+    if (hydrated && !plan) router.replace("/plan/new");
+  }, [isAuthed, planId, plans, hydrated, plan, router]);
 
   // Catalog-derived lookups.
   const allCourseCodesSet = useMemo(
@@ -188,10 +181,8 @@ function PlannerShellInner({
   // recomputes the audit in a lower-priority pass, keeping edits snappy.
   const deferredPlan = useDeferredValue(plan);
 
-  // Bridge: writes route to setPlan when there's a current plan, or to
-  // create+navigate when the user is authed without a planId (first server
-  // plan after sign-in / empty server account / explicit "+ New plan" via
-  // /plan?new=1).
+  // Bridge for the in-planner transcript import: writes route to setPlan when
+  // there's a current plan, or create+navigate when authed without a planId.
   const persistOrCreate = useCallback(
     async (next: LocalPlan, name: string = NEW_PLAN_NAME) => {
       if (isAuthed && planId === null) {
@@ -200,16 +191,8 @@ function PlannerShellInner({
         return;
       }
       setPlan(next);
-      // Anon path: when the user just created via /plan?new=1, the URL still
-      // carries that flag and the `newRequested` branch keeps EmptyState on
-      // screen even though the local plan now exists. Strip the flag so the
-      // loaded-plan branch wins on the next render. (The signed-in path
-      // doesn't need this — `create` above replaces the URL wholesale.)
-      if (!isAuthed && newRequested) {
-        router.replace("/plan");
-      }
     },
-    [isAuthed, planId, newRequested, create, router, setPlan],
+    [isAuthed, planId, create, router, setPlan],
   );
 
   const handleApplyTranscript = useCallback(
@@ -241,33 +224,6 @@ function PlannerShellInner({
           startTermId: next.startTermId,
         });
         setImportBanner(banner);
-      } finally {
-        setCreating(false);
-      }
-    },
-    [creating, persistOrCreate],
-  );
-
-  const handleCreatePlan = useCallback(
-    async (params: {
-      programId: string;
-      startTermId: number;
-      stream: Stream;
-    }) => {
-      if (creating) return;
-      setCreating(true);
-      try {
-        const slots = buildEmptySlots(params.startTermId, params.stream, () =>
-          crypto.randomUUID(),
-        );
-        const next: LocalPlan = {
-          ...emptyPlan(),
-          programId: params.programId,
-          stream: params.stream,
-          startTermId: params.startTermId,
-          slots,
-        };
-        await persistOrCreate(next);
       } finally {
         setCreating(false);
       }
@@ -407,37 +363,6 @@ function PlannerShellInner({
     <HandoffModal localPlan={conflict.localPlan} onResolve={resolveConflict} />
   ) : null;
 
-  // `?new=1` overrides everything: the user explicitly asked for the create
-  // flow. Skip the plan load + not-found branches entirely so they see
-  // EmptyState immediately, even if a planId is also present (which can
-  // happen if they hit "+ New plan" while on a loaded plan).
-  if (newRequested) {
-    return (
-      <PlannerLayout
-        isAuthed={isAuthed}
-        overlays={
-          <>
-            {transcriptOpen ? (
-              <TranscriptImportModal
-                onClose={() => setTranscriptOpen(false)}
-                onApplyPlan={handleApplyTranscript}
-                catalogCodes={allCourseCodesSet}
-              />
-            ) : null}
-            {handoffElement}
-          </>
-        }
-      >
-        <EmptyState
-          programOptions={programOptions}
-          onCreate={handleCreatePlan}
-          onUploadTranscript={() => setTranscriptOpen(true)}
-          busy={creating}
-        />
-      </PlannerLayout>
-    );
-  }
-
   if (!hydrated && !plan) {
     return (
       <PlannerLayout
@@ -489,49 +414,13 @@ function PlannerShellInner({
     );
   }
 
-  // Signed-in, no planId yet, and either the plan list is still loading or it
-  // has entries we're about to redirect into (see the router.replace effect
-  // above). Show the skeleton rather than EmptyState so the user never sees the
-  // create-plan UI flash before landing on their most recently updated plan.
-  // EmptyState is reserved for the genuine zero-plan case (plans fetched, empty)
-  // and the explicit `?new=1` entry point (handled by its own branch above).
-  const awaitingPlanRedirect =
-    isAuthed &&
-    planId === null &&
-    !newRequested &&
-    (plans === null || plans.length > 0);
-
-  if (awaitingPlanRedirect) {
+  // No plan to show: the redirect effect above is navigating — to /plan/new
+  // (no plan yet) or to the most recent plan (signed in, no planId). Render a
+  // skeleton meanwhile so the planner never flashes an empty state.
+  if (!plan) {
     return (
       <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
         <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
-      </PlannerLayout>
-    );
-  }
-
-  if (!plan) {
-    return (
-      <PlannerLayout
-        isAuthed={isAuthed}
-        overlays={
-          <>
-            {transcriptOpen ? (
-              <TranscriptImportModal
-                onClose={() => setTranscriptOpen(false)}
-                onApplyPlan={handleApplyTranscript}
-                catalogCodes={allCourseCodesSet}
-              />
-            ) : null}
-            {handoffElement}
-          </>
-        }
-      >
-        <EmptyState
-          programOptions={programOptions}
-          onCreate={handleCreatePlan}
-          onUploadTranscript={() => setTranscriptOpen(true)}
-          busy={creating}
-        />
       </PlannerLayout>
     );
   }
