@@ -12,9 +12,12 @@ import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import { emptyPlan, savePlan } from "@/lib/plan/storage";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
-import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
+import {
+  applyTranscriptToPlan,
+  detectStream,
+} from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
-import { KNOWN_TERMS, makeTermId } from "@/lib/terms";
+import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
@@ -61,6 +64,8 @@ export function WelcomeFlow({
   );
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  // False when co-op but the stream is undetectable — shows a confirm hint.
+  const [streamConfident, setStreamConfident] = useState(true);
   const [busy, setBusy] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
 
@@ -73,7 +78,15 @@ export function WelcomeFlow({
       const result = parseTranscript(text);
       setParseResult(result);
       if (result.detectedProgramId) setProgramId(result.detectedProgramId);
-      if (result.detectedSystemOfStudy === "coop") setStream("stream8");
+      const detectedStream = detectStream(result);
+      if (detectedStream) {
+        setStream(detectedStream);
+        setStreamConfident(true);
+      } else if (result.detectedSystemOfStudy === "coop") {
+        // Co-op but undetectable — default to the common Stream 8, ask to confirm.
+        setStream("stream8");
+        setStreamConfident(false);
+      }
     } catch (err) {
       logError("PDF parsing failed in onFile:", err);
       setParseError("Couldn't read that PDF. Try a Quest transcript export.");
@@ -85,11 +98,21 @@ export function WelcomeFlow({
   const buildPlan = useCallback((): LocalPlan => {
     const mintId = () => crypto.randomUUID();
     if (parseResult) {
-      return applyTranscriptToPlan(parseResult, {
+      const { plan } = applyTranscriptToPlan(parseResult, {
         stream,
         includedUnrecognized: new Set<string>(),
         mintId,
-      }).plan;
+      });
+      // Honour a program the user corrected in review; drop the detected
+      // specialization when it no longer matches.
+      return {
+        ...plan,
+        programId,
+        specializationId:
+          programId === parseResult.detectedProgramId
+            ? plan.specializationId
+            : null,
+      };
     }
     return {
       ...emptyPlan(),
@@ -100,18 +123,29 @@ export function WelcomeFlow({
     };
   }, [parseResult, programId, stream, startTermId]);
 
+  const programName =
+    programOptions.find((p) => p.id === programId)?.name ?? "your program";
+  // Build once, reused for both the review preview and the save.
+  const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
+  const placedCount = parseResult
+    ? completedCoursesFromPlan(draftPlan).length
+    : 0;
+
   async function build() {
     if (busy) return;
     setBusy(true);
     setBuildError(null);
     try {
-      const next = buildPlan();
       if (isAuthed) {
-        const id = await create(NEW_PLAN_NAME, toSnapshot(next));
-        if (id) router.push(`/plan?planId=${id}`);
-        else setBusy(false);
+        const id = await create(NEW_PLAN_NAME, toSnapshot(draftPlan));
+        if (id) {
+          router.push(`/plan?planId=${id}`);
+        } else {
+          setBuildError("Couldn't save your plan. Please try again.");
+          setBusy(false);
+        }
       } else {
-        savePlan(next);
+        savePlan(draftPlan);
         router.push("/plan");
       }
     } catch (err) {
@@ -120,13 +154,6 @@ export function WelcomeFlow({
       setBusy(false);
     }
   }
-
-  const programName =
-    programOptions.find((p) => p.id === programId)?.name ?? "your program";
-  const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
-  const placedCount = parseResult
-    ? completedCoursesFromPlan(draftPlan).length
-    : 0;
 
   return (
     <div className="section">
@@ -183,7 +210,10 @@ export function WelcomeFlow({
                 </span>
                 <button
                   type="button"
-                  onClick={() => setParseResult(null)}
+                  onClick={() => {
+                    setParseResult(null);
+                    setStreamConfident(true);
+                  }}
                   className="shrink-0 text-ink-2 underline hover:text-ink"
                 >
                   Clear
@@ -252,14 +282,63 @@ export function WelcomeFlow({
         ) : null}
 
         {step === 1 ? (
-          <div className="card p-6 flex flex-col gap-3">
+          <div className="card p-6 flex flex-col gap-4">
             <h2 className="u-h3">Review</h2>
             {parseResult ? (
-              <p className="u-body">
-                We'll build a plan from your transcript — <b>{placedCount}</b>{" "}
-                past course{placedCount === 1 ? "" : "s"} auto-placed, ready for
-                you to plan the rest.
-              </p>
+              <>
+                <p className="u-body">
+                  We'll build a plan from your transcript — <b>{placedCount}</b>{" "}
+                  past course{placedCount === 1 ? "" : "s"} auto-placed
+                  {draftPlan.startTermId ? (
+                    <>
+                      {" "}
+                      starting <b>{termLabel(draftPlan.startTermId)}</b>
+                    </>
+                  ) : null}
+                  . Confirm your program and stream below.
+                </p>
+                {!streamConfident ? (
+                  <p className="rounded-[8px] border border-line-2 bg-bg-2 px-3 py-2 text-xs text-ink-2">
+                    We couldn't tell your co-op stream apart from the
+                    transcript, so we guessed <b>Stream 8</b>. Change it below
+                    if that's wrong.
+                  </p>
+                ) : null}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Program">
+                    {(id) => (
+                      <select
+                        id={id}
+                        className={INPUT}
+                        value={programId}
+                        onChange={(e) => setProgramId(e.target.value)}
+                      >
+                        {programOptions.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </Field>
+                  <Field label="Co-op stream">
+                    {(id) => (
+                      <select
+                        id={id}
+                        className={INPUT}
+                        value={stream}
+                        onChange={(e) => setStream(e.target.value as Stream)}
+                      >
+                        {STREAMS.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </Field>
+                </div>
+              </>
             ) : (
               <p className="u-body">
                 We'll create an empty <b>{streamText(stream)}</b>{" "}
@@ -312,9 +391,7 @@ export function WelcomeFlow({
 }
 
 function streamText(stream: Stream): string {
-  if (stream === "stream4") return "Stream 4 co-op";
-  if (stream === "stream8") return "Stream 8 co-op";
-  return "regular";
+  return STREAMS.find((s) => s.value === stream)?.label ?? stream;
 }
 
 function Stepper({ step }: { step: number }) {

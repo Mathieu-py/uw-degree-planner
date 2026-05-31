@@ -146,6 +146,49 @@ export function applyTranscriptToPlan(
   };
 }
 
+/**
+ * Infer a co-op student's stream from when their academic terms fall. Stream 4
+ * and Stream 8 interleave work terms differently, so the set of terms a student
+ * takes classes in fingerprints their stream: score each cadence by how many
+ * observed terms hit an academic slot and return the unambiguous winner.
+ *
+ * Returns `"regular"` for a regular transcript, and `null` when undecidable
+ * (unknown system of study, <2 datable terms, or a tie) so the caller can ask.
+ */
+export function detectStream(
+  parseResult: TranscriptParseResult,
+): Stream | null {
+  if (parseResult.detectedSystemOfStudy === "regular") return "regular";
+  if (parseResult.detectedSystemOfStudy !== "coop") return null;
+
+  const observed = [
+    ...new Set(
+      parseResult.courses
+        .filter((c) => c.status !== "transfer" && c.status !== "skipped")
+        .map((c) => termLabelToTermId(c.termLabel))
+        .filter((id): id is TermId => id !== null),
+    ),
+  ];
+  if (observed.length < 2) return null;
+
+  // TermIds sort chronologically, so the smallest is the 1A start both
+  // cadences begin from.
+  const startTermId = Math.min(...observed);
+  const academicHits = (stream: Stream): number => {
+    const academic = new Set(
+      sequenceTerms(startTermId, stream)
+        .filter((s) => !s.isCoop)
+        .map((s) => s.termId),
+    );
+    return observed.filter((id) => academic.has(id)).length;
+  };
+
+  const four = academicHits("stream4");
+  const eight = academicHits("stream8");
+  if (four === eight) return null;
+  return four > eight ? "stream4" : "stream8";
+}
+
 function inferStartTermId(parseResult: TranscriptParseResult): TermId | null {
   let earliest: TermId | null = null;
   for (const c of parseResult.courses) {

@@ -99,14 +99,12 @@ export function TermPicker({
   function addTo(slot: PlanSlot, label: string) {
     const current = plan;
     if (!current) return;
-    // A course belongs in exactly one term; the `alreadyIn` banner already
-    // flags this, so bail if it's placed anywhere rather than duplicating it.
+    // A course belongs in exactly one term; the option buttons are disabled
+    // once it's placed, but guard here too so the writer can't ever duplicate.
     if (current.slots.some((s) => s.courses.some((c) => c.code === code)))
       return;
     const nextSlots = current.slots.map((s) =>
-      s.id === slot.id && !s.courses.some((c) => c.code === code)
-        ? { ...s, courses: [...s.courses, { code }] }
-        : s,
+      s.id === slot.id ? { ...s, courses: [...s.courses, { code }] } : s,
     );
     const next = {
       ...current,
@@ -166,7 +164,7 @@ export function TermPicker({
               <button
                 key={opt.slot.id}
                 type="button"
-                disabled={opt.state === "missing"}
+                disabled={opt.state === "missing" || alreadyIn !== null}
                 onClick={() => addTo(opt.slot, opt.label)}
                 title={opt.hint}
                 className="flex items-center justify-between gap-3 rounded-[9px] border border-line px-3 py-2.5 text-left transition-colors hover:bg-bg-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
