@@ -15,6 +15,7 @@ import { DropdownMenu, type MenuItem } from "@/components/ui/DropdownMenu";
 import { Icon } from "@/components/ui/Icon";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
+import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
 
 interface Props {
   /** Anon users get no bar — they have a single local plan. */
@@ -246,72 +247,30 @@ function PlanToolbarAuthed({
     ? "flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0"
     : "flex items-center gap-2 rounded-lg border border-line bg-bg px-3 py-1.5";
 
-  // Editing/confirming swap the dropdown for an inline form. Card mode (non-
+  // Editing/confirming swap the dropdown for an inline bar. Card mode (non-
   // inline) keeps its old behavior — these flows take over the whole bar.
   if (editing) {
     return (
-      <div className={containerClass}>
-        <form
-          onSubmit={submitRename}
-          className="flex items-center gap-1 flex-1 min-w-0"
-        >
-          <input
-            ref={focusOnMount}
-            value={editingName}
-            onChange={(e) => setEditingName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setEditing(false);
-            }}
-            className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-3 py-2.5 text-sm"
-            aria-label="New plan name"
-          />
-          <button
-            type="submit"
-            disabled={busy || !editingName.trim()}
-            aria-label="Save rename"
-            title="Save"
-            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 disabled:opacity-50"
-          >
-            <Icon name="check" size="sm" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            aria-label="Cancel rename"
-            title="Cancel"
-            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
-          >
-            <Icon name="close" size="md" aria-hidden="true" />
-          </button>
-        </form>
-      </div>
+      <RenameBar
+        containerClass={containerClass}
+        name={editingName}
+        busy={busy}
+        onNameChange={setEditingName}
+        onSubmit={submitRename}
+        onCancel={() => setEditing(false)}
+      />
     );
   }
 
   if (confirmingDelete) {
     return (
-      <div className={containerClass}>
-        <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
-          <span className="text-sm truncate">Delete "{currentPlan.name}"?</span>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setConfirmingDelete(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              size="lg"
-              disabled={busy}
-              onClick={confirmDelete}
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </div>
+      <DeleteConfirmBar
+        containerClass={containerClass}
+        planName={currentPlan.name}
+        busy={busy}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     );
   }
 

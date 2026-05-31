@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
+import { logError } from "@/lib/log";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
@@ -74,7 +75,7 @@ export function WelcomeFlow({
       if (result.detectedProgramId) setProgramId(result.detectedProgramId);
       if (result.detectedSystemOfStudy === "coop") setStream("stream8");
     } catch (err) {
-      console.error("PDF parsing failed in onFile:", err);
+      logError("PDF parsing failed in onFile:", err);
       setParseError("Couldn't read that PDF. Try a Quest transcript export.");
     } finally {
       setParsing(false);
@@ -114,7 +115,7 @@ export function WelcomeFlow({
         router.push("/plan");
       }
     } catch (err) {
-      console.error("Failed to build/save plan:", err);
+      logError("Failed to build/save plan:", err);
       setBuildError("Couldn't build your plan. Please try again.");
       setBusy(false);
     }

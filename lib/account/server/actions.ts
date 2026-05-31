@@ -1,6 +1,7 @@
 "use server";
 
 import type { ActionResult } from "@/lib/plan/server/types";
+import { mapDbError } from "@/lib/server/dbError";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -65,7 +66,7 @@ export async function updateProfile(input: {
     ) {
       return { ok: false, error: "username_taken" };
     }
-    return { ok: false, error: error.message };
+    return { ok: false, error: mapDbError(error, "updateProfile") };
   }
   if (!data || data.length === 0) {
     return { ok: false, error: "not_found" };
@@ -89,6 +90,6 @@ export async function deleteAccount(): Promise<ActionResult<void>> {
   if (!auth.ok) return { ok: false, error: auth.error };
 
   const { error } = await auth.client.rpc("delete_own_account");
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "deleteAccount") };
   return { ok: true, data: undefined };
 }

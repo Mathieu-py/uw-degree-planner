@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
+import { logError } from "@/lib/log";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ServerPlan } from "@/lib/plan/server/types";
 import { savePlan } from "@/lib/plan/storage";
@@ -94,7 +95,7 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
         router.push("/plan");
       }
     } catch (err) {
-      console.error("Failed to duplicate plan", err);
+      logError("Failed to duplicate plan", err);
       setBusy(false);
     }
   }

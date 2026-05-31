@@ -42,6 +42,24 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
+  build:
+    runs-on: ubuntu-latest
+    # A production build catches breakages lint/typecheck/unit miss (bad
+    # imports, RSC boundary errors). Supabase vars are read at module init, so
+    # reuse the e2e placeholders — the build never reaches the backend.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
   e2e:
     runs-on: ubuntu-latest
     # Official Playwright image: ships with Chromium + every system dep

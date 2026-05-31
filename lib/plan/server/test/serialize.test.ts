@@ -1,13 +1,62 @@
 import { describe, expect, it } from "vitest";
 import {
   assembleServerPlan,
+  MAX_COURSES_PER_SLOT,
+  MAX_SLOTS,
   mapSharedPlanJson,
   type PlanCourseRow,
   type PlanRow,
   type PlanSlotRow,
   planRowToSummary,
+  snapshotSizeError,
   toSnapshot,
 } from "../serialize";
+import type { PlanSnapshot } from "../types";
+
+function snapshotWith(slots: PlanSnapshot["slots"]): PlanSnapshot {
+  return {
+    programId: null,
+    specializationId: null,
+    stream: null,
+    startTermId: null,
+    programScrapeVersion: null,
+    slots,
+  };
+}
+
+function slot(courseCount: number): PlanSnapshot["slots"][number] {
+  return {
+    id: "s",
+    termId: null,
+    position: "pre",
+    isCoop: false,
+    courses: Array.from({ length: courseCount }, (_, i) => ({ code: `c${i}` })),
+  };
+}
+
+describe("snapshotSizeError", () => {
+  it("accepts a normal-sized plan", () => {
+    expect(snapshotSizeError(snapshotWith([slot(6), slot(6)]))).toBeNull();
+  });
+
+  it("accepts exactly the caps", () => {
+    const slots = Array.from({ length: MAX_SLOTS }, () =>
+      slot(MAX_COURSES_PER_SLOT),
+    );
+    expect(snapshotSizeError(snapshotWith(slots))).toBeNull();
+  });
+
+  it("rejects too many slots", () => {
+    const slots = Array.from({ length: MAX_SLOTS + 1 }, () => slot(0));
+    expect(snapshotSizeError(snapshotWith(slots))).toBe("snapshot_too_large");
+  });
+
+  it("rejects too many courses in a single slot", () => {
+    expect(
+      snapshotSizeError(snapshotWith([slot(MAX_COURSES_PER_SLOT + 1)])),
+    ).toBe("snapshot_too_large");
+  });
+});
 
 const PLAN: PlanRow = {
   id: "plan-1",

@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
   useDeferredValue,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -37,6 +36,8 @@ import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { termInfo } from "@/lib/terms";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import { ProgramHeader } from "./ProgramHeader";
+import { usePlannerModals } from "./usePlannerModals";
+import { usePlannerRedirect } from "./usePlannerRedirect";
 
 export interface ProgramOption {
   id: string;
@@ -51,11 +52,6 @@ interface Props {
     Array<{ slug: string; name: string }>
   >;
   catalog: Course[];
-}
-
-interface PickerContext {
-  slotId: string;
-  focusCodes?: string[];
 }
 
 /**
@@ -127,36 +123,28 @@ function PlannerShellInner({
   const planRef = useRef(plan);
   planRef.current = plan;
 
-  const [pickerCtx, setPickerCtx] = useState<PickerContext | null>(null);
-  const [transcriptOpen, setTranscriptOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [auditSheetOpen, setAuditSheetOpen] = useState(false);
+  const {
+    picker,
+    setPicker,
+    openPicker,
+    closePicker,
+    transcriptOpen,
+    setTranscriptOpen,
+    settingsOpen,
+    setSettingsOpen,
+    auditSheetOpen,
+    setAuditSheetOpen,
+  } = usePlannerModals();
   const [importBanner, setImportBanner] = useState<string | null>(null);
   // Guards the in-planner transcript import against the double-click
   // duplicate-plan bug — without it, a second click during the network
   // round-trip creates a second server plan.
   const [creating, setCreating] = useState(false);
 
-  // /plan resolves to either the planner or the create flow:
-  //   - viewing a specific plan (?planId) → render it (below)
-  //   - signed in, no planId → open the most recent plan, or /plan/new if none
-  //   - signed out, no local plan once hydrated → /plan/new
-  // Plan creation itself lives at /plan/new, so there's no inline empty state.
-  useEffect(() => {
-    if (planId !== null) return;
-    if (isAuthed) {
-      if (!plans) return; // still loading
-      if (plans.length === 0) {
-        router.replace("/plan/new");
-        return;
-      }
-      router.replace(`/plan?planId=${plans[0].id}`);
-      return;
-    }
-    // Signed out: redirect to the create flow only once we know there's no
-    // local plan (hydrated && null), never mid-load.
-    if (hydrated && !plan) router.replace("/plan/new");
-  }, [isAuthed, planId, plans, hydrated, plan, router]);
+  // /plan resolves to either the planner or the create flow when there's no
+  // ?planId — see usePlannerRedirect. Plan creation lives at /plan/new, so
+  // there's no inline empty state here.
+  usePlannerRedirect({ isAuthed, planId, plans, hydrated, plan });
 
   // Catalog-derived lookups.
   const allCourseCodesSet = useMemo(
@@ -227,16 +215,16 @@ function PlannerShellInner({
         setCreating(false);
       }
     },
-    [creating, persistOrCreate],
+    [creating, persistOrCreate, setTranscriptOpen],
   );
 
   const handleReset = useCallback(() => {
     // Signed-out only — for signed-in users, the PlanSwitcher provides
     // per-plan delete, which is the equivalent action.
     clearLocalPlan();
-    setPickerCtx(null);
+    setPicker(null);
     setImportBanner(null);
-  }, [clearLocalPlan]);
+  }, [clearLocalPlan, setPicker]);
 
   const handleSaveSettings = useCallback(
     (next: {
@@ -280,39 +268,36 @@ function PlannerShellInner({
     [plan, setPlan],
   );
 
-  const handleOpenPicker = useCallback((slotId: string) => {
-    setPickerCtx({ slotId });
-  }, []);
-
   // Audit drill-in: open the picker pre-filtered to a requirement's courses,
   // targeting the earliest academic term that still has room (prereq-bearing
   // courses usually belong earlier) so the user lands in a sensible term.
-  const handleDrillToRequirement = useCallback((codes: string[]) => {
-    const current = planRef.current;
-    if (!current) return;
-    const academic = current.slots.filter(
-      (s) => s.position !== "pre" && !s.isCoop,
-    );
-    const target = academic.find((s) => s.courses.length < 6) ?? academic[0];
-    if (!target) return;
-    setPickerCtx({ slotId: target.id, focusCodes: codes });
-  }, []);
-
-  const handleClosePicker = useCallback(() => setPickerCtx(null), []);
+  const handleDrillToRequirement = useCallback(
+    (codes: string[]) => {
+      const current = planRef.current;
+      if (!current) return;
+      const academic = current.slots.filter(
+        (s) => s.position !== "pre" && !s.isCoop,
+      );
+      const target = academic.find((s) => s.courses.length < 6) ?? academic[0];
+      if (!target) return;
+      setPicker({ slotId: target.id, focusCodes: codes });
+    },
+    [setPicker],
+  );
 
   const handlePickCode = useCallback(
     (code: string) => {
-      if (!plan || !pickerCtx) return;
+      if (!plan || !picker) return;
       const lc = code.toLowerCase();
       const nextSlots = plan.slots.map((s) =>
-        s.id === pickerCtx.slotId && !s.courses.some((c) => c.code === lc)
+        s.id === picker.slotId && !s.courses.some((c) => c.code === lc)
           ? { ...s, courses: [...s.courses, { code: lc }] }
           : s,
       );
       setPlan({ ...plan, slots: nextSlots });
-      setPickerCtx(null);
+      setPicker(null);
     },
-    [plan, pickerCtx, setPlan],
+    [plan, picker, setPlan, setPicker],
   );
 
   const handleRemoveCourse = useCallback(
@@ -337,8 +322,8 @@ function PlannerShellInner({
   }, [flushSave]);
 
   const pickerMeta = useMemo(() => {
-    if (!plan || !pickerCtx) return null;
-    const slot = plan.slots.find((s) => s.id === pickerCtx.slotId);
+    if (!plan || !picker) return null;
+    const slot = plan.slots.find((s) => s.id === picker.slotId);
     if (!slot) return null;
     const completedBefore =
       slot.termId !== null
@@ -352,7 +337,7 @@ function PlannerShellInner({
         ? (termInfo(slot.termId)?.label ?? `Term ${slot.termId}`)
         : "Pre-arrival";
     return { slot, completedBefore, placedCodes, termLabel };
-  }, [plan, pickerCtx]);
+  }, [plan, picker]);
 
   // Rendered alongside every branch below: the handoff modal can appear over
   // the loading skeleton, the not-found banner, the empty state, or the
@@ -436,15 +421,15 @@ function PlannerShellInner({
       toolbar={null}
       overlays={
         <>
-          {pickerCtx && pickerMeta ? (
+          {picker && pickerMeta ? (
             <SlotPicker
               targetTermLabel={pickerMeta.termLabel}
               catalog={catalog}
               placedCodes={pickerMeta.placedCodes}
               completedBefore={pickerMeta.completedBefore}
-              focusCodes={pickerCtx.focusCodes}
+              focusCodes={picker.focusCodes}
               onPick={handlePickCode}
-              onClose={handleClosePicker}
+              onClose={closePicker}
             />
           ) : null}
 
@@ -596,7 +581,7 @@ function PlannerShellInner({
               <Timeline
                 plan={plan}
                 issuesPerSlot={issuesPerSlot}
-                onSlotClick={handleOpenPicker}
+                onSlotClick={openPicker}
                 onRemoveCourse={handleRemoveCourse}
               />
             </div>
