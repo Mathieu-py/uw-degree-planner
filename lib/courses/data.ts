@@ -13,10 +13,40 @@ import { enrichCourse } from "./filters";
 import type { Course, CourseDetail } from "./types";
 import { validateCoursesFile, validateDescriptionsFile } from "./validation";
 
+/**
+ * Raised when a snapshot file can't be read or parsed. Shape-validation
+ * failures still throw CoursesFileError from ./validation; this just turns a
+ * raw ENOENT/SyntaxError into a message that names the file.
+ */
+export class CourseDataError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "CourseDataError";
+  }
+}
+
+async function readJsonFile(file: string): Promise<unknown> {
+  let raw: string;
+  try {
+    raw = await readFile(file, "utf-8");
+  } catch (cause) {
+    throw new CourseDataError(`Could not read course data file at ${file}.`, {
+      cause,
+    });
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (cause) {
+    throw new CourseDataError(
+      `Course data file at ${file} is not valid JSON.`,
+      { cause },
+    );
+  }
+}
+
 export const loadTerm = cache(async (termId: TermId): Promise<Course[]> => {
   const file = path.resolve(process.cwd(), "data", `courses.${termId}.json`);
-  const raw = await readFile(file, "utf-8");
-  const parsed = validateCoursesFile(JSON.parse(raw));
+  const parsed = validateCoursesFile(await readJsonFile(file));
   return parsed.courses.map(enrichCourse);
 });
 
@@ -33,8 +63,7 @@ const loadDescriptions = cache(
       "data",
       `descriptions.${termId}.json`,
     );
-    const raw = await readFile(file, "utf-8");
-    return validateDescriptionsFile(JSON.parse(raw)).descriptions;
+    return validateDescriptionsFile(await readJsonFile(file)).descriptions;
   },
 );
 

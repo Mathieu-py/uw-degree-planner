@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { SiteNav } from "@/components/chrome/SiteNav";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Runs synchronously during HTML parsing, before first paint, so the saved
+// theme is applied with no flash. Defaults to dark when nothing is stored.
+// Kept inline (not next/script) because framework-injected scripts aren't
+// guaranteed to run before paint. Mirror of applyTheme() in ThemeProvider.
+const THEME_INIT_SCRIPT = `(function(){try{var v=localStorage.getItem("udp-theme");document.documentElement.setAttribute("data-mode",v==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-mode","dark");}})();`;
+
+// Hanken Grotesk = all UI text; JetBrains Mono = course codes, term labels,
+// counts, share URLs. Both are variable fonts, so `weight: "variable"` ships a
+// single self-hosted face covering the full design range (400–800 / 400–700).
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
+  weight: "variable",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
+  weight: "variable",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,35 +41,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${hanken.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: trusted static
+            anti-FOUC snippet; must run before paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
-        <header className="bg-black text-zinc-100 border-b border-zinc-800">
-          <div className="px-6 sm:px-8 lg:px-12 py-5 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-semibold tracking-tight text-zinc-50"
-            >
-              UW Degree Planner
-            </Link>
-            <nav className="flex items-center gap-5 text-sm text-zinc-400">
-              <Link href="/plan" className="hover:text-zinc-50">
-                Plan
-              </Link>
-              <a
-                href="https://github.com/Mathieu-py/uw-elective-finder"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="hover:text-zinc-50"
-              >
-                GitHub
-              </a>
-              <span aria-hidden="true" className="h-5 w-px bg-zinc-700" />
-              <UserMenu />
-            </nav>
-          </div>
-        </header>
-        <main className="flex-1 flex flex-col">{children}</main>
+        <ThemeProvider>
+          <SiteNav />
+          <main className="flex-1 flex flex-col">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

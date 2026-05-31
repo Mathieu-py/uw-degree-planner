@@ -62,16 +62,12 @@ describe("HandoffModal", () => {
     await waitFor(() => expect(onResolve).toHaveBeenCalledWith("discard"));
   });
 
-  it("resolves with 'cancel' on the decide-later button", async () => {
+  it("resolves with 'cancel' on Escape (no dedicated decide-later button)", async () => {
     const onResolve = vi.fn().mockResolvedValue(undefined);
     render(<HandoffModal localPlan={mkPlan()} onResolve={onResolve} />);
-    fireEvent.click(screen.getByRole("button", { name: /decide later/i }));
-    await waitFor(() => expect(onResolve).toHaveBeenCalledWith("cancel"));
-  });
-
-  it("resolves with 'cancel' on Escape", async () => {
-    const onResolve = vi.fn().mockResolvedValue(undefined);
-    render(<HandoffModal localPlan={mkPlan()} onResolve={onResolve} />);
+    // The "Decide later" button was removed — Escape/backdrop is the only
+    // cancel affordance now.
+    expect(screen.queryByRole("button", { name: /decide later/i })).toBeNull();
     fireEvent.keyDown(window, { key: "Escape" });
     await waitFor(() => expect(onResolve).toHaveBeenCalledWith("cancel"));
   });

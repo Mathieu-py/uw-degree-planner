@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { HandoffResolution } from "@/lib/plan/sync/useAnonHandoff";
@@ -15,10 +16,13 @@ interface Props {
 
 /**
  * Shown when the user signs in with both a local plan AND existing server
- * plans. Three options:
+ * plans. Two explicit choices:
  *   - "Import as another plan" — uploads the local plan as a new server plan
  *   - "Discard local plan"    — drops the local plan; server-only from now on
- *   - "Decide later"          — closes the modal, prompts again on next sign-in
+ *
+ * There's no dedicated "Decide later" button — Escape or a backdrop click
+ * resolves `cancel` (re-prompts on next sign-in), which `useModalExit` wires
+ * to onClose.
  */
 export function HandoffModal({ localPlan, onResolve }: Props) {
   const [busy, setBusy] = useState(false);
@@ -51,39 +55,41 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
 
   return (
     <Modal isClosing={isClosing} onClose={handleClose} titleId="handoff-title">
-      <header className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-        <h2 id="handoff-title" className="text-sm font-medium">
+      <header className="border-b border-line px-4 py-3.5">
+        <h2 id="handoff-title" className="text-[15px] font-bold tracking-tight">
           You have an unsaved local plan
         </h2>
       </header>
-      <div className="px-4 py-4 flex flex-col gap-3 text-sm text-zinc-700 dark:text-zinc-300">
-        <p>
-          Your browser has a plan built before you signed in. Your account
-          already has at least one saved plan — what would you like to do?
+      <div className="px-4 py-4 flex flex-col gap-3.5">
+        <p className="text-[13.5px] text-ink-2">
+          This browser has a plan you built before signing in, and your account
+          already has saved plans. What would you like to do?
         </p>
-        <div className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
-          Local plan: {summarize(localPlan)}
+        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-[9px] bg-accent-soft border border-accent-line">
+          <span className="text-accent shrink-0">
+            <Icon name="doc" size="sm" aria-hidden="true" />
+          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[13px] font-semibold text-ink">
+              Local plan
+            </span>
+            <span className="u-small truncate">{summarize(localPlan)}</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 mt-0.5">
+          <Button block disabled={disabled} onClick={() => pick("import")}>
+            Import as another plan
+          </Button>
+          <Button
+            variant="dangerOutline"
+            block
+            disabled={disabled}
+            onClick={() => pick("discard")}
+          >
+            Discard local plan
+          </Button>
         </div>
       </div>
-      <footer className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 flex flex-col gap-2">
-        <Button disabled={disabled} onClick={() => pick("import")}>
-          Import as another plan
-        </Button>
-        <Button
-          variant="destructiveOutline"
-          disabled={disabled}
-          onClick={() => pick("discard")}
-        >
-          Discard local plan
-        </Button>
-        <Button
-          variant="secondary"
-          disabled={disabled}
-          onClick={() => pick("cancel")}
-        >
-          Decide later
-        </Button>
-      </footer>
     </Modal>
   );
 }

@@ -1,55 +1,59 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
-test("planner front door renders empty state with manual-setup form", async ({
+// Demo (signed-out) plan creation now lives in the WelcomeFlow stepper at
+// /plan/new. Visiting /plan with empty localStorage redirects there; the user
+// picks program/term/stream (or imports a transcript), hits Continue → Review,
+// then "Build my plan", which saves the local plan and routes back to /plan.
+async function createDemoPlan(page: Page) {
+  await page.goto("/plan");
+  // Step 1 (Set up): the manual-setup defaults — first program, Fall start,
+  // Regular stream — are valid out of the box, so advance straight through.
+  await page.getByRole("button", { name: "Continue" }).click();
+  // Step 2 (Review): commit. Anon flow persists to localStorage and pushes /plan.
+  await page.getByRole("button", { name: /build my plan/i }).click();
+  // Wait for the redirect so callers don't race the navigation.
+  await page.waitForURL("/plan");
+}
+
+test("planner front door redirects to the WelcomeFlow set-up stepper", async ({
   page,
 }) => {
-  // Empty localStorage on a fresh Playwright context → planner shows the
-  // empty state (upload-transcript card + manual-setup form). The page-
-  // level "Plan your degree" h1 was dropped in the PR-3 IU refactor (the
-  // PlannerToolbar now owns the active-plan label); the EmptyState's two
-  // section headings + the Create button are the durable front-door anchors.
+  // Empty localStorage on a fresh Playwright context → /plan has no demo plan,
+  // so PlannerShell redirects to /plan/new. The stepper's headings + the
+  // "Or set up manually" divider are the durable front-door anchors.
   await page.goto("/plan");
+  await expect(page).toHaveURL(/\/plan\/new/);
 
   await expect(
-    page.getByRole("heading", { name: "Upload your Quest transcript" }),
+    page.getByRole("heading", { name: "Let's set up your plan" }),
   ).toBeVisible();
 
   await expect(
-    page.getByRole("heading", { name: "Or set up manually" }),
+    page.getByRole("heading", { name: "Start from your transcript" }),
   ).toBeVisible();
 
-  await expect(
-    page.getByRole("button", { name: "Create empty plan" }),
-  ).toBeVisible();
+  await expect(page.getByText("Or set up manually")).toBeVisible();
 });
 
-test("creating an empty plan via manual setup renders the timeline", async ({
+test("building an empty plan via manual setup renders the timeline", async ({
   page,
 }) => {
-  await page.goto("/plan");
+  await createDemoPlan(page);
 
-  // Manual setup form is the second card. The defaults (first program in
-  // the list, Fall 2023 start, Regular stream) are valid out of the box —
-  // we just click through.
-  await page.getByRole("button", { name: "Create empty plan" }).click();
-
-  // After creation: the "Edit plan" dropdown trigger appears in the planner
-  // header (the IU refactor folded Reset plan into this menu), and the
-  // empty-state form is gone.
-  await expect(page.getByRole("button", { name: "Edit plan" })).toBeVisible();
-
-  // At least one academic term column rendered — the regular cadence puts
-  // 1A in the first position.
+  // Back on /plan: the demo planner header exposes "Import transcript", and the
+  // regular cadence puts 1A in the first term column.
+  await expect(
+    page.getByRole("button", { name: /import transcript/i }),
+  ).toBeVisible();
   await expect(page.getByText("1A", { exact: true }).first()).toBeVisible();
 });
 
 test("opening the slot picker on an empty 1A slot lets the user add a course", async ({
   page,
 }) => {
-  await page.goto("/plan");
-  await page.getByRole("button", { name: "Create empty plan" }).click();
+  await createDemoPlan(page);
 
-  // The first slot's "+ Add course" affordance opens the SlotPicker modal.
+  // The first slot's "+ add course" affordance opens the SlotPicker modal.
   await page
     .getByRole("button", { name: /add course/i })
     .first()

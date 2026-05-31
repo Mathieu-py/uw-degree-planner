@@ -64,7 +64,7 @@ export function DropdownMenu({ label, icon, items }: Props) {
   return (
     <div ref={containerRef} className="relative">
       <Button
-        variant="secondary"
+        variant="outline"
         size="lg"
         aria-haspopup="true"
         aria-expanded={open}
@@ -72,7 +72,11 @@ export function DropdownMenu({ label, icon, items }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5"
       >
-        {icon ? <span aria-hidden="true">{icon}</span> : null}
+        {icon ? (
+          <span aria-hidden="true" className="inline-flex shrink-0">
+            {icon}
+          </span>
+        ) : null}
         <span>{label}</span>
         <Icon
           name="chevronDown"
@@ -84,7 +88,7 @@ export function DropdownMenu({ label, icon, items }: Props) {
       {open ? (
         <div
           id={menuId}
-          className="absolute right-0 top-full mt-1 z-20 min-w-[10rem] rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-lg py-1"
+          className="absolute right-0 top-full mt-1 z-20 min-w-[10rem] rounded-[10px] border border-line bg-bg shadow-card-md py-1"
         >
           {items.map((item) => (
             <button
@@ -97,11 +101,13 @@ export function DropdownMenu({ label, icon, items }: Props) {
               }}
               className={`w-full text-left px-3 py-2 text-sm inline-flex items-center gap-2 disabled:opacity-50 ${
                 item.destructive
-                  ? "text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                  : "hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                  ? "text-danger hover:bg-danger-soft"
+                  : "text-ink hover:bg-bg-2"
               }`}
             >
-              <span aria-hidden="true">{item.icon}</span>
+              <span aria-hidden="true" className="inline-flex shrink-0">
+                {item.icon}
+              </span>
               <span>{item.label}</span>
             </button>
           ))}

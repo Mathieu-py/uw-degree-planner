@@ -52,7 +52,10 @@ describe("AuditPanel", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("exposes Missing/Placed/All filter tabs", () => {
+  it("shows the overall percent-complete headline", () => {
+    // The redesign replaced the Missing/Placed/All filter tabs with a single
+    // "% requirements met" headline + progress bar; met and missing chips now
+    // render together per requirement group.
     const engId = Object.entries(PROGRAMS).find(
       ([, p]) => p.kind === "engineering",
     )?.[0];
@@ -63,8 +66,6 @@ describe("AuditPanel", () => {
     if (!engId) return;
     render(<AuditPanel plan={mkPlan({ programId: engId })} />);
 
-    expect(screen.getByRole("tab", { name: /missing/i })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: /placed/i })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: /^all$/i })).toBeTruthy();
+    expect(screen.getByText(/requirements met/i)).toBeTruthy();
   });
 });

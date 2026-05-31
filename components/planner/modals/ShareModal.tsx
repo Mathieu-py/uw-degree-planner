@@ -55,8 +55,11 @@ export function ShareModal({ planName, shareToken, onClose }: Props) {
       onClose={handleClose}
       titleId="share-modal-title"
     >
-      <header className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between">
-        <h2 id="share-modal-title" className="text-sm font-medium truncate">
+      <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
+        <h2
+          id="share-modal-title"
+          className="text-[15px] font-bold tracking-tight truncate flex-1 min-w-0"
+        >
           Share "{planName}"
         </h2>
         <Button variant="icon" onClick={handleClose} aria-label="Close">
@@ -65,31 +68,52 @@ export function ShareModal({ planName, shareToken, onClose }: Props) {
       </header>
 
       <div className="px-4 py-4 flex flex-col gap-3">
-        <p
-          id="share-link-desc"
-          className="text-xs text-zinc-600 dark:text-zinc-400"
-        >
-          Anyone with this link can view this plan (read-only).
+        <p id="share-link-desc" className="text-[13.5px] text-ink-2">
+          Anyone with this link can{" "}
+          <span className="text-ink font-medium">view</span> this plan —
+          read-only. They can duplicate it to their own account, but can't edit
+          yours.
         </p>
         {url ? (
-          <input
-            ref={inputRef}
-            readOnly
-            value={url}
-            onFocus={(e) => e.currentTarget.select()}
-            aria-label="Share URL"
-            aria-describedby="share-link-desc"
-            className="w-full rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-2 text-xs font-mono"
-          />
+          <div className="flex items-center gap-2.5 pl-3 pr-2 py-[7px] border border-line-2 rounded-[10px] bg-bg-2">
+            <span className="text-ink-3 shrink-0">
+              <Icon name="share" size="sm" aria-hidden="true" />
+            </span>
+            <input
+              ref={inputRef}
+              readOnly
+              value={url}
+              onFocus={(e) => e.currentTarget.select()}
+              aria-label="Share URL"
+              aria-describedby="share-link-desc"
+              className="flex-1 min-w-0 bg-transparent text-[13px] font-mono text-ink outline-none truncate"
+            />
+            <Button
+              variant={copied ? "brand" : "primary"}
+              size="sm"
+              onClick={handleCopy}
+              className="shrink-0 gap-1.5"
+            >
+              <Icon
+                name={copied ? "check" : "copy"}
+                size="sm"
+                aria-hidden="true"
+              />
+              {copied ? "Copied" : "Copy"}
+            </Button>
+          </div>
         ) : (
-          <div className="w-full rounded border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="w-full rounded-[10px] border border-dashed border-line-2 bg-bg-2 px-3 py-2.5 text-[13px] text-ink-3">
             Generating link…
           </div>
         )}
-        <Button onClick={handleCopy} disabled={!url} className="self-start">
-          {copied ? "Copied!" : "Copy link"}
-        </Button>
       </div>
+
+      <footer className="border-t border-line bg-bg-2 px-4 py-3 flex justify-end">
+        <Button variant="ghost" onClick={handleClose}>
+          Done
+        </Button>
+      </footer>
     </Modal>
   );
 }

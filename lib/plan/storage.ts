@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logWarn } from "@/lib/log";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import { type LocalPlan, PLAN_SCHEMA_VERSION } from "./types";
 
@@ -64,7 +65,7 @@ export function loadPlan(): LocalPlan | null {
     return LocalPlanSchema.parse(parsed);
   } catch (err) {
     safeSetItem(PLAN_BROKEN_BACKUP_KEY, raw);
-    console.warn(
+    logWarn(
       "loadPlan: stored plan failed to parse; raw backup written to localStorage key",
       PLAN_BROKEN_BACKUP_KEY,
       err,

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Icon } from "@/components/ui/Icon";
 import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
+import { getRatingColor } from "@/lib/courses/ratingColor";
 import { formatCourseCode, formatPercent } from "@/lib/format";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
@@ -27,122 +29,148 @@ export default async function CoursePage(props: {
   if (!course) notFound();
 
   const rating = course.rating;
+  const hasRatings =
+    rating && rating.filled_count != null && rating.filled_count > 0;
   const totalSeats = seatsAvailable(course) ?? 0;
+  const uwflowUrl = `https://uwflow.com/course/${course.code}`;
 
   return (
-    <div className="mx-auto max-w-3xl w-full px-6 py-10 flex flex-col gap-8">
+    <div className="mx-auto max-w-5xl w-full px-6 py-10">
       <Link
         href="/plan"
-        className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 w-fit"
+        className="text-sm text-ink-2 hover:text-ink w-fit inline-flex items-center gap-1.5"
       >
         ← Back to planner
       </Link>
 
-      <header className="flex flex-col gap-2">
-        <span className="font-mono text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          {formatCourseCode(course.code)} · {termLabel(TERM)}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 items-start">
+        {/* Main column */}
+        <div className="min-w-0 flex flex-col gap-8">
+          <header className="flex flex-col gap-2">
+            <span className="u-mono text-xs uppercase tracking-wider text-ink-3">
+              {formatCourseCode(course.code)} · {termLabel(TERM)}
+            </span>
+            <h1 className="u-h1 text-[34px]">{course.name}</h1>
+          </header>
+
+          {course.description ? (
+            <p className="u-body whitespace-pre-line">{course.description}</p>
+          ) : null}
+
+          <section className="grid sm:grid-cols-3 gap-3">
+            <ReqCard label="Prerequisites" value={course.prereqs} />
+            <ReqCard label="Corequisites" value={course.coreqs} />
+            <ReqCard label="Antirequisites" value={course.antireqs} />
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="u-h3">Sections in {termLabel(TERM)}</h2>
+            {course.sections.length === 0 ? (
+              <p className="text-sm text-ink-3">No sections scheduled.</p>
+            ) : (
+              <div className="card overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-line text-sm">
+                  <span className="text-ink-2">
+                    {course.sections.length} section
+                    {course.sections.length === 1 ? "" : "s"}
+                  </span>
+                  <span className={totalSeats > 0 ? "text-met" : "text-ink-3"}>
+                    {totalSeats > 0 ? `${totalSeats} seats open` : "Full"}
+                  </span>
+                </div>
+                <ul className="divide-y divide-line">
+                  {course.sections.map((s) => {
+                    const open = Math.max(
+                      0,
+                      s.enrollment_capacity - s.enrollment_total,
+                    );
+                    return (
+                      <li
+                        key={s.id}
+                        className="flex items-center justify-between px-4 py-2 text-xs tabular-nums"
+                      >
+                        <span className="u-mono text-ink">#{s.id}</span>
+                        <span className="text-ink-2">
+                          {s.enrollment_total}/{s.enrollment_capacity}
+                          {open > 0 ? (
+                            <span className="text-met"> · {open} open</span>
+                          ) : (
+                            <span className="text-ink-3"> · full</span>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Sticky add rail */}
+        <aside className="lg:sticky lg:top-20 card p-5 flex flex-col gap-5">
+          {hasRatings ? (
+            <div className="flex flex-col gap-3">
+              <RatingRow label="Useful" value={rating.useful} />
+              <RatingRow label="Easy" value={rating.easy} />
+              <RatingRow label="Liked" value={rating.liked} />
+              <p className="u-small">
+                Based on {rating.filled_count} UWFlow review
+                {rating.filled_count === 1 ? "" : "s"}
+              </p>
+            </div>
+          ) : (
+            <p className="u-small">No UWFlow ratings yet.</p>
+          )}
+
+          <div className="h-px bg-line" />
+
+          <Link
+            href="/plan"
+            className="inline-flex items-center justify-center gap-2 h-[42px] px-[18px] rounded-[9px] bg-primary text-primary-ink text-sm font-semibold hover:bg-primary-hover"
+          >
+            <Icon name="plusSign" size="sm" />
+            Add in the planner
+          </Link>
+          <a
+            href={uwflowUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center justify-center gap-2 h-[42px] px-[18px] rounded-[9px] border border-line-2 text-ink text-sm font-semibold hover:bg-bg-2"
+          >
+            View on UWFlow
+            <Icon name="external" size="sm" />
+          </a>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function RatingRow({ label, value }: { label: string; value: number | null }) {
+  const color = getRatingColor(value);
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-ink-2">{label}</span>
+      <span className="inline-flex items-center gap-2">
+        <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
+        <span className="u-mono text-sm font-semibold tabular-nums">
+          {value == null ? "—" : formatPercent(value)}
         </span>
-        <h1 className="text-3xl font-semibold tracking-tight">{course.name}</h1>
-      </header>
-
-      {rating && rating.filled_count != null && rating.filled_count > 0 && (
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
-          <Stat label="Useful" value={formatPercent(rating.useful)} />
-          <Stat label="Easy" value={formatPercent(rating.easy)} />
-          <Stat label="Liked" value={formatPercent(rating.liked)} />
-          <Stat label="Reviews" value={rating.filled_count.toString()} />
-        </section>
-      )}
-
-      {course.description && (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            Description
-          </h2>
-          <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 whitespace-pre-line">
-            {course.description}
-          </p>
-        </section>
-      )}
-
-      <section className="grid sm:grid-cols-3 gap-6">
-        <ReqBlock label="Prerequisites" value={course.prereqs} />
-        <ReqBlock label="Corequisites" value={course.coreqs} />
-        <ReqBlock label="Antirequisites" value={course.antireqs} />
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          Sections in {termLabel(TERM)}
-        </h2>
-        {course.sections.length === 0 ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            No sections scheduled.
-          </p>
-        ) : (
-          <>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {course.sections.length} section
-              {course.sections.length === 1 ? "" : "s"} ·{" "}
-              <span
-                className={
-                  totalSeats > 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-zinc-500"
-                }
-              >
-                {totalSeats > 0 ? `${totalSeats} seats open` : "Full"}
-              </span>
-            </p>
-            <ul className="text-xs text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-x-3 gap-y-1 mt-1">
-              {course.sections.map((s) => {
-                const open = Math.max(
-                  0,
-                  s.enrollment_capacity - s.enrollment_total,
-                );
-                return (
-                  <li key={s.id} className="tabular-nums">
-                    #{s.id}: {s.enrollment_total}/{s.enrollment_capacity}
-                    {open > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        {" "}
-                        ({open} open)
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        )}
-      </section>
+      </span>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function ReqCard({ label, value }: { label: string; value: string | null }) {
+  const has = !!value && value.trim() !== "";
   return (
-    <div className="flex flex-col">
-      <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-        {label}
-      </span>
-      <span className="text-xl font-semibold tabular-nums">{value}</span>
-    </div>
-  );
-}
-
-function ReqBlock({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-        {label}
-      </span>
-      {value && value.trim() !== "" ? (
-        <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          {value}
-        </p>
+    <div className="card-2 border border-line rounded-[14px] p-4 flex flex-col gap-1.5">
+      <span className="u-eyebrow">{label}</span>
+      {has ? (
+        <p className="text-[13px] leading-relaxed text-ink">{value}</p>
       ) : (
-        <span className="text-sm text-zinc-400">None</span>
+        <span className="text-[13px] text-ink-3">None</span>
       )}
     </div>
   );

@@ -10,6 +10,11 @@
  */
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+// A real transcript is a handful of pages; cap well above so a crafted PDF
+// can't tie up the main thread.
+const MAX_PAGES = 50;
+// Ceiling on parse time so a pathological document can't hang the modal.
+const PARSE_TIMEOUT_MS = 15_000;
 // Two pdf-units of vertical jitter still counts as the "same row". Quest's
 // table rows are spaced ~10 units apart; sub-pixel rendering can offset the
 // y by < 1 unit across cells, so a tolerance of 2 absorbs that without
@@ -50,19 +55,12 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   const doc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
 
   try {
-    const allLines: string[] = [];
-    for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
-      const page = await doc.getPage(pageNum);
-      const content = await page.getTextContent();
-      // content.items is (TextItem | TextMarkedContent)[]; only TextItems
-      // carry str + transform. Filter, then narrow via cast — the runtime
-      // check above keeps it sound.
-      const items: PdfTextItem[] = content.items
-        .filter((it) => "str" in it && "transform" in it)
-        .map((it) => it as unknown as PdfTextItem);
-      allLines.push(...assembleLines(items));
+    if (doc.numPages > MAX_PAGES) {
+      throw new Error(
+        `PDF has too many pages (${doc.numPages}). Quest unofficial transcripts are only a few pages — make sure you uploaded the right file.`,
+      );
     }
-    const text = allLines.join("\n");
+    const text = await withTimeout(extractAllPages(doc), PARSE_TIMEOUT_MS);
     if (text.trim().length === 0) {
       throw new Error(
         "Couldn't read any text from this PDF — it may be a scan/image. Try exporting the unofficial transcript directly from Quest.",
@@ -72,6 +70,49 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   } finally {
     await doc.destroy();
   }
+}
+
+interface PdfDocLike {
+  numPages: number;
+  getPage(
+    n: number,
+  ): Promise<{ getTextContent(): Promise<{ items: unknown[] }> }>;
+}
+
+async function extractAllPages(doc: PdfDocLike): Promise<string> {
+  const allLines: string[] = [];
+  for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+    const page = await doc.getPage(pageNum);
+    const content = await page.getTextContent();
+    // content.items is (TextItem | TextMarkedContent)[]; only TextItems
+    // carry str + transform. Filter, then narrow via cast — the runtime
+    // check above keeps it sound.
+    const items: PdfTextItem[] = content.items
+      .filter((it) => "str" in (it as object) && "transform" in (it as object))
+      .map((it) => it as unknown as PdfTextItem);
+    allLines.push(...assembleLines(items));
+  }
+  return allLines.join("\n");
+}
+
+// Reject if `promise` doesn't settle within `ms`. The pdfjs work keeps running
+// but its result is discarded; the caller's `finally` still destroys the doc.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Timed out reading this PDF. Try a smaller file."));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
 }
 
 /**

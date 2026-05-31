@@ -1,14 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { Brand } from "@/components/chrome/Brand";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
 import {
   type ProgramOption,
   planSubtitle,
 } from "@/components/planner/shell/PlannerShell";
 import { Timeline } from "@/components/planner/timeline/Timeline";
+import { Button } from "@/components/ui/Button";
+import { Pill } from "@/components/ui/Pill";
+import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
+import { logError } from "@/lib/log";
+import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ServerPlan } from "@/lib/plan/server/types";
+import { savePlan } from "@/lib/plan/storage";
+import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
@@ -28,6 +37,11 @@ interface Props {
  * both downstream components already accept LocalPlan.
  */
 export function SharedPlanView({ plan, catalog, programOptions }: Props) {
+  const router = useRouter();
+  const { isAuthed, ready } = useAuthState();
+  const { create } = usePlanList({ isAuthed });
+  const [busy, setBusy] = useState(false);
+
   // Adapter: ServerPlan → LocalPlan. The display tree expects LocalPlan;
   // schemaVersion + stream defaulting are the only fields that differ in
   // shape (server stream can be null; LocalPlan's enum doesn't include null).
@@ -58,22 +72,65 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   const programName =
     programOptions.find((p) => p.id === localPlan.programId)?.name ?? "—";
 
+  // "Duplicate to my plans" — mirrors WelcomeFlow's build(): an authed visitor
+  // gets a server copy and is routed to it; an anon visitor seeds the single
+  // local demo plan and lands in the demo planner. Either way the source slot
+  // ids belong to the owner's rows, so mint fresh ones to avoid PK conflicts
+  // on the seeded insert (same reason duplicatePlan remaps them server-side).
+  async function onDuplicate() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (isAuthed) {
+        const snapshot = toSnapshot(localPlan);
+        const fresh = {
+          ...snapshot,
+          slots: snapshot.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
+        };
+        const id = await create(`${plan.name} (copy)`, fresh);
+        if (id) router.push(`/plan?planId=${id}`);
+        else setBusy(false);
+      } else {
+        savePlan({
+          ...localPlan,
+          slots: localPlan.slots.map((s) => ({
+            ...s,
+            id: crypto.randomUUID(),
+          })),
+        });
+        router.push("/plan");
+      }
+    } catch (err) {
+      logError("Failed to duplicate plan", err);
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/90 backdrop-blur px-4 py-2.5">
+    <div className="flex flex-col gap-4">
+      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-line bg-bg/90 backdrop-blur px-4 py-3 shadow-card-sm">
         <div className="flex items-center gap-3 min-w-0">
-          <span
-            className="font-medium truncate max-w-[14rem]"
-            title={plan.name}
-          >
-            {plan.name}
-          </span>
-          <span className="rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2 py-0.5 text-[10px] uppercase tracking-wider">
-            Shared · read-only
-          </span>
+          <Brand href="/" />
+          <span className="hidden sm:block h-5 w-px bg-line-2" aria-hidden />
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold truncate" title={plan.name}>
+              {plan.name}
+            </span>
+            <span className="u-small truncate">
+              {programName} · {planSubtitle(localPlan)}
+            </span>
+          </div>
         </div>
-        <div className="flex-1 min-w-0 text-center truncate text-sm text-zinc-600 dark:text-zinc-300">
-          {programName} · {planSubtitle(localPlan)}
+        <div className="flex items-center gap-3 shrink-0">
+          <Pill>Shared · read-only</Pill>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onDuplicate}
+            disabled={busy || !ready}
+          >
+            {busy ? "Duplicating…" : "Duplicate to my plans"}
+          </Button>
         </div>
       </div>
 

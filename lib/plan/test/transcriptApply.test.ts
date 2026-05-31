@@ -3,7 +3,7 @@ import type {
   ParsedCourse,
   TranscriptParseResult,
 } from "../../transcript/types";
-import { applyTranscriptToPlan } from "../transcriptApply";
+import { applyTranscriptToPlan, detectStream } from "../transcriptApply";
 
 const makeMint = () => {
   let n = 0;
@@ -199,6 +199,69 @@ describe("applyTranscriptToPlan — undecodable term labels", () => {
     expect(plan.slots.flatMap((s) => s.courses.map((c) => c.code))).toEqual([
       "cs115",
     ]);
+  });
+});
+
+describe("detectStream", () => {
+  it("returns 'regular' as soon as the transcript says regular system", () => {
+    const parse = mkParse([mkCourse("a", "Fall 2023")], {
+      detectedSystemOfStudy: "regular",
+    });
+    expect(detectStream(parse)).toBe("regular");
+  });
+
+  it("detects stream8 from its academic-term fingerprint (1A→1B back-to-back)", () => {
+    // Stream 8 stays in class 1A (Fall 23) → 1B (Winter 24), then 2A (Fall 24).
+    const parse = mkParse([
+      mkCourse("a", "Fall 2023"),
+      mkCourse("b", "Winter 2024"),
+      mkCourse("c", "Fall 2024"),
+    ]);
+    expect(detectStream(parse)).toBe("stream8");
+  });
+
+  it("detects stream4 from its academic-term fingerprint (work term after 1A)", () => {
+    // Stream 4 works in Winter 24, so 1B lands in Spring 24 and 2A in Winter 25.
+    const parse = mkParse([
+      mkCourse("a", "Fall 2023"),
+      mkCourse("b", "Spring 2024"),
+      mkCourse("c", "Winter 2025"),
+    ]);
+    expect(detectStream(parse)).toBe("stream4");
+  });
+
+  it("infers the start term from the earliest course regardless of order", () => {
+    const parse = mkParse([
+      mkCourse("c", "Fall 2024"),
+      mkCourse("a", "Fall 2023"),
+      mkCourse("b", "Winter 2024"),
+    ]);
+    expect(detectStream(parse)).toBe("stream8");
+  });
+
+  it("returns null when both streams fit equally (ambiguous)", () => {
+    // Fall 2023 and Fall 2027 are academic terms in BOTH cadences.
+    const parse = mkParse([
+      mkCourse("a", "Fall 2023"),
+      mkCourse("b", "Fall 2027"),
+    ]);
+    expect(detectStream(parse)).toBeNull();
+  });
+
+  it("returns null with fewer than two datable academic terms", () => {
+    const parse = mkParse([
+      mkCourse("a", "Fall 2023"),
+      mkCourse("xfer", "Transfer Credit", "transfer"),
+    ]);
+    expect(detectStream(parse)).toBeNull();
+  });
+
+  it("returns null when the system of study is unknown", () => {
+    const parse = mkParse(
+      [mkCourse("a", "Fall 2023"), mkCourse("b", "Winter 2024")],
+      { detectedSystemOfStudy: null },
+    );
+    expect(detectStream(parse)).toBeNull();
   });
 });
 

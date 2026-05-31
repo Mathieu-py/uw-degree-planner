@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ServerPlan } from "@/lib/plan/server/types";
 
@@ -27,6 +33,28 @@ vi.mock("@/lib/plan/validate", () => ({
 // PlannerShell is a heavy client module; we only need planSubtitle here.
 vi.mock("@/components/planner/shell/PlannerShell", () => ({
   planSubtitle: () => "Co-op · 8 terms",
+}));
+
+// The "Duplicate to my plans" action pulls in router + auth + plan-list +
+// storage. Stub them so the view mounts in isolation; capture create() to
+// assert the duplicate flow.
+const { routerPushMock, createMock, savePlanMock } = vi.hoisted(() => ({
+  routerPushMock: vi.fn(),
+  createMock: vi.fn().mockResolvedValue("new-plan-id"),
+  savePlanMock: vi.fn(),
+}));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPushMock }),
+}));
+vi.mock("@/lib/auth/store", () => ({
+  useAuthState: () => ({ user: null, ready: true, isAuthed: true }),
+}));
+vi.mock("@/lib/plan/sync/usePlanList", () => ({
+  usePlanList: () => ({ create: createMock }),
+}));
+vi.mock("@/lib/plan/storage", () => ({ savePlan: savePlanMock }));
+vi.mock("@/lib/plan/server/serialize", () => ({
+  toSnapshot: (p: unknown) => ({ ...(p as object), slots: [] }),
 }));
 
 import { SharedPlanView } from "../SharedPlanView";
@@ -110,5 +138,25 @@ describe("SharedPlanView", () => {
       />,
     );
     expect(screen.getByTestId("timeline")).toBeTruthy();
+  });
+
+  it("duplicates to a server plan and routes to it when authed", async () => {
+    render(
+      <SharedPlanView
+        plan={makePlan()}
+        catalog={[]}
+        programOptions={PROGRAM_OPTIONS}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /duplicate to my plans/i }),
+    );
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalledWith(
+        "My shared plan (copy)",
+        expect.anything(),
+      );
+    });
+    expect(routerPushMock).toHaveBeenCalledWith("/plan?planId=new-plan-id");
   });
 });

@@ -172,14 +172,14 @@ describe("listPlans", () => {
     expect(client.from).toHaveBeenCalledWith("plans");
   });
 
-  it("returns the error message when supabase fails", async () => {
+  it("returns a generic error code (not the raw message) when supabase fails", async () => {
     installClient({
       tables: {
         plans: { data: null, error: { message: "boom" } },
       },
     });
     const result = await listPlans();
-    expect(result).toEqual({ ok: false, error: "boom" });
+    expect(result).toEqual({ ok: false, error: "something_went_wrong" });
   });
 });
 
@@ -233,7 +233,7 @@ describe("createPlan", () => {
       rpc: { data: null, error: { message: "rpc failed" } },
     });
     const result = await createPlan({ name: "Fresh", seed: SNAPSHOT });
-    expect(result).toEqual({ ok: false, error: "rpc failed" });
+    expect(result).toEqual({ ok: false, error: "something_went_wrong" });
     // Ensure the rollback actually ran (second from + delete on the chain).
     expect(client.from).toHaveBeenCalledTimes(2);
   });
@@ -360,7 +360,7 @@ describe("loadServerPlan", () => {
       },
     });
     const result = await loadServerPlan("p1");
-    expect(result).toEqual({ ok: false, error: "db down" });
+    expect(result).toEqual({ ok: false, error: "something_went_wrong" });
   });
 
   it("returns an error when the slot query fails", async () => {
@@ -385,7 +385,7 @@ describe("loadServerPlan", () => {
       },
     });
     const result = await loadServerPlan("p1");
-    expect(result).toEqual({ ok: false, error: "slot error" });
+    expect(result).toEqual({ ok: false, error: "something_went_wrong" });
   });
 
   it("returns an error when the course query fails", async () => {
@@ -425,7 +425,7 @@ describe("loadServerPlan", () => {
       },
     });
     const result = await loadServerPlan("p1");
-    expect(result).toEqual({ ok: false, error: "course error" });
+    expect(result).toEqual({ ok: false, error: "something_went_wrong" });
   });
 
   it("skips the courses query when there are no slots", async () => {
@@ -619,7 +619,24 @@ describe("savePlanState", () => {
       rpc: { data: null, error: { message: "rls denied" } },
     });
     const result = await savePlanState("p1", SNAPSHOT);
-    expect(result).toEqual({ ok: false, error: "rls denied" });
+    expect(result).toEqual({ ok: false, error: "something_went_wrong" });
+  });
+
+  it("rejects an oversized snapshot before hitting the RPC", async () => {
+    const { client } = installClient();
+    const huge = {
+      ...SNAPSHOT,
+      slots: Array.from({ length: 51 }, (_, i) => ({
+        id: `slot-${i}`,
+        termId: null,
+        position: "pre" as const,
+        isCoop: false,
+        courses: [],
+      })),
+    };
+    const result = await savePlanState("p1", huge);
+    expect(result).toEqual({ ok: false, error: "snapshot_too_large" });
+    expect(client.rpc).not.toHaveBeenCalled();
   });
 });
 

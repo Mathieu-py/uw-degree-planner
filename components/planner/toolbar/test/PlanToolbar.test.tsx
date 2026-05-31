@@ -9,12 +9,15 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanSummary } from "@/lib/plan/server/types";
 
-const { routerReplaceMock, searchParamsRef } = vi.hoisted(() => ({
-  routerReplaceMock: vi.fn(),
-  searchParamsRef: { current: new URLSearchParams() },
-}));
+const { routerReplaceMock, routerPushMock, searchParamsRef } = vi.hoisted(
+  () => ({
+    routerReplaceMock: vi.fn(),
+    routerPushMock: vi.fn(),
+    searchParamsRef: { current: new URLSearchParams() },
+  }),
+);
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: routerReplaceMock }),
+  useRouter: () => ({ replace: routerReplaceMock, push: routerPushMock }),
   useSearchParams: () => searchParamsRef.current,
 }));
 
@@ -97,14 +100,15 @@ describe("PlanToolbar — visibility", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("renders nothing when currentPlan is missing", () => {
-    // Plans exist but ?planId points at a stale id — bar hides until the
-    // shell's auto-redirect resolves to a real plan.
+  it("falls back to the first plan when ?planId is stale", () => {
+    // Plans exist but ?planId points at a stale id — rather than hiding the
+    // bar (which would strand the user), fall back to the first plan so the
+    // selector stays reachable and they can switch.
     const { container } = mount({
       plans: [mkSummary({ id: "a", name: "Plan A" })],
       currentPlanId: "missing",
     });
-    expect(container.textContent).toBe("");
+    expect(container.textContent).toContain("Plan A");
   });
 });
 
@@ -271,10 +275,10 @@ describe("PlanToolbar — duplicate", () => {
 });
 
 describe("PlanToolbar — create", () => {
-  it("routes to ?new=1 so EmptyState collects program/start-term metadata", () => {
-    // Regression carried from PlanSwitcher: previously create() ran with no
-    // seed, which produced an empty server plan with no slots. Now it routes
-    // to EmptyState so the user picks metadata first.
+  it("routes to /plan/new so the create stepper collects metadata", () => {
+    // Previously create() ran with no seed, producing an empty server plan
+    // with no slots. Now "New plan" routes to the /plan/new stepper where the
+    // user picks program/term (or imports a transcript) first.
     const createMock = vi.fn();
     mount({
       plans: [mkSummary({ id: "a", name: "Plan A" })],
@@ -283,7 +287,7 @@ describe("PlanToolbar — create", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /^new plan$/i }));
     expect(createMock).not.toHaveBeenCalled();
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan?new=1");
+    expect(routerPushMock).toHaveBeenCalledWith("/plan/new");
   });
 });
 

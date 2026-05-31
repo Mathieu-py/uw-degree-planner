@@ -18,15 +18,6 @@ interface Props {
   readOnly?: boolean;
 }
 
-function positionLabel(position: PlanSlot["position"]): string {
-  if (position === "pre") return "Pre-arrival";
-  if (position.startsWith("coop")) {
-    const n = position.slice(4);
-    return `Co-op ${n}`;
-  }
-  return position;
-}
-
 export const TermColumn = memo(function TermColumn({
   slot,
   issues,
@@ -35,8 +26,9 @@ export const TermColumn = memo(function TermColumn({
   readOnly = false,
 }: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
-  const isCoop = slot.isCoop;
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
+  const filled = slot.courses.length;
+  const allDone = filled > 0 && slot.courses.every((c) => !!c.grade);
 
   // Bind the slot id here so the parent's handlers stay referentially stable
   // across edits (they take a slotId) while SlotBody still gets the simple
@@ -52,36 +44,28 @@ export const TermColumn = memo(function TermColumn({
   );
 
   return (
-    <div
-      className={
-        "w-full lg:h-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 p-3 flex flex-col " +
-        (slot.courses.length === 0 ? "gap-1" : "gap-2")
-      }
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-base font-semibold truncate min-w-0">
-          {info?.label ?? "—"}
+    <div className="card pw-term">
+      <div className="pw-thead">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="pw-badge">{slot.position}</span>
+          <span className="pw-season truncate">{info?.label ?? "—"}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {slotLevel.length > 0 ? (
+            <span
+              className="inline-flex items-center text-partial"
+              title={slotLevel.map((i) => i.message).join("\n")}
+            >
+              <Icon name="warning" size="sm" aria-hidden="true" />
+            </span>
+          ) : null}
           <span
-            className={
-              "ml-2 font-medium " +
-              (isCoop
-                ? "text-blue-700 dark:text-blue-300"
-                : "text-zinc-500 dark:text-zinc-400")
-            }
+            className="u-mono u-small"
+            style={{ color: allDone ? "var(--met)" : "var(--ink-3)" }}
           >
-            <span className="mr-2">·</span>
-            <span>{positionLabel(slot.position)}</span>
+            {filled}
           </span>
-        </span>
-        {slotLevel.length > 0 ? (
-          <span
-            className="shrink-0 inline-flex items-center gap-1 text-sm font-semibold text-rose-700 dark:text-rose-300"
-            title={slotLevel.map((i) => i.message).join("\n")}
-          >
-            <Icon name="warning" size="sm" aria-hidden="true" />
-            {slotLevel.map((i) => labelForKind(i.kind)).join(", ")}
-          </span>
-        ) : null}
+        </div>
       </div>
       <SlotBody
         slot={slot}
@@ -93,16 +77,3 @@ export const TermColumn = memo(function TermColumn({
     </div>
   );
 });
-
-function labelForKind(kind: ValidationIssue["kind"]): string {
-  switch (kind) {
-    case "overload":
-      return "Overload";
-    case "prereq":
-      return "Prereq";
-    case "antireq":
-      return "Antireq";
-    case "coreq":
-      return "Coreq";
-  }
-}

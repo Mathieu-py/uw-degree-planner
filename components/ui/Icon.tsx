@@ -1,32 +1,60 @@
 import type { SVGProps } from "react";
+import Arrow from "./icons/arrow.svg";
+import Bolt from "./icons/bolt.svg";
 import Check from "./icons/check.svg";
 import ChevronDown from "./icons/chevronDown.svg";
+import ChevronRight from "./icons/chevronRight.svg";
 import Close from "./icons/close.svg";
+import Copy from "./icons/copy.svg";
 import Delete from "./icons/delete.svg";
-import Duplicate from "./icons/duplicate.svg";
+import Doc from "./icons/doc.svg";
 import Edit from "./icons/edit.svg";
+import External from "./icons/external.svg";
+import Gear from "./icons/gear.svg";
+import Grid from "./icons/grid.svg";
 import Import from "./icons/import.svg";
+import List from "./icons/list.svg";
+import Moon from "./icons/moon.svg";
 import PlusSign from "./icons/plusSign.svg";
 import Rename from "./icons/rename.svg";
-import Settings from "./icons/settings.svg";
+import Reset from "./icons/reset.svg";
+import Search from "./icons/search.svg";
 import Share from "./icons/share.svg";
+import Shield from "./icons/shield.svg";
+import Sun from "./icons/sun.svg";
+import Upload from "./icons/upload.svg";
 import Warning from "./icons/warning.svg";
 
 // Add new icons here as: name → component. Names are camelCase strings the
 // rest of the app uses via <Icon name="..." />. Keep each icon component
 // drawing in its own viewBox; the wrapper just applies size + color classes.
 const REGISTRY = {
+  arrow: Arrow,
+  bolt: Bolt,
   check: Check,
   chevronDown: ChevronDown,
+  chevronRight: ChevronRight,
   close: Close,
+  copy: Copy,
   delete: Delete,
-  duplicate: Duplicate,
+  doc: Doc,
+  duplicate: Copy,
   edit: Edit,
+  external: External,
+  gear: Gear,
+  grid: Grid,
   import: Import,
+  list: List,
+  moon: Moon,
   plusSign: PlusSign,
   rename: Rename,
-  settings: Settings,
+  reset: Reset,
+  search: Search,
+  settings: Gear,
   share: Share,
+  shield: Shield,
+  sun: Sun,
+  upload: Upload,
   warning: Warning,
 } as const;
 

@@ -46,14 +46,14 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 rounded-t-xl shadow-2xl flex flex-col max-h-[85vh] transform transition-transform duration-300 motion-safe:animate-slide-in-bottom ${
+        className={`relative bg-bg border-t border-line rounded-t-[14px] shadow-card-lg flex flex-col max-h-[85vh] transform transition-transform duration-300 motion-safe:animate-slide-in-bottom ${
           isClosing ? "translate-y-full" : "translate-y-0"
         } pb-[env(safe-area-inset-bottom)]`}
       >
         <div className="flex items-center justify-center pt-2 pb-1">
           <span
             aria-hidden="true"
-            className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"
+            className="w-10 h-1 rounded-full bg-line-2"
           />
         </div>
         <div className="flex items-center justify-between px-4 pb-2">

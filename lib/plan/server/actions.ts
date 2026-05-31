@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { mapDbError } from "@/lib/server/dbError";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   assembleServerPlan,
@@ -9,6 +10,7 @@ import {
   type PlanRow,
   type PlanSlotRow,
   planRowToSummary,
+  snapshotSizeError,
   toSnapshot,
 } from "./serialize";
 import type {
@@ -58,7 +60,7 @@ export async function listPlans(): Promise<ActionResult<PlanSummary[]>> {
     .select(PLAN_COLUMNS)
     .order("updated_at", { ascending: false });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "listPlans") };
   return { ok: true, data: (data as PlanRow[]).map(planRowToSummary) };
 }
 
@@ -92,7 +94,10 @@ export async function createPlan(
     .single();
 
   if (error || !data) {
-    return { ok: false, error: error?.message ?? "insert_failed" };
+    return {
+      ok: false,
+      error: error ? mapDbError(error, "createPlan") : "insert_failed",
+    };
   }
 
   if (input.seed) {
@@ -157,7 +162,9 @@ export async function loadServerPlan(
     .eq("id", planId)
     .maybeSingle();
 
-  if (planError) return { ok: false, error: planError.message };
+  if (planError) {
+    return { ok: false, error: mapDbError(planError, "loadServerPlan.plan") };
+  }
   if (!planData) return { ok: true, data: null };
 
   const { data: slotData, error: slotError } = await auth.client
@@ -165,7 +172,9 @@ export async function loadServerPlan(
     .select(SLOT_COLUMNS)
     .eq("plan_id", planId);
 
-  if (slotError) return { ok: false, error: slotError.message };
+  if (slotError) {
+    return { ok: false, error: mapDbError(slotError, "loadServerPlan.slots") };
+  }
 
   const slotIds = (slotData as PlanSlotRow[]).map((s) => s.id);
   let courses: PlanCourseRow[] = [];
@@ -174,7 +183,12 @@ export async function loadServerPlan(
       .from("plan_courses")
       .select(COURSE_COLUMNS)
       .in("slot_id", slotIds);
-    if (courseError) return { ok: false, error: courseError.message };
+    if (courseError) {
+      return {
+        ok: false,
+        error: mapDbError(courseError, "loadServerPlan.courses"),
+      };
+    }
     courses = courseData as PlanCourseRow[];
   }
 
@@ -204,11 +218,14 @@ async function savePlanStateWithClient(
   planId: string,
   snapshot: PlanSnapshot,
 ): Promise<ActionResult<void>> {
+  const sizeError = snapshotSizeError(snapshot);
+  if (sizeError) return { ok: false, error: sizeError };
+
   const { error } = await client.rpc("save_plan_state", {
     p_plan_id: planId,
     p_snapshot: snapshot,
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "savePlanState") };
   return { ok: true, data: undefined };
 }
 
@@ -235,7 +252,7 @@ export async function renamePlan(
     .eq("id", planId)
     .select("id");
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "renamePlan") };
   if (!data || data.length === 0) {
     return { ok: false, error: "not_found_or_unauthorized" };
   }
@@ -265,7 +282,9 @@ export async function setPlanShare(
       .update({ share_token: null })
       .eq("id", planId)
       .select("id");
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      return { ok: false, error: mapDbError(error, "setPlanShare.disable") };
+    }
     if (!data || data.length === 0) {
       return { ok: false, error: "not_found_or_unauthorized" };
     }
@@ -282,7 +301,7 @@ export async function setPlanShare(
     if (error) {
       // Postgres unique_violation; retry once before bubbling up.
       if (error.code === "23505" && attempt === 0) continue;
-      return { ok: false, error: error.message };
+      return { ok: false, error: mapDbError(error, "setPlanShare.enable") };
     }
     if (!data || data.length === 0) {
       return { ok: false, error: "not_found_or_unauthorized" };
@@ -307,7 +326,7 @@ export async function loadSharedPlan(
   if (!token) return { ok: true, data: null };
   const client = await createSupabaseServerClient();
   const { data, error } = await client.rpc("get_shared_plan", { token });
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "loadSharedPlan") };
   return { ok: true, data: mapSharedPlanJson(data) };
 }
 
@@ -328,7 +347,7 @@ export async function deletePlan(planId: string): Promise<ActionResult<void>> {
     .eq("id", planId)
     .select("id");
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "deletePlan") };
   if (!data || data.length === 0) {
     return { ok: false, error: "not_found_or_unauthorized" };
   }

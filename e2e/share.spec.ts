@@ -8,22 +8,30 @@ test("a bogus share token returns 404 and the not-found page", async ({
   const res = await page.goto("/p/not-a-real-token");
   expect(res?.status()).toBe(404);
 
-  // Next.js default not-found page copy.
-  await expect(page.getByText(/this page could not be found/i)).toBeVisible();
+  // Custom not-found.tsx (ErrorScreen kind="404") copy.
+  await expect(page.getByText(/page not found/i)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /couldn.t find that page/i }),
+  ).toBeVisible();
 });
 
-// Needs a plan seeded with a known share_token. The e2e suite runs against a
-// live Supabase project with no seeding harness (see playwright.config.ts),
-// so this is skipped until a fixture token is available.
-test.skip("a valid share token shows the read-only plan", async ({ page }) => {
-  const SEEDED_TOKEN = "REPLACE_WITH_SEEDED_TOKEN";
-  await page.goto(`/p/${SEEDED_TOKEN}`);
+// Needs a real Supabase plan sharing this token; CI runs against placeholder
+// env with no seeding harness. Run locally with `E2E_SHARE_TOKEN=<token>
+// pnpm test:e2e` (share a plan on your dev DB to get one); skipped otherwise.
+// Unblocking in CI would need a Playwright global-setup that seeds via a
+// service-role client.
+const SEEDED_TOKEN = process.env.E2E_SHARE_TOKEN;
+(SEEDED_TOKEN ? test : test.skip)(
+  "a valid share token shows the read-only plan",
+  async ({ page }) => {
+    await page.goto(`/p/${SEEDED_TOKEN}`);
 
-  // Header shows the plan name and the read-only badge.
-  await expect(page.getByText("Shared · read-only")).toBeVisible();
+    // Header shows the read-only badge.
+    await expect(page.getByText("Shared · read-only")).toBeVisible();
 
-  // read-only enforcement: no course-adding affordances are rendered.
-  await expect(page.getByRole("button", { name: /add course/i })).toHaveCount(
-    0,
-  );
-});
+    // read-only enforcement: no course-adding affordances are rendered.
+    await expect(page.getByRole("button", { name: /add course/i })).toHaveCount(
+      0,
+    );
+  },
+);

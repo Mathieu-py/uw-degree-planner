@@ -1,11 +1,5 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramOption } from "../PlannerShell";
 
@@ -18,10 +12,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => searchParamsRef.current,
 }));
 
-const { usePlanSyncMock, setPlanMock } = vi.hoisted(() => {
+const { usePlanSyncMock } = vi.hoisted(() => {
   const setPlan = vi.fn();
   return {
-    setPlanMock: setPlan,
     usePlanSyncMock: vi.fn(() => ({
       plan: null,
       source: "local" as const,
@@ -81,13 +74,11 @@ afterEach(() => {
   cleanup();
 });
 
-describe("PlannerShell — anon /plan?new=1 strip after create (B1)", () => {
-  it("strips ?new=1 from the URL after an anon user creates a local plan, so the loaded-plan branch wins on the next render", async () => {
-    // Anon user landed on /plan?new=1 (e.g. via a bookmark). Without B1 the
-    // URL flag survives setPlan, so the `newRequested` branch keeps
-    // EmptyState on screen and the user thinks the button is broken.
-    searchParamsRef.current = new URLSearchParams("new=1");
-
+describe("PlannerShell — demo first-run routing", () => {
+  it("redirects a signed-out user with no local plan to /plan/new", async () => {
+    // The inline EmptyState is gone: plan creation lives at /plan/new. A
+    // signed-out visitor with no local plan (hydrated, plan === null) and no
+    // ?planId should be redirected there.
     render(
       <PlannerShell
         programOptions={PROGRAM_OPTIONS}
@@ -96,17 +87,8 @@ describe("PlannerShell — anon /plan?new=1 strip after create (B1)", () => {
       />,
     );
 
-    // useAuthedFlag's effect resolves on the next tick (Supabase unconfigured
-    // in tests → setReady(true) immediately) — wait for the EmptyState form.
-    const createBtn = await screen.findByRole("button", {
-      name: /Create empty plan/i,
-    });
-
-    fireEvent.click(createBtn);
-
     await waitFor(() => {
-      expect(setPlanMock).toHaveBeenCalled();
-      expect(routerReplaceMock).toHaveBeenCalledWith("/plan");
+      expect(routerReplaceMock).toHaveBeenCalledWith("/plan/new");
     });
   });
 });
