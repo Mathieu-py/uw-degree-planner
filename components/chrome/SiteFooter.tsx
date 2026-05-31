@@ -1,7 +1,6 @@
 import Link from "next/link";
+import { REPO_URL } from "@/lib/constants";
 import { Brand } from "./Brand";
-
-const REPO_URL = "https://github.com/Mathieu-py/uw-degree-planner";
 
 /**
  * Site footer: wordmark + unaffiliated-tool tagline, plus a links row. Styling

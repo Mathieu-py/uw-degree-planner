@@ -93,7 +93,8 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
         savePlan(localPlan);
         router.push("/plan");
       }
-    } catch {
+    } catch (err) {
+      console.error("Failed to duplicate plan", err);
       setBusy(false);
     }
   }

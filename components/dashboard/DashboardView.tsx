@@ -42,6 +42,7 @@ export function DashboardView({
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
   if (!ready) {
     return (
@@ -95,14 +96,35 @@ export function DashboardView({
         )
       : "—";
 
+  function markPending(id: string, on: boolean) {
+    setPendingIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
   async function onDelete(id: string) {
+    if (pendingIds.has(id)) return;
     setConfirmId(null);
-    await remove(id);
+    markPending(id, true);
+    try {
+      await remove(id);
+    } finally {
+      markPending(id, false);
+    }
   }
 
   async function onDuplicate(id: string) {
-    const newId = await duplicate(id);
-    if (newId) router.push(`/plan?planId=${newId}`);
+    if (pendingIds.has(id)) return;
+    markPending(id, true);
+    try {
+      const newId = await duplicate(id);
+      if (newId) router.push(`/plan?planId=${newId}`);
+    } finally {
+      markPending(id, false);
+    }
   }
 
   return (
@@ -170,6 +192,7 @@ export function DashboardView({
               programName={p.programId ? programNames[p.programId] : null}
               view={view}
               confirming={confirmId === p.id}
+              pending={pendingIds.has(p.id)}
               onConfirm={() => setConfirmId(p.id)}
               onCancelConfirm={() => setConfirmId(null)}
               onDelete={() => onDelete(p.id)}
@@ -203,6 +226,7 @@ function PlanCard({
   programName,
   view,
   confirming,
+  pending,
   onConfirm,
   onCancelConfirm,
   onDelete,
@@ -212,6 +236,7 @@ function PlanCard({
   programName: string | null;
   view: ViewMode;
   confirming: boolean;
+  pending: boolean;
   onConfirm: () => void;
   onCancelConfirm: () => void;
   onDelete: () => void;
@@ -240,7 +265,12 @@ function PlanCard({
         {confirming ? (
           <>
             <span className="u-small text-danger mr-1">Delete?</span>
-            <Button variant="danger" size="sm" onClick={onDelete}>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={onDelete}
+              disabled={pending}
+            >
               Yes
             </Button>
             <Button variant="outline" size="sm" onClick={onCancelConfirm}>
@@ -258,6 +288,7 @@ function PlanCard({
             <Button
               variant="icon"
               onClick={onDuplicate}
+              disabled={pending}
               aria-label="Duplicate plan"
               title="Duplicate"
             >
@@ -266,6 +297,7 @@ function PlanCard({
             <Button
               variant="icon"
               onClick={onConfirm}
+              disabled={pending}
               aria-label="Delete plan"
               title="Delete"
               className="hover:text-danger"

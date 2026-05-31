@@ -148,6 +148,10 @@ export function TranscriptImportModal({
           type="file"
           accept="application/pdf,.pdf"
           onChange={handleFileChange}
+          onClick={(e) => {
+            // Clear so re-selecting the same PDF still fires onChange.
+            (e.target as HTMLInputElement).value = "";
+          }}
           disabled={isExtracting}
           className="sr-only"
         />

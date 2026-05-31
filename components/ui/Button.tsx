@@ -1,6 +1,11 @@
 "use client";
 
-import type { ButtonHTMLAttributes } from "react";
+import {
+  type ButtonHTMLAttributes,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+} from "react";
 
 // Design-system variants:
 //   primary       — ink fill (black/white). The default CTA. NOT gold.
@@ -29,6 +34,11 @@ interface ButtonProps
   block?: boolean;
   /** Defaults to "button" so the component doesn't accidentally submit forms. */
   type?: "button" | "submit" | "reset";
+  /**
+   * Render the single child element with the button styling merged in instead
+   * of a `<button>`. Use for `<Link>` CTAs that should look like buttons.
+   */
+  asChild?: boolean;
 }
 
 const BASE =
@@ -45,7 +55,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   ghost: "text-ink-2 hover:bg-bg-2 hover:text-ink",
   danger: "bg-danger text-bg hover:brightness-105",
   dangerOutline: "border-danger/40 text-danger hover:bg-danger-soft",
-  icon: "p-1.5 rounded-[7px] text-ink-3 hover:text-ink hover:bg-bg-2",
+  icon: "p-2 rounded-[7px] text-ink-3 hover:text-ink hover:bg-bg-2",
 };
 
 // height + horizontal padding + text size + radius per size.
@@ -68,7 +78,9 @@ export function Button({
   size = "md",
   block = false,
   type = "button",
+  asChild = false,
   className,
+  children,
   ...props
 }: ButtonProps) {
   const sizing = variant === "icon" ? "" : SIZES[size];
@@ -76,5 +88,19 @@ export function Button({
     `${BASE} ${VARIANTS[variant]} ${sizing} ${block ? "w-full" : ""} ${className ?? ""}`
       .replace(/\s+/g, " ")
       .trim();
-  return <button type={type} className={classes} {...props} />;
+
+  // asChild: style the single child (e.g. a <Link>) instead of rendering a
+  // <button>. Merges classes; drops button-only props like `type`.
+  if (asChild && isValidElement(children)) {
+    const child = children as ReactElement<{ className?: string }>;
+    return cloneElement(child, {
+      className: `${classes} ${child.props.className ?? ""}`.trim(),
+    });
+  }
+
+  return (
+    <button type={type} className={classes} {...props}>
+      {children}
+    </button>
+  );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
@@ -27,19 +28,15 @@ export function Hero() {
             prereq-aware picks from UWFlow.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/plan"
-              className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-[10px] bg-primary text-primary-ink text-[15px] font-semibold hover:bg-primary-hover transition-colors"
-            >
-              Try the demo
-              <Icon name="arrow" size="sm" aria-hidden="true" />
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center h-12 px-6 rounded-[10px] border border-line-2 bg-bg text-ink text-[15px] font-semibold hover:bg-bg-2 transition-colors"
-            >
-              Sign in
-            </Link>
+            <Button asChild variant="primary" size="lg">
+              <Link href="/plan">
+                Try the demo
+                <Icon name="arrow" size="sm" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/login">Sign in</Link>
+            </Button>
           </div>
           <p className="u-small">
             For UWaterloo undergrads — any program our catalog covers. No

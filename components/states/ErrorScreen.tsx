@@ -4,8 +4,7 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import { SiteFooter } from "@/components/chrome/SiteFooter";
 import { Icon } from "@/components/ui/Icon";
-
-const REPO_URL = "https://github.com/Mathieu-py/uw-degree-planner";
+import { REPO_URL } from "@/lib/constants";
 
 const QUICK_LINKS: { label: string; href: string; external?: boolean }[] = [
   { label: "Home", href: "/" },

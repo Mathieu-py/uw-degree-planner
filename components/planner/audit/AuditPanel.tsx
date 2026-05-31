@@ -76,7 +76,7 @@ export const AuditPanel = memo(function AuditPanel({
 
   const pct =
     totals.needed > 0
-      ? Math.round((totals.satisfied / totals.needed) * 100)
+      ? Math.min(Math.round((totals.satisfied / totals.needed) * 100), 100)
       : 0;
 
   return (

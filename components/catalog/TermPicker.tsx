@@ -97,7 +97,7 @@ export function TermPicker({
   }, [plan, prereqNode]);
 
   function addTo(slot: PlanSlot, label: string) {
-    const current = loadPlan();
+    const current = plan;
     if (!current) return;
     const nextSlots = current.slots.map((s) =>
       s.id === slot.id && !s.courses.some((c) => c.code === code)

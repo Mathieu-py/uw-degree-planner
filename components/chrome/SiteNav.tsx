@@ -55,7 +55,7 @@ export function SiteNav() {
             <Link
               key={l.label}
               href={l.href}
-              className={`nav-link ${l.match && pathname === l.match ? "is-active" : ""}`.trim()}
+              className={`nav-link ${l.match && (pathname === l.match || pathname.startsWith(`${l.match}/`)) ? "is-active" : ""}`.trim()}
             >
               {l.label}
             </Link>

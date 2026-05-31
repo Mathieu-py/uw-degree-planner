@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
+import { getRatingColor } from "@/lib/courses/ratingColor";
 import { formatCourseCode, formatPercent } from "@/lib/format";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
@@ -147,15 +148,7 @@ export default async function CoursePage(props: {
 }
 
 function RatingRow({ label, value }: { label: string; value: number | null }) {
-  const pct = value == null ? 0 : Math.round(value * 100);
-  const color =
-    value == null
-      ? "bg-missing"
-      : pct >= 70
-        ? "bg-met"
-        : pct >= 50
-          ? "bg-partial"
-          : "bg-danger";
+  const color = getRatingColor(value);
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-ink-2">{label}</span>

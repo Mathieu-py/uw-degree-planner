@@ -234,8 +234,9 @@ function PlanToolbarAuthed({
   // confusing in those states, so hide it.
   if (plans === null || plans.length === 0) return null;
 
-  const currentPlan = plans.find((p) => p.id === currentPlanId) ?? null;
-  if (!currentPlan) return null;
+  // A stale/invalid planId in the URL shouldn't hide the toolbar — fall back to
+  // the first plan so the user can still switch plans and recover.
+  const currentPlan = plans.find((p) => p.id === currentPlanId) ?? plans[0];
 
   const sharingPlan = sharingId
     ? (plans.find((p) => p.id === sharingId) ?? null)

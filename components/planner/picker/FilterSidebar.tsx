@@ -219,7 +219,7 @@ function RangeRow({
           const n = Number(e.target.value);
           onChange(n === 0 ? null : n / 100);
         }}
-        className="accent-[var(--accent-bg)]"
+        className="accent-(--accent-bg)"
       />
     </div>
   );

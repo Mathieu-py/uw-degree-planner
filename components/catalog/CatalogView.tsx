@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { FilterSidebar } from "@/components/planner/picker/FilterSidebar";
 import {
   PICKER_PAGE_SIZE,
@@ -13,6 +13,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import type { SortKey } from "@/lib/courses/courseSort";
 import { seatsAvailable } from "@/lib/courses/filters";
+import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode, formatPercent } from "@/lib/format";
 import { TermPicker } from "./TermPicker";
@@ -139,10 +140,7 @@ export function CatalogView({ catalog }: { catalog: Course[] }) {
 
 function CatalogRow({ course, onAdd }: { course: Course; onAdd: () => void }) {
   const seats = seatsAvailable(course);
-  const prereqLine = useMemo(() => {
-    const p = course.prereqs?.trim();
-    return p && p !== "" ? p : null;
-  }, [course.prereqs]);
+  const prereqLine = course.prereqs?.trim() || null;
 
   return (
     <li className="card p-3 flex items-center gap-4">
@@ -200,14 +198,7 @@ function MiniRating({
   value: number | null | undefined;
 }) {
   const pct = value == null ? null : Math.round(value * 100);
-  const color =
-    pct == null
-      ? "bg-missing"
-      : pct >= 70
-        ? "bg-met"
-        : pct >= 50
-          ? "bg-partial"
-          : "bg-danger";
+  const color = getRatingColor(value);
   return (
     <span
       className="inline-flex items-center gap-1.5 w-[88px]"

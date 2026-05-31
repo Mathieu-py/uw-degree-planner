@@ -271,7 +271,12 @@ export function LoginForm() {
         )}
 
         {errors.form && (
-          <p className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger">
+          <p
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger"
+          >
             {errors.form}
           </p>
         )}

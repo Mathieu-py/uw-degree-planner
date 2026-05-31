@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import type { SortDir, SortKey } from "@/lib/courses/courseSort";
 import type { EligibilityRow } from "@/lib/courses/eligibility";
 import { seatsAvailable } from "@/lib/courses/filters";
+import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
@@ -327,8 +328,7 @@ function RatingCell({ value }: { value: number | null | undefined }) {
   if (value == null) {
     return <td className="px-2 py-2 text-right text-xs text-ink-3">—</td>;
   }
-  const pct = Math.round(value * 100);
-  const color = pct >= 70 ? "bg-met" : pct >= 50 ? "bg-partial" : "bg-danger";
+  const color = getRatingColor(value);
   return (
     <td className="px-2 py-2 text-right">
       <div className="inline-flex items-center gap-1.5 justify-end min-w-[56px]">

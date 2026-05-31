@@ -100,14 +100,15 @@ describe("PlanToolbar — visibility", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("renders nothing when currentPlan is missing", () => {
-    // Plans exist but ?planId points at a stale id — bar hides until the
-    // shell's auto-redirect resolves to a real plan.
+  it("falls back to the first plan when ?planId is stale", () => {
+    // Plans exist but ?planId points at a stale id — rather than hiding the
+    // bar (which would strand the user), fall back to the first plan so the
+    // selector stays reachable and they can switch.
     const { container } = mount({
       plans: [mkSummary({ id: "a", name: "Plan A" })],
       currentPlanId: "missing",
     });
-    expect(container.textContent).toBe("");
+    expect(container.textContent).toContain("Plan A");
   });
 });
 

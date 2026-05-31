@@ -62,7 +62,7 @@ export function SettingsView() {
             live behind sign-in. In demo mode there's no account to manage.
           </p>
           <Link
-            href="/login"
+            href="/login?next=/settings"
             className="inline-flex h-11 items-center justify-center rounded-[9px] bg-primary px-5 text-sm font-semibold text-primary-ink hover:bg-primary-hover"
           >
             Sign in
@@ -179,11 +179,12 @@ function Row({
 
 function UsernameRow({ initialUsername }: { initialUsername: string }) {
   const [value, setValue] = useState(initialUsername);
+  const [baseline, setBaseline] = useState(initialUsername);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const dirty = value.trim() !== initialUsername.trim();
+  const dirty = value.trim() !== baseline.trim();
 
   async function save() {
     if (busy || !dirty) return;
@@ -192,6 +193,7 @@ function UsernameRow({ initialUsername }: { initialUsername: string }) {
     setSaved(false);
     const result = await updateProfile({ username: value });
     if (result.ok) {
+      setBaseline(value);
       setSaved(true);
     } else {
       setError(usernameError(result.error));

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/Button";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
+import { NEW_PLAN_NAME } from "@/lib/constants";
 import type { Course } from "@/lib/courses/types";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import { rebuildSlotsForStream } from "@/lib/plan/sequence";
@@ -56,8 +57,6 @@ interface PickerContext {
   slotId: string;
   focusCodes?: string[];
 }
-
-const NEW_PLAN_NAME = "Untitled plan";
 
 /**
  * Client root for the planner. Branches on auth state: signed-out plans
@@ -473,7 +472,13 @@ function PlannerShellInner({
               titleId="audit-sheet-title"
               title="Degree audit"
             >
-              <AuditPanel plan={deferredPlan ?? plan} />
+              <AuditPanel
+                plan={deferredPlan ?? plan}
+                onDrillToRequirement={(codes) => {
+                  handleDrillToRequirement(codes);
+                  setAuditSheetOpen(false);
+                }}
+              />
             </BottomSheet>
           ) : null}
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
+import { NEW_PLAN_NAME } from "@/lib/constants";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
@@ -31,7 +32,6 @@ const STREAMS: Array<{ value: Stream; label: string }> = [
 const STEPS = ["Set up", "Review"] as const;
 const INPUT =
   "w-full h-[42px] rounded-[9px] border border-line-2 bg-bg text-ink px-[13px] text-sm outline-none focus:border-accent-bg";
-const NEW_PLAN_NAME = "Untitled plan";
 
 export function WelcomeFlow({
   programOptions,
@@ -61,6 +61,7 @@ export function WelcomeFlow({
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -72,14 +73,15 @@ export function WelcomeFlow({
       setParseResult(result);
       if (result.detectedProgramId) setProgramId(result.detectedProgramId);
       if (result.detectedSystemOfStudy === "coop") setStream("stream8");
-    } catch {
+    } catch (err) {
+      console.error("PDF parsing failed in onFile:", err);
       setParseError("Couldn't read that PDF. Try a Quest transcript export.");
     } finally {
       setParsing(false);
     }
   }
 
-  function buildPlan(): LocalPlan {
+  const buildPlan = useCallback((): LocalPlan => {
     const mintId = () => crypto.randomUUID();
     if (parseResult) {
       return applyTranscriptToPlan(parseResult, {
@@ -95,11 +97,12 @@ export function WelcomeFlow({
       startTermId,
       slots: buildEmptySlots(startTermId, stream, mintId),
     };
-  }
+  }, [parseResult, programId, stream, startTermId]);
 
   async function build() {
     if (busy) return;
     setBusy(true);
+    setBuildError(null);
     try {
       const next = buildPlan();
       if (isAuthed) {
@@ -110,15 +113,18 @@ export function WelcomeFlow({
         savePlan(next);
         router.push("/plan");
       }
-    } catch {
+    } catch (err) {
+      console.error("Failed to build/save plan:", err);
+      setBuildError("Couldn't build your plan. Please try again.");
       setBusy(false);
     }
   }
 
   const programName =
     programOptions.find((p) => p.id === programId)?.name ?? "your program";
+  const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
   const placedCount = parseResult
-    ? completedCoursesFromPlan(buildPlan()).length
+    ? completedCoursesFromPlan(draftPlan).length
     : 0;
 
   return (
@@ -261,6 +267,12 @@ export function WelcomeFlow({
               </p>
             )}
           </div>
+        ) : null}
+
+        {buildError ? (
+          <p className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger">
+            {buildError}
+          </p>
         ) : null}
 
         {/* Footer nav */}

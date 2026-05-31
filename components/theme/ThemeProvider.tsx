@@ -25,8 +25,13 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function readStoredTheme(): Theme {
   if (typeof window === "undefined") return DEFAULT_THEME;
-  const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return raw === "light" || raw === "dark" ? raw : DEFAULT_THEME;
+  try {
+    const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return raw === "light" || raw === "dark" ? raw : DEFAULT_THEME;
+  } catch {
+    // Private mode / storage disabled — fall back to the default.
+    return DEFAULT_THEME;
+  }
 }
 
 /**

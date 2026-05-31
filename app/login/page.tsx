@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Icon } from "@/components/ui/Icon";
+import { REPO_DISPLAY } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Sign in — UW Degree Planner",
 };
 
-const REPO = "github.com/uw-degree-planner";
 const PERKS = ["Live audit", "Transcript import", "Share links"];
 
 export default function LoginPage() {
@@ -50,7 +50,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="font-mono text-xs text-[#726c5b]">Unofficial · {REPO}</p>
+        <p className="font-mono text-xs text-[#726c5b]">
+          Unofficial · {REPO_DISPLAY}
+        </p>
       </aside>
 
       {/* Right: form */}
