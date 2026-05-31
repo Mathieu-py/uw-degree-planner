@@ -56,13 +56,13 @@ describe("ShareModal", () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+      fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     });
 
     expect(writeText).toHaveBeenCalledWith(
       `${window.location.origin}/p/${TOKEN}`,
     );
-    expect(screen.getByRole("button", { name: "Copied!" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy();
   });
 
   it("falls back to selecting the input when clipboard.writeText rejects", async () => {
@@ -73,12 +73,12 @@ describe("ShareModal", () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+      fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     });
 
     expect(selectSpy).toHaveBeenCalled();
     // Label stays "Copy link" — the copy didn't succeed.
-    expect(screen.getByRole("button", { name: "Copy link" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeTruthy();
   });
 
   it("resets the Copied! label back to Copy link after 1500ms", async () => {
@@ -89,14 +89,14 @@ describe("ShareModal", () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+      fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     });
-    expect(screen.getByRole("button", { name: "Copied!" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy();
 
     await act(async () => {
       vi.advanceTimersByTime(1500);
     });
-    expect(screen.getByRole("button", { name: "Copy link" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeTruthy();
   });
 
   it("calls onClose (via handleClose) when the × button is clicked", () => {

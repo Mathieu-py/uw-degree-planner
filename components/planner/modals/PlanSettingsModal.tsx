@@ -28,7 +28,9 @@ interface Props {
 }
 
 const INPUT =
-  "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm";
+  "w-full h-[42px] rounded-[9px] border border-line-2 bg-bg px-3 text-sm text-ink " +
+  "cursor-pointer outline-none transition-[border-color,box-shadow] " +
+  "focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 const STREAM_LABELS: Record<Stream, string> = {
   regular: "Regular (no co-op)",
@@ -82,8 +84,11 @@ export function PlanSettingsModal({
       onClose={handleClose}
       titleId="plan-settings-title"
     >
-      <header className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between">
-        <h2 id="plan-settings-title" className="text-sm font-medium">
+      <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
+        <h2
+          id="plan-settings-title"
+          className="text-[15px] font-bold tracking-tight"
+        >
           Plan settings
         </h2>
         <Button variant="icon" onClick={handleClose} aria-label="Close">
@@ -92,8 +97,8 @@ export function PlanSettingsModal({
       </header>
 
       <div className="px-4 py-4 flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-xs">
+          <span className="text-[12.5px] font-semibold text-ink-2">
             Program
           </span>
           <select
@@ -110,8 +115,8 @@ export function PlanSettingsModal({
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-xs">
+          <span className="text-[12.5px] font-semibold text-ink-2">
             Specialization / Option
           </span>
           <select
@@ -128,14 +133,14 @@ export function PlanSettingsModal({
             ))}
           </select>
           {programId && specs.length === 0 ? (
-            <span className="text-zinc-400 dark:text-zinc-500 mt-0.5">
+            <span className="text-ink-3 mt-0.5">
               No specializations available for this program.
             </span>
           ) : null}
         </label>
 
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-xs">
+          <span className="text-[12.5px] font-semibold text-ink-2">
             Co-op stream
           </span>
           <select
@@ -150,7 +155,7 @@ export function PlanSettingsModal({
             ))}
           </select>
           {streamDirty ? (
-            <span className="text-amber-700 dark:text-amber-300 mt-0.5">
+            <span className="text-partial mt-0.5">
               Saving will re-sequence terms — your courses stay on the same
               academic term (1A, 2B, …) but may shift to different calendar
               months.
@@ -158,25 +163,26 @@ export function PlanSettingsModal({
           ) : null}
         </label>
 
-        <div className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400 flex flex-col gap-1">
+        <div className="rounded-[9px] border border-accent-line bg-accent-soft px-3 py-2.5 text-xs text-ink-2 flex flex-col gap-1.5">
           <div className="flex justify-between">
-            <span>Start term</span>
-            <span>
+            <span className="font-semibold text-ink">Start term</span>
+            <span className="u-mono u-small">
               {plan.startTermId
                 ? (termInfo(plan.startTermId)?.label ??
                   String(plan.startTermId))
                 : "—"}
             </span>
           </div>
-          <p className="text-[11px] mt-1 text-zinc-500 dark:text-zinc-500">
-            Changing the start term re-bases every calendar term. To do that,
-            use <strong>Reset plan</strong> and re-import.
+          <p className="text-ink-3">
+            Changing the start term re-bases every calendar term — use{" "}
+            <strong className="text-ink-2 font-semibold">Reset plan</strong> and
+            re-import.
           </p>
         </div>
       </div>
 
-      <footer className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 flex justify-end gap-2">
-        <Button variant="outline" onClick={handleClose}>
+      <footer className="border-t border-line bg-bg-2 px-4 py-3 flex justify-end gap-2">
+        <Button variant="ghost" onClick={handleClose}>
           Cancel
         </Button>
         <Button
@@ -186,7 +192,7 @@ export function PlanSettingsModal({
             handleClose();
           }}
         >
-          Save
+          Save changes
         </Button>
       </footer>
     </Modal>

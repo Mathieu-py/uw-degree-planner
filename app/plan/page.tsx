@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { PlannerShell } from "@/components/planner/shell/PlannerShell";
+import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { loadTerm } from "@/lib/courses/data";
 import { PROGRAMS } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
@@ -43,11 +44,7 @@ export default async function PlanPage() {
         useSearchParams (PlannerShell reads `?planId=…`), otherwise the
         whole route is forced into CSR-only mode at build.
       */}
-      <Suspense
-        fallback={
-          <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
-        }
-      >
+      <Suspense fallback={<PlannerSkeleton />}>
         <PlannerShell
           programOptions={programOptions}
           specializationsByProgram={specializationsByProgram}

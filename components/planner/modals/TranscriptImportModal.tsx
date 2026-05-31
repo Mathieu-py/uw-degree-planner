@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
@@ -96,6 +96,13 @@ export function TranscriptImportModal({
     ? PROGRAMS[parseResult.detectedProgramId]?.name
     : null;
 
+  // Recognized total drives the headline ("N courses found …"); the unrecognized
+  // bucket is opt-in and shown on its own line.
+  const recognizedCount =
+    categorized.passed.length +
+    categorized.inProgress.length +
+    categorized.transfer.length;
+
   function toggleIncluded(code: string) {
     setIncluded((prev) => {
       const next = new Set(prev);
@@ -120,216 +127,237 @@ export function TranscriptImportModal({
       titleId="transcript-import-title"
       className="max-w-2xl"
     >
-      <div className="flex flex-col gap-4 p-5">
-        <div className="flex items-center justify-between">
-          <h2 id="transcript-import-title" className="text-sm font-semibold">
-            Import from transcript
-          </h2>
-          <Button variant="icon" onClick={handleClose} aria-label="Close">
-            <Icon name="close" size="md" aria-hidden="true" />
-          </Button>
-        </div>
+      <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
+        <h2
+          id="transcript-import-title"
+          className="text-[15px] font-bold tracking-tight"
+        >
+          Import from transcript
+        </h2>
+        <Button variant="icon" onClick={handleClose} aria-label="Close">
+          <Icon name="close" size="md" aria-hidden="true" />
+        </Button>
+      </header>
 
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Parsed in your browser. Never sent anywhere.
-        </p>
+      <div className="px-4 py-4 flex flex-col gap-4 overflow-y-auto">
+        {/* The native file input is the actual control; once a file is chosen
+            it's hidden and the file row's "Replace" re-triggers it. */}
+        <input
+          ref={fileInputRef}
+          id="transcript-pdf-input"
+          type="file"
+          accept="application/pdf,.pdf"
+          onChange={handleFileChange}
+          disabled={isExtracting}
+          className="sr-only"
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="transcript-pdf-input"
-            className="text-xs text-zinc-600 dark:text-zinc-400"
-          >
-            Quest unofficial transcript (PDF)
-          </label>
-          <input
-            ref={fileInputRef}
-            id="transcript-pdf-input"
-            type="file"
-            accept="application/pdf,.pdf"
-            onChange={handleFileChange}
-            disabled={isExtracting}
-            className="block w-full text-xs text-zinc-700 dark:text-zinc-300 file:mr-3 file:rounded file:border file:border-zinc-300 dark:file:border-zinc-700 file:bg-zinc-100 dark:file:bg-zinc-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-900 dark:file:text-zinc-100 file:cursor-pointer hover:file:bg-zinc-200 dark:hover:file:bg-zinc-800 disabled:opacity-50"
-          />
-          {fileName && !isExtracting && !extractError && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {fileName}
-            </p>
-          )}
-        </div>
-
-        <div className="text-xs">
-          {isExtracting && (
-            <p className="text-zinc-500 dark:text-zinc-400">Reading PDF…</p>
-          )}
-
-          {extractError && (
-            <p className="text-rose-600 dark:text-rose-400">{extractError}</p>
-          )}
-
-          {!isExtracting && !extractError && !hasInput && (
-            <p className="text-zinc-500 dark:text-zinc-400">
+        {!fileName ? (
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-line-2 bg-bg-2 px-4 py-8 text-center transition-colors hover:border-accent-bg hover:bg-accent-soft"
+            >
+              <span className="text-accent">
+                <Icon name="upload" size="md" aria-hidden="true" />
+              </span>
+              <span className="text-sm font-semibold text-ink">
+                Choose your Quest transcript (PDF)
+              </span>
+              <span className="u-small inline-flex items-center gap-1.5">
+                <span className="text-met">
+                  <Icon name="shield" size="xs" aria-hidden="true" />
+                </span>
+                Parsed in your browser · never uploaded
+              </span>
+            </button>
+            <p className="u-small">
               Sign into Quest → Student Center → Other Academic… → Transcript:
               View Unofficial → save as PDF, then upload it here.
             </p>
-          )}
+          </div>
+        ) : (
+          <FileRow
+            fileName={fileName}
+            busy={isExtracting}
+            onReplace={() => fileInputRef.current?.click()}
+          />
+        )}
 
-          {!isExtracting && !extractError && hasInput && !hasResults && (
-            <p className="text-rose-600 dark:text-rose-400">
-              No course codes found in the PDF — make sure you uploaded a Quest
-              unofficial transcript.
-            </p>
-          )}
+        {extractError && (
+          <p className="text-[13px] text-danger">{extractError}</p>
+        )}
 
-          {!isExtracting && !extractError && hasResults && (
-            <div className="flex flex-col gap-2">
-              <DetectionLine
-                programName={detectedProgramName}
-                currentTerm={parseResult.detectedCurrentTerm}
-                rawPlan={parseResult.rawPlanText}
-              />
+        {!isExtracting && !extractError && hasInput && !hasResults && (
+          <p className="text-[13px] text-danger">
+            No course codes found in the PDF — make sure you uploaded a Quest
+            unofficial transcript.
+          </p>
+        )}
 
-              {categorized.passed.length > 0 && (
-                <CategoryDetails
-                  title={
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon name="check" size="xs" aria-hidden="true" />
-                      Passed ({categorized.passed.length})
-                    </span>
-                  }
-                  items={categorized.passed}
-                />
-              )}
-              {categorized.inProgress.length > 0 && (
-                <CategoryDetails
-                  title={
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon name="check" size="xs" aria-hidden="true" />
-                      In-progress ({categorized.inProgress.length})
-                    </span>
-                  }
-                  items={categorized.inProgress}
-                />
-              )}
-              {categorized.transfer.length > 0 && (
-                <CategoryDetails
-                  title={
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon name="check" size="xs" aria-hidden="true" />
-                      Transfer credit ({categorized.transfer.length})
-                    </span>
-                  }
-                  items={categorized.transfer}
-                />
-              )}
-              {categorized.skipped.length > 0 && (
-                <CategoryDetails
-                  title={
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon name="close" size="xs" aria-hidden="true" />
-                      Skipped (failed/withdrawn) ({categorized.skipped.length})
-                    </span>
-                  }
-                  items={categorized.skipped}
-                  muted
-                />
-              )}
-              {categorized.unrecognized.length > 0 && (
-                <UnrecognizedDetails
-                  items={categorized.unrecognized}
-                  included={included}
-                  onToggle={toggleIncluded}
-                />
-              )}
+        {!isExtracting && !extractError && hasResults && (
+          <div className="flex flex-col gap-4">
+            <Headline
+              count={recognizedCount}
+              programName={detectedProgramName}
+              currentTerm={parseResult.detectedCurrentTerm}
+              rawPlan={parseResult.rawPlanText}
+            />
 
-              {parseResult.warnings.length > 0 && (
-                <div className="text-amber-700 dark:text-amber-400 text-xs">
-                  {parseResult.warnings.map((w) => (
-                    <p key={w} className="flex items-start gap-1">
-                      <Icon
-                        name="warning"
-                        size="xs"
-                        aria-hidden="true"
-                        className="mt-0.5 shrink-0"
-                      />
-                      <span>{w}</span>
-                    </p>
-                  ))}
-                </div>
-              )}
+            <div className="grid grid-cols-4 border border-line rounded-[11px] overflow-hidden divide-x divide-line">
+              <Stat label="Passed" n={categorized.passed.length} />
+              <Stat label="In progress" n={categorized.inProgress.length} />
+              <Stat label="Transfer" n={categorized.transfer.length} />
+              <Stat label="Skipped" n={categorized.skipped.length} muted />
             </div>
-          )}
-        </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <Button variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleApply} disabled={includedCount === 0}>
-            Apply {includedCount} course{includedCount === 1 ? "" : "s"}
-          </Button>
-        </div>
+            {categorized.unrecognized.length > 0 && (
+              <UnrecognizedLine
+                items={categorized.unrecognized}
+                included={included}
+                onToggle={toggleIncluded}
+              />
+            )}
+
+            {parseResult.warnings.length > 0 && (
+              <div className="text-partial text-xs flex flex-col gap-1">
+                {parseResult.warnings.map((w) => (
+                  <p key={w} className="flex items-start gap-1.5">
+                    <Icon
+                      name="warning"
+                      size="xs"
+                      aria-hidden="true"
+                      className="mt-0.5 shrink-0"
+                    />
+                    <span>{w}</span>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      <footer className="border-t border-line bg-bg-2 px-4 py-3 flex justify-end gap-2">
+        <Button variant="ghost" onClick={handleClose}>
+          Cancel
+        </Button>
+        <Button onClick={handleApply} disabled={includedCount === 0}>
+          Add {includedCount} course{includedCount === 1 ? "" : "s"}
+        </Button>
+      </footer>
     </Modal>
   );
 }
 
-function DetectionLine({
+function FileRow({
+  fileName,
+  busy,
+  onReplace,
+}: {
+  fileName: string;
+  busy: boolean;
+  onReplace: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2.5 border border-line rounded-[10px] bg-bg-2">
+      <span className="text-accent shrink-0">
+        <Icon name="doc" size="sm" aria-hidden="true" />
+      </span>
+      <div className="flex flex-col min-w-0 flex-1">
+        <span className="text-[13px] font-semibold text-ink truncate">
+          {fileName}
+        </span>
+        <span className="u-small inline-flex items-center gap-1.5">
+          {busy ? (
+            "Reading PDF…"
+          ) : (
+            <>
+              <span className="text-met">
+                <Icon name="shield" size="xs" aria-hidden="true" />
+              </span>
+              Parsed in your browser · never uploaded
+            </>
+          )}
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onReplace}
+        disabled={busy}
+        className="shrink-0"
+      >
+        Replace
+      </Button>
+    </div>
+  );
+}
+
+function Headline({
+  count,
   programName,
   currentTerm,
   rawPlan,
 }: {
+  count: number;
   programName: string | null | undefined;
   currentTerm: TermLetter | null;
   rawPlan: string | null;
 }) {
-  const programPart = programName
-    ? programName
-    : rawPlan
-      ? `${rawPlan} (no matching program — pick after import)`
-      : "(no program detected — pick after import)";
-  const termPart = currentTerm
-    ? `term ${currentTerm}`
-    : "(term not detected — pick after import)";
+  const programNode = programName ? (
+    <b className="text-ink font-semibold">{programName}</b>
+  ) : rawPlan ? (
+    <span>
+      <b className="text-ink font-semibold">{rawPlan}</b> (no matching program —
+      pick after import)
+    </span>
+  ) : (
+    <span>(no program detected — pick after import)</span>
+  );
+  const termNode = currentTerm ? (
+    <>
+      , through term <b className="text-ink font-semibold">{currentTerm}</b>
+    </>
+  ) : (
+    <> (term not detected — pick after import)</>
+  );
   return (
-    <p className="text-zinc-700 dark:text-zinc-300">
-      Detected: <span className="font-medium">{programPart}</span> — {termPart}
-    </p>
+    <div className="flex items-baseline gap-2">
+      <span className="text-[30px] font-bold tracking-tight leading-none tabular-nums">
+        {count}
+      </span>
+      <span className="text-sm text-ink-2">
+        course{count === 1 ? "" : "s"} found in {programNode}
+        {termNode}.
+      </span>
+    </div>
   );
 }
 
-function CategoryDetails({
-  title,
-  items,
+function Stat({
+  label,
+  n,
   muted = false,
 }: {
-  title: ReactNode;
-  items: ParsedCourse[];
+  label: string;
+  n: number;
   muted?: boolean;
 }) {
   return (
-    <details
-      className={
-        muted
-          ? "text-zinc-500 dark:text-zinc-500"
-          : "text-zinc-700 dark:text-zinc-300"
-      }
-    >
-      <summary className="cursor-pointer select-none">{title}</summary>
-      <ul className="mt-1 ml-4 list-disc text-xs space-y-0.5">
-        {items.map((c) => (
-          <li key={c.code} className="font-mono">
-            {c.code}
-            <span className="ml-2 font-sans text-zinc-500 dark:text-zinc-400">
-              {c.name}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </details>
+    <div className="px-2.5 py-3 flex flex-col gap-0.5 items-start">
+      <span
+        className={`text-[22px] font-bold tracking-tight leading-none tabular-nums ${muted ? "text-ink-3" : "text-ink"}`}
+      >
+        {n}
+      </span>
+      <span className="text-[11px] text-ink-3 font-medium">{label}</span>
+    </div>
   );
 }
 
-function UnrecognizedDetails({
+function UnrecognizedLine({
   items,
   included,
   onToggle,
@@ -338,35 +366,47 @@ function UnrecognizedDetails({
   included: Set<string>;
   onToggle: (code: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const includedCount = items.filter((c) => included.has(c.code)).length;
   return (
-    <details open className="text-amber-700 dark:text-amber-400">
-      <summary className="cursor-pointer select-none">
-        <Icon
-          name="warning"
-          size="xs"
-          aria-hidden="true"
-          className="inline-block align-[-0.125em] mr-1"
-        />
-        Unrecognized codes ({items.length}) — check to include
-      </summary>
-      <ul className="mt-1 ml-4 space-y-1">
-        {items.map((c) => (
-          <li key={c.code}>
-            <label className="flex items-center gap-2 cursor-pointer">
+    <div className="border border-partial bg-partial-soft rounded-[10px]">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-between gap-2 w-full px-3 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-2 text-[12.5px]">
+          <span className="text-partial inline-flex">
+            <Icon name="bolt" size="xs" aria-hidden="true" />
+          </span>
+          <span>
+            <b className="font-bold">{items.length} unrecognized codes</b> —{" "}
+            {includedCount} included
+          </span>
+        </span>
+        <span className="u-small font-semibold text-accent">
+          {open ? "Hide" : "Review"}
+        </span>
+      </button>
+      {open && (
+        <div className="flex flex-col gap-0.5 px-3 pb-2.5">
+          {items.map((c) => (
+            <label
+              key={c.code}
+              className="flex items-center gap-2 cursor-pointer py-[3px] text-xs"
+            >
               <input
                 type="checkbox"
                 checked={included.has(c.code)}
                 onChange={() => onToggle(c.code)}
-                className="h-3.5 w-3.5"
+                className="h-3.5 w-3.5 accent-accent-bg"
               />
-              <span className="font-mono text-xs">{c.code}</span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {c.name}
-              </span>
+              <span className="font-mono font-semibold">{c.code}</span>
+              <span className="u-small truncate">{c.name}</span>
             </label>
-          </li>
-        ))}
-      </ul>
-    </details>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

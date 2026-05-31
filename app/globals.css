@@ -285,6 +285,55 @@ body {
 }
 
 /* ============================================================
+   ERROR / NOT-FOUND — "digit · empty-slot · digit" lockup
+   ============================================================ */
+.er-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 680px;
+}
+.er-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.er-digit {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(72px, 11vw, 128px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.er-slot {
+  width: clamp(78px, 11vw, 134px);
+  height: clamp(78px, 11vw, 134px);
+  border-radius: 18px;
+  border: 2px dashed var(--line-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-2);
+}
+.er-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.er-links a:hover {
+  color: var(--ink);
+}
+.er-dot {
+  color: var(--ink-3);
+}
+
+/* ============================================================
    BRAND MARK — ink square with gold diagonal + mono "W"
    ============================================================ */
 .brand {
