@@ -1,4 +1,4 @@
-import { type Page, expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 // Demo (signed-out) plan creation now lives in the WelcomeFlow stepper at
 // /plan/new. Visiting /plan with empty localStorage redirects there; the user
