@@ -1,6 +1,6 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-05-30T09:15:35.288Z",
+  "fetchedAt": "2026-05-31T09:47:22.110Z",
   "courseCount": 10729,
   "courses": [
     {
@@ -5154,13 +5154,13 @@
       },
       "sections": [
         {
-          "id": 610242,
-          "enrollment_total": 30,
+          "id": 610243,
+          "enrollment_total": 29,
           "enrollment_capacity": 30
         },
         {
-          "id": 610243,
-          "enrollment_total": 29,
+          "id": 610242,
+          "enrollment_total": 30,
           "enrollment_capacity": 30
         }
       ]
@@ -31145,6 +31145,11 @@
       },
       "sections": [
         {
+          "id": 609718,
+          "enrollment_total": 0,
+          "enrollment_capacity": 60
+        },
+        {
           "id": 610778,
           "enrollment_total": 55,
           "enrollment_capacity": 60
@@ -31158,11 +31163,6 @@
           "id": 610810,
           "enrollment_total": 25,
           "enrollment_capacity": 30
-        },
-        {
-          "id": 609718,
-          "enrollment_total": 0,
-          "enrollment_capacity": 60
         }
       ]
     },
@@ -44841,13 +44841,13 @@
       },
       "sections": [
         {
-          "id": 609640,
-          "enrollment_total": 24,
+          "id": 609641,
+          "enrollment_total": 0,
           "enrollment_capacity": 25
         },
         {
-          "id": 609641,
-          "enrollment_total": 0,
+          "id": 609640,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         }
       ]
@@ -52719,13 +52719,13 @@
       },
       "sections": [
         {
-          "id": 608013,
-          "enrollment_total": 133,
+          "id": 608012,
+          "enrollment_total": 0,
           "enrollment_capacity": 148
         },
         {
-          "id": 608012,
-          "enrollment_total": 0,
+          "id": 608013,
+          "enrollment_total": 133,
           "enrollment_capacity": 148
         },
         {
@@ -60499,6 +60499,11 @@
       },
       "sections": [
         {
+          "id": 608718,
+          "enrollment_total": 12,
+          "enrollment_capacity": 22
+        },
+        {
           "id": 608714,
           "enrollment_total": 84,
           "enrollment_capacity": 108
@@ -60522,11 +60527,6 @@
           "id": 608717,
           "enrollment_total": 20,
           "enrollment_capacity": 20
-        },
-        {
-          "id": 608718,
-          "enrollment_total": 12,
-          "enrollment_capacity": 22
         }
       ]
     },
@@ -62173,6 +62173,11 @@
       },
       "sections": [
         {
+          "id": 609756,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 609770,
           "enrollment_total": 24,
           "enrollment_capacity": 25
@@ -62185,6 +62190,26 @@
         {
           "id": 609762,
           "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609742,
+          "enrollment_total": 19,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609747,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609765,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609764,
+          "enrollment_total": 23,
           "enrollment_capacity": 25
         },
         {
@@ -62315,31 +62340,6 @@
         {
           "id": 609738,
           "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609756,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609742,
-          "enrollment_total": 19,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609747,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609765,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609764,
-          "enrollment_total": 23,
           "enrollment_capacity": 25
         }
       ]
@@ -67299,13 +67299,13 @@
       },
       "sections": [
         {
-          "id": 610816,
-          "enrollment_total": 9,
+          "id": 610817,
+          "enrollment_total": 0,
           "enrollment_capacity": 15
         },
         {
-          "id": 610817,
-          "enrollment_total": 0,
+          "id": 610816,
+          "enrollment_total": 9,
           "enrollment_capacity": 15
         }
       ]
@@ -90136,10 +90136,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7083333333333334,
-        "useful": 0.7916666666666666,
-        "liked": 0.875,
-        "filled_count": 8
+        "easy": 0.6785714285714286,
+        "useful": 0.75,
+        "liked": 0.8888888888888888,
+        "filled_count": 9
       },
       "sections": [
         {
@@ -106616,6 +106616,11 @@
       },
       "sections": [
         {
+          "id": 610904,
+          "enrollment_total": 12,
+          "enrollment_capacity": 14
+        },
+        {
           "id": 613676,
           "enrollment_total": 1,
           "enrollment_capacity": 1
@@ -106629,11 +106634,6 @@
           "id": 610086,
           "enrollment_total": 5,
           "enrollment_capacity": 5
-        },
-        {
-          "id": 610904,
-          "enrollment_total": 12,
-          "enrollment_capacity": 14
         }
       ]
     },
@@ -110061,8 +110061,8 @@
       "coreqs": null,
       "antireqs": "MATH106, MATH115, MATH136, MATH146, NE112",
       "rating": {
-        "easy": 0.6163793103448276,
-        "useful": 0.8940677966101696,
+        "easy": 0.6186440677966102,
+        "useful": 0.8916666666666667,
         "liked": 0.7745098039215687,
         "filled_count": 102
       },
@@ -111107,6 +111107,11 @@
       },
       "sections": [
         {
+          "id": 610762,
+          "enrollment_total": 0,
+          "enrollment_capacity": 999
+        },
+        {
           "id": 610763,
           "enrollment_total": 110,
           "enrollment_capacity": 160
@@ -111115,11 +111120,6 @@
           "id": 610764,
           "enrollment_total": 110,
           "enrollment_capacity": 160
-        },
-        {
-          "id": 610762,
-          "enrollment_total": 0,
-          "enrollment_capacity": 999
         }
       ]
     },
@@ -142347,10 +142347,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.4339622641509434,
-        "useful": 0.9259259259259259,
-        "liked": 0.9736842105263158,
-        "filled_count": 76
+        "easy": 0.4305555555555555,
+        "useful": 0.9272727272727272,
+        "liked": 0.974025974025974,
+        "filled_count": 77
       },
       "sections": [
         {
@@ -142368,10 +142368,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.35833333333333334,
-        "useful": 0.9655172413793104,
-        "liked": 0.9148936170212766,
-        "filled_count": 47
+        "easy": 0.3548387096774194,
+        "useful": 0.9666666666666667,
+        "liked": 0.9166666666666666,
+        "filled_count": 48
       },
       "sections": [
         {
@@ -142419,10 +142419,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.6547619047619048,
-        "useful": 0.7857142857142857,
-        "liked": 0.84375,
-        "filled_count": 32
+        "easy": 0.6477272727272727,
+        "useful": 0.7840909090909091,
+        "liked": 0.8484848484848485,
+        "filled_count": 33
       },
       "sections": [
         {
@@ -175495,10 +175495,10 @@
       "coreqs": null,
       "antireqs": "STAT221, STAT241",
       "rating": {
-        "easy": 0.4915254237288135,
-        "useful": 0.6278089887640449,
-        "liked": 0.39627329192546584,
-        "filled_count": 805
+        "easy": 0.4924812030075188,
+        "useful": 0.6271028037383177,
+        "liked": 0.3957816377171216,
+        "filled_count": 806
       },
       "sections": [
         {
