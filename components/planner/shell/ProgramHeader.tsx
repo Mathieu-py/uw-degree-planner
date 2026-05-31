@@ -4,6 +4,7 @@ import type { LocalPlan } from "@/lib/plan/types";
 
 interface Props {
   programName: string;
+  planName: string;
   plan: LocalPlan;
 }
 
@@ -14,8 +15,8 @@ function streamLabel(stream: LocalPlan["stream"]): string {
 }
 
 // Program names in data/programs.json are "Short Name (Long Degree Title)".
-// Split so the short name reads as a page heading and the degree title goes
-// in the subtitle; non-parenthesized names fall through unchanged.
+// Split so the short name reads as the context eyebrow and the degree title
+// goes in the subtitle; non-parenthesized names fall through unchanged.
 function splitProgramName(name: string): [string, string | null] {
   const m = name.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
   if (!m) return [name, null];
@@ -23,32 +24,31 @@ function splitProgramName(name: string): [string, string | null] {
 }
 
 /**
- * Top header of the planner workspace: program name as a page heading with
- * the degree title + stream beneath. Workspace + plan-level actions render
- * in the row below in PlannerShell, not here, so this stays a tight headline.
- *
- * Degree titles in the source data follow the pattern
- * "Bachelor of Mathematics - Honours" — we split on " - " so the subtitle
- * reads as bullet-separated parts ("Bachelor of Mathematics · Honours ·
- * Regular") instead of a single hyphenated phrase.
+ * Top header of the planner workspace: the program as a mono eyebrow, the plan
+ * name as the page heading, and the degree title + stream beneath. Workspace +
+ * plan-level actions render in the row below in PlannerShell, not here.
  */
-export function ProgramHeader({ programName, plan }: Props) {
-  const [title, degree] = splitProgramName(programName);
+export function ProgramHeader({ programName, planName, plan }: Props) {
+  const [program, degree] = splitProgramName(programName);
   const stream = streamLabel(plan.stream);
   const parts = degree ? [...degree.split(/\s+-\s+/), stream] : [stream];
   const subtitle = parts.join(" · ");
 
   return (
-    <header className="min-w-0 flex flex-col gap-1">
-      <h1
-        className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate"
+    <header className="min-w-0 flex flex-col gap-0.5">
+      <span
+        className="u-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3 truncate"
         title={programName}
       >
-        {title}
+        {program}
+      </span>
+      <h1
+        className="text-2xl font-bold tracking-tight leading-tight truncate"
+        title={planName}
+      >
+        {planName}
       </h1>
-      <p className="text-base text-zinc-500 dark:text-zinc-400 truncate">
-        {subtitle}
-      </p>
+      <p className="u-body text-[13px] truncate">{subtitle}</p>
     </header>
   );
 }

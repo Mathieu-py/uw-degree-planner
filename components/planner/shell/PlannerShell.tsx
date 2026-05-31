@@ -329,6 +329,20 @@ function PlannerShellInner({
     setPickerCtx({ slotId });
   }, []);
 
+  // Audit drill-in: open the picker pre-filtered to a requirement's courses,
+  // targeting the earliest academic term that still has room (prereq-bearing
+  // courses usually belong earlier) so the user lands in a sensible term.
+  const handleDrillToRequirement = useCallback((codes: string[]) => {
+    const current = planRef.current;
+    if (!current) return;
+    const academic = current.slots.filter(
+      (s) => s.position !== "pre" && !s.isCoop,
+    );
+    const target = academic.find((s) => s.courses.length < 6) ?? academic[0];
+    if (!target) return;
+    setPickerCtx({ slotId: target.id, focusCodes: codes });
+  }, []);
+
   const handleClosePicker = useCallback(() => setPickerCtx(null), []);
 
   const handlePickCode = useCallback(
@@ -431,7 +445,7 @@ function PlannerShellInner({
         toolbar={null}
         overlays={handoffElement}
       >
-        <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+        <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
       </PlannerLayout>
     );
   }
@@ -451,7 +465,7 @@ function PlannerShellInner({
   if (planLoadFailed) {
     return (
       <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
-        <div className="rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 px-4 py-6 text-sm text-rose-900 dark:text-rose-200">
+        <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
           <p className="font-medium">We couldn't load this plan.</p>
           <p className="mt-1 text-xs opacity-80">{loadError}</p>
           <p className="mt-2 text-xs opacity-80">
@@ -465,7 +479,7 @@ function PlannerShellInner({
   if (planNotFound) {
     return (
       <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
-        <div className="rounded-lg border border-amber-300 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 px-4 py-6 text-sm text-amber-900 dark:text-amber-200">
+        <div className="rounded-[10px] border border-partial bg-partial-soft px-4 py-6 text-sm text-ink">
           <p>
             We couldn't find a plan with that id. Pick a different plan from the
             toolbar, or create a new one.
@@ -490,7 +504,7 @@ function PlannerShellInner({
   if (awaitingPlanRedirect) {
     return (
       <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
-        <div className="h-96 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 animate-pulse" />
+        <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
       </PlannerLayout>
     );
   }
@@ -579,7 +593,7 @@ function PlannerShellInner({
           <button
             type="button"
             onClick={() => setAuditSheetOpen(true)}
-            className="lg:hidden fixed left-1/2 -translate-x-1/2 z-40 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 px-4 py-2 text-xs font-medium shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-200"
+            className="lg:hidden fixed left-1/2 -translate-x-1/2 z-40 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] rounded-full bg-primary text-primary-ink px-4 py-2 text-xs font-medium shadow-card-lg hover:bg-primary-hover"
             aria-label="Open degree audit"
           >
             Audit
@@ -591,100 +605,116 @@ function PlannerShellInner({
     >
       <div
         aria-busy={reloading}
-        className={`flex flex-col lg:flex-row gap-5 lg:flex-1 lg:min-h-0 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
+        className={`flex flex-col gap-3 lg:flex-1 lg:min-h-0 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
       >
-        <div className="flex-1 min-w-0 flex flex-col gap-4 lg:min-h-0">
-          <div className="flex items-center justify-between gap-3">
-            <ProgramHeader programName={programName} plan={plan} />
-            <div className="flex items-center gap-2 shrink-0 mr-4">
-              <Button
-                variant="outline"
-                size="lg"
-                className="inline-flex items-center gap-2"
-                onClick={() => setTranscriptOpen(true)}
-              >
-                <Icon name="import" size="md" />
-                Import transcript
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setSettingsOpen(true)}
-                aria-label="Plan settings"
-                title="Plan settings"
-                className="px-2.5! aspect-square inline-flex items-center justify-center"
-              >
-                <Icon name="settings" size="md" />
-              </Button>
+        {/* Header, plan switcher, and banner span the full width above the
+            timeline + audit row. */}
+        <div className="flex items-center justify-between gap-3">
+          <ProgramHeader
+            programName={programName}
+            planName={activePlanName}
+            plan={plan}
+          />
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="lg"
+              className="inline-flex items-center gap-2"
+              onClick={() => setTranscriptOpen(true)}
+            >
+              <Icon name="import" size="md" />
+              Import transcript
+            </Button>
+          </div>
+        </div>
+        {isAuthed ? (
+          <PlanToolbar
+            isAuthed
+            inline
+            extraItems={[
+              {
+                key: "settings",
+                label: "Plan settings",
+                icon: <Icon name="settings" size="md" />,
+                onSelect: () => setSettingsOpen(true),
+              },
+            ]}
+          >
+            {saveStatus ? (
+              <SaveStatusBadge status={saveStatus} onRetry={handleRetrySave} />
+            ) : null}
+          </PlanToolbar>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0">
+            <span
+              className="text-sm font-medium truncate max-w-[16rem]"
+              title={activePlanName}
+            >
+              {activePlanName}
+            </span>
+            {isLocalSource ? (
+              <div className="ml-auto flex items-center gap-2">
+                <DropdownMenu
+                  label="Edit plan"
+                  icon={<Icon name="edit" size="sm" />}
+                  items={[
+                    {
+                      key: "settings",
+                      label: "Plan settings",
+                      icon: <Icon name="settings" size="md" />,
+                      onSelect: () => setSettingsOpen(true),
+                    },
+                    {
+                      key: "reset",
+                      label: "Reset plan",
+                      icon: <Icon name="reset" size="md" />,
+                      destructive: true,
+                      onSelect: handleReset,
+                    },
+                  ]}
+                />
+              </div>
+            ) : null}
+          </div>
+        )}
+        {importBanner ? (
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="flex items-start justify-between gap-3 rounded-[10px] border border-partial bg-partial-soft px-4 py-2.5 text-xs text-ink"
+          >
+            <span>{importBanner}</span>
+            <button
+              type="button"
+              onClick={() => setImportBanner(null)}
+              aria-label="Dismiss"
+              className="text-ink-3 hover:text-ink"
+            >
+              <Icon name="close" size="sm" aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+        {/* Timeline (vertically scrollable) + audit on the side. */}
+        <div className="flex flex-col lg:flex-row gap-5 lg:flex-1 lg:min-h-0">
+          <div className="flex-1 min-w-0 flex flex-col gap-3 lg:min-h-0">
+            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto [scrollbar-width:thin] pr-1">
+              <Timeline
+                plan={plan}
+                issuesPerSlot={issuesPerSlot}
+                onSlotClick={handleOpenPicker}
+                onRemoveCourse={handleRemoveCourse}
+              />
             </div>
           </div>
-          {isAuthed ? (
-            <PlanToolbar isAuthed inline>
-              {saveStatus ? (
-                <SaveStatusBadge
-                  status={saveStatus}
-                  onRetry={handleRetrySave}
-                />
-              ) : null}
-            </PlanToolbar>
-          ) : (
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 px-3 py-3 w-full min-w-0">
-              <span
-                className="text-sm font-medium truncate max-w-[16rem]"
-                title={activePlanName}
-              >
-                {activePlanName}
-              </span>
-              {isLocalSource ? (
-                <div className="ml-auto flex items-center gap-2">
-                  <DropdownMenu
-                    label="Edit plan"
-                    icon={<Icon name="edit" size="sm" />}
-                    items={[
-                      {
-                        key: "reset",
-                        label: "Reset plan",
-                        icon: "↺",
-                        destructive: true,
-                        onSelect: handleReset,
-                      },
-                    ]}
-                  />
-                </div>
-              ) : null}
-            </div>
-          )}
-          {importBanner ? (
-            <div
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              className="flex items-start justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 px-4 py-2.5 text-xs text-amber-900 dark:text-amber-200"
-            >
-              <span>{importBanner}</span>
-              <button
-                type="button"
-                onClick={() => setImportBanner(null)}
-                aria-label="Dismiss"
-                className="text-amber-700/70 dark:text-amber-300/70 hover:text-amber-900 dark:hover:text-amber-100"
-              >
-                <Icon name="close" size="sm" aria-hidden="true" />
-              </button>
-            </div>
-          ) : null}
-          <Timeline
-            plan={plan}
-            issuesPerSlot={issuesPerSlot}
-            onSlotClick={handleOpenPicker}
-            onRemoveCourse={handleRemoveCourse}
-          />
-        </div>
-        {/* Inline at lg+, hidden below — the bottom sheet replaces it on
-            phone widths so the timeline gets full vertical real estate.
-            Lives outside the left column so it aligns with the header at
-            the very top of the page, not below the controls row. */}
-        <div className="hidden lg:block lg:min-h-0">
-          <AuditPanel plan={deferredPlan ?? plan} />
+          {/* Audit on the side at lg+, hidden below — the bottom sheet
+              replaces it on phone widths so the timeline gets full width. */}
+          <div className="hidden lg:block lg:min-h-0">
+            <AuditPanel
+              plan={deferredPlan ?? plan}
+              onDrillToRequirement={handleDrillToRequirement}
+            />
+          </div>
         </div>
       </div>
     </PlannerLayout>

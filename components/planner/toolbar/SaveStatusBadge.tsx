@@ -1,6 +1,5 @@
 "use client";
 
-import { Icon } from "@/components/ui/Icon";
 import type { SaveStatus } from "@/lib/plan/sync/types";
 
 interface Props {
@@ -25,11 +24,8 @@ export function SaveStatusBadge({ status, onRetry }: Props) {
 
   if (status.kind === "saving") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-300">
-        <span
-          aria-hidden="true"
-          className="inline-block size-2 rounded-full bg-amber-500"
-        />
+      <span className="pw-save">
+        <span aria-hidden="true" className="sdot sdot-partial" />
         Saving…
       </span>
     );
@@ -37,9 +33,9 @@ export function SaveStatusBadge({ status, onRetry }: Props) {
 
   if (status.kind === "saved") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-        <Icon name="check" size="sm" aria-hidden="true" />
-        Saved
+      <span className="pw-save">
+        <span aria-hidden="true" className="sdot sdot-met" />
+        All changes saved
       </span>
     );
   }
@@ -52,11 +48,11 @@ export function SaveStatusBadge({ status, onRetry }: Props) {
       onClick={onRetry}
       title={status.message}
       aria-live="polite"
-      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200 dark:hover:bg-rose-950/60"
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium border border-danger bg-danger-soft text-danger hover:brightness-105"
     >
       <span
         aria-hidden="true"
-        className="inline-block size-2 rounded-full bg-rose-500"
+        className="inline-block size-2 rounded-full bg-danger"
       />
       Save failed — retry
     </button>

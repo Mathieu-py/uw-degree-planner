@@ -241,8 +241,8 @@ function PlanToolbarAuthed({
     : null;
 
   const containerClass = inline
-    ? "flex flex-wrap items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 px-3 py-3 w-full min-w-0"
-    : "flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-1.5";
+    ? "flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0"
+    : "flex items-center gap-2 rounded-lg border border-line bg-bg px-3 py-1.5";
 
   // Editing/confirming swap the dropdown for an inline form. Card mode (non-
   // inline) keeps its old behavior — these flows take over the whole bar.
@@ -260,7 +260,7 @@ function PlanToolbarAuthed({
             onKeyDown={(e) => {
               if (e.key === "Escape") setEditing(false);
             }}
-            className="flex-1 min-w-0 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2.5 text-sm"
+            className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-3 py-2.5 text-sm"
             aria-label="New plan name"
           />
           <button
@@ -268,7 +268,7 @@ function PlanToolbarAuthed({
             disabled={busy || !editingName.trim()}
             aria-label="Save rename"
             title="Save"
-            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50"
+            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 disabled:opacity-50"
           >
             <Icon name="check" size="sm" aria-hidden="true" />
           </button>
@@ -277,7 +277,7 @@ function PlanToolbarAuthed({
             onClick={() => setEditing(false)}
             aria-label="Cancel rename"
             title="Cancel"
-            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+            className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
           >
             <Icon name="close" size="md" aria-hidden="true" />
           </button>
@@ -369,7 +369,7 @@ function PlanToolbarAuthed({
             aria-haspopup="listbox"
             aria-expanded={pickerOpen}
             aria-label="Switch plan"
-            className="appearance-none rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 pl-3 pr-9 py-2.5 text-sm w-64 text-left truncate relative"
+            className="appearance-none rounded-md border border-line-2 bg-bg pl-3 pr-9 py-2.5 text-sm w-64 text-left truncate relative"
           >
             {currentPlan.name}
             <Icon
@@ -383,7 +383,7 @@ function PlanToolbarAuthed({
             <div
               role="listbox"
               aria-label="Plans"
-              className="absolute left-0 top-full mt-1 z-20 w-64 max-h-72 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-lg py-1"
+              className="absolute left-0 top-full mt-1 z-20 w-64 max-h-72 overflow-y-auto rounded-md border border-line bg-bg shadow-card-md py-1"
             >
               {plans.map((p) => {
                 const selected = p.id === currentPlan.id;
@@ -412,9 +412,7 @@ function PlanToolbarAuthed({
                     className={
                       "group flex items-center gap-2 px-3 py-2 text-sm " +
                       (inlineActive ? "" : "cursor-pointer ") +
-                      (selected
-                        ? "bg-zinc-100 dark:bg-zinc-900 font-medium"
-                        : "hover:bg-zinc-100 dark:hover:bg-zinc-900")
+                      (selected ? "bg-bg-2 font-medium" : "hover:bg-bg-2")
                     }
                   >
                     {renamingThis ? (
@@ -434,7 +432,7 @@ function PlanToolbarAuthed({
                               setInlineRenameId(null);
                             }
                           }}
-                          className="flex-1 min-w-0 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-sm"
+                          className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-2 py-1 text-sm"
                           aria-label="New plan name"
                         />
                         <button
@@ -446,7 +444,7 @@ function PlanToolbarAuthed({
                           }}
                           aria-label="Save rename"
                           title="Save"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50"
+                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 disabled:opacity-50"
                         >
                           <Icon name="check" size="sm" aria-hidden="true" />
                         </button>
@@ -458,14 +456,14 @@ function PlanToolbarAuthed({
                           }}
                           aria-label="Cancel rename"
                           title="Cancel"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
                         >
                           <Icon name="close" size="md" aria-hidden="true" />
                         </button>
                       </>
                     ) : deletingThis ? (
                       <>
-                        <span className="flex-1 truncate text-rose-700 dark:text-rose-300">
+                        <span className="flex-1 truncate text-danger">
                           Delete "{p.name}"?
                         </span>
                         <button
@@ -477,7 +475,7 @@ function PlanToolbarAuthed({
                           }}
                           aria-label="Confirm delete"
                           title="Delete"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-50"
+                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-danger hover:bg-danger-soft disabled:opacity-50"
                         >
                           <Icon name="check" size="sm" aria-hidden="true" />
                         </button>
@@ -489,7 +487,7 @@ function PlanToolbarAuthed({
                           }}
                           aria-label="Cancel delete"
                           title="Cancel"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
                         >
                           <Icon name="close" size="md" aria-hidden="true" />
                         </button>
@@ -506,7 +504,7 @@ function PlanToolbarAuthed({
                           }}
                           aria-label={`Rename ${p.name}`}
                           title="Rename"
-                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 transition-opacity"
                         >
                           <Icon name="rename" size="md" aria-hidden="true" />
                         </button>
@@ -519,7 +517,7 @@ function PlanToolbarAuthed({
                           }}
                           aria-label={`Delete ${p.name}`}
                           title="Delete"
-                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-opacity disabled:opacity-50"
+                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-danger hover:bg-danger-soft transition-opacity disabled:opacity-50"
                         >
                           <Icon name="delete" size="md" aria-hidden="true" />
                         </button>

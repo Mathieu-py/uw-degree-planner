@@ -24,7 +24,7 @@ const STREAM_LABELS: Array<{ value: Stream; label: string }> = [
 ];
 
 const INPUT =
-  "w-full rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm";
+  "w-full rounded-[9px] border border-line-2 bg-bg text-ink px-3 py-2 text-sm outline-none focus:border-accent-bg";
 
 export function EmptyState({
   programOptions,
@@ -53,9 +53,9 @@ export function EmptyState({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-900/40 px-6 py-8 flex flex-col gap-3">
+      <div className="rounded-[14px] border border-dashed border-line-2 card-2 px-6 py-8 flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Upload your Quest transcript</h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+        <p className="text-sm text-ink-2 max-w-xl">
           Get an instant degree plan with every past term pre-filled. The PDF is
           parsed locally in your browser; nothing is uploaded.
         </p>
@@ -69,10 +69,10 @@ export function EmptyState({
         </Button>
       </div>
 
-      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 px-6 py-6 flex flex-col gap-4">
+      <div className="rounded-[14px] border border-line px-6 py-6 flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold">Or set up manually</h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-ink-2">
             Pick your program, start term, and co-op stream to scaffold an empty
             plan. You can fill the slots in as you go.
           </p>
@@ -80,9 +80,7 @@ export function EmptyState({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              Program
-            </span>
+            <span className="font-medium text-ink-2">Program</span>
             <select
               className={INPUT}
               value={programId}
@@ -97,9 +95,7 @@ export function EmptyState({
           </label>
 
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              Start term (1A)
-            </span>
+            <span className="font-medium text-ink-2">Start term (1A)</span>
             <select
               className={INPUT}
               value={startTermId}
@@ -114,9 +110,7 @@ export function EmptyState({
           </label>
 
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              Co-op stream
-            </span>
+            <span className="font-medium text-ink-2">Co-op stream</span>
             <select
               className={INPUT}
               value={stream}

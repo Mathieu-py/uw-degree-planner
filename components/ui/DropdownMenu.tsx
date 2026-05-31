@@ -72,7 +72,11 @@ export function DropdownMenu({ label, icon, items }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5"
       >
-        {icon ? <span aria-hidden="true">{icon}</span> : null}
+        {icon ? (
+          <span aria-hidden="true" className="inline-flex shrink-0">
+            {icon}
+          </span>
+        ) : null}
         <span>{label}</span>
         <Icon
           name="chevronDown"
@@ -101,7 +105,9 @@ export function DropdownMenu({ label, icon, items }: Props) {
                   : "text-ink hover:bg-bg-2"
               }`}
             >
-              <span aria-hidden="true">{item.icon}</span>
+              <span aria-hidden="true" className="inline-flex shrink-0">
+                {item.icon}
+              </span>
               <span>{item.label}</span>
             </button>
           ))}

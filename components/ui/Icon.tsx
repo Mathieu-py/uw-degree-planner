@@ -8,17 +8,17 @@ import Close from "./icons/close.svg";
 import Copy from "./icons/copy.svg";
 import Delete from "./icons/delete.svg";
 import Doc from "./icons/doc.svg";
-import Duplicate from "./icons/duplicate.svg";
 import Edit from "./icons/edit.svg";
 import External from "./icons/external.svg";
+import Gear from "./icons/gear.svg";
 import Grid from "./icons/grid.svg";
 import Import from "./icons/import.svg";
 import List from "./icons/list.svg";
 import Moon from "./icons/moon.svg";
 import PlusSign from "./icons/plusSign.svg";
 import Rename from "./icons/rename.svg";
+import Reset from "./icons/reset.svg";
 import Search from "./icons/search.svg";
-import Settings from "./icons/settings.svg";
 import Share from "./icons/share.svg";
 import Shield from "./icons/shield.svg";
 import Sun from "./icons/sun.svg";
@@ -38,20 +38,19 @@ const REGISTRY = {
   copy: Copy,
   delete: Delete,
   doc: Doc,
-  duplicate: Duplicate,
+  duplicate: Copy,
   edit: Edit,
   external: External,
-  // aliases to existing glyphs (design vocabulary → registered icon)
-  gear: Settings,
+  gear: Gear,
   grid: Grid,
   import: Import,
   list: List,
   moon: Moon,
-  plus: PlusSign,
   plusSign: PlusSign,
   rename: Rename,
+  reset: Reset,
   search: Search,
-  settings: Settings,
+  settings: Gear,
   share: Share,
   shield: Shield,
   sun: Sun,

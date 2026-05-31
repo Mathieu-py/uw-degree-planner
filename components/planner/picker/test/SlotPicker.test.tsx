@@ -88,10 +88,8 @@ describe("SlotPicker", () => {
         onClose={vi.fn()}
       />,
     );
-    // The header switches to the "filtered to requirement options" variant.
-    expect(
-      screen.queryByText(/filtered to requirement options/i),
-    ).not.toBeNull();
+    // The header shows the gold "Requirement options" drill-in chip.
+    expect(screen.queryByText(/requirement options/i)).not.toBeNull();
     // Picker renders each row's code + name as two clickable buttons, so
     // there can be more than one match per course code — we just need at
     // least one MATH 115 row and zero CS rows.
