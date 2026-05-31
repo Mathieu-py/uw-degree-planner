@@ -278,7 +278,7 @@ export function LoginForm() {
 
         <Button
           type="submit"
-          variant="accent"
+          variant="brand"
           size="lg"
           disabled={busy}
           className="mt-1 w-full"
@@ -294,7 +294,7 @@ export function LoginForm() {
       </div>
 
       <Button
-        variant="secondary"
+        variant="outline"
         size="lg"
         onClick={signInWithGoogle}
         disabled={busy}

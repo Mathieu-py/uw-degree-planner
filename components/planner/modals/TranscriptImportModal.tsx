@@ -261,7 +261,7 @@ export function TranscriptImportModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
           <Button onClick={handleApply} disabled={includedCount === 0}>

@@ -293,14 +293,14 @@ function PlanToolbarAuthed({
           <span className="text-sm truncate">Delete "{currentPlan.name}"?</span>
           <div className="flex items-center gap-1 shrink-0">
             <Button
-              variant="secondary"
+              variant="outline"
               size="lg"
               onClick={() => setConfirmingDelete(false)}
             >
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="danger"
               size="lg"
               disabled={busy}
               onClick={confirmDelete}
@@ -532,7 +532,7 @@ function PlanToolbarAuthed({
           ) : null}
         </div>
         <Button
-          variant="accent"
+          variant="brand"
           size="lg"
           disabled={busy}
           onClick={handleCreate}

@@ -65,7 +65,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative bg-white dark:bg-zinc-950 rounded-lg shadow-2xl w-full flex flex-col overflow-hidden border border-zinc-200 dark:border-zinc-800 transform transition-all duration-300 motion-safe:animate-scale-in ${isClosing ? "scale-95 opacity-0" : "scale-100 opacity-100"} ${className ?? "max-w-md"}`}
+        className={`relative bg-bg rounded-[14px] shadow-card-lg w-full flex flex-col overflow-hidden border border-line transform transition-all duration-300 motion-safe:animate-scale-in ${isClosing ? "scale-95 opacity-0" : "scale-100 opacity-100"} ${className ?? "max-w-md"}`}
       >
         {children}
       </div>

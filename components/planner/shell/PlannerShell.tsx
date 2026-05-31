@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
+import { DemoModeBanner } from "@/components/planner/DemoModeBanner";
 import { HandoffModal } from "@/components/planner/modals/HandoffModal";
 import { PlanSettingsModal } from "@/components/planner/modals/PlanSettingsModal";
 import { TranscriptImportModal } from "@/components/planner/modals/TranscriptImportModal";
@@ -597,7 +598,7 @@ function PlannerShellInner({
             <ProgramHeader programName={programName} plan={plan} />
             <div className="flex items-center gap-2 shrink-0 mr-4">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="lg"
                 className="inline-flex items-center gap-2"
                 onClick={() => setTranscriptOpen(true)}
@@ -606,7 +607,7 @@ function PlannerShellInner({
                 Import transcript
               </Button>
               <Button
-                variant="secondary"
+                variant="outline"
                 size="lg"
                 onClick={() => setSettingsOpen(true)}
                 aria-label="Plan settings"
@@ -720,6 +721,7 @@ function PlannerLayout({
   return (
     <>
       <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+        {!isAuthed ? <DemoModeBanner /> : null}
         {toolbar === undefined ? <PlanToolbar isAuthed={isAuthed} /> : toolbar}
         <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0">
           {children}

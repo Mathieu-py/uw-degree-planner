@@ -176,7 +176,7 @@ export function PlanSettingsModal({
       </div>
 
       <footer className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 flex justify-end gap-2">
-        <Button variant="secondary" onClick={handleClose}>
+        <Button variant="outline" onClick={handleClose}>
           Cancel
         </Button>
         <Button

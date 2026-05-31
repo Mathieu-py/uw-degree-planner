@@ -70,14 +70,14 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
           Import as another plan
         </Button>
         <Button
-          variant="destructiveOutline"
+          variant="dangerOutline"
           disabled={disabled}
           onClick={() => pick("discard")}
         >
           Discard local plan
         </Button>
         <Button
-          variant="secondary"
+          variant="outline"
           disabled={disabled}
           onClick={() => pick("cancel")}
         >
