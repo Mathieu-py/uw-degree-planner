@@ -99,6 +99,10 @@ export function TermPicker({
   function addTo(slot: PlanSlot, label: string) {
     const current = plan;
     if (!current) return;
+    // A course belongs in exactly one term; the `alreadyIn` banner already
+    // flags this, so bail if it's placed anywhere rather than duplicating it.
+    if (current.slots.some((s) => s.courses.some((c) => c.code === code)))
+      return;
     const nextSlots = current.slots.map((s) =>
       s.id === slot.id && !s.courses.some((c) => c.code === code)
         ? { ...s, courses: [...s.courses, { code }] }

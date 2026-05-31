@@ -11,6 +11,8 @@ async function createDemoPlan(page: Page) {
   await page.getByRole("button", { name: "Continue" }).click();
   // Step 2 (Review): commit. Anon flow persists to localStorage and pushes /plan.
   await page.getByRole("button", { name: /build my plan/i }).click();
+  // Wait for the redirect so callers don't race the navigation.
+  await page.waitForURL("/plan");
 }
 
 test("planner front door redirects to the WelcomeFlow set-up stepper", async ({

@@ -91,7 +91,10 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
         if (id) router.push(`/plan?planId=${id}`);
         else setBusy(false);
       } else {
-        savePlan(localPlan);
+        savePlan({
+          ...localPlan,
+          slots: localPlan.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
+        });
         router.push("/plan");
       }
     } catch (err) {

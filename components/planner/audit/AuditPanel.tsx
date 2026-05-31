@@ -404,7 +404,7 @@ function synthesizeCoreSection(termNodes: AuditNode[]): Section {
     status:
       needed === 0
         ? "met"
-        : satisfied === needed
+        : satisfied >= needed
           ? "met"
           : satisfied > 0
             ? "partial"
