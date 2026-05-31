@@ -8,8 +8,11 @@ test("a bogus share token returns 404 and the not-found page", async ({
   const res = await page.goto("/p/not-a-real-token");
   expect(res?.status()).toBe(404);
 
-  // Next.js default not-found page copy.
-  await expect(page.getByText(/this page could not be found/i)).toBeVisible();
+  // Custom not-found.tsx (ErrorScreen kind="404") copy.
+  await expect(page.getByText(/page not found/i)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /couldn.t find that page/i }),
+  ).toBeVisible();
 });
 
 // Needs a plan seeded with a known share_token. The e2e suite runs against a
