@@ -2,26 +2,7 @@
 
 import type { ActionResult } from "@/lib/plan/server/types";
 import { mapDbError } from "@/lib/server/dbError";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-/**
- * Resolve the current user. Mirrors the helper in lib/plan/server/actions.ts —
- * every account action returns `not_authenticated` rather than throwing when
- * the session is gone.
- */
-async function requireUser(): Promise<
-  | {
-      ok: true;
-      userId: string;
-      client: Awaited<ReturnType<typeof createSupabaseServerClient>>;
-    }
-  | { ok: false; error: "not_authenticated" }
-> {
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.auth.getUser();
-  if (error || !data.user) return { ok: false, error: "not_authenticated" };
-  return { ok: true, userId: data.user.id, client };
-}
+import { requireUser } from "@/lib/supabase/requireUser";
 
 // Same rules the sign-up form enforces (LoginForm's usernameSchema): 3–20 chars,
 // letters / numbers / underscores. Re-validated here because client validation
