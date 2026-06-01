@@ -3,7 +3,7 @@ import { loadTerm } from "@/lib/courses/data";
 import { PINNED_TERM } from "@/lib/terms";
 
 export const metadata = {
-  title: "Course catalog · UW Degree Planner",
+  title: "Course catalog",
   description:
     "Browse the UWaterloo course calendar by level, subject, and UWFlow ratings, then add courses to your plan with per-term prerequisite checks.",
 };

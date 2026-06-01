@@ -2,7 +2,7 @@ import { DashboardView } from "@/components/dashboard/DashboardView";
 import { programNameMap } from "@/lib/programs";
 
 export const metadata = {
-  title: "My plans · UW Degree Planner",
+  title: "My plans",
 };
 
 export default function PlansPage() {

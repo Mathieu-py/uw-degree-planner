@@ -3,7 +3,7 @@ import { WelcomeFlow } from "@/components/onboarding/WelcomeFlow";
 import { getProgramOptions } from "@/lib/programs";
 
 export const metadata = {
-  title: "Create a plan · UW Degree Planner",
+  title: "Create a plan",
 };
 
 export default function NewPlanPage() {

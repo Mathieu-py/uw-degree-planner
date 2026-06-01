@@ -23,7 +23,7 @@ export async function generateMetadata({
   const result = await loadSharedPlanCached(shareToken);
   const name = result.ok && result.data ? result.data.name : "Shared plan";
   return {
-    title: `${name} · UW Degree Planner`,
+    title: name,
     // Shared plans are link-only; don't surface them in search results.
     robots: { index: false, follow: false },
   };

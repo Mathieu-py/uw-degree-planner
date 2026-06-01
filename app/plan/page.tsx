@@ -6,7 +6,7 @@ import { getProgramOptions, PROGRAMS } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
 
 export const metadata = {
-  title: "Plan your degree · UW Degree Planner",
+  title: "Plan your degree",
 };
 
 export default async function PlanPage() {
