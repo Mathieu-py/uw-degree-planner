@@ -99,9 +99,85 @@ describe("parsePrereqs", () => {
     }
   });
 
-  it("captures program-only text as raw", () => {
-    const node = parsePrereqs("Honours Mathematics students only");
-    expect(node?.kind).toBe("raw");
+  it("captures a program restriction as a program node", () => {
+    expect(parsePrereqs("Honours Mathematics students only")).toEqual({
+      kind: "program",
+      clause: "Honours Mathematics students only",
+    });
+  });
+
+  it("keeps a course prereq and trailing program restriction separate", () => {
+    const node = parsePrereqs(
+      "CS234 or CS240; Honours Mathematics or Software Engineering students only",
+    );
+    expect(node?.kind).toBe("and");
+    if (node?.kind === "and") {
+      expect(courses(node).sort()).toEqual(["cs234", "cs240"]);
+      expect(node.children).toContainEqual({
+        kind: "program",
+        clause: "Honours Mathematics or Software Engineering students only",
+      });
+    }
+  });
+
+  it("captures a level requirement before a program restriction", () => {
+    const node = parsePrereqs(
+      "Level at least 4A Mathematics or Science students only",
+    );
+    expect(node?.kind).toBe("and");
+    if (node?.kind === "and") {
+      expect(node.children).toContainEqual({ kind: "level", minLevel: "4A" });
+      expect(node.children).toContainEqual({
+        kind: "program",
+        clause: "Mathematics or Science students only",
+      });
+    }
+  });
+
+  it("captures an 'Open only to students in …' restriction", () => {
+    expect(parsePrereqs("Open only to students in Engineering")).toEqual({
+      kind: "program",
+      clause: "Open only to students in Engineering",
+    });
+  });
+
+  it("captures a bare 'level + program' restriction with no 'students' word", () => {
+    // e.g. CIVE125's "1A Civil Engineering" — a cohort lock written without
+    // the word "students". Must become a program node, not raw → "check".
+    expect(parsePrereqs("1A Civil Engineering")).toEqual({
+      kind: "program",
+      clause: "1A Civil Engineering",
+    });
+  });
+
+  it("captures a bare '… students' restriction (no 'only') after a course", () => {
+    // The dominant AFM phrasing: "<course>; <programs> students" with no "only".
+    const node = parsePrereqs(
+      "AFM101; Accounting and Financial Management, Computing and Financial Management students",
+    );
+    expect(node?.kind).toBe("and");
+    if (node?.kind === "and") {
+      expect(node.children).toContainEqual({ kind: "course", code: "afm101" });
+      expect(node.children).toContainEqual({
+        kind: "program",
+        clause:
+          "Accounting and Financial Management, Computing and Financial Management students",
+      });
+    }
+  });
+
+  it("keeps an 'or' before a program restriction as an OR, not an AND", () => {
+    // The leading "or" is the connective joining the alternatives, not part of
+    // the clause — so this is an OR(course, program), not AND.
+    const node = parsePrereqs("CS241 or Honours Mathematics students only");
+    expect(node?.kind).toBe("or");
+    if (node?.kind === "or") {
+      expect(node.children).toContainEqual({ kind: "course", code: "cs241" });
+      expect(node.children).toContainEqual({
+        kind: "program",
+        clause: "Honours Mathematics students only",
+      });
+    }
   });
 
   it("flattens nested AND/OR", () => {

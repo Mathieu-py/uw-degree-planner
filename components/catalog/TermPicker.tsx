@@ -111,7 +111,7 @@ function LocalTermBody({
   const code = course.code.toLowerCase();
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
 
-  const { options, alreadyIn } = useTermOptions(course, plan?.slots);
+  const { options, alreadyIn } = useTermOptions(course, plan?.slots, plan);
 
   function addTo(slot: PlanSlot, label: string) {
     if (!plan) return;
@@ -192,7 +192,11 @@ function ServerTermBody({
 
   // serverPlan is null during the plan-picker step and mid-load, so options
   // come back empty until a plan resolves — exactly the term step's gate.
-  const { options, alreadyIn } = useTermOptions(course, serverPlan?.slots);
+  const { options, alreadyIn } = useTermOptions(
+    course,
+    serverPlan?.slots,
+    serverPlan,
+  );
 
   useEffect(() => {
     setHeading(step === "plans" ? "Add to which plan?" : "Add to which term?");

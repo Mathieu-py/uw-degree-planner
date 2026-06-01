@@ -31,7 +31,7 @@ export function TermChoiceModal({
   const { isClosing, handleClose, animateOut } = useModalExit(onClose);
   const [addedTo, setAddedTo] = useState<string | null>(null);
 
-  const { options, alreadyIn } = useTermOptions(course, plan.slots);
+  const { options, alreadyIn } = useTermOptions(course, plan.slots, plan);
 
   // Play the exit animation before committing so the add+unmount lands once the
   // modal has visually dismissed (and a double-tap can't double-add).

@@ -4,11 +4,15 @@
  * the UI can ask the student to verify them rather than wrongly failing.
  */
 
+import type { ProgramIdentity } from "@/lib/programs";
 import type { PrereqNode } from "./parse";
+import { matchProgram, parseProgramClause } from "./program";
 
 export interface UserState {
   completed: ReadonlySet<string>;
   level?: string;
+  /** Student's program, so program-restriction clauses resolve instead of "check". */
+  program?: ProgramIdentity;
 }
 
 export interface EligibilityResult {
@@ -16,6 +20,7 @@ export interface EligibilityResult {
   uncertain: boolean;
   missingCourses: string[];
   rawRequirements: string[];
+  blockedByProgram: boolean;
 }
 
 export function evaluate(
@@ -28,6 +33,7 @@ export function evaluate(
       uncertain: false,
       missingCourses: [],
       rawRequirements: [],
+      blockedByProgram: false,
     };
   }
   const result = walk(node, state);
@@ -36,6 +42,7 @@ export function evaluate(
     uncertain: result.uncertain,
     missingCourses: [...new Set(result.missing)],
     rawRequirements: [...new Set(result.raw)],
+    blockedByProgram: result.blockedByProgram,
   };
 }
 
@@ -44,50 +51,72 @@ interface WalkResult {
   uncertain: boolean;
   missing: string[];
   raw: string[];
+  /** A program restriction in this subtree confirmed the student is ineligible. */
+  blockedByProgram: boolean;
+}
+
+/**
+ * A WalkResult with neutral "satisfied, nothing to report" defaults; pass only
+ * the fields that differ. Keeps each `walk` branch to its meaningful deltas.
+ */
+function res(over: Partial<WalkResult> = {}): WalkResult {
+  return {
+    satisfied: true,
+    uncertain: false,
+    missing: [],
+    raw: [],
+    blockedByProgram: false,
+    ...over,
+  };
 }
 
 function walk(node: PrereqNode, state: UserState): WalkResult {
   switch (node.kind) {
     case "course": {
       const ok = state.completed.has(node.code);
-      return {
-        satisfied: ok,
-        uncertain: false,
-        missing: ok ? [] : [node.code],
-        raw: [],
-      };
+      return ok ? res() : res({ satisfied: false, missing: [node.code] });
     }
     case "level": {
-      if (!state.level) {
-        return {
-          satisfied: true,
-          uncertain: true,
-          missing: [],
-          raw: [`Level at least ${node.minLevel}`],
-        };
+      const gate = `Level at least ${node.minLevel}`;
+      // Unknown level → uncertain ("check"); known level → definite, and on a
+      // fail we surface the gate so the UI names the level rather than a bare
+      // "Missing prereqs".
+      if (!state.level) return res({ uncertain: true, raw: [gate] });
+      const ok = compareLevel(state.level, node.minLevel) >= 0;
+      return res({ satisfied: ok, raw: ok ? [] : [gate] });
+    }
+    case "program": {
+      const verdict = matchProgram(
+        parseProgramClause(node.clause),
+        state.program ?? null,
+      );
+      // block → hard fail (surfaced via raw so the UI can explain why, since
+      // there's no missing course to point at); unknown → "check"; allow → pass.
+      if (verdict === "block") {
+        return res({
+          satisfied: false,
+          raw: [node.clause],
+          blockedByProgram: true,
+        });
       }
-      return {
-        satisfied: compareLevel(state.level, node.minLevel) >= 0,
-        uncertain: false,
-        missing: [],
-        raw: [],
-      };
+      if (verdict === "unknown")
+        return res({ uncertain: true, raw: [node.clause] });
+      return res();
     }
     case "raw": {
       const text = node.text.trim();
-      if (text === "") {
-        return { satisfied: true, uncertain: false, missing: [], raw: [] };
-      }
-      return { satisfied: true, uncertain: true, missing: [], raw: [text] };
+      return text === "" ? res() : res({ uncertain: true, raw: [text] });
     }
     case "and": {
       const child = node.children.map((c) => walk(c, state));
-      return {
+      return res({
         satisfied: child.every((c) => c.satisfied),
         uncertain: child.some((c) => c.uncertain),
         missing: child.flatMap((c) => c.missing),
         raw: child.flatMap((c) => c.raw),
-      };
+        // Any program block in the conjunction fails it for a program reason.
+        blockedByProgram: child.some((c) => c.blockedByProgram),
+      });
     }
     case "or": {
       // If any child is definitely satisfied, the OR is satisfied (no asterisk).
@@ -95,17 +124,18 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       // bias toward "satisfied + uncertain" rather than failing — the student
       // may still meet the requirement via a route we can't evaluate.
       const child = node.children.map((c) => walk(c, state));
-      const anySatisfied = child.some((c) => c.satisfied && !c.uncertain);
-      if (anySatisfied) {
-        return { satisfied: true, uncertain: false, missing: [], raw: [] };
-      }
+      if (child.some((c) => c.satisfied && !c.uncertain)) return res();
       const anyUncertain = child.some((c) => c.uncertain);
-      return {
+      return res({
         satisfied: anyUncertain,
         uncertain: anyUncertain,
         missing: anyUncertain ? [] : child.flatMap((c) => c.missing),
         raw: child.flatMap((c) => c.raw),
-      };
+        // Only a definitively-failing OR (no satisfied, no uncertain branch)
+        // can be attributed to a program block.
+        blockedByProgram:
+          !anyUncertain && child.some((c) => c.blockedByProgram),
+      });
     }
   }
 }

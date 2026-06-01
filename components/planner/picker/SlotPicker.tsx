@@ -14,6 +14,7 @@ import type { Course } from "@/lib/courses/types";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { EligibilityResult } from "@/lib/prereqs/satisfied";
+import type { ProgramIdentity } from "@/lib/programs";
 import { FilterSidebar } from "./FilterSidebar";
 import { PICKER_PAGE_SIZE, useFilteredCourses } from "./useFilteredCourses";
 
@@ -24,6 +25,10 @@ interface Props {
   placedCodes: Set<string>;
   /** Completed set as of the target slot's term (used for prereq eval). */
   completedBefore: Set<string>;
+  /** Target term's level (e.g. "2A") so level-gated prereqs resolve instead of showing "check". */
+  level?: string;
+  /** Student's program so program-restriction prereqs resolve instead of "check". */
+  program?: ProgramIdentity;
   /** Optional restriction to specific codes (e.g. audit drill-in). */
   focusCodes?: string[];
   onPick: (code: string) => void;
@@ -40,6 +45,8 @@ export function SlotPicker({
   catalog,
   placedCodes,
   completedBefore,
+  level,
+  program,
   focusCodes,
   onPick,
   onClose,
@@ -61,6 +68,8 @@ export function SlotPicker({
     catalog,
     placedCodes,
     completedBefore,
+    level,
+    program,
     focusCodes,
   });
 
@@ -357,6 +366,18 @@ function EligibilityChip({ result }: { result: EligibilityResult }) {
         title={result.rawRequirements.join(" · ")}
       >
         Check: {truncate(hint, 18)}
+      </span>
+    );
+  }
+  // A confirmed program/faculty restriction (e.g. "Anthropology students
+  // only") — label it as such rather than as missing prereqs.
+  if (result.blockedByProgram) {
+    return (
+      <span
+        className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
+        title={result.rawRequirements.join(" · ")}
+      >
+        Wrong program
       </span>
     );
   }

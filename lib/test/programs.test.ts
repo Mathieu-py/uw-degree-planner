@@ -9,6 +9,8 @@ import {
   isTermLetter,
   PROGRAMS,
   type Program,
+  programIdentity,
+  programShortNames,
   type RuleNode,
   requiredCoursesIn,
   TERM_LETTERS,
@@ -139,6 +141,48 @@ describe("isKnownSpecialization / getSpecialization", () => {
 
   it("rejects all specs when the program is unknown", () => {
     expect(isKnownSpecialization("not-a-program", spec)).toBe(false);
+  });
+});
+
+describe("programIdentity", () => {
+  it("derives engineering faculty + short name + alias for SYDE", () => {
+    const id = programIdentity("systems-design-engineering");
+    expect(id?.faculty).toBe("engineering");
+    expect(id?.names).toContain("systems design engineering");
+    expect(id?.names).toContain("syde");
+  });
+
+  it("maps Bachelor of Computer Science to the mathematics faculty", () => {
+    const id = programIdentity("h-computer-science-bcs");
+    expect(id?.faculty).toBe("mathematics");
+    expect(id?.names).toEqual(
+      expect.arrayContaining(["computer science", "cs"]),
+    );
+  });
+
+  it("derives arts faculty for a Bachelor of Arts program", () => {
+    expect(programIdentity("3g-anthropology")?.faculty).toBe("arts");
+  });
+
+  it("leaves faculty null when the degree type is ambiguous", () => {
+    // "Bachelor of Medical Sciences" maps to no faculty in DEGREE_FACULTY.
+    expect(programIdentity("medical-sciences")?.faculty).toBeNull();
+  });
+
+  it("returns null for an unknown or empty program id", () => {
+    expect(programIdentity("not-a-program")).toBeNull();
+    expect(programIdentity(null)).toBeNull();
+    expect(programIdentity(undefined)).toBeNull();
+  });
+});
+
+describe("programShortNames", () => {
+  it("includes registry short names and curated aliases", () => {
+    const names = programShortNames();
+    expect(names.has("systems design engineering")).toBe(true);
+    expect(names.has("computer science")).toBe(true);
+    expect(names.has("syde")).toBe(true);
+    expect(names.has("cs")).toBe(true);
   });
 });
 
