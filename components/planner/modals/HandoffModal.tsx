@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { Modal } from "@/components/ui/Modal";
+import { Modal, ModalHeader } from "@/components/ui/Modal";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { HandoffResolution } from "@/lib/plan/sync/useAnonHandoff";
 import type { LocalPlan } from "@/lib/plan/types";
@@ -55,11 +55,9 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
 
   return (
     <Modal isClosing={isClosing} onClose={handleClose} titleId="handoff-title">
-      <header className="border-b border-line px-4 py-3.5">
-        <h2 id="handoff-title" className="text-[15px] font-bold tracking-tight">
-          You have an unsaved local plan
-        </h2>
-      </header>
+      <ModalHeader titleId="handoff-title">
+        You have an unsaved local plan
+      </ModalHeader>
       <div className="px-4 py-4 flex flex-col gap-3.5">
         <p className="text-[13.5px] text-ink-2">
           This browser has a plan you built before signing in, and your account

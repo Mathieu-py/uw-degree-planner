@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { Modal } from "@/components/ui/Modal";
+import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 
 interface Props {
@@ -55,17 +55,9 @@ export function ShareModal({ planName, shareToken, onClose }: Props) {
       onClose={handleClose}
       titleId="share-modal-title"
     >
-      <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
-        <h2
-          id="share-modal-title"
-          className="text-[15px] font-bold tracking-tight truncate flex-1 min-w-0"
-        >
-          Share "{planName}"
-        </h2>
-        <Button variant="icon" onClick={handleClose} aria-label="Close">
-          <Icon name="close" size="md" aria-hidden="true" />
-        </Button>
-      </header>
+      <ModalHeader titleId="share-modal-title" onClose={handleClose}>
+        Share "{planName}"
+      </ModalHeader>
 
       <div className="px-4 py-4 flex flex-col gap-3">
         <p id="share-link-desc" className="text-[13.5px] text-ink-2">
@@ -109,11 +101,11 @@ export function ShareModal({ planName, shareToken, onClose }: Props) {
         )}
       </div>
 
-      <footer className="border-t border-line bg-bg-2 px-4 py-3 flex justify-end">
+      <ModalFooter>
         <Button variant="ghost" onClick={handleClose}>
           Done
         </Button>
-      </footer>
+      </ModalFooter>
     </Modal>
   );
 }

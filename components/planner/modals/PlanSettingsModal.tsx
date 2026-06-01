@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ProgramOption } from "@/components/planner/shell/PlannerShell";
 import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/ui/Icon";
-import { Modal } from "@/components/ui/Modal";
+import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
@@ -80,17 +79,9 @@ export function PlanSettingsModal({
       onClose={handleClose}
       titleId="plan-settings-title"
     >
-      <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
-        <h2
-          id="plan-settings-title"
-          className="text-[15px] font-bold tracking-tight"
-        >
-          Plan settings
-        </h2>
-        <Button variant="icon" onClick={handleClose} aria-label="Close">
-          <Icon name="close" size="md" aria-hidden="true" />
-        </Button>
-      </header>
+      <ModalHeader titleId="plan-settings-title" onClose={handleClose}>
+        Plan settings
+      </ModalHeader>
 
       <div className="px-4 py-4 flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-xs">
@@ -174,7 +165,7 @@ export function PlanSettingsModal({
         </div>
       </div>
 
-      <footer className="border-t border-line bg-bg-2 px-4 py-3 flex justify-end gap-2">
+      <ModalFooter>
         <Button variant="ghost" onClick={handleClose}>
           Cancel
         </Button>
@@ -187,7 +178,7 @@ export function PlanSettingsModal({
         >
           Save changes
         </Button>
-      </footer>
+      </ModalFooter>
     </Modal>
   );
 }
