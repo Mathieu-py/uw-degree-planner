@@ -1,7 +1,7 @@
 "use client";
 
 import type { SelectHTMLAttributes } from "react";
-import { FIELD_CLASSES } from "./fieldClasses";
+import { FIELD_CLASSES } from "./Input";
 
 /**
  * Native `<select>` styled to match {@link Input} — same hairline border, height,

@@ -22,8 +22,7 @@ import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ActionResult, ServerPlan } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { PlanSlot } from "@/lib/plan/types";
-import { optionButtonClasses } from "./optionButtonClasses";
-import { TermOptionList } from "./TermOptionList";
+import { optionButtonClasses, TermOptionList } from "./TermOptionList";
 import { alreadyInLabel, useTermOptions } from "./termOptions";
 import { ErrorBody, StatusBody, serverActionError } from "./termPickerShared";
 
