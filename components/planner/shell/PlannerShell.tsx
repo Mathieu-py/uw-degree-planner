@@ -25,6 +25,8 @@ import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import type { Course } from "@/lib/courses/types";
 import { completedSetFromPlan } from "@/lib/plan/derive";
+import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
+import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { rebuildSlotsForStream } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
@@ -288,13 +290,8 @@ function PlannerShellInner({
   const handlePickCode = useCallback(
     (code: string) => {
       if (!plan || !picker) return;
-      const lc = code.toLowerCase();
-      const nextSlots = plan.slots.map((s) =>
-        s.id === picker.slotId && !s.courses.some((c) => c.code === lc)
-          ? { ...s, courses: [...s.courses, { code: lc }] }
-          : s,
-      );
-      setPlan({ ...plan, slots: nextSlots });
+      const next = addCourseToSlot(plan, picker.slotId, { code });
+      if (next !== plan) setPlan(next);
       setPicker(null);
     },
     [plan, picker, setPlan, setPicker],
@@ -304,15 +301,21 @@ function PlannerShellInner({
     (slotId: string, code: string) => {
       const current = planRef.current;
       if (!current) return;
-      const nextSlots = current.slots.map((s) =>
-        s.id === slotId
-          ? {
-              ...s,
-              courses: s.courses.filter((c) => c.code !== code.toLowerCase()),
-            }
-          : s,
-      );
-      setPlan({ ...current, slots: nextSlots });
+      const next = removeCourseFromSlot(current, slotId, code);
+      if (next !== current) setPlan(next);
+    },
+    [setPlan],
+  );
+
+  // Drag-and-drop: a placed chip dropped on another term ("move") or an audit
+  // "missing" chip dropped into a term ("add"). All routed through setPlan, so
+  // persistence and re-validation happen exactly as for any other edit.
+  const handleCourseDrop = useCallback(
+    (toSlotId: string, data: CourseDragData) => {
+      const cur = planRef.current;
+      if (!cur) return;
+      const next = applyCourseDrop(cur, toSlotId, data);
+      if (next !== cur) setPlan(next);
     },
     [setPlan],
   );
@@ -583,6 +586,7 @@ function PlannerShellInner({
                 issuesPerSlot={issuesPerSlot}
                 onSlotClick={openPicker}
                 onRemoveCourse={handleRemoveCourse}
+                onCourseDrop={handleCourseDrop}
               />
             </div>
           </div>

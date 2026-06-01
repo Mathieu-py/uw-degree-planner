@@ -10,6 +10,7 @@ import {
   summarize,
 } from "@/lib/audit/compile";
 import { formatCourseCode } from "@/lib/format";
+import { courseDragProps } from "@/lib/plan/dnd";
 import type { LocalPlan } from "@/lib/plan/types";
 import { PROGRAMS, TERM_LETTERS } from "@/lib/programs";
 
@@ -241,10 +242,11 @@ function LeafChips({
               key={c}
               type="button"
               disabled={!onDrill}
+              {...(onDrill ? courseDragProps({ kind: "add", code: c }) : null)}
               onClick={() => onDrill?.(node.missingCodes)}
               title={
                 onDrill
-                  ? "Find courses for this requirement"
+                  ? "Drag into a term, or click to find courses"
                   : formatCourseCode(c)
               }
               className="pw-areq is-miss disabled:cursor-default"

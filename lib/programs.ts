@@ -256,7 +256,7 @@ export function describeRule(node: RuleNode): string | undefined {
  *
  * Returns the flat list of course codes if the node qualifies, else null.
  */
-export function functionallyMandatoryCourses(node: RuleNode): string[] | null {
+function functionallyMandatoryCourses(node: RuleNode): string[] | null {
   if (node.kind !== "pick" || node.selectMin === undefined) return null;
   const leafCourses: string[] = [];
   for (const c of node.children) {

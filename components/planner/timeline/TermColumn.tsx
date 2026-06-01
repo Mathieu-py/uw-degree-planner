@@ -1,7 +1,13 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import {
+  type CourseDragData,
+  courseDragKind,
+  hasCourseDrag,
+  readCourseDrag,
+} from "@/lib/plan/dnd";
 import type { PlanSlot } from "@/lib/plan/types";
 import {
   issuesByCourseInSlot,
@@ -15,6 +21,7 @@ interface Props {
   issues: ValidationIssue[];
   onSlotClick: (slotId: string) => void;
   onRemoveCourse: (slotId: string, code: string) => void;
+  onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
   readOnly?: boolean;
 }
 
@@ -23,6 +30,7 @@ export const TermColumn = memo(function TermColumn({
   issues,
   onSlotClick,
   onRemoveCourse,
+  onCourseDrop,
   readOnly = false,
 }: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
@@ -43,8 +51,40 @@ export const TermColumn = memo(function TermColumn({
     [onRemoveCourse, slotId],
   );
 
+  // Drop target: highlight while one of our chips hovers, add/move on drop.
+  // Disabled entirely in read-only views (no onCourseDrop).
+  const [dropActive, setDropActive] = useState(false);
+  const droppable = !readOnly && !!onCourseDrop;
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (!hasCourseDrag(e)) return;
+    e.preventDefault(); // required so the drop event fires
+    e.dataTransfer.dropEffect = courseDragKind(e) === "add" ? "copy" : "move";
+    setDropActive(true);
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Ignore leaves into descendant chips; only clear on a real exit.
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setDropActive(false);
+    }
+  }, []);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDropActive(false);
+      const data = readCourseDrag(e);
+      if (data) onCourseDrop?.(slotId, data);
+    },
+    [onCourseDrop, slotId],
+  );
+
   return (
-    <div className="card pw-term">
+    // biome-ignore lint/a11y/noStaticElementInteractions: drop zone for course chips; the keyboard-accessible path is the + add / × remove buttons.
+    <div
+      className={`card pw-term${dropActive ? " is-drop" : ""}`}
+      onDragOver={droppable ? handleDragOver : undefined}
+      onDragLeave={droppable ? handleDragLeave : undefined}
+      onDrop={droppable ? handleDrop : undefined}
+    >
       <div className="pw-thead">
         <div className="flex items-center gap-2 min-w-0">
           <span className="pw-badge">{slot.position}</span>

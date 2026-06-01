@@ -5,6 +5,10 @@
 **Issue:** [#29](https://github.com/Mathieu-py/uw-elective-finder/issues/29)
 **Informed by:** [#28 diagnostic findings](../../scripts/diagnostic/findings.md)
 
+## Amendment — 2026-05-31 (`choiceGroups` helper removed)
+
+The standalone `lib/courses/choiceGroups.ts` module (and its test) have been deleted: rule-derived pools are now resolved straight from the `RuleNode` AST (see the rule-tree refactor amendment below), so the helper was orphaned. The `choiceGroups` / `choiceGroupsByTerm` references throughout the rest of this ADR are **historical** — they describe the pre-AST flat-field design, not the current code.
+
 ## Amendment — 2026-05-22 (issue [#43](https://github.com/Mathieu-py/uw-elective-finder/issues/43))
 
 `ChoiceGroup.selectCount` is replaced with explicit `selectMin?: number; selectMax?: number` bounds so the schema can express the three "pick K from a course list" rule shapes uniformly:

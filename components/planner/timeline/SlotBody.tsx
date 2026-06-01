@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { formatCourseCode } from "@/lib/format";
+import { courseDragProps } from "@/lib/plan/dnd";
 import type { PlanSlot, SlotCourse } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 
@@ -40,6 +41,9 @@ export const SlotBody = memo(function SlotBody({
   onRemoveCourse,
   readOnly = false,
 }: Props) {
+  // Code of the chip currently being dragged out of this term, so we can dim
+  // it while it's in flight. Cleared on dragend (drop or cancel).
+  const [draggingCode, setDraggingCode] = useState<string | null>(null);
   return (
     <div className="pw-slots">
       {slot.courses.map((c) => {
@@ -48,11 +52,22 @@ export const SlotBody = memo(function SlotBody({
         const status = courseStatus(c, hasIssue);
         const issueText = courseIssues.map((i) => i.message).join("\n");
         const code = formatCourseCode(c.code);
+        const isDragging = draggingCode === c.code;
+        const dragProps = readOnly
+          ? null
+          : courseDragProps(
+              { kind: "move", fromSlotId: slot.id, code: c.code },
+              {
+                onStart: () => setDraggingCode(c.code),
+                onEnd: () => setDraggingCode(null),
+              },
+            );
         return (
           <div
             key={`${slot.id}:${c.code}`}
-            className={`pw-slot pw-${status}`}
+            className={`pw-slot pw-${status}${isDragging ? " is-dragging" : ""}`}
             title={status === "warn" ? issueText : code}
+            {...dragProps}
           >
             <div className="flex items-center justify-between gap-1.5">
               <span className="u-mono pw-code truncate min-w-0">{code}</span>
@@ -76,6 +91,7 @@ export const SlotBody = memo(function SlotBody({
                   href={`/course/${c.code}`}
                   target="_blank"
                   rel="noopener"
+                  draggable={false}
                   className="pw-slot-btn"
                   title={`View ${code} details (new tab)`}
                 >
@@ -85,6 +101,7 @@ export const SlotBody = memo(function SlotBody({
                   <button
                     type="button"
                     onClick={() => onRemoveCourse(c.code)}
+                    draggable={false}
                     aria-label={`Remove ${code}`}
                     title={`Remove ${code}`}
                     className="pw-slot-btn pw-slot-x"

@@ -1,6 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/ui/Icon";
+import type { CourseDragData } from "@/lib/plan/dnd";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import { termInfo } from "@/lib/terms";
@@ -15,6 +16,8 @@ interface Props {
   issuesPerSlot: ReadonlyMap<string, ValidationIssue[]>;
   onSlotClick: (slotId: string) => void;
   onRemoveCourse: (slotId: string, code: string) => void;
+  /** Present only in editable views; absent makes term columns inert as drop targets. */
+  onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
   readOnly?: boolean;
 }
 
@@ -30,6 +33,7 @@ export function Timeline({
   issuesPerSlot,
   onSlotClick,
   onRemoveCourse,
+  onCourseDrop,
   readOnly = false,
 }: Props) {
   const preSlot = plan.slots.find((s) => s.position === "pre");
@@ -49,6 +53,7 @@ export function Timeline({
             issues={issuesPerSlot.get(slot.id) ?? EMPTY_ISSUES}
             onSlotClick={onSlotClick}
             onRemoveCourse={onRemoveCourse}
+            onCourseDrop={onCourseDrop}
             readOnly={readOnly}
           />
         ),
