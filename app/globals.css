@@ -781,6 +781,11 @@ body {
   flex-direction: column;
   gap: 10px;
 }
+/* Drag-over highlight while a course chip hovers an academic term. */
+.pw-term.is-drop {
+  border-color: var(--accent-bg);
+  background: var(--accent-soft);
+}
 .pw-thead {
   display: flex;
   align-items: center;
@@ -816,6 +821,13 @@ body {
   gap: 2px;
   text-align: left;
   font: inherit;
+}
+/* Draggable course chips — grab affordance and a dimmed in-flight state. */
+.pw-slot[draggable="true"] {
+  cursor: grab;
+}
+.pw-slot.is-dragging {
+  opacity: 0.5;
 }
 .pw-code {
   font-size: 11.5px;
@@ -1014,4 +1026,7 @@ body {
   border-color: var(--accent-bg);
   color: var(--accent);
   background: var(--accent-soft);
+}
+.pw-areq.is-miss[draggable="true"] {
+  cursor: grab;
 }

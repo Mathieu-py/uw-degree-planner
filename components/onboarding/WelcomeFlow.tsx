@@ -64,6 +64,7 @@ export function WelcomeFlow({
   );
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   // False when co-op but the stream is undetectable — shows a confirm hint.
   const [streamConfident, setStreamConfident] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -93,6 +94,24 @@ export function WelcomeFlow({
     } finally {
       setParsing(false);
     }
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault(); // required so the drop event fires
+    setDragActive(true);
+  }
+  function onDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    // Ignore leaves into descendant nodes (e.g. the hidden file input); only
+    // clear on a real exit of the dropzone.
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setDragActive(false);
+    }
+  }
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragActive(false);
+    onFile(e.dataTransfer.files?.[0]);
   }
 
   const buildPlan = useCallback((): LocalPlan => {
@@ -179,7 +198,14 @@ export function WelcomeFlow({
               </p>
             </div>
 
-            <label className="flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-line-2 bg-bg-2 px-6 py-10 text-center cursor-pointer hover:border-accent-bg hover:bg-accent-soft transition-colors">
+            <label
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+              className={`flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed bg-bg-2 px-6 py-10 text-center cursor-pointer transition-colors hover:border-accent-bg hover:bg-accent-soft ${
+                dragActive ? "border-accent-bg bg-accent-soft" : "border-line-2"
+              }`}
+            >
               <Icon name="upload" size="lg" className="text-ink-3" />
               <span className="text-sm font-medium text-ink">
                 {parsing ? "Reading…" : "Choose a PDF or drop it here"}
