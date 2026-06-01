@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { REPO_URL } from "@/lib/constants";
 import { Brand } from "./Brand";
+import { FooterAuthLinks } from "./FooterAuthLinks";
 
 /**
  * Site footer: wordmark + unaffiliated-tool tagline, plus a links row. Styling
@@ -17,8 +18,7 @@ export function SiteFooter() {
         </span>
       </div>
       <div className="foot-links">
-        <Link href="/plan">Try the demo</Link>
-        <Link href="/login">Sign in</Link>
+        <FooterAuthLinks />
         <Link href="/catalog">Course catalog</Link>
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           GitHub

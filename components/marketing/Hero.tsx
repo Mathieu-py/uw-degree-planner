@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
+import { HeroCta } from "./HeroCta";
 import { MiniPlanner } from "./MiniPlanner";
 
 const PROOF = [
@@ -27,21 +25,7 @@ export function Hero() {
             seconds — every past course placed, requirements audited live, and
             prereq-aware picks from UWFlow.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/plan"
-              className={buttonClasses({ variant: "primary", size: "lg" })}
-            >
-              Try the demo
-              <Icon name="arrow" size="sm" aria-hidden="true" />
-            </Link>
-            <Link
-              href="/login"
-              className={buttonClasses({ variant: "outline", size: "lg" })}
-            >
-              Sign in
-            </Link>
-          </div>
+          <HeroCta />
           <p className="u-small">
             For UWaterloo undergrads — any program our catalog covers. No
             account needed to try it.
