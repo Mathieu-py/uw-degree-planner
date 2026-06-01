@@ -1,16 +1,12 @@
 "use client";
 
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { FIELD_CLASSES } from "./fieldClasses";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   /** Optional leading icon (rendered inside the field, left-aligned). */
   icon?: ReactNode;
 }
-
-const FIELD_CLASSES =
-  "h-[42px] w-full rounded-[9px] border border-line-2 bg-bg text-ink text-sm " +
-  "placeholder:text-ink-3 outline-none transition-[border-color,box-shadow] " +
-  "focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 /**
  * Text input matching the design's `.input`. Pass `icon` for the search-field

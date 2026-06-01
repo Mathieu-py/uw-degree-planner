@@ -5,6 +5,7 @@ import type { ProgramOption } from "@/components/planner/shell/PlannerShell";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { termInfo } from "@/lib/terms";
@@ -26,11 +27,6 @@ interface Props {
     stream: Stream;
   }) => void;
 }
-
-const INPUT =
-  "w-full h-[42px] rounded-[9px] border border-line-2 bg-bg px-3 text-sm text-ink " +
-  "cursor-pointer outline-none transition-[border-color,box-shadow] " +
-  "focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 const STREAM_LABELS: Record<Stream, string> = {
   regular: "Regular (no co-op)",
@@ -101,8 +97,7 @@ export function PlanSettingsModal({
           <span className="text-[12.5px] font-semibold text-ink-2">
             Program
           </span>
-          <select
-            className={INPUT}
+          <Select
             value={programId ?? ""}
             onChange={(e) => patchProgram(e.target.value || null)}
           >
@@ -112,15 +107,14 @@ export function PlanSettingsModal({
                 {p.name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
 
         <label className="flex flex-col gap-1.5 text-xs">
           <span className="text-[12.5px] font-semibold text-ink-2">
             Specialization / Option
           </span>
-          <select
-            className={INPUT}
+          <Select
             value={specializationId ?? ""}
             onChange={(e) => setSpecializationId(e.target.value || null)}
             disabled={specs.length === 0}
@@ -131,7 +125,7 @@ export function PlanSettingsModal({
                 {s.name}
               </option>
             ))}
-          </select>
+          </Select>
           {programId && specs.length === 0 ? (
             <span className="text-ink-3 mt-0.5">
               No specializations available for this program.
@@ -143,8 +137,7 @@ export function PlanSettingsModal({
           <span className="text-[12.5px] font-semibold text-ink-2">
             Co-op stream
           </span>
-          <select
-            className={INPUT}
+          <Select
             value={stream}
             onChange={(e) => setStream(e.target.value as Stream)}
           >
@@ -153,7 +146,7 @@ export function PlanSettingsModal({
                 {STREAM_LABELS[s]}
               </option>
             ))}
-          </select>
+          </Select>
           {streamDirty ? (
             <span className="text-partial mt-0.5">
               Saving will re-sequence terms — your courses stay on the same

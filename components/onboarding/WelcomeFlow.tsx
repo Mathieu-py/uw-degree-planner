@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
+import { Select } from "@/components/ui/Select";
 import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import { logError } from "@/lib/log";
@@ -30,8 +32,6 @@ const STREAMS: Array<{ value: Stream; label: string }> = [
 ];
 
 const STEPS = ["Set up", "Review"] as const;
-const INPUT =
-  "w-full h-[42px] rounded-[9px] border border-line-2 bg-bg text-ink px-[13px] text-sm outline-none focus:border-accent-bg";
 
 export function WelcomeFlow({
   programOptions,
@@ -214,11 +214,7 @@ export function WelcomeFlow({
               />
             </label>
 
-            {parseError ? (
-              <p className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger">
-                {parseError}
-              </p>
-            ) : null}
+            {parseError ? <Alert>{parseError}</Alert> : null}
 
             {parseResult ? (
               <div className="flex items-center justify-between gap-3 rounded-[10px] bg-met-soft px-3 py-2.5 text-sm text-met">
@@ -251,9 +247,8 @@ export function WelcomeFlow({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="Program">
                     {(id) => (
-                      <select
+                      <Select
                         id={id}
-                        className={INPUT}
                         value={programId}
                         onChange={(e) => setProgramId(e.target.value)}
                       >
@@ -262,14 +257,13 @@ export function WelcomeFlow({
                             {p.name}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </Field>
                   <Field label="Start term (1A)">
                     {(id) => (
-                      <select
+                      <Select
                         id={id}
-                        className={INPUT}
                         value={startTermId}
                         onChange={(e) => setStartTermId(Number(e.target.value))}
                       >
@@ -278,14 +272,13 @@ export function WelcomeFlow({
                             {t.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </Field>
                   <Field label="Co-op stream">
                     {(id) => (
-                      <select
+                      <Select
                         id={id}
-                        className={INPUT}
                         value={stream}
                         onChange={(e) => setStream(e.target.value as Stream)}
                       >
@@ -294,7 +287,7 @@ export function WelcomeFlow({
                             {s.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </Field>
                 </div>
@@ -329,9 +322,8 @@ export function WelcomeFlow({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Program">
                     {(id) => (
-                      <select
+                      <Select
                         id={id}
-                        className={INPUT}
                         value={programId}
                         onChange={(e) => setProgramId(e.target.value)}
                       >
@@ -340,14 +332,13 @@ export function WelcomeFlow({
                             {p.name}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </Field>
                   <Field label="Co-op stream">
                     {(id) => (
-                      <select
+                      <Select
                         id={id}
-                        className={INPUT}
                         value={stream}
                         onChange={(e) => setStream(e.target.value as Stream)}
                       >
@@ -356,7 +347,7 @@ export function WelcomeFlow({
                             {s.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </Field>
                 </div>
@@ -371,11 +362,7 @@ export function WelcomeFlow({
           </div>
         ) : null}
 
-        {buildError ? (
-          <p className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger">
-            {buildError}
-          </p>
-        ) : null}
+        {buildError ? <Alert>{buildError}</Alert> : null}
 
         {/* Footer nav */}
         <div className="flex items-center justify-between">

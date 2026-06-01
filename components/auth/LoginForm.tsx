@@ -3,13 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
-
-const INPUT_CLASS =
-  "w-full h-[42px] rounded-[9px] border border-line-2 bg-bg px-[13px] text-sm text-ink placeholder:text-ink-3 outline-none transition-[border-color,box-shadow] focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 const usernameSchema = z
   .string()
@@ -205,7 +204,7 @@ export function LoginForm() {
           label={isSignUp ? "Email" : "Email or username"}
           error={errors.email}
         >
-          <input
+          <Input
             id="login-email"
             type={isSignUp ? "email" : "text"}
             autoComplete={isSignUp ? "email" : "username"}
@@ -214,7 +213,6 @@ export function LoginForm() {
             }
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
 
@@ -224,14 +222,13 @@ export function LoginForm() {
             label="Username"
             error={errors.username}
           >
-            <input
+            <Input
               id="login-username"
               type="text"
               autoComplete="username"
               placeholder="goose27"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className={INPUT_CLASS}
             />
           </Field>
         )}
@@ -241,14 +238,13 @@ export function LoginForm() {
           label="Password"
           error={errors.password}
         >
-          <input
+          <Input
             id="login-password"
             type="password"
             autoComplete={isSignUp ? "new-password" : "current-password"}
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
 
@@ -258,27 +254,21 @@ export function LoginForm() {
             label="Confirm password"
             error={errors.confirm}
           >
-            <input
+            <Input
               id="login-confirm"
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className={INPUT_CLASS}
             />
           </Field>
         )}
 
         {errors.form && (
-          <p
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-            className="rounded-[8px] border border-danger bg-danger-soft px-3 py-2 text-xs text-danger"
-          >
+          <Alert aria-live="assertive" aria-atomic="true">
             {errors.form}
-          </p>
+          </Alert>
         )}
 
         <Button
