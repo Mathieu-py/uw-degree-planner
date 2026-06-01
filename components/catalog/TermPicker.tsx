@@ -5,10 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
-import { Modal } from "@/components/ui/Modal";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
-import { formatCourseCode } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import {
@@ -22,6 +20,7 @@ import { loadPlan, savePlan } from "@/lib/plan/storage";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import { parsePrereqs } from "@/lib/prereqs/parse";
+import { CourseTermModalShell } from "./CourseTermModalShell";
 import { TermOptionList } from "./TermOptionList";
 import { alreadyInLabel, computeTermOptions } from "./termOptions";
 
@@ -60,59 +59,32 @@ export function TermPicker({
     [animateOut, onClose],
   );
 
-  const titleId = "term-picker-title";
-  const niceCode = formatCourseCode(course.code);
-
   return (
-    <Modal
+    <CourseTermModalShell
+      course={course}
+      heading={heading}
+      titleId="term-picker-title"
       isClosing={isClosing}
       onClose={handleClose}
-      titleId={titleId}
-      className="max-w-md"
+      addedTo={addedTo}
     >
-      <header className="border-b border-line px-4 py-3 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wider text-ink-3">
-            {heading}
-          </div>
-          <h2 id={titleId} className="text-sm font-medium truncate">
-            <span className="u-mono">{niceCode}</span> · {course.name}
-          </h2>
-        </div>
-        <Button variant="icon" onClick={handleClose} aria-label="Close">
-          <Icon name="close" size="md" aria-hidden="true" />
-        </Button>
-      </header>
-
-      <div className="px-4 py-4 flex flex-col gap-2">
-        {!ready ? (
-          <StatusBody>Loading…</StatusBody>
-        ) : isAuthed ? (
-          <ServerTermBody
-            course={course}
-            setHeading={setHeading}
-            onAdded={onAdded}
-            justAdded={addedTo !== null}
-          />
-        ) : (
-          <LocalTermBody
-            course={course}
-            onAdded={onAdded}
-            justAdded={addedTo !== null}
-          />
-        )}
-      </div>
-
-      <footer className="border-t border-line px-4 py-2.5">
-        <span className="u-small">
-          {addedTo ? (
-            <span className="text-met">Added to {addedTo} ✓</span>
-          ) : (
-            "Ineligible terms are disabled"
-          )}
-        </span>
-      </footer>
-    </Modal>
+      {!ready ? (
+        <StatusBody>Loading…</StatusBody>
+      ) : isAuthed ? (
+        <ServerTermBody
+          course={course}
+          setHeading={setHeading}
+          onAdded={onAdded}
+          justAdded={addedTo !== null}
+        />
+      ) : (
+        <LocalTermBody
+          course={course}
+          onAdded={onAdded}
+          justAdded={addedTo !== null}
+        />
+      )}
+    </CourseTermModalShell>
   );
 }
 
