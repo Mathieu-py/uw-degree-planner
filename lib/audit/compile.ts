@@ -16,6 +16,7 @@
  *  - `excluded`: never gates status; the UI surfaces violations as warnings.
  */
 
+import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import type { LocalPlan } from "@/lib/plan/types";
 import {
   describeRule,
@@ -83,16 +84,6 @@ function statusFromPickCount(
     return "met";
   }
   return count > 0 || anyPartial ? "partial" : "unmet";
-}
-
-function levelBucket(code: string): number {
-  const m = code.match(/(\d+)/);
-  if (!m) return 0;
-  return Math.floor(parseInt(m[0], 10) / 100) * 100;
-}
-
-function coursePrefix(code: string): string {
-  return (code.match(/^([a-z]+)/i)?.[1] ?? "").toLowerCase();
 }
 
 function compile(node: RuleNode, placement: PlacementMap): AuditNode {
@@ -195,7 +186,7 @@ function compile(node: RuleNode, placement: PlacementMap): AuditNode {
       const satisfiers: Placement[] = [];
       for (const [code, p] of placement) {
         if (!subjects.has(coursePrefix(code))) continue;
-        const lvl = levelBucket(code);
+        const lvl = levelBucket(courseLevel(code));
         if (node.minLevel !== undefined && lvl < node.minLevel) continue;
         if (node.maxLevel !== undefined && lvl > node.maxLevel) continue;
         satisfiers.push(p);
