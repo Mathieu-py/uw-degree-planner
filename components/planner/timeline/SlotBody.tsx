@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { formatCourseCode } from "@/lib/format";
 import { courseDragProps } from "@/lib/plan/dnd";
@@ -48,6 +48,18 @@ export const SlotBody = memo(function SlotBody({
   // Code of the chip currently being dragged out of this term, so we can dim
   // it while it's in flight. Cleared on dragend (drop or cancel).
   const [draggingCode, setDraggingCode] = useState<string | null>(null);
+
+  // A drop relocates a chip by mutating the plan, which unmounts the source
+  // chip — and React's event delegation can't deliver its `dragend` to a gone
+  // element, so `draggingCode` is left stale. If that course later lands back
+  // in this term the remounted chip would render dimmed forever, so drop the
+  // flag whenever the term's course set changes (covers the leave and return).
+  const coursesRef = useRef(slot.courses);
+  if (coursesRef.current !== slot.courses) {
+    coursesRef.current = slot.courses;
+    if (draggingCode !== null) setDraggingCode(null);
+  }
+
   return (
     <div className="pw-slots">
       {slot.courses.map((c) => {
