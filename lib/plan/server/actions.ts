@@ -64,6 +64,43 @@ export async function listPlans(): Promise<ActionResult<PlanSummary[]>> {
   return { ok: true, data: (data as PlanRow[]).map(planRowToSummary) };
 }
 
+/**
+ * The ids of the caller's plans that already contain `courseCode`. Used by the
+ * catalog add flow to grey out plans the course is already in. A single
+ * RLS-scoped read: `plan_courses` joined up to `plans` so only the user's own
+ * rows come back. Course codes are stored lowercase, so we match lowercase.
+ */
+export async function plansContainingCourse(
+  courseCode: string,
+): Promise<ActionResult<string[]>> {
+  const auth = await requireUser();
+  if (!auth.ok) return { ok: false, error: auth.error };
+
+  const code = courseCode.trim().toLowerCase();
+  if (!code) return { ok: true, data: [] };
+
+  const { data, error } = await auth.client
+    .from("plan_courses")
+    .select("plan_slots!inner(plan_id)")
+    .eq("course_code", code);
+
+  if (error) {
+    return { ok: false, error: mapDbError(error, "plansContainingCourse") };
+  }
+
+  // PostgREST types a to-one embed as an object, but can surface an array;
+  // accept both so a relationship-shape change can't silently drop ids.
+  const ids = new Set<string>();
+  for (const row of (data ?? []) as Array<{
+    plan_slots: { plan_id: string } | { plan_id: string }[] | null;
+  }>) {
+    const ps = row.plan_slots;
+    if (Array.isArray(ps)) for (const x of ps) ids.add(x.plan_id);
+    else if (ps) ids.add(ps.plan_id);
+  }
+  return { ok: true, data: [...ids] };
+}
+
 // ---------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------

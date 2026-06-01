@@ -1,4 +1,4 @@
-import type { LocalPlan, SlotCourse } from "@/lib/plan/types";
+import type { LocalPlan, PlanSlot, SlotCourse } from "@/lib/plan/types";
 
 /**
  * Pure slot-course edits shared by every mutation path in the planner: the
@@ -10,12 +10,19 @@ import type { LocalPlan, SlotCourse } from "@/lib/plan/types";
  * matched and stored in catalog (lowercase) form.
  */
 
-/** Append `course` to slot `slotId`, deduping by code. No-op if the slot is missing or already holds the code. */
-export function addCourseToSlot(
-  plan: LocalPlan,
+/**
+ * Append `course` to slot `slotId`, deduping by code. No-op if the slot is
+ * missing or already holds the code.
+ *
+ * Generic over the plan shape (it only touches `slots`) so the catalog's
+ * signed-in add can mutate a `ServerPlan` and get a `ServerPlan` back without
+ * a cast, while `LocalPlan` callers keep their return type.
+ */
+export function addCourseToSlot<T extends { slots: PlanSlot[] }>(
+  plan: T,
   slotId: string,
   course: SlotCourse,
-): LocalPlan {
+): T {
   const code = course.code.toLowerCase();
   const target = plan.slots.find((s) => s.id === slotId);
   if (!target || target.courses.some((c) => c.code === code)) return plan;

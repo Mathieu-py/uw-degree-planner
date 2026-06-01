@@ -1,5 +1,12 @@
 import type { TermId } from "@/lib/terms";
-import type { LocalPlan } from "./types";
+import type { PlanSlot } from "./types";
+
+/**
+ * Anything carrying plan slots. Both `LocalPlan` and `ServerPlan` satisfy
+ * this — these derivations only ever read `slots`, so they don't need the
+ * full plan shape (and `ServerPlan` isn't assignable to `LocalPlan`).
+ */
+type WithSlots = { slots: PlanSlot[] };
 
 /**
  * Flatten the plan into a sorted list of unique course codes. If
@@ -12,7 +19,7 @@ import type { LocalPlan } from "./types";
  * regardless of cutoff.
  */
 export function completedCoursesFromPlan(
-  plan: LocalPlan,
+  plan: WithSlots,
   asOfTermId?: TermId,
 ): string[] {
   const out = new Set<string>();
@@ -32,7 +39,7 @@ export function completedCoursesFromPlan(
  * prereq evaluator (`evaluate()` in lib/prereqs/satisfied.ts).
  */
 export function completedSetFromPlan(
-  plan: LocalPlan,
+  plan: WithSlots,
   asOfTermId?: TermId,
 ): Set<string> {
   return new Set(completedCoursesFromPlan(plan, asOfTermId));

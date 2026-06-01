@@ -90,6 +90,25 @@ describe("completedCoursesFromPlan", () => {
   });
 });
 
+describe("completedCoursesFromPlan — plan-shape-agnostic", () => {
+  it("accepts any value carrying slots (e.g. a ServerPlan), reading only slots", () => {
+    // ServerPlan isn't assignable to LocalPlan, but these derivations only
+    // touch `.slots`, so a bare { slots } works.
+    const serverLike = {
+      id: "plan-1",
+      name: "My plan",
+      slots: PLAN.slots,
+    };
+    expect(completedCoursesFromPlan(serverLike, 1249)).toEqual([
+      "cs136",
+      "math115",
+      "se101",
+      "transfer1",
+      "transfer2",
+    ]);
+  });
+});
+
 describe("completedSetFromPlan", () => {
   it("returns a Set with the same membership as the list form", () => {
     const set = completedSetFromPlan(PLAN, 1249);
