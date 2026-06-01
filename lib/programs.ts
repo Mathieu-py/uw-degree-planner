@@ -134,9 +134,18 @@ const ProgramSchema = z.discriminatedUnion("kind", [
 
 export type Program = z.infer<typeof ProgramSchema>;
 
-export const PROGRAMS: Record<string, Program> = z
-  .record(z.string(), ProgramSchema)
-  .parse(programsData);
+const ProgramsFileSchema = z.record(z.string(), ProgramSchema);
+
+/**
+ * Validate a `slug → Program` map, throwing on the first schema violation.
+ * Used both to parse the bundled `programs.json` at import and by the scraper
+ * to fail fast before it writes a malformed file the app couldn't load.
+ */
+export function validatePrograms(raw: unknown): Record<string, Program> {
+  return ProgramsFileSchema.parse(raw);
+}
+
+export const PROGRAMS: Record<string, Program> = validatePrograms(programsData);
 
 /** The six UWaterloo undergraduate faculties a program can belong to. */
 export type Faculty =

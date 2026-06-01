@@ -15,6 +15,8 @@ import {
   CourseSchema,
   type CoursesFile,
   type DescriptionsFile,
+  validateCoursesFile,
+  validateDescriptionsFile,
 } from "../lib/courses/validation";
 import { PINNED_TERM } from "../lib/terms";
 
@@ -107,6 +109,11 @@ async function writeSnapshot(termId: number, courses: FetchedCourse[]) {
     fetchedAt,
     descriptions,
   };
+
+  // Fail fast on a malformed shape rather than committing files the app would
+  // reject at load (it parses these same schemas via validate*File).
+  validateCoursesFile(coursesFile);
+  validateDescriptionsFile(descriptionsFile);
 
   const coursesPath = path.join(dataDir, `courses.${termId}.json`);
   const descriptionsPath = path.join(dataDir, `descriptions.${termId}.json`);

@@ -21,7 +21,11 @@
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Program, Specialization } from "../lib/programs";
+import {
+  type Program,
+  type Specialization,
+  validatePrograms,
+} from "../lib/programs";
 import { applyRuleOverrides } from "./scrape-programs.overrides";
 import {
   buildConflictCounts,
@@ -449,6 +453,9 @@ async function writeOutput(programs: Record<string, Program>): Promise<string> {
   const sorted = Object.fromEntries(
     Object.entries(programs).sort(([a], [b]) => a.localeCompare(b)),
   );
+  // Fail fast on a malformed shape rather than committing a programs.json the
+  // app would reject at load (it parses the same schema via validatePrograms).
+  validatePrograms(sorted);
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
   const outPath = path.join(dataDir, "programs.json");
