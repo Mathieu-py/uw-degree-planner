@@ -1,6 +1,6 @@
+import { courseLevel, levelBucket } from "./code";
 import type { CatalogCourse, Course, PureFilters } from "./types";
 
-const LEVEL_RE = /\d+/;
 const PREFIX_RE = /^[A-Z]+/;
 
 /**
@@ -33,8 +33,7 @@ export function seatsAvailable(course: Course): number | null {
 export function enrichCourse(raw: CatalogCourse): Course {
   const upper = raw.code.toUpperCase();
   const prefix = upper.match(PREFIX_RE)?.[0] ?? "";
-  const levelMatch = upper.match(LEVEL_RE);
-  const level = levelMatch ? parseInt(levelMatch[0], 10) : 0;
+  const level = courseLevel(raw.code);
   const hasSeats = raw.sections.some(
     (s) => s.enrollment_capacity > s.enrollment_total,
   );
@@ -69,8 +68,7 @@ export function passesLevelFilter(
   levels: ReadonlyArray<number>,
 ): boolean {
   if (levels.length === 0) return true;
-  const bucket = Math.floor(course.level / 100) * 100;
-  return levels.includes(bucket);
+  return levels.includes(levelBucket(course.level));
 }
 
 export function passesSeatsFilter(

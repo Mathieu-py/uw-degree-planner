@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/Icon";
 import { REPO_DISPLAY } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Sign in — UW Degree Planner",
+  title: "Sign in",
 };
 
 const PERKS = ["Live audit", "Transcript import", "Share links"];

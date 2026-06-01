@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { Modal } from "@/components/ui/Modal";
+import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
 import {
@@ -127,17 +127,9 @@ export function TranscriptImportModal({
       titleId="transcript-import-title"
       className="max-w-2xl"
     >
-      <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
-        <h2
-          id="transcript-import-title"
-          className="text-[15px] font-bold tracking-tight"
-        >
-          Import from transcript
-        </h2>
-        <Button variant="icon" onClick={handleClose} aria-label="Close">
-          <Icon name="close" size="md" aria-hidden="true" />
-        </Button>
-      </header>
+      <ModalHeader titleId="transcript-import-title" onClose={handleClose}>
+        Import from transcript
+      </ModalHeader>
 
       <div className="px-4 py-4 flex flex-col gap-4 overflow-y-auto">
         {/* The native file input is the actual control; once a file is chosen
@@ -243,14 +235,14 @@ export function TranscriptImportModal({
         )}
       </div>
 
-      <footer className="border-t border-line bg-bg-2 px-4 py-3 flex justify-end gap-2">
+      <ModalFooter>
         <Button variant="ghost" onClick={handleClose}>
           Cancel
         </Button>
         <Button onClick={handleApply} disabled={includedCount === 0}>
           Add {includedCount} course{includedCount === 1 ? "" : "s"}
         </Button>
-      </footer>
+      </ModalFooter>
     </Modal>
   );
 }

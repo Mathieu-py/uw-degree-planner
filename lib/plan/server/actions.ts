@@ -2,6 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { mapDbError } from "@/lib/server/dbError";
+import { requireUser } from "@/lib/supabase/requireUser";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   assembleServerPlan,
@@ -26,26 +27,6 @@ const PLAN_COLUMNS =
 const SLOT_COLUMNS = "id, plan_id, term_id, position, is_coop, ordinal";
 
 const COURSE_COLUMNS = "id, slot_id, course_code, grade, ordinal";
-
-/**
- * Resolve the current user, returning `null` for unauthenticated callers.
- * Centralizing the auth check keeps the actions below uniform: every action
- * returns `not_authenticated` rather than throwing when the session is gone
- * (which happens routinely as refresh tokens expire mid-session).
- */
-async function requireUser(): Promise<
-  | {
-      ok: true;
-      userId: string;
-      client: Awaited<ReturnType<typeof createSupabaseServerClient>>;
-    }
-  | { ok: false; error: "not_authenticated" }
-> {
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.auth.getUser();
-  if (error || !data.user) return { ok: false, error: "not_authenticated" };
-  return { ok: true, userId: data.user.id, client };
-}
 
 // ---------------------------------------------------------------------------
 // List

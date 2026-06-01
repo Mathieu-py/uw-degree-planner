@@ -1,7 +1,7 @@
 import { SettingsView } from "@/components/settings/SettingsView";
 
 export const metadata = {
-  title: "Settings · UW Degree Planner",
+  title: "Settings",
 };
 
 export default function SettingsPage() {

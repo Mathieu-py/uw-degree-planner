@@ -28,7 +28,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UW Degree Planner",
+  // `default` titles the home page; `template` suffixes every child segment's
+  // own title, so route pages set just their bare name (e.g. "Settings").
+  title: {
+    default: "UW Degree Planner",
+    template: "%s · UW Degree Planner",
+  },
   description:
     "Plan every term of your UWaterloo degree on one screen, with live requirement audit, prereq checks, and UWFlow ratings.",
 };

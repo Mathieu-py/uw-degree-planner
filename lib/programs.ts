@@ -134,9 +134,18 @@ const ProgramSchema = z.discriminatedUnion("kind", [
 
 export type Program = z.infer<typeof ProgramSchema>;
 
-export const PROGRAMS: Record<string, Program> = z
-  .record(z.string(), ProgramSchema)
-  .parse(programsData);
+const ProgramsFileSchema = z.record(z.string(), ProgramSchema);
+
+/**
+ * Validate a `slug → Program` map, throwing on the first schema violation.
+ * Used both to parse the bundled `programs.json` at import and by the scraper
+ * to fail fast before it writes a malformed file the app couldn't load.
+ */
+export function validatePrograms(raw: unknown): Record<string, Program> {
+  return ProgramsFileSchema.parse(raw);
+}
+
+export const PROGRAMS: Record<string, Program> = validatePrograms(programsData);
 
 /** The six UWaterloo undergraduate faculties a program can belong to. */
 export type Faculty =
@@ -267,6 +276,31 @@ export function isTermLetter(s: string | null | undefined): s is TermLetter {
 
 export function isKnownProgram(id: string): boolean {
   return Object.hasOwn(PROGRAMS, id);
+}
+
+export interface ProgramOption {
+  id: string;
+  name: string;
+  kind: Program["kind"];
+}
+
+/**
+ * The `(id, name, kind)` digest of every program, sorted by name. Server
+ * components ship this to the client instead of the full programs.json so the
+ * planner / onboarding UI can populate a program dropdown without the rule
+ * trees. Callers that only need `(id, name)` accept the richer shape fine.
+ */
+export function getProgramOptions(): ProgramOption[] {
+  return Object.entries(PROGRAMS)
+    .map(([id, p]) => ({ id, name: p.name, kind: p.kind }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** A flat `id → name` lookup for labelling plan cards client-side. */
+export function programNameMap(): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(PROGRAMS).map(([id, p]) => [id, p.name]),
+  );
 }
 
 export function getSpecialization(

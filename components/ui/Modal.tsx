@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useEscape } from "@/lib/hooks/useEscape";
+import { Button } from "./Button";
+import { Icon } from "./Icon";
 
 interface ModalProps {
   /**
@@ -70,5 +72,61 @@ export function Modal({
         {children}
       </div>
     </div>
+  );
+}
+
+/**
+ * Standard dialog header: a hairline-underlined bar with the accessible title.
+ * Pass `onClose` to get the right-aligned icon close button (and the
+ * space-between layout); omit it for a plain title-only header. `titleId` must
+ * match the `titleId` given to the parent {@link Modal} (aria-labelledby).
+ */
+export function ModalHeader({
+  titleId,
+  onClose,
+  children,
+}: {
+  titleId: string;
+  onClose?: () => void;
+  children: ReactNode;
+}) {
+  if (!onClose) {
+    return (
+      <header className="border-b border-line px-4 py-3.5">
+        <h2 id={titleId} className="text-[15px] font-bold tracking-tight">
+          {children}
+        </h2>
+      </header>
+    );
+  }
+  return (
+    <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
+      <h2
+        id={titleId}
+        className="text-[15px] font-bold tracking-tight truncate flex-1 min-w-0"
+      >
+        {children}
+      </h2>
+      <Button variant="icon" onClick={onClose} aria-label="Close">
+        <Icon name="close" size="md" aria-hidden="true" />
+      </Button>
+    </header>
+  );
+}
+
+/** Standard dialog footer: a hairline-topped action bar, right-aligned. */
+export function ModalFooter({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <footer
+      className={`border-t border-line bg-bg-2 px-4 py-3 flex justify-end gap-2 ${className ?? ""}`.trim()}
+    >
+      {children}
+    </footer>
   );
 }

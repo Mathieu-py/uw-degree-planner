@@ -1,13 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  useCallback,
-  useDeferredValue,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
 import { DemoModeBanner } from "@/components/planner/DemoModeBanner";
 import { HandoffModal } from "@/components/planner/modals/HandoffModal";
@@ -23,31 +17,21 @@ import { Button } from "@/components/ui/Button";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
-import { NEW_PLAN_NAME } from "@/lib/constants";
 import type { Course } from "@/lib/courses/types";
 import { completedSetFromPlan } from "@/lib/plan/derive";
-import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
-import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
-import { rebuildSlotsForStream } from "@/lib/plan/sequence";
-import { toSnapshot } from "@/lib/plan/server/serialize";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
-import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
-import type { LocalPlan, Stream } from "@/lib/plan/types";
+import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
-import { programIdentity } from "@/lib/programs";
+import { type ProgramOption, programIdentity } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
-import type { TranscriptParseResult } from "@/lib/transcript/types";
 import { ProgramHeader } from "./ProgramHeader";
+import { usePlanEditors } from "./usePlanEditors";
 import { usePlannerModals } from "./usePlannerModals";
 import { usePlannerRedirect } from "./usePlannerRedirect";
 
-export interface ProgramOption {
-  id: string;
-  name: string;
-  kind: "engineering" | "flexible";
-}
+export type { ProgramOption };
 
 interface Props {
   programOptions: ProgramOption[];
@@ -121,12 +105,6 @@ function PlannerShellInner({
     },
   });
 
-  // Latest plan, read by the edit handlers so they don't have to list `plan`
-  // in their dep arrays — keeping the handlers referentially stable across
-  // edits so the memoized timeline columns aren't invalidated every keystroke.
-  const planRef = useRef(plan);
-  planRef.current = plan;
-
   const {
     picker,
     setPicker,
@@ -140,11 +118,33 @@ function PlannerShellInner({
     setAuditSheetOpen,
   } = usePlannerModals();
   const [importBanner, setImportBanner] = useState<string | null>(null);
-  const [termChoiceCode, setTermChoiceCode] = useState<string | null>(null);
-  // Guards the in-planner transcript import against the double-click
-  // duplicate-plan bug — without it, a second click during the network
-  // round-trip creates a second server plan.
-  const [creating, setCreating] = useState(false);
+
+  const {
+    termChoiceCode,
+    setTermChoiceCode,
+    handleApplyTranscript,
+    handleReset,
+    handleSaveSettings,
+    handleDrillToRequirement,
+    handlePickCode,
+    handlePickTermForCourse,
+    handleRemoveCourse,
+    handleCourseDrop,
+    handleRetrySave,
+  } = usePlanEditors({
+    plan,
+    picker,
+    planId,
+    isAuthed,
+    setPlan,
+    clearLocalPlan,
+    flushSave,
+    create,
+    router,
+    setPicker,
+    setTranscriptOpen,
+    setImportBanner,
+  });
 
   // /plan resolves to either the planner or the create flow when there's no
   // ?planId — see usePlannerRedirect. Plan creation lives at /plan/new, so
@@ -172,164 +172,6 @@ function PlannerShellInner({
   // surface the user is actually editing) updates synchronously while React
   // recomputes the audit in a lower-priority pass, keeping edits snappy.
   const deferredPlan = useDeferredValue(plan);
-
-  // Bridge for the in-planner transcript import: writes route to setPlan when
-  // there's a current plan, or create+navigate when authed without a planId.
-  const persistOrCreate = useCallback(
-    async (next: LocalPlan, name: string = NEW_PLAN_NAME) => {
-      if (isAuthed && planId === null) {
-        const newId = await create(name, toSnapshot(next));
-        if (newId) router.replace(`/plan?planId=${newId}`);
-        return;
-      }
-      setPlan(next);
-    },
-    [isAuthed, planId, create, router, setPlan],
-  );
-
-  const handleApplyTranscript = useCallback(
-    async (
-      parseResult: TranscriptParseResult,
-      included: ReadonlySet<string>,
-    ) => {
-      if (creating) return;
-      setCreating(true);
-      try {
-        const stream: Stream =
-          parseResult.detectedSystemOfStudy === "coop" ? "stream8" : "regular";
-        const {
-          plan: next,
-          unsortedCodes,
-          unplacedTerms,
-        } = applyTranscriptToPlan(parseResult, {
-          stream,
-          includedUnrecognized: included,
-          mintId: () => crypto.randomUUID(),
-        });
-        await persistOrCreate(next, "Imported plan");
-        setTranscriptOpen(false);
-
-        const banner = buildImportBanner({
-          stream,
-          unsortedCodes,
-          unplacedTerms,
-          startTermId: next.startTermId,
-        });
-        setImportBanner(banner);
-      } finally {
-        setCreating(false);
-      }
-    },
-    [creating, persistOrCreate, setTranscriptOpen],
-  );
-
-  const handleReset = useCallback(() => {
-    // Signed-out only — for signed-in users, the PlanSwitcher provides
-    // per-plan delete, which is the equivalent action.
-    clearLocalPlan();
-    setPicker(null);
-    setImportBanner(null);
-  }, [clearLocalPlan, setPicker]);
-
-  const handleSaveSettings = useCallback(
-    (next: {
-      programId: string | null;
-      specializationId: string | null;
-      stream: Stream;
-    }) => {
-      if (!plan) return;
-      const streamChanged = next.stream !== plan.stream;
-      // Stream changes re-sequence the cadence; programId/specializationId
-      // alone never touch slots. startTermId === null means the plan has no
-      // calendar anchor yet — update the metadata but skip rebuild.
-      if (streamChanged && plan.startTermId !== null) {
-        const { slots, droppedCodes } = rebuildSlotsForStream(
-          plan.slots,
-          plan.startTermId,
-          next.stream,
-          () => crypto.randomUUID(),
-        );
-        setPlan({
-          ...plan,
-          programId: next.programId,
-          specializationId: next.specializationId,
-          stream: next.stream,
-          slots,
-        });
-        if (droppedCodes.length > 0) {
-          setImportBanner(
-            `Switched stream to ${next.stream}. ${droppedCodes.length} course${droppedCodes.length === 1 ? "" : "s"} no longer fit and ${droppedCodes.length === 1 ? "was" : "were"} removed: ${droppedCodes.join(", ")}.`,
-          );
-        }
-        return;
-      }
-      setPlan({
-        ...plan,
-        programId: next.programId,
-        specializationId: next.specializationId,
-        stream: next.stream,
-      });
-    },
-    [plan, setPlan],
-  );
-
-  // Audit drill-in: the missing-requirement chip already names the course, so
-  // the only thing left to choose is the term. Open the term picker for that
-  // course rather than auto-appending it to the earliest term with room.
-  const handleDrillToRequirement = useCallback((codes: string[]) => {
-    const code = codes[0];
-    if (!code) return;
-    setTermChoiceCode(code);
-  }, []);
-
-  const handlePickCode = useCallback(
-    (code: string) => {
-      if (!plan || !picker) return;
-      const next = addCourseToSlot(plan, picker.slotId, { code });
-      if (next !== plan) setPlan(next);
-      setPicker(null);
-    },
-    [plan, picker, setPlan, setPicker],
-  );
-
-  // Commit the audit drill-in's chosen course into the term the user picked.
-  const handlePickTermForCourse = useCallback(
-    (slot: { id: string }) => {
-      const current = planRef.current;
-      if (!current || !termChoiceCode) return;
-      const next = addCourseToSlot(current, slot.id, { code: termChoiceCode });
-      if (next !== current) setPlan(next);
-      setTermChoiceCode(null);
-    },
-    [termChoiceCode, setPlan],
-  );
-
-  const handleRemoveCourse = useCallback(
-    (slotId: string, code: string) => {
-      const current = planRef.current;
-      if (!current) return;
-      const next = removeCourseFromSlot(current, slotId, code);
-      if (next !== current) setPlan(next);
-    },
-    [setPlan],
-  );
-
-  // Drag-and-drop: a placed chip dropped on another term ("move") or an audit
-  // "missing" chip dropped into a term ("add"). All routed through setPlan, so
-  // persistence and re-validation happen exactly as for any other edit.
-  const handleCourseDrop = useCallback(
-    (toSlotId: string, data: CourseDragData) => {
-      const cur = planRef.current;
-      if (!cur) return;
-      const next = applyCourseDrop(cur, toSlotId, data);
-      if (next !== cur) setPlan(next);
-    },
-    [setPlan],
-  );
-
-  const handleRetrySave = useCallback(() => {
-    void flushSave();
-  }, [flushSave]);
 
   const pickerMeta = useMemo(() => {
     if (!plan || !picker) return null;
@@ -681,30 +523,6 @@ function PlannerLayout({
       {overlays}
     </>
   );
-}
-
-function buildImportBanner(args: {
-  stream: Stream;
-  unsortedCodes: string[];
-  unplacedTerms: string[];
-  startTermId: number | null;
-}): string {
-  const parts: string[] = [];
-  if (args.startTermId === null) {
-    parts.push(
-      "Transcript imported but no recognizable term labels were found — slots were not generated.",
-    );
-  } else if (args.stream === "stream8") {
-    parts.push(
-      "Imported as Stream 8 co-op (the default for transcripts marked co-operative). Reset and re-import to switch to Stream 4.",
-    );
-  }
-  if (args.unsortedCodes.length > 0) {
-    parts.push(
-      `${args.unsortedCodes.length} course${args.unsortedCodes.length === 1 ? "" : "s"} couldn't be placed onto the cadence (${args.unplacedTerms.join(", ")}): ${args.unsortedCodes.join(", ")}.`,
-    );
-  }
-  return parts.join(" ");
 }
 
 export function planSubtitle(plan: LocalPlan): string {

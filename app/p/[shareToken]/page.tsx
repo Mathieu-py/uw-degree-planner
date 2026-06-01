@@ -4,7 +4,7 @@ import { cache } from "react";
 import { SharedPlanView } from "@/components/planner/viewer/SharedPlanView";
 import { loadTerm } from "@/lib/courses/data";
 import { loadSharedPlan } from "@/lib/plan/server/actions";
-import { PROGRAMS } from "@/lib/programs";
+import { getProgramOptions } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
 
 // generateMetadata and the page both need the shared plan. Dedup the RPC
@@ -23,7 +23,7 @@ export async function generateMetadata({
   const result = await loadSharedPlanCached(shareToken);
   const name = result.ok && result.data ? result.data.name : "Shared plan";
   return {
-    title: `${name} · UW Degree Planner`,
+    title: name,
     // Shared plans are link-only; don't surface them in search results.
     robots: { index: false, follow: false },
   };
@@ -34,11 +34,9 @@ export default async function SharedPlanPage({ params }: PageProps) {
   const result = await loadSharedPlanCached(shareToken);
   if (!result.ok || !result.data) notFound();
 
-  // Same digests as the main /plan route — kept tiny on the wire so the
+  // Same digest as the main /plan route — kept tiny on the wire so the
   // shared view loads fast even for cold visitors.
-  const programOptions = Object.entries(PROGRAMS)
-    .map(([id, p]) => ({ id, name: p.name, kind: p.kind }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const programOptions = getProgramOptions();
 
   const catalog = await loadTerm(PINNED_TERM);
 

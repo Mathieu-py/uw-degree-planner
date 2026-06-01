@@ -15,9 +15,9 @@ interface PageParams {
 export async function generateMetadata(props: { params: Promise<PageParams> }) {
   const { code } = await props.params;
   const course = await loadCourseByCode(TERM, code);
-  if (!course) return { title: "Course not found · UW Degree Planner" };
+  if (!course) return { title: "Course not found" };
   return {
-    title: `${formatCourseCode(course.code)} — ${course.name} · UW Degree Planner`,
+    title: `${formatCourseCode(course.code)} — ${course.name}`,
     description: course.description?.slice(0, 160) ?? undefined,
   };
 }

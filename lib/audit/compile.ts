@@ -16,6 +16,7 @@
  *  - `excluded`: never gates status; the UI surfaces violations as warnings.
  */
 
+import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import type { LocalPlan } from "@/lib/plan/types";
 import {
   describeRule,
@@ -85,16 +86,6 @@ function statusFromPickCount(
   return count > 0 || anyPartial ? "partial" : "unmet";
 }
 
-function levelBucket(code: string): number {
-  const m = code.match(/(\d+)/);
-  if (!m) return 0;
-  return Math.floor(parseInt(m[0], 10) / 100) * 100;
-}
-
-function coursePrefix(code: string): string {
-  return (code.match(/^([a-z]+)/i)?.[1] ?? "").toLowerCase();
-}
-
 function compile(node: RuleNode, placement: PlacementMap): AuditNode {
   switch (node.kind) {
     case "courses": {
@@ -131,92 +122,10 @@ function compile(node: RuleNode, placement: PlacementMap): AuditNode {
         children,
       };
     }
-    case "pick": {
-      const allCoursesLeaves =
-        node.children.length > 0 &&
-        node.children.every((c) => c.kind === "courses");
-      if (allCoursesLeaves) {
-        const options = [
-          ...new Set(
-            node.children.flatMap((c) =>
-              c.kind === "courses" ? c.courses : [],
-            ),
-          ),
-        ];
-        const satisfiers: Placement[] = [];
-        const missing: string[] = [];
-        for (const code of options) {
-          const p = placement.get(code);
-          if (p) satisfiers.push(p);
-          else missing.push(code);
-        }
-        return {
-          ruleNode: node,
-          status: statusFromPickCount(
-            satisfiers.length,
-            node.selectMin,
-            node.selectMax,
-            false,
-          ),
-          description: describeRule(node),
-          satisfiers,
-          missingCodes: missing,
-          satisfiedCount: satisfiers.length,
-          selectMin: node.selectMin,
-          selectMax: node.selectMax,
-          children: [],
-        };
-      }
-      // Mixed/nested children: each must be independently met to count as 1.
-      const children = node.children.map((c) => compile(c, placement));
-      const count = children.filter(
-        (c) => c.status === "met" || c.status === "overSatisfied",
-      ).length;
-      const anyPartial = children.some((c) => c.status === "partial");
-      return {
-        ruleNode: node,
-        status: statusFromPickCount(
-          count,
-          node.selectMin,
-          node.selectMax,
-          anyPartial,
-        ),
-        description: describeRule(node),
-        satisfiers: children.flatMap((c) => c.satisfiers),
-        missingCodes: [],
-        satisfiedCount: count,
-        selectMin: node.selectMin,
-        selectMax: node.selectMax,
-        children,
-      };
-    }
-    case "subjectPool": {
-      const subjects = new Set(node.subjectCodes.map((s) => s.toLowerCase()));
-      const satisfiers: Placement[] = [];
-      for (const [code, p] of placement) {
-        if (!subjects.has(coursePrefix(code))) continue;
-        const lvl = levelBucket(code);
-        if (node.minLevel !== undefined && lvl < node.minLevel) continue;
-        if (node.maxLevel !== undefined && lvl > node.maxLevel) continue;
-        satisfiers.push(p);
-      }
-      return {
-        ruleNode: node,
-        status: statusFromPickCount(
-          satisfiers.length,
-          node.selectCount,
-          node.selectCount,
-          false,
-        ),
-        description: describeRule(node),
-        satisfiers,
-        missingCodes: [],
-        satisfiedCount: satisfiers.length,
-        selectMin: node.selectCount,
-        selectMax: node.selectCount,
-        children: [],
-      };
-    }
+    case "pick":
+      return compilePick(node, placement);
+    case "subjectPool":
+      return compileSubjectPool(node, placement);
     case "excluded": {
       const violations: Placement[] = [];
       for (const code of node.courses) {
@@ -235,6 +144,108 @@ function compile(node: RuleNode, placement: PlacementMap): AuditNode {
       };
     }
   }
+}
+
+/**
+ * A `pick` node. When every child is a `courses` leaf, the options collapse
+ * into one distinct-code pool (so MATH235 named in two branches counts once).
+ * Otherwise each child must be independently met to count toward the threshold.
+ */
+function compilePick(
+  node: Extract<RuleNode, { kind: "pick" }>,
+  placement: PlacementMap,
+): AuditNode {
+  const allCoursesLeaves =
+    node.children.length > 0 &&
+    node.children.every((c) => c.kind === "courses");
+  if (allCoursesLeaves) {
+    const options = [
+      ...new Set(
+        node.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
+      ),
+    ];
+    const satisfiers: Placement[] = [];
+    const missing: string[] = [];
+    for (const code of options) {
+      const p = placement.get(code);
+      if (p) satisfiers.push(p);
+      else missing.push(code);
+    }
+    return {
+      ruleNode: node,
+      status: statusFromPickCount(
+        satisfiers.length,
+        node.selectMin,
+        node.selectMax,
+        false,
+      ),
+      description: describeRule(node),
+      satisfiers,
+      missingCodes: missing,
+      satisfiedCount: satisfiers.length,
+      selectMin: node.selectMin,
+      selectMax: node.selectMax,
+      children: [],
+    };
+  }
+  // Mixed/nested children: each must be independently met to count as 1.
+  const children = node.children.map((c) => compile(c, placement));
+  const count = children.filter(
+    (c) => c.status === "met" || c.status === "overSatisfied",
+  ).length;
+  const anyPartial = children.some((c) => c.status === "partial");
+  return {
+    ruleNode: node,
+    status: statusFromPickCount(
+      count,
+      node.selectMin,
+      node.selectMax,
+      anyPartial,
+    ),
+    description: describeRule(node),
+    satisfiers: children.flatMap((c) => c.satisfiers),
+    missingCodes: [],
+    satisfiedCount: count,
+    selectMin: node.selectMin,
+    selectMax: node.selectMax,
+    children,
+  };
+}
+
+/**
+ * A `subjectPool` node: count placed courses whose prefix is in the pool and
+ * whose level falls within the optional min/max bounds. The threshold is
+ * `selectCount` exactly (used as both selectMin and selectMax).
+ */
+function compileSubjectPool(
+  node: Extract<RuleNode, { kind: "subjectPool" }>,
+  placement: PlacementMap,
+): AuditNode {
+  const subjects = new Set(node.subjectCodes.map((s) => s.toLowerCase()));
+  const satisfiers: Placement[] = [];
+  for (const [code, p] of placement) {
+    if (!subjects.has(coursePrefix(code))) continue;
+    const lvl = levelBucket(courseLevel(code));
+    if (node.minLevel !== undefined && lvl < node.minLevel) continue;
+    if (node.maxLevel !== undefined && lvl > node.maxLevel) continue;
+    satisfiers.push(p);
+  }
+  return {
+    ruleNode: node,
+    status: statusFromPickCount(
+      satisfiers.length,
+      node.selectCount,
+      node.selectCount,
+      false,
+    ),
+    description: describeRule(node),
+    satisfiers,
+    missingCodes: [],
+    satisfiedCount: satisfiers.length,
+    selectMin: node.selectCount,
+    selectMax: node.selectCount,
+    children: [],
+  };
 }
 
 export function compileAudit(
