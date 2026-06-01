@@ -11,7 +11,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Isolate the component from the router, auth, plan sync, and the heavy
 // PDF/transcript pipeline so the drop wiring is what's under test.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/lib/auth/store", () => ({ useAuthState: () => ({ isAuthed: false }) }));
+vi.mock("@/lib/auth/store", () => ({
+  useAuthState: () => ({ isAuthed: false }),
+}));
 vi.mock("@/lib/plan/sync/usePlanList", () => ({
   usePlanList: () => ({ create: vi.fn() }),
 }));
@@ -60,9 +62,7 @@ describe("WelcomeFlow dropzone", () => {
 
     fireEvent.drop(label, { dataTransfer: { files: [file] } });
 
-    await waitFor(() =>
-      expect(extractTextFromPdf).toHaveBeenCalledWith(file),
-    );
+    await waitFor(() => expect(extractTextFromPdf).toHaveBeenCalledWith(file));
   });
 
   it("shows drag-active feedback on drag-over and clears it on leave", () => {
