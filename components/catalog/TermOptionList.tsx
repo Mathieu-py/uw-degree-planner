@@ -1,4 +1,5 @@
 import type { PlanSlot } from "@/lib/plan/types";
+import { optionButtonClasses } from "./optionButtonClasses";
 import type { TermOption, TermState } from "./termOptions";
 
 /**
@@ -40,7 +41,7 @@ export function TermOptionList({
           disabled={opt.state === "missing" || alreadyIn !== null || busy}
           onClick={() => onPick(opt.slot, opt.label)}
           title={opt.hint}
-          className="flex items-center justify-between gap-3 rounded-[9px] border border-line px-3 py-2.5 text-left transition-colors hover:bg-bg-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          className={optionButtonClasses}
         >
           <span className="flex items-center gap-2 min-w-0">
             <span className="u-mono text-xs font-bold">
