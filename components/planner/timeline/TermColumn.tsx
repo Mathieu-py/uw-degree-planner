@@ -23,6 +23,8 @@ interface Props {
   onRemoveCourse: (slotId: string, code: string) => void;
   onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
   readOnly?: boolean;
+  /** Forwarded to SlotBody's course-detail links — see {@link SlotBody}. */
+  planOriginQuery?: string;
 }
 
 export const TermColumn = memo(function TermColumn({
@@ -32,6 +34,7 @@ export const TermColumn = memo(function TermColumn({
   onRemoveCourse,
   onCourseDrop,
   readOnly = false,
+  planOriginQuery,
 }: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
@@ -113,6 +116,7 @@ export const TermColumn = memo(function TermColumn({
         onAdd={handleAdd}
         onRemoveCourse={handleRemoveCourse}
         readOnly={readOnly}
+        planOriginQuery={planOriginQuery}
       />
     </div>
   );

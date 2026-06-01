@@ -130,4 +130,33 @@ describe("SlotBody drag source", () => {
     fireEvent.dragEnd(chip);
     expect(chip.classList.contains("is-dragging")).toBe(false);
   });
+
+  it("clears a stale drag dim when the course leaves and returns to the term", () => {
+    const props = {
+      issuesByCourse: new Map(),
+      onAdd: () => {},
+      onRemoveCourse: () => {},
+    };
+    const { rerender } = render(<SlotBody slot={ACADEMIC_SLOT} {...props} />);
+    const chip = screen.getByText("MATH 115").closest(".pw-slot");
+    if (!chip) throw new Error("course chip not found");
+
+    // Drag out: the chip dims. The real drop relocates the course and unmounts
+    // this chip, so its dragEnd never fires — hence no dragEnd call here.
+    fireEvent.dragStart(chip, { dataTransfer: fakeDataTransfer() });
+    expect(chip.classList.contains("is-dragging")).toBe(true);
+
+    // Course leaves this term…
+    rerender(<SlotBody slot={{ ...ACADEMIC_SLOT, courses: [] }} {...props} />);
+    // …then is dropped back in. The returned chip must not be greyed out.
+    rerender(
+      <SlotBody
+        slot={{ ...ACADEMIC_SLOT, courses: [{ code: "math115" }] }}
+        {...props}
+      />,
+    );
+
+    const returned = screen.getByText("MATH 115").closest(".pw-slot");
+    expect(returned?.classList.contains("is-dragging")).toBe(false);
+  });
 });

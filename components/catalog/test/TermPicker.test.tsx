@@ -1,22 +1,43 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Course } from "@/lib/courses/types";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LocalPlan, PlanSlot, SlotCourse } from "@/lib/plan/types";
 import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { makeTermId } from "@/lib/terms";
+import { makeCourse, slot } from "./fixtures";
 
 // Storage is the only side-effecting dependency: drive `loadPlan` to set the
 // initial plan and spy on `savePlan` to observe what gets written. The prereq
 // engine, term labels, and completed-set derivation run for real so the tests
 // exercise the actual eligibility wiring.
-const { loadPlanMock, savePlanMock } = vi.hoisted(() => ({
+const { loadPlanMock, savePlanMock, authStateMock } = vi.hoisted(() => ({
   loadPlanMock: vi.fn<() => LocalPlan | null>(),
   savePlanMock: vi.fn<(plan: LocalPlan) => boolean>(() => true),
+  authStateMock: vi.fn(),
 }));
 vi.mock("@/lib/plan/storage", () => ({
   loadPlan: loadPlanMock,
   savePlan: savePlanMock,
+}));
+
+// These tests exercise the signed-out (local plan) branch. Pin auth to
+// "ready, signed out" so the wrapper renders the local body. The signed-in
+// branch is covered in TermPickerServer.test.tsx.
+vi.mock("@/lib/auth/store", () => ({ useAuthState: authStateMock }));
+
+// TermPicker statically imports the plan server actions (for the signed-in
+// branch). The real module pulls in `server-only`, which throws under jsdom,
+// so stub it out — the local branch never calls these.
+vi.mock("@/lib/plan/server/actions", () => ({
+  loadServerPlan: vi.fn(),
+  savePlanState: vi.fn(),
+  plansContainingCourse: vi.fn(),
 }));
 
 // Make close synchronous/observable; TermPicker only reads these three.
@@ -28,38 +49,18 @@ vi.mock("@/lib/hooks/useModalExit", () => ({
   }),
 }));
 
+const SIGNED_OUT = {
+  user: null,
+  username: null,
+  displayName: null,
+  ready: true,
+  isAuthed: false,
+};
+
 import { TermPicker } from "../TermPicker";
 
 const FALL_2025 = makeTermId(2025, "Fall"); // → "Fall 2025"
 const WINTER_2025 = makeTermId(2025, "Winter"); // → "Winter 2025"
-
-function makeCourse(over: Partial<Course> = {}): Course {
-  return {
-    id: 1,
-    code: "CS246",
-    name: "Object-Oriented Software Development",
-    prereqs: null,
-    coreqs: null,
-    antireqs: null,
-    rating: null,
-    sections: [],
-    prefix: "cs",
-    level: 200,
-    hasSeats: true,
-    ...over,
-  };
-}
-
-function slot(
-  over: Partial<PlanSlot> & Pick<PlanSlot, "id" | "position">,
-): PlanSlot {
-  return {
-    termId: null,
-    isCoop: false,
-    courses: [],
-    ...over,
-  };
-}
 
 function makePlan(slots: PlanSlot[]): LocalPlan {
   return {
@@ -78,6 +79,10 @@ function slotsWithCode(plan: LocalPlan, code: string): PlanSlot[] {
   return plan.slots.filter((s) => s.courses.some((c) => c.code === code));
 }
 
+beforeEach(() => {
+  authStateMock.mockReturnValue(SIGNED_OUT);
+});
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -85,6 +90,18 @@ afterEach(() => {
 });
 
 describe("TermPicker", () => {
+  it("shows a loading state until auth resolves", () => {
+    authStateMock.mockReturnValue({ ...SIGNED_OUT, ready: false });
+    loadPlanMock.mockReturnValue(null);
+    render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
+
+    expect(screen.getByText(/loading…/i)).toBeTruthy();
+    // No local body, even though loadPlan would return null — the wrapper must
+    // not read storage or flash the signed-out empty state before `ready`.
+    expect(screen.queryByText(/don't have a local plan yet/i)).toBeNull();
+    expect(loadPlanMock).not.toHaveBeenCalled();
+  });
+
   it("prompts to start a plan when none exists", () => {
     loadPlanMock.mockReturnValue(null);
     render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
@@ -113,14 +130,15 @@ describe("TermPicker", () => {
     expect(screen.queryByRole("button", { name: /^pre/ })).toBeNull();
   });
 
-  it("writes the course into exactly the chosen term and confirms", () => {
+  it("writes the course into the chosen term and dismisses the picker", async () => {
+    const onClose = vi.fn();
     loadPlanMock.mockReturnValue(
       makePlan([
         slot({ id: "a", position: "1A", termId: FALL_2025 }),
         slot({ id: "b", position: "1B", termId: WINTER_2025 }),
       ]),
     );
-    render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
+    render(<TermPicker course={makeCourse()} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Winter 2025/ }));
 
@@ -128,7 +146,8 @@ describe("TermPicker", () => {
     const saved = savePlanMock.mock.calls[0][0];
     const placed = slotsWithCode(saved, "cs246");
     expect(placed.map((s) => s.id)).toEqual(["b"]);
-    expect(screen.getByText(/Added to Winter 2025/)).toBeTruthy();
+    // Picking a term closes the picker — nothing more to do on that course.
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
   it("flags an already-placed course and disables every term option", () => {

@@ -14,6 +14,7 @@ import { HandoffModal } from "@/components/planner/modals/HandoffModal";
 import { PlanSettingsModal } from "@/components/planner/modals/PlanSettingsModal";
 import { TranscriptImportModal } from "@/components/planner/modals/TranscriptImportModal";
 import { SlotPicker } from "@/components/planner/picker/SlotPicker";
+import { TermChoiceModal } from "@/components/planner/picker/TermChoiceModal";
 import { Timeline } from "@/components/planner/timeline/Timeline";
 import { PlanToolbar } from "@/components/planner/toolbar/PlanToolbar";
 import { SaveStatusBadge } from "@/components/planner/toolbar/SaveStatusBadge";
@@ -138,6 +139,7 @@ function PlannerShellInner({
     setAuditSheetOpen,
   } = usePlannerModals();
   const [importBanner, setImportBanner] = useState<string | null>(null);
+  const [termChoiceCode, setTermChoiceCode] = useState<string | null>(null);
   // Guards the in-planner transcript import against the double-click
   // duplicate-plan bug — without it, a second click during the network
   // round-trip creates a second server plan.
@@ -270,22 +272,14 @@ function PlannerShellInner({
     [plan, setPlan],
   );
 
-  // Audit drill-in: open the picker pre-filtered to a requirement's courses,
-  // targeting the earliest academic term that still has room (prereq-bearing
-  // courses usually belong earlier) so the user lands in a sensible term.
-  const handleDrillToRequirement = useCallback(
-    (codes: string[]) => {
-      const current = planRef.current;
-      if (!current) return;
-      const academic = current.slots.filter(
-        (s) => s.position !== "pre" && !s.isCoop,
-      );
-      const target = academic.find((s) => s.courses.length < 6) ?? academic[0];
-      if (!target) return;
-      setPicker({ slotId: target.id, focusCodes: codes });
-    },
-    [setPicker],
-  );
+  // Audit drill-in: the missing-requirement chip already names the course, so
+  // the only thing left to choose is the term. Open the term picker for that
+  // course rather than auto-appending it to the earliest term with room.
+  const handleDrillToRequirement = useCallback((codes: string[]) => {
+    const code = codes[0];
+    if (!code) return;
+    setTermChoiceCode(code);
+  }, []);
 
   const handlePickCode = useCallback(
     (code: string) => {
@@ -295,6 +289,18 @@ function PlannerShellInner({
       setPicker(null);
     },
     [plan, picker, setPlan, setPicker],
+  );
+
+  // Commit the audit drill-in's chosen course into the term the user picked.
+  const handlePickTermForCourse = useCallback(
+    (slot: { id: string }) => {
+      const current = planRef.current;
+      if (!current || !termChoiceCode) return;
+      const next = addCourseToSlot(current, slot.id, { code: termChoiceCode });
+      if (next !== current) setPlan(next);
+      setTermChoiceCode(null);
+    },
+    [termChoiceCode, setPlan],
   );
 
   const handleRemoveCourse = useCallback(
@@ -341,6 +347,10 @@ function PlannerShellInner({
         : "Pre-arrival";
     return { slot, completedBefore, placedCodes, termLabel };
   }, [plan, picker]);
+
+  const termChoiceCourse = termChoiceCode
+    ? (catalogByCode.get(termChoiceCode) ?? null)
+    : null;
 
   // Rendered alongside every branch below: the handoff modal can appear over
   // the loading skeleton, the not-found banner, the empty state, or the
@@ -415,6 +425,10 @@ function PlannerShellInner({
   const programName =
     programOptions.find((p) => p.id === plan.programId)?.name ?? "—";
 
+  // Tag the timeline's course links as plan-originated so the detail page hides
+  // its (here redundant) "Add to plan" button — the course is already in view.
+  const planOriginQuery = "?from=plan";
+
   return (
     <PlannerLayout
       isAuthed={isAuthed}
@@ -433,6 +447,15 @@ function PlannerShellInner({
               focusCodes={picker.focusCodes}
               onPick={handlePickCode}
               onClose={closePicker}
+            />
+          ) : null}
+
+          {termChoiceCourse ? (
+            <TermChoiceModal
+              course={termChoiceCourse}
+              plan={plan}
+              onPick={handlePickTermForCourse}
+              onClose={() => setTermChoiceCode(null)}
             />
           ) : null}
 
@@ -587,6 +610,7 @@ function PlannerShellInner({
                 onSlotClick={openPicker}
                 onRemoveCourse={handleRemoveCourse}
                 onCourseDrop={handleCourseDrop}
+                planOriginQuery={planOriginQuery}
               />
             </div>
           </div>

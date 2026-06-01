@@ -243,10 +243,10 @@ function LeafChips({
               type="button"
               disabled={!onDrill}
               {...(onDrill ? courseDragProps({ kind: "add", code: c }) : null)}
-              onClick={() => onDrill?.(node.missingCodes)}
+              onClick={() => onDrill?.([c])}
               title={
                 onDrill
-                  ? "Drag into a term, or click to find courses"
+                  ? "Drag into a term, or click to pick a term"
                   : formatCourseCode(c)
               }
               className="pw-areq is-miss disabled:cursor-default"

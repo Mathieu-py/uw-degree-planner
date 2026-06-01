@@ -58,6 +58,23 @@ describe("addCourseToSlot", () => {
   it("is a no-op for an unknown slot", () => {
     expect(addCourseToSlot(PLAN, "nope", { code: "cs246" })).toBe(PLAN);
   });
+
+  it("is generic over the plan shape, preserving non-slot fields", () => {
+    // A ServerPlan-shaped value (carries id/name, no schemaVersion). The
+    // catalog's signed-in add relies on getting the same shape back.
+    const serverLike = {
+      id: "plan-1",
+      name: "My plan",
+      programId: "se",
+      slots: PLAN.slots,
+    };
+    const next = addCourseToSlot(serverLike, "1B", { code: "cs246" });
+    expect(next.id).toBe("plan-1");
+    expect(next.name).toBe("My plan");
+    expect(
+      next.slots.find((s) => s.id === "1B")?.courses.map((c) => c.code),
+    ).toEqual(["cs136", "cs246"]);
+  });
 });
 
 describe("removeCourseFromSlot", () => {
