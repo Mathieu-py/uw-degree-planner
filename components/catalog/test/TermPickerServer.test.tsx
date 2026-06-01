@@ -7,7 +7,6 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Course } from "@/lib/courses/types";
 import type {
   PlanSnapshot,
   PlanSummary,
@@ -15,6 +14,7 @@ import type {
 } from "@/lib/plan/server/types";
 import type { PlanSlot } from "@/lib/plan/types";
 import { makeTermId } from "@/lib/terms";
+import { makeCourse, slot } from "./fixtures";
 
 const {
   authStateMock,
@@ -59,29 +59,6 @@ const SIGNED_IN = {
   ready: true,
   isAuthed: true,
 };
-
-function makeCourse(over: Partial<Course> = {}): Course {
-  return {
-    id: 1,
-    code: "CS246",
-    name: "Object-Oriented Software Development",
-    prereqs: null,
-    coreqs: null,
-    antireqs: null,
-    rating: null,
-    sections: [],
-    prefix: "cs",
-    level: 200,
-    hasSeats: true,
-    ...over,
-  };
-}
-
-function slot(
-  over: Partial<PlanSlot> & Pick<PlanSlot, "id" | "position">,
-): PlanSlot {
-  return { termId: null, isCoop: false, courses: [], ...over };
-}
 
 function makeServerPlan(
   slots: PlanSlot[],

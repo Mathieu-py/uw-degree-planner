@@ -66,9 +66,12 @@ export async function listPlans(): Promise<ActionResult<PlanSummary[]>> {
 
 /**
  * The ids of the caller's plans that already contain `courseCode`. Used by the
- * catalog add flow to grey out plans the course is already in. A single
- * RLS-scoped read: `plan_courses` joined up to `plans` so only the user's own
- * rows come back. Course codes are stored lowercase, so we match lowercase.
+ * catalog add flow to grey out plans the course is already in. There's no join
+ * to `plans`: scoping to the caller's own rows relies on the RLS policies
+ * (`plan_courses_owner_all` on public.plan_courses, `plan_slots_owner_all` on
+ * public.plan_slots), so the `plan_slots!inner(plan_id)` embed only surfaces
+ * plan ids from RLS-scoped rows. Course codes are stored lowercase, so we match
+ * lowercase.
  */
 export async function plansContainingCourse(
   courseCode: string,

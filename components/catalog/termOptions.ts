@@ -35,14 +35,7 @@ export function computeTermOptions(
         { slots },
         slot.termId ?? undefined,
       );
-      const result = prereqNode
-        ? evaluate(prereqNode, { completed })
-        : {
-            satisfied: true,
-            uncertain: false,
-            missingCourses: [],
-            rawRequirements: [],
-          };
+      const result = evaluate(prereqNode, { completed });
       const state: TermState = !result.satisfied
         ? "missing"
         : result.uncertain
