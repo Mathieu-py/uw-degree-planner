@@ -14,6 +14,7 @@ import {
 } from "@/lib/courses/eligibility";
 import { applyFilters } from "@/lib/courses/filters";
 import type { Course } from "@/lib/courses/types";
+import type { ProgramIdentity } from "@/lib/programs";
 
 export interface PickerFilters {
   query: string;
@@ -41,6 +42,10 @@ export interface UseFilteredCoursesArgs {
   catalog: Course[];
   placedCodes: Set<string>;
   completedBefore: Set<string>;
+  /** Target term's level (e.g. "2A") for resolving level-gated prereqs. */
+  level?: string;
+  /** Student's program for resolving program-restriction prereqs. */
+  program?: ProgramIdentity;
   focusCodes?: string[];
 }
 
@@ -69,6 +74,8 @@ export function useFilteredCourses({
   catalog,
   placedCodes,
   completedBefore,
+  level,
+  program,
   focusCodes,
 }: UseFilteredCoursesArgs): UseFilteredCoursesResult {
   const [filters, setFilters] = useState<PickerFilters>(DEFAULT_FILTERS);
@@ -132,7 +139,13 @@ export function useFilteredCourses({
         course,
         eligibility: null,
       }));
-      const annotated = attachEligibility(baseRows, completedBefore, true);
+      const annotated = attachEligibility(
+        baseRows,
+        completedBefore,
+        true,
+        level,
+        program,
+      );
       return [...annotated].sort((a, b) =>
         compareCourses(a.course, b.course, sortKey, sortDir),
       );
@@ -144,15 +157,30 @@ export function useFilteredCourses({
     return baseRows.sort((a, b) =>
       compareCourses(a.course, b.course, sortKey, sortDir),
     );
-  }, [searched, completedBefore, filters.hideUnmetPrereqs, sortKey, sortDir]);
+  }, [
+    searched,
+    completedBefore,
+    level,
+    program,
+    filters.hideUnmetPrereqs,
+    sortKey,
+    sortDir,
+  ]);
 
   const visible = useMemo<EligibilityRow[]>(() => {
     const slice = sortedCourses.slice(0, limit);
     // In gating mode, slice rows already carry annotations from the
     // pre-pagination pass — re-annotating would be wasted work.
     if (filters.hideUnmetPrereqs) return slice;
-    return attachEligibility(slice, completedBefore, false);
-  }, [sortedCourses, limit, completedBefore, filters.hideUnmetPrereqs]);
+    return attachEligibility(slice, completedBefore, false, level, program);
+  }, [
+    sortedCourses,
+    limit,
+    completedBefore,
+    level,
+    program,
+    filters.hideUnmetPrereqs,
+  ]);
 
   // `sorted` is exposed for the candidate-count display and hasMore math;
   // nothing downstream reads `eligibility` off the off-page rows.

@@ -68,6 +68,28 @@ describe("computeTermOptions", () => {
     );
     expect(options[0].state).toBe("check");
   });
+
+  it("resolves a level-only prereq from the slot's position, never 'check'", () => {
+    // Each slot's `position` is the level the student would be at in that term,
+    // so a "Level at least 2A" gate decides definitively: missing before 2A,
+    // eligible from 2A on — it must never punt to the amber "check".
+    const slots = [
+      slot({ id: "1a", position: "1A", termId: makeTermId(2025, "Fall") }),
+      slot({ id: "1b", position: "1B", termId: makeTermId(2026, "Winter") }),
+      slot({ id: "2a", position: "2A", termId: makeTermId(2026, "Fall") }),
+      slot({ id: "2b", position: "2B", termId: makeTermId(2027, "Winter") }),
+    ];
+    const options = computeTermOptions(
+      slots,
+      parsePrereqs("Level at least 2A"),
+    );
+    const byId = Object.fromEntries(options.map((o) => [o.slot.id, o.state]));
+    expect(byId["1a"]).toBe("missing");
+    expect(byId["1b"]).toBe("missing");
+    expect(byId["2a"]).toBe("eligible");
+    expect(byId["2b"]).toBe("eligible");
+    expect(options.map((o) => o.state)).not.toContain("check");
+  });
 });
 
 describe("alreadyInLabel", () => {

@@ -36,6 +36,7 @@ import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
+import { programIdentity } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import { ProgramHeader } from "./ProgramHeader";
@@ -345,7 +346,14 @@ function PlannerShellInner({
       slot.termId !== null
         ? (termInfo(slot.termId)?.label ?? `Term ${slot.termId}`)
         : "Pre-arrival";
-    return { slot, completedBefore, placedCodes, termLabel };
+    // The slot's position is the student's level in this term ("1A".."4B"),
+    // letting the picker resolve level-gated prereqs. Pre/co-op have no level.
+    const level =
+      !slot.isCoop && slot.position !== "pre" ? slot.position : undefined;
+    // The plan's program lets the picker resolve program-restriction prereqs.
+    const program =
+      programIdentity(plan.programId, plan.specializationId) ?? undefined;
+    return { slot, completedBefore, placedCodes, termLabel, level, program };
   }, [plan, picker]);
 
   const termChoiceCourse = termChoiceCode
@@ -426,8 +434,12 @@ function PlannerShellInner({
     programOptions.find((p) => p.id === plan.programId)?.name ?? "—";
 
   // Tag the timeline's course links as plan-originated so the detail page hides
-  // its (here redundant) "Add to plan" button — the course is already in view.
-  const planOriginQuery = "?from=plan";
+  // its (here redundant) "Add to plan" button — the course is already in view —
+  // and carry the plan id so "Back to planner" returns to this exact plan (not
+  // a generic /plan). Signed-out local plans have no planId and stay at /plan.
+  const planOriginQuery = planId
+    ? `?from=plan&planId=${encodeURIComponent(planId)}`
+    : "?from=plan";
 
   return (
     <PlannerLayout
@@ -444,6 +456,8 @@ function PlannerShellInner({
               catalog={catalog}
               placedCodes={pickerMeta.placedCodes}
               completedBefore={pickerMeta.completedBefore}
+              level={pickerMeta.level}
+              program={pickerMeta.program}
               focusCodes={picker.focusCodes}
               onPick={handlePickCode}
               onClose={closePicker}

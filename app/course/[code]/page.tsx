@@ -24,12 +24,18 @@ export async function generateMetadata(props: { params: Promise<PageParams> }) {
 
 export default async function CoursePage(props: {
   params: Promise<PageParams>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; planId?: string }>;
 }) {
   const { code } = await props.params;
-  const { from } = await props.searchParams;
+  const { from, planId } = await props.searchParams;
   const course = await loadCourseByCode(TERM, code);
   if (!course) notFound();
+
+  // Return to the exact plan the user came from when one was passed; otherwise
+  // fall back to the generic planner (signed-out local plan, or direct visit).
+  const backToPlannerHref = planId
+    ? `/plan?planId=${encodeURIComponent(planId)}`
+    : "/plan";
 
   const rating = course.rating;
   const hasRatings =
@@ -40,7 +46,7 @@ export default async function CoursePage(props: {
   return (
     <div className="mx-auto max-w-5xl w-full px-6 py-10">
       <Link
-        href="/plan"
+        href={backToPlannerHref}
         className="text-sm text-ink-2 hover:text-ink w-fit inline-flex items-center gap-1.5"
       >
         ← Back to planner

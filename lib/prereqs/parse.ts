@@ -18,6 +18,7 @@ export type PrereqNode =
   | { kind: "and"; children: PrereqNode[] }
   | { kind: "or"; children: PrereqNode[] }
   | { kind: "level"; minLevel: string }
+  | { kind: "program"; clause: string }
   | { kind: "raw"; text: string };
 
 type Token =
@@ -30,6 +31,7 @@ type Token =
   | { kind: "COMMA" }
   | { kind: "SEMI" }
   | { kind: "LEVEL"; minLevel: string }
+  | { kind: "PROGRAM"; clause: string }
   | { kind: "RAW"; text: string }
   | { kind: "END" };
 
@@ -39,6 +41,9 @@ const ONE_OF_RE = /^one of\b/i;
 const OR_RE = /^or\b/i;
 const AND_RE = /^and\b/i;
 const RAW_RE = /^[^(),;/]+/;
+const PROGRAM_TRIGGER =
+  /students?\s+only|students?\.?\s*$|open only to|only open to/i;
+const LEAD_LEVEL_RE = /^(?:level\s+)?\d[a-z](?:\s+or\s+\d[a-z])*\s+[a-z]/i;
 
 function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -103,6 +108,25 @@ function tokenize(input: string): Token[] {
       continue;
     }
 
+    // A program/faculty restriction. Course and level tokens are tried first
+    // (above), so by here `segment` is the trailing restriction prose. Grab the
+    // whole segment up to the next ";" as one token — its internal "or" /
+    // commas / slashes are part of the clause, not boolean structure. A leading
+    // "or"/"and" is the connective joining this restriction to what precedes
+    // it, NOT part of the clause: skip the PROGRAM branch so it's tokenized as
+    // OR/AND below (the restriction then starts on the next iteration).
+    const semiIdx = rest.indexOf(";");
+    const segment = semiIdx === -1 ? rest : rest.slice(0, semiIdx);
+    if (
+      !/^(?:or|and)\b/i.test(segment) &&
+      (PROGRAM_TRIGGER.test(segment) || LEAD_LEVEL_RE.test(segment))
+    ) {
+      const clause = segment.trim();
+      if (clause.length > 0) tokens.push({ kind: "PROGRAM", clause });
+      i += segment.length;
+      continue;
+    }
+
     const orMatch = rest.match(OR_RE);
     if (orMatch) {
       tokens.push({ kind: "OR" });
@@ -159,10 +183,27 @@ class Parser {
 
   parseAndClause(): PrereqNode {
     const parts: PrereqNode[] = [this.parseOrClause()];
-    while (this.match("AND")) {
+    // Explicit "and", plus implicit conjunction: UWFlow often juxtaposes a
+    // structured requirement after another with no connective (e.g. "Level at
+    // least 4A Mathematics … students only"). Treat an adjacent structured
+    // primary as AND so it isn't silently dropped. RAW is excluded — trailing
+    // prose like "with a grade of at least 60%" should keep being ignored
+    // rather than making the whole clause uncertain.
+    while (this.match("AND") || this.atStructuredPrimary()) {
       parts.push(this.parseOrClause());
     }
     return parts.length === 1 ? parts[0] : flatten("and", parts);
+  }
+
+  private atStructuredPrimary(): boolean {
+    const k = this.peek().kind;
+    return (
+      k === "COURSE" ||
+      k === "LEVEL" ||
+      k === "PROGRAM" ||
+      k === "ONE_OF" ||
+      k === "LPAREN"
+    );
   }
 
   parseOrClause(): PrereqNode {
@@ -182,6 +223,10 @@ class Parser {
     if (tok.kind === "LEVEL") {
       this.consume();
       return { kind: "level", minLevel: tok.minLevel };
+    }
+    if (tok.kind === "PROGRAM") {
+      this.consume();
+      return { kind: "program", clause: tok.clause };
     }
     if (tok.kind === "ONE_OF") {
       this.consume();
@@ -223,6 +268,10 @@ class Parser {
     if (tok.kind === "COURSE") {
       this.consume();
       return { kind: "course", code: tok.code };
+    }
+    if (tok.kind === "PROGRAM") {
+      this.consume();
+      return { kind: "program", clause: tok.clause };
     }
     if (tok.kind === "RAW") {
       this.consume();

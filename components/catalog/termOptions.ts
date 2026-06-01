@@ -5,6 +5,7 @@ import { completedSetFromPlan } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
 import { type PrereqNode, parsePrereqs } from "@/lib/prereqs/parse";
 import { evaluate } from "@/lib/prereqs/satisfied";
+import { type ProgramIdentity, programIdentity } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 
 export type TermState = "eligible" | "check" | "missing";
@@ -29,6 +30,7 @@ export interface TermOption {
 export function computeTermOptions(
   slots: PlanSlot[],
   prereqNode: PrereqNode | null,
+  program?: ProgramIdentity,
 ): TermOption[] {
   return slots
     .filter((s) => s.position !== "pre" && !s.isCoop)
@@ -37,7 +39,11 @@ export function computeTermOptions(
         { slots },
         slot.termId ?? undefined,
       );
-      const result = evaluate(prereqNode, { completed });
+      const result = evaluate(prereqNode, {
+        completed,
+        level: slot.position,
+        program,
+      });
       const state: TermState = !result.satisfied
         ? "missing"
         : result.uncertain
@@ -45,7 +51,10 @@ export function computeTermOptions(
           : "eligible";
       const hint =
         state === "missing"
-          ? `Needs ${result.missingCourses.map(formatCourseCode).join(", ") || "earlier prereqs"}`
+          ? result.missingCourses.length > 0
+            ? `Needs ${result.missingCourses.map(formatCourseCode).join(", ")}`
+            : // No missing course → a program restriction blocked it.
+              result.rawRequirements.join(" · ") || "Needs earlier prereqs"
           : state === "check"
             ? result.rawRequirements.join(" · ") || "Manual check"
             : "Prerequisites met";
@@ -84,15 +93,20 @@ export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
 export function useTermOptions(
   course: Course,
   slots: PlanSlot[] | null | undefined,
+  plan?: { programId: string | null; specializationId: string | null } | null,
 ): { options: TermOption[]; alreadyIn: string | null } {
   const code = course.code.toLowerCase();
   const prereqNode = useMemo(
     () => parsePrereqs(course.prereqs),
     [course.prereqs],
   );
+  const program = useMemo(
+    () => programIdentity(plan?.programId, plan?.specializationId) ?? undefined,
+    [plan?.programId, plan?.specializationId],
+  );
   const options = useMemo(
-    () => (slots ? computeTermOptions(slots, prereqNode) : []),
-    [slots, prereqNode],
+    () => (slots ? computeTermOptions(slots, prereqNode, program) : []),
+    [slots, prereqNode, program],
   );
   const alreadyIn = slots ? alreadyInLabel(slots, code) : null;
   return { options, alreadyIn };

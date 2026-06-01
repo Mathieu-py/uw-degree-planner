@@ -138,6 +138,129 @@ export const PROGRAMS: Record<string, Program> = z
   .record(z.string(), ProgramSchema)
   .parse(programsData);
 
+/** The six UWaterloo undergraduate faculties a program can belong to. */
+export type Faculty =
+  | "engineering"
+  | "mathematics"
+  | "arts"
+  | "science"
+  | "environment"
+  | "health";
+
+/**
+ * Normalized, matchable description of the student's program, used to resolve
+ * program-restriction prereqs (e.g. "Honours Mathematics students only") to a
+ * definite eligible/missing instead of "check". Derived from {@link PROGRAMS}.
+ */
+export interface ProgramIdentity {
+  programId: string;
+  /** Lowercased name variants to match restriction text against: short name + aliases. */
+  names: string[];
+  /** Faculty, or null when it can't be derived confidently from the degree type. */
+  faculty: Faculty | null;
+}
+
+/**
+ * Curated aliases keyed by program short name (lowercased). UWFlow restriction
+ * text uses abbreviations the registry names don't ("CS", "SE", "BBA/BMath");
+ * a miss here only narrows coverage (falls back to "check"), never correctness.
+ */
+const PROGRAM_ALIASES: Record<string, string[]> = {
+  "computer science": ["cs"],
+  "software engineering": ["se"],
+  "systems design engineering": ["syde"],
+  // UWFlow restriction text says "Architecture students only"; the registry
+  // calls these programs "Architectural Studies" / "Architectural Engineering".
+  "architectural studies": ["architecture"],
+  "architectural engineering": ["architecture"],
+  "accounting and financial management": ["afm"],
+  "computing and financial management": ["cfm"],
+  "mathematical finance": ["math fin", "math finance"],
+  "business administration and mathematics double degree": [
+    "bba/bmath",
+    "bba and bmath",
+    "busmath",
+  ],
+  "business administration and computer science double degree": [
+    "bba/bcs",
+    "bba and bcs",
+    "bba/bmath or bba/cs",
+  ],
+};
+
+/** Degree-type substring (inside the program name's parentheses) → faculty. */
+const DEGREE_FACULTY: Array<[string, Faculty]> = [
+  ["bachelor of applied science", "engineering"],
+  ["bachelor of software engineering", "engineering"],
+  ["bachelor of architectural studies", "engineering"],
+  ["bachelor of mathematics", "mathematics"],
+  ["bachelor of computer science", "mathematics"],
+  ["bachelor of computing and financial management", "mathematics"],
+  ["bachelor of environmental studies", "environment"],
+  ["bachelor of arts", "arts"],
+  ["bachelor of science", "science"],
+  ["bachelor of public health", "health"],
+];
+
+/** Short name = program name up to the first " (" (e.g. "Computer Science"). */
+function shortName(name: string): string {
+  const paren = name.indexOf(" (");
+  return (paren === -1 ? name : name.slice(0, paren)).trim();
+}
+
+/** Faculty from the degree-type clause inside the name, or null if ambiguous. */
+function facultyFromName(name: string): Faculty | null {
+  const lower = name.toLowerCase();
+  for (const [needle, faculty] of DEGREE_FACULTY) {
+    if (lower.includes(needle)) return faculty;
+  }
+  return null;
+}
+
+/**
+ * Build a {@link ProgramIdentity} for the student's program (and optional
+ * specialization), or null when the program id is unknown. The specialization
+ * name, when present, is added as an extra matchable name.
+ */
+export function programIdentity(
+  programId: string | null | undefined,
+  specializationId?: string | null,
+): ProgramIdentity | null {
+  if (!programId) return null;
+  const program = PROGRAMS[programId];
+  if (!program) return null;
+  const short = shortName(program.name).toLowerCase();
+  const names = new Set<string>([short, ...(PROGRAM_ALIASES[short] ?? [])]);
+  if (specializationId) {
+    const spec = getSpecialization(programId, specializationId);
+    if (spec) names.add(spec.name.toLowerCase());
+  }
+  return {
+    programId,
+    names: [...names],
+    faculty: facultyFromName(program.name),
+  };
+}
+
+/**
+ * Lowercased set of every program short name + alias in the registry. Serves as
+ * the recognition vocabulary for {@link matchProgram}: a restriction can only be
+ * resolved to a definite "block" when every program it names is recognized here
+ * (otherwise we can't be sure the student isn't in an unrecognized synonym).
+ */
+let shortNamesCache: ReadonlySet<string> | null = null;
+export function programShortNames(): ReadonlySet<string> {
+  if (shortNamesCache) return shortNamesCache;
+  const out = new Set<string>();
+  for (const id of Object.keys(PROGRAMS)) {
+    const short = shortName(PROGRAMS[id].name).toLowerCase();
+    out.add(short);
+    for (const alias of PROGRAM_ALIASES[short] ?? []) out.add(alias);
+  }
+  shortNamesCache = out;
+  return out;
+}
+
 export function isTermLetter(s: string | null | undefined): s is TermLetter {
   return s != null && (TERM_LETTERS as readonly string[]).includes(s);
 }
