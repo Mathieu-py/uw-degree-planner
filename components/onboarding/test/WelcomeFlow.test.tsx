@@ -38,7 +38,9 @@ vi.mock("@/lib/plan/derive", () => ({ completedCoursesFromPlan: () => [] }));
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import { WelcomeFlow } from "../WelcomeFlow";
 
-const PROGRAMS = [{ id: "se", name: "Systems Design" }];
+const PROGRAMS = [
+  { id: "se", name: "Systems Design", kind: "engineering" as const },
+];
 
 function renderFlow() {
   render(<WelcomeFlow programOptions={PROGRAMS} />);

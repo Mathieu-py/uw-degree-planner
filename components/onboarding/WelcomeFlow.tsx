@@ -17,15 +17,11 @@ import {
   detectStream,
 } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
+import type { ProgramOption } from "@/lib/programs";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
-
-interface ProgramOption {
-  id: string;
-  name: string;
-}
 
 const STREAMS: Array<{ value: Stream; label: string }> = [
   { value: "regular", label: "Regular" },

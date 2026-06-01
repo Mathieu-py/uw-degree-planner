@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { PlannerShell } from "@/components/planner/shell/PlannerShell";
 import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { loadTerm } from "@/lib/courses/data";
-import { PROGRAMS } from "@/lib/programs";
+import { getProgramOptions, PROGRAMS } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
 
 export const metadata = {
@@ -11,12 +11,9 @@ export const metadata = {
 
 export default async function PlanPage() {
   // Server: pass the sorted program list down so the client doesn't ship the
-  // entire programs.json again. PROGRAMS is already imported in the bundle
-  // server-side; the small (id, name, kind) digest is all the planner UI needs
-  // until a slot picker opens.
-  const programOptions = Object.entries(PROGRAMS)
-    .map(([id, p]) => ({ id, name: p.name, kind: p.kind }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // entire programs.json again. The small (id, name, kind) digest is all the
+  // planner UI needs until a slot picker opens.
+  const programOptions = getProgramOptions();
 
   // Per-program specialization digest for the Plan Settings modal — only
   // slug + name are shipped to the client; full spec rule trees stay server-side.

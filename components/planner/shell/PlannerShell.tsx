@@ -36,18 +36,14 @@ import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
-import { programIdentity } from "@/lib/programs";
+import { type ProgramOption, programIdentity } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import { ProgramHeader } from "./ProgramHeader";
 import { usePlannerModals } from "./usePlannerModals";
 import { usePlannerRedirect } from "./usePlannerRedirect";
 
-export interface ProgramOption {
-  id: string;
-  name: string;
-  kind: "engineering" | "flexible";
-}
+export type { ProgramOption };
 
 interface Props {
   programOptions: ProgramOption[];

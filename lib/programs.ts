@@ -269,6 +269,31 @@ export function isKnownProgram(id: string): boolean {
   return Object.hasOwn(PROGRAMS, id);
 }
 
+export interface ProgramOption {
+  id: string;
+  name: string;
+  kind: Program["kind"];
+}
+
+/**
+ * The `(id, name, kind)` digest of every program, sorted by name. Server
+ * components ship this to the client instead of the full programs.json so the
+ * planner / onboarding UI can populate a program dropdown without the rule
+ * trees. Callers that only need `(id, name)` accept the richer shape fine.
+ */
+export function getProgramOptions(): ProgramOption[] {
+  return Object.entries(PROGRAMS)
+    .map(([id, p]) => ({ id, name: p.name, kind: p.kind }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** A flat `id → name` lookup for labelling plan cards client-side. */
+export function programNameMap(): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(PROGRAMS).map(([id, p]) => [id, p.name]),
+  );
+}
+
 export function getSpecialization(
   programId: string,
   specializationSlug: string,
