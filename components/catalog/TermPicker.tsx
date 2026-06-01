@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
@@ -19,10 +19,9 @@ import type { ActionResult, ServerPlan } from "@/lib/plan/server/types";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
-import { parsePrereqs } from "@/lib/prereqs/parse";
 import { CourseTermModalShell } from "./CourseTermModalShell";
 import { TermOptionList } from "./TermOptionList";
-import { alreadyInLabel, computeTermOptions } from "./termOptions";
+import { alreadyInLabel, useTermOptions } from "./termOptions";
 
 /**
  * Catalog "Add" flow. The catalog has no target term, so this runs the prereq
@@ -34,29 +33,37 @@ import { alreadyInLabel, computeTermOptions } from "./termOptions";
  * users first pick which of their server-side plans to add to, then the same
  * term picker runs against that plan and the add is persisted with a server
  * round-trip (read-modify-write via `savePlanState`).
+ *
+ * `onAdded`, when given, fires after a successful add in place of the default
+ * close — the course-detail "Add" flow uses it to redirect back to the catalog.
  */
 export function TermPicker({
   course,
   onClose,
+  onAdded,
 }: {
   course: Course;
   onClose: () => void;
+  onAdded?: () => void;
 }) {
   const { isClosing, handleClose, animateOut } = useModalExit(onClose);
   const { isAuthed, ready } = useAuthState();
   const [heading, setHeading] = useState("Add to which term?");
   const [addedTo, setAddedTo] = useState<string | null>(null);
 
-  // A successful add dismisses the picker — there's nothing left to do on a
-  // term once the course lands in it. We record the label (the footer flashes
-  // "Added ✓" during the exit) and play the close animation. Bodies only call
-  // this on success, so a failed server save keeps the modal open.
-  const onAdded = useCallback(
+  // A successful add dismisses the picker: record the label (the footer flashes
+  // "Added ✓" during the exit), play the close animation, then hand off to
+  // `onAdded` if the caller wants to redirect, else just close. Bodies call this
+  // only on success, so a failed server save keeps the modal open.
+  const handleAdded = useCallback(
     (label: string) => {
       setAddedTo(label);
-      void animateOut().then(onClose);
+      void animateOut().then(() => {
+        if (onAdded) onAdded();
+        else onClose();
+      });
     },
-    [animateOut, onClose],
+    [animateOut, onClose, onAdded],
   );
 
   return (
@@ -74,13 +81,13 @@ export function TermPicker({
         <ServerTermBody
           course={course}
           setHeading={setHeading}
-          onAdded={onAdded}
+          onAdded={handleAdded}
           justAdded={addedTo !== null}
         />
       ) : (
         <LocalTermBody
           course={course}
-          onAdded={onAdded}
+          onAdded={handleAdded}
           justAdded={addedTo !== null}
         />
       )}
@@ -104,15 +111,7 @@ function LocalTermBody({
   const code = course.code.toLowerCase();
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
 
-  const prereqNode = useMemo(
-    () => parsePrereqs(course.prereqs),
-    [course.prereqs],
-  );
-  const options = useMemo(
-    () => (plan ? computeTermOptions(plan.slots, prereqNode) : []),
-    [plan, prereqNode],
-  );
-  const alreadyIn = plan ? alreadyInLabel(plan.slots, code) : null;
+  const { options, alreadyIn } = useTermOptions(course, plan?.slots);
 
   function addTo(slot: PlanSlot, label: string) {
     if (!plan) return;
@@ -172,10 +171,6 @@ function ServerTermBody({
   justAdded: boolean;
 }) {
   const code = course.code.toLowerCase();
-  const prereqNode = useMemo(
-    () => parsePrereqs(course.prereqs),
-    [course.prereqs],
-  );
   const {
     plans,
     loading,
@@ -194,6 +189,10 @@ function ServerTermBody({
   // in the picker. Null until the lookup resolves; greying is an enhancement,
   // so a failed lookup just leaves every plan selectable.
   const [containing, setContaining] = useState<Set<string> | null>(null);
+
+  // serverPlan is null during the plan-picker step and mid-load, so options
+  // come back empty until a plan resolves — exactly the term step's gate.
+  const { options, alreadyIn } = useTermOptions(course, serverPlan?.slots);
 
   useEffect(() => {
     setHeading(step === "plans" ? "Add to which plan?" : "Add to which term?");
@@ -333,10 +332,6 @@ function ServerTermBody({
 
   // ---- Term-selection step ----
   const showBack = (plans?.length ?? 0) > 1;
-  const options = serverPlan
-    ? computeTermOptions(serverPlan.slots, prereqNode)
-    : [];
-  const alreadyIn = serverPlan ? alreadyInLabel(serverPlan.slots, code) : null;
 
   return (
     <>

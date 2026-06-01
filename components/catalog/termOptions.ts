@@ -1,7 +1,9 @@
+import { useMemo } from "react";
+import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
-import type { PrereqNode } from "@/lib/prereqs/parse";
+import { type PrereqNode, parsePrereqs } from "@/lib/prereqs/parse";
 import { evaluate } from "@/lib/prereqs/satisfied";
 import { termInfo } from "@/lib/terms";
 
@@ -70,4 +72,28 @@ export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
   return slot.termId !== null
     ? (termInfo(slot.termId)?.label ?? "your plan")
     : "your plan";
+}
+
+/**
+ * Shared derivation behind every course→term "add" surface (catalog local +
+ * server bodies, planner audit drill-in): parse the course's prereqs once, then
+ * derive the per-term {@link computeTermOptions} and {@link alreadyInLabel}.
+ * `slots` is nullable so callers can render before the plan loads — options
+ * stay empty until it arrives.
+ */
+export function useTermOptions(
+  course: Course,
+  slots: PlanSlot[] | null | undefined,
+): { options: TermOption[]; alreadyIn: string | null } {
+  const code = course.code.toLowerCase();
+  const prereqNode = useMemo(
+    () => parsePrereqs(course.prereqs),
+    [course.prereqs],
+  );
+  const options = useMemo(
+    () => (slots ? computeTermOptions(slots, prereqNode) : []),
+    [slots, prereqNode],
+  );
+  const alreadyIn = slots ? alreadyInLabel(slots, code) : null;
+  return { options, alreadyIn };
 }

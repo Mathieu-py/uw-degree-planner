@@ -14,6 +14,9 @@ interface Props {
   onAdd: () => void;
   onRemoveCourse: (code: string) => void;
   readOnly?: boolean;
+  /** `?from=plan` appended to course links so the detail page knows they came
+   *  from a plan (and hides its "Add to plan"). Omitted by the shared view. */
+  planOriginQuery?: string;
 }
 
 type SlotStatus = "done" | "plan" | "warn";
@@ -40,6 +43,7 @@ export const SlotBody = memo(function SlotBody({
   onAdd,
   onRemoveCourse,
   readOnly = false,
+  planOriginQuery = "",
 }: Props) {
   // Code of the chip currently being dragged out of this term, so we can dim
   // it while it's in flight. Cleared on dragend (drop or cancel).
@@ -88,7 +92,7 @@ export const SlotBody = memo(function SlotBody({
                   </span>
                 ) : null}
                 <Link
-                  href={`/course/${c.code}`}
+                  href={`/course/${c.code}${planOriginQuery}`}
                   target="_blank"
                   rel="noopener"
                   draggable={false}

@@ -1,16 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { CourseTermModalShell } from "@/components/catalog/CourseTermModalShell";
 import { TermOptionList } from "@/components/catalog/TermOptionList";
-import {
-  alreadyInLabel,
-  computeTermOptions,
-} from "@/components/catalog/termOptions";
+import { useTermOptions } from "@/components/catalog/termOptions";
 import type { Course } from "@/lib/courses/types";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
-import { parsePrereqs } from "@/lib/prereqs/parse";
 
 /**
  * Planner term picker for a single, already-chosen course (the audit drill-in
@@ -35,16 +31,7 @@ export function TermChoiceModal({
   const { isClosing, handleClose, animateOut } = useModalExit(onClose);
   const [addedTo, setAddedTo] = useState<string | null>(null);
 
-  const code = course.code.toLowerCase();
-  const prereqNode = useMemo(
-    () => parsePrereqs(course.prereqs),
-    [course.prereqs],
-  );
-  const options = useMemo(
-    () => computeTermOptions(plan.slots, prereqNode),
-    [plan.slots, prereqNode],
-  );
-  const alreadyIn = alreadyInLabel(plan.slots, code);
+  const { options, alreadyIn } = useTermOptions(course, plan.slots);
 
   // Play the exit animation before committing so the add+unmount lands once the
   // modal has visually dismissed (and a double-tap can't double-add).

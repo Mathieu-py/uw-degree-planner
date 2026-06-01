@@ -19,6 +19,9 @@ interface Props {
   /** Present only in editable views; absent makes term columns inert as drop targets. */
   onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
   readOnly?: boolean;
+  /** `?from=plan` for course links so the detail page hides its "Add to plan".
+   *  Set by the editable planner; omitted by the shared view. */
+  planOriginQuery?: string;
 }
 
 /**
@@ -35,6 +38,7 @@ export function Timeline({
   onRemoveCourse,
   onCourseDrop,
   readOnly = false,
+  planOriginQuery,
 }: Props) {
   const preSlot = plan.slots.find((s) => s.position === "pre");
   const orderedSlots = plan.slots.filter((s) => s.position !== "pre");
@@ -55,6 +59,7 @@ export function Timeline({
             onRemoveCourse={onRemoveCourse}
             onCourseDrop={onCourseDrop}
             readOnly={readOnly}
+            planOriginQuery={planOriginQuery}
           />
         ),
       )}

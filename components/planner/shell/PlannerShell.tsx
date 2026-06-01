@@ -425,6 +425,10 @@ function PlannerShellInner({
   const programName =
     programOptions.find((p) => p.id === plan.programId)?.name ?? "—";
 
+  // Tag the timeline's course links as plan-originated so the detail page hides
+  // its (here redundant) "Add to plan" button — the course is already in view.
+  const planOriginQuery = "?from=plan";
+
   return (
     <PlannerLayout
       isAuthed={isAuthed}
@@ -606,6 +610,7 @@ function PlannerShellInner({
                 onSlotClick={openPicker}
                 onRemoveCourse={handleRemoveCourse}
                 onCourseDrop={handleCourseDrop}
+                planOriginQuery={planOriginQuery}
               />
             </div>
           </div>

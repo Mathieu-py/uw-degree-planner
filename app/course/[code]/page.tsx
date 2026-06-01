@@ -6,6 +6,7 @@ import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
 import { formatCourseCode, formatPercent } from "@/lib/format";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
+import { AddInPlannerButton } from "./AddInPlannerButton";
 
 interface PageParams {
   code: string;
@@ -23,8 +24,10 @@ export async function generateMetadata(props: { params: Promise<PageParams> }) {
 
 export default async function CoursePage(props: {
   params: Promise<PageParams>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { code } = await props.params;
+  const { from } = await props.searchParams;
   const course = await loadCourseByCode(TERM, code);
   if (!course) notFound();
 
@@ -125,13 +128,7 @@ export default async function CoursePage(props: {
 
           <div className="h-px bg-line" />
 
-          <Link
-            href="/plan"
-            className="inline-flex items-center justify-center gap-2 h-[42px] px-[18px] rounded-[9px] bg-primary text-primary-ink text-sm font-semibold hover:bg-primary-hover"
-          >
-            <Icon name="plusSign" size="sm" />
-            Add in the planner
-          </Link>
+          <AddInPlannerButton course={course} from={from} />
           <a
             href={uwflowUrl}
             target="_blank"

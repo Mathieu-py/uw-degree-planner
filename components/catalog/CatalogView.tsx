@@ -147,7 +147,7 @@ function CatalogRow({ course, onAdd }: { course: Course; onAdd: () => void }) {
       <div className="min-w-0 flex-1 flex flex-col gap-0.5">
         <div className="flex items-center gap-2">
           <Link
-            href={`/course/${course.code}`}
+            href={`/course/${course.code}?from=catalog`}
             className="u-mono text-[13px] font-bold hover:text-accent"
           >
             {formatCourseCode(course.code)}
@@ -175,7 +175,7 @@ function CatalogRow({ course, onAdd }: { course: Course; onAdd: () => void }) {
 
       <div className="flex items-center gap-1 shrink-0">
         <Link
-          href={`/course/${course.code}`}
+          href={`/course/${course.code}?from=catalog`}
           className="inline-flex items-center justify-center w-8 h-8 rounded-[7px] text-ink-3 hover:text-ink hover:bg-bg-2"
           aria-label={`Details for ${course.code}`}
           title="Course details"
