@@ -65,14 +65,18 @@ export function usePlanEditors({
 
   // Bridge for the in-planner transcript import: writes route to setPlan when
   // there's a current plan, or create+navigate when authed without a planId.
+  // Returns whether the write landed — a failed server create (create → null)
+  // reports false so the caller doesn't flash a success state.
   const persistOrCreate = useCallback(
-    async (next: LocalPlan, name: string = NEW_PLAN_NAME) => {
+    async (next: LocalPlan, name: string = NEW_PLAN_NAME): Promise<boolean> => {
       if (isAuthed && planId === null) {
         const newId = await create(name, toSnapshot(next));
-        if (newId) router.replace(`/plan?planId=${newId}`);
-        return;
+        if (!newId) return false;
+        router.replace(`/plan?planId=${newId}`);
+        return true;
       }
       setPlan(next);
+      return true;
     },
     [isAuthed, planId, create, router, setPlan],
   );
@@ -96,7 +100,10 @@ export function usePlanEditors({
           includedUnrecognized: included,
           mintId: () => crypto.randomUUID(),
         });
-        await persistOrCreate(next, "Imported plan");
+        const persisted = await persistOrCreate(next, "Imported plan");
+        // A failed server create leaves the modal open so the user can retry —
+        // don't close it or flash a success banner for an import that was lost.
+        if (!persisted) return;
         setTranscriptOpen(false);
 
         const banner = buildImportBanner({
