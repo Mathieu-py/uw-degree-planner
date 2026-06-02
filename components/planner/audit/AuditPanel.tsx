@@ -14,6 +14,17 @@ import { courseDragProps } from "@/lib/plan/dnd";
 import type { LocalPlan } from "@/lib/plan/types";
 import { PROGRAMS, TERM_LETTERS } from "@/lib/programs";
 
+/**
+ * Drag wiring for the missing chips, owned by the planner shell. `draggingCode`
+ * is the code in flight (dims its chip); `onStart`/`onEnd` bracket the drag.
+ * Absent in the read-only shared view.
+ */
+interface DragWiring {
+  draggingCode: string | null;
+  onStart: (code: string) => void;
+  onEnd: () => void;
+}
+
 interface Props {
   plan: LocalPlan;
   /**
@@ -22,6 +33,8 @@ interface Props {
    * read-only shared view passes nothing, leaving chips inert.
    */
   onDrillToRequirement?: (codes: string[]) => void;
+  /** Drag lifecycle for missing chips; omitted alongside the read-only view. */
+  drag?: DragWiring;
 }
 
 interface SectionSummary {
@@ -47,6 +60,7 @@ function dotStatus(status: AuditStatus): "met" | "partial" | "missing" {
 export const AuditPanel = memo(function AuditPanel({
   plan,
   onDrillToRequirement,
+  drag,
 }: Props) {
   const program = plan.programId ? (PROGRAMS[plan.programId] ?? null) : null;
 
@@ -107,6 +121,7 @@ export const AuditPanel = memo(function AuditPanel({
               key={`p-${i}`}
               section={s}
               onDrill={onDrillToRequirement}
+              drag={drag}
             />
           ))}
           {specializationSections.map((s, i) => (
@@ -115,6 +130,7 @@ export const AuditPanel = memo(function AuditPanel({
               key={`s-${i}`}
               section={s}
               onDrill={onDrillToRequirement}
+              drag={drag}
             />
           ))}
         </div>
@@ -126,9 +142,11 @@ export const AuditPanel = memo(function AuditPanel({
 function AuditSection({
   section,
   onDrill,
+  drag,
 }: {
   section: Section;
   onDrill?: (codes: string[]) => void;
+  drag?: DragWiring;
 }) {
   const { title, node, summary } = section;
   const { needed, satisfied, excludedViolationCount } = summary;
@@ -161,7 +179,7 @@ function AuditSection({
         </span>
       </summary>
       <div className="pw-aud-body">
-        <AuditTree node={node} onDrill={onDrill} />
+        <AuditTree node={node} onDrill={onDrill} drag={drag} />
       </div>
     </details>
   );
@@ -170,9 +188,11 @@ function AuditSection({
 function AuditTree({
   node,
   onDrill,
+  drag,
 }: {
   node: AuditNode;
   onDrill?: (codes: string[]) => void;
+  drag?: DragWiring;
 }) {
   if (node.children.length > 0) {
     return (
@@ -191,7 +211,7 @@ function AuditTree({
                 </span>
               </div>
               <div className="pl-4">
-                <AuditTree node={c} onDrill={onDrill} />
+                <AuditTree node={c} onDrill={onDrill} drag={drag} />
               </div>
             </li>
           ))}
@@ -199,7 +219,7 @@ function AuditTree({
       </div>
     );
   }
-  return <LeafChips node={node} onDrill={onDrill} />;
+  return <LeafChips node={node} onDrill={onDrill} drag={drag} />;
 }
 
 // Max chips to render before collapsing into a "+N more" overflow pill.
@@ -208,9 +228,11 @@ const CHIP_LIMIT = 8;
 function LeafChips({
   node,
   onDrill,
+  drag,
 }: {
   node: AuditNode;
   onDrill?: (codes: string[]) => void;
+  drag?: DragWiring;
 }) {
   const showSatisfiers = node.satisfiers.length > 0;
   const showMissing = node.missingCodes.length > 0;
@@ -237,23 +259,11 @@ function LeafChips({
         <OverflowChip count={node.satisfiers.length - CHIP_LIMIT} />
       ) : null}
       {showMissing
-        ? node.missingCodes.slice(0, CHIP_LIMIT).map((c) => (
-            <button
-              key={c}
-              type="button"
-              disabled={!onDrill}
-              {...(onDrill ? courseDragProps({ kind: "add", code: c }) : null)}
-              onClick={() => onDrill?.([c])}
-              title={
-                onDrill
-                  ? "Drag into a term, or click to pick a term"
-                  : formatCourseCode(c)
-              }
-              className="pw-areq is-miss disabled:cursor-default"
-            >
-              {formatCourseCode(c)}
-            </button>
-          ))
+        ? node.missingCodes
+            .slice(0, CHIP_LIMIT)
+            .map((c) => (
+              <MissingChip key={c} code={c} onDrill={onDrill} drag={drag} />
+            ))
         : null}
       {node.missingCodes.length > CHIP_LIMIT ? (
         <OverflowChip count={node.missingCodes.length - CHIP_LIMIT} />
@@ -273,6 +283,48 @@ function LeafChips({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * A still-needed course. When interactive the whole chip is the drag source,
+ * and clicking it opens the term picker (the keyboard-accessible path). Without
+ * a drill handler (the read-only shared view) it collapses to an inert span.
+ */
+function MissingChip({
+  code,
+  onDrill,
+  drag,
+}: {
+  code: string;
+  onDrill?: (codes: string[]) => void;
+  drag?: DragWiring;
+}) {
+  const label = formatCourseCode(code);
+  if (!onDrill) {
+    return (
+      <span className="pw-areq is-miss" title={label}>
+        {label}
+      </span>
+    );
+  }
+  const isPlacing = drag?.draggingCode === code;
+  return (
+    <button
+      type="button"
+      onClick={() => onDrill([code])}
+      title={`Drag ${label} into a term, or click to pick one`}
+      aria-label={`Add ${label} to a term`}
+      className={`pw-areq is-miss${isPlacing ? " is-placing" : ""}`}
+      {...courseDragProps(
+        { kind: "add", code },
+        drag
+          ? { onStart: () => drag.onStart(code), onEnd: () => drag.onEnd() }
+          : undefined,
+      )}
+    >
+      {label}
+    </button>
   );
 }
 

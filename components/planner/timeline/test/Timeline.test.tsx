@@ -60,3 +60,44 @@ describe("Timeline drop forwarding", () => {
     expect(onCourseDrop).toHaveBeenCalledWith("2A", payload);
   });
 });
+
+describe("Timeline eligibility highlight", () => {
+  it("derives per-term eligible/muted from eligibleSlotIds; co-op never highlights", () => {
+    const { container } = render(
+      <Timeline
+        plan={PLAN}
+        issuesPerSlot={EMPTY_ISSUES}
+        onSlotClick={() => {}}
+        onRemoveCourse={() => {}}
+        onCourseDrop={() => {}}
+        eligibleSlotIds={new Set(["1A"])}
+      />,
+    );
+
+    const cards = container.querySelectorAll(".pw-term");
+    expect(cards.length).toBe(2); // 1A + 2A; co-op is a separate card
+    const [first, second] = cards;
+    expect(first.classList.contains("pw-term-eligible")).toBe(true);
+    expect(second.classList.contains("pw-term-muted")).toBe(true);
+    // The co-op card carries neither highlight class.
+    expect(
+      container
+        .querySelector(".pw-coop")
+        ?.classList.contains("pw-term-eligible"),
+    ).toBe(false);
+  });
+
+  it("applies no highlight classes when eligibleSlotIds is absent", () => {
+    const { container } = render(
+      <Timeline
+        plan={PLAN}
+        issuesPerSlot={EMPTY_ISSUES}
+        onSlotClick={() => {}}
+        onRemoveCourse={() => {}}
+        onCourseDrop={() => {}}
+      />,
+    );
+    expect(container.querySelector(".pw-term-eligible")).toBeNull();
+    expect(container.querySelector(".pw-term-muted")).toBeNull();
+  });
+});

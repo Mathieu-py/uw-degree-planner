@@ -85,7 +85,7 @@ describe("AuditPanel", () => {
     expect(screen.getByText(/requirements met/i)).toBeTruthy();
   });
 
-  it("makes a missing-requirement chip an add-drag source when drill is enabled", () => {
+  it("makes the whole missing chip an 'add' drag source when drill is enabled", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const { container } = render(
@@ -98,6 +98,9 @@ describe("AuditPanel", () => {
     const chip = container.querySelector(".pw-areq.is-miss");
     expect(chip, "expected at least one missing chip").not.toBeNull();
     if (!chip) return;
+    // The chip itself is draggable, so the chip (with its code) is the drag
+    // preview — not a separate handle.
+    expect(chip.tagName).toBe("BUTTON");
     expect(chip.getAttribute("draggable")).toBe("true");
 
     const dt = fakeDataTransfer();
@@ -107,7 +110,66 @@ describe("AuditPanel", () => {
     });
   });
 
-  it("leaves missing chips inert (not draggable) without a drill handler", () => {
+  it("clicking a missing chip drills into the requirement", () => {
+    const engId = engineeringProgramId();
+    if (!engId) return;
+    const drilled: string[][] = [];
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: engId })}
+        onDrillToRequirement={(codes) => drilled.push(codes)}
+      />,
+    );
+
+    const chip = container.querySelector<HTMLButtonElement>(".pw-areq.is-miss");
+    expect(chip).not.toBeNull();
+    if (!chip) return;
+
+    fireEvent.click(chip);
+    expect(drilled).toHaveLength(1);
+    expect(drilled[0]).toHaveLength(1);
+  });
+
+  it("fires the drag lifecycle and dims the in-flight chip", () => {
+    const engId = engineeringProgramId();
+    if (!engId) return;
+    let started: string | null = null;
+    let ended = 0;
+    const { container, rerender } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: engId })}
+        onDrillToRequirement={() => {}}
+        drag={{
+          draggingCode: null,
+          onStart: (c) => {
+            started = c;
+          },
+          onEnd: () => {
+            ended += 1;
+          },
+        }}
+      />,
+    );
+
+    const chip = container.querySelector(".pw-areq.is-miss");
+    if (!chip) return;
+    fireEvent.dragStart(chip, { dataTransfer: fakeDataTransfer() });
+    expect(started).not.toBeNull();
+    fireEvent.dragEnd(chip);
+    expect(ended).toBe(1);
+
+    // With that code marked as dragging, its chip dims (is-placing).
+    rerender(
+      <AuditPanel
+        plan={mkPlan({ programId: engId })}
+        onDrillToRequirement={() => {}}
+        drag={{ draggingCode: started, onStart: () => {}, onEnd: () => {} }}
+      />,
+    );
+    expect(container.querySelector(".pw-areq.is-placing")).not.toBeNull();
+  });
+
+  it("leaves missing chips inert (an inert span, not draggable) without a drill handler", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const { container } = render(
@@ -116,6 +178,8 @@ describe("AuditPanel", () => {
 
     const chip = container.querySelector(".pw-areq.is-miss");
     expect(chip).not.toBeNull();
+    expect(chip?.tagName).toBe("SPAN");
     expect(chip?.getAttribute("draggable")).not.toBe("true");
+    expect(container.querySelector("button.pw-areq")).toBeNull();
   });
 });

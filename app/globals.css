@@ -786,6 +786,21 @@ body {
   border-color: var(--accent-bg);
   background: var(--accent-soft);
 }
+/* Drag highlight while an audit course is dragged: eligible terms read green,
+   the rest mute. Advisory — drops still land on any academic term. */
+.pw-term-eligible {
+  border-color: var(--met);
+  background: var(--met-soft);
+}
+.pw-term-muted {
+  opacity: 0.5;
+}
+/* Hover (is-drop) wins over the eligible tint so the term under the cursor
+   reads as the active target. */
+.pw-term.pw-term-eligible.is-drop {
+  border-color: var(--accent-bg);
+  background: var(--accent-soft);
+}
 .pw-thead {
   display: flex;
   align-items: center;
@@ -1020,13 +1035,20 @@ body {
   background: var(--bg);
   border-color: var(--line-2);
   color: var(--ink-3);
-  cursor: pointer;
 }
-.pw-areq.is-miss:hover {
+/* Interactive missing chip: the whole chip drags; clicks open the term picker. */
+.pw-areq.is-miss[draggable="true"] {
+  cursor: grab;
+}
+.pw-areq.is-miss[draggable="true"]:hover {
   border-color: var(--accent-bg);
   color: var(--accent);
   background: var(--accent-soft);
 }
-.pw-areq.is-miss[draggable="true"] {
-  cursor: grab;
+.pw-areq.is-miss[draggable="true"]:active {
+  cursor: grabbing;
+}
+/* The chip whose course is currently in flight. */
+.pw-areq.is-placing {
+  opacity: 0.5;
 }

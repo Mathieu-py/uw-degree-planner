@@ -23,6 +23,11 @@ interface Props {
   onRemoveCourse: (slotId: string, code: string) => void;
   onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
   readOnly?: boolean;
+  /**
+   * Drag highlight: "eligible" tints green, "ineligible" mutes, null clears.
+   * Advisory only — drops still land on any academic term.
+   */
+  eligibility?: "eligible" | "ineligible" | null;
   /** Forwarded to SlotBody's course-detail links — see {@link SlotBody}. */
   planOriginQuery?: string;
 }
@@ -34,6 +39,7 @@ export const TermColumn = memo(function TermColumn({
   onRemoveCourse,
   onCourseDrop,
   readOnly = false,
+  eligibility = null,
   planOriginQuery,
 }: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
@@ -83,7 +89,14 @@ export const TermColumn = memo(function TermColumn({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: drop zone for course chips; the keyboard-accessible path is the + add / × remove buttons.
     <div
-      className={`card pw-term${dropActive ? " is-drop" : ""}`}
+      // is-drop last so a hovered eligible column reads as the active target.
+      className={`card pw-term${
+        eligibility === "eligible"
+          ? " pw-term-eligible"
+          : eligibility === "ineligible"
+            ? " pw-term-muted"
+            : ""
+      }${dropActive ? " is-drop" : ""}`}
       onDragOver={droppable ? handleDragOver : undefined}
       onDragLeave={droppable ? handleDragLeave : undefined}
       onDrop={droppable ? handleDrop : undefined}

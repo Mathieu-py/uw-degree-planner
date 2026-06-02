@@ -91,6 +91,49 @@ describe("TermColumn drop target", () => {
   });
 });
 
+describe("TermColumn eligibility highlight", () => {
+  function renderWith(eligibility: "eligible" | "ineligible" | null) {
+    const { container } = render(
+      <TermColumn
+        slot={ACADEMIC_SLOT}
+        issues={[]}
+        onSlotClick={() => {}}
+        onRemoveCourse={() => {}}
+        onCourseDrop={() => {}}
+        eligibility={eligibility}
+      />,
+    );
+    const card = container.querySelector(".pw-term");
+    if (!card) throw new Error("term card not found");
+    return card;
+  }
+
+  it("tints eligible terms and mutes ineligible ones", () => {
+    expect(renderWith("eligible").classList.contains("pw-term-eligible")).toBe(
+      true,
+    );
+    cleanup();
+    expect(renderWith("ineligible").classList.contains("pw-term-muted")).toBe(
+      true,
+    );
+  });
+
+  it("applies no highlight class when not dragging (null)", () => {
+    const card = renderWith(null);
+    expect(card.classList.contains("pw-term-eligible")).toBe(false);
+    expect(card.classList.contains("pw-term-muted")).toBe(false);
+  });
+
+  it("keeps is-drop alongside the eligible tint on dragOver", () => {
+    const card = renderWith("eligible");
+    fireEvent.dragOver(card, {
+      dataTransfer: fakeDataTransfer({ type: COURSE_DRAG_MIME, value: "{}" }),
+    });
+    expect(card.classList.contains("pw-term-eligible")).toBe(true);
+    expect(card.classList.contains("is-drop")).toBe(true);
+  });
+});
+
 describe("SlotBody drag source", () => {
   it("writes a move payload identifying the course and its term on dragStart", () => {
     render(

@@ -1,47 +1,86 @@
 /**
  * Eligibility annotation for the slot-picker rows. Kept separate from
- * `filters.ts` because eligibility evaluation is expensive (prereq parsing +
- * tree walk) and only the picker view needs it.
+ * `filters.ts` because evaluation is expensive and only the picker needs it.
+ * Delegates the decision to the shared {@link evaluateCourseEligibility}.
  */
 
-import { cachedParsePrereqs } from "@/lib/prereqs/cache";
-import { type EligibilityResult, evaluate } from "@/lib/prereqs/satisfied";
 import type { ProgramIdentity } from "@/lib/programs";
+import {
+  type CourseEligibilityVerdict,
+  evaluateCourseEligibility,
+} from "./courseEligibility";
 import type { Course } from "./types";
+
+const EMPTY_SET: ReadonlySet<string> = new Set();
 
 export interface EligibilityRow {
   course: Course;
-  eligibility: EligibilityResult | null;
+  eligibility: CourseEligibilityVerdict | null;
+}
+
+export interface AttachEligibilityOptions {
+  /** Codes completed strictly before the target term. */
+  completed: ReadonlySet<string>;
+  /** Every code placed anywhere in the plan (antireqs + duplicate). */
+  placedAnywhere: ReadonlySet<string>;
+  /**
+   * Codes the student's program references (suppresses stale program blocks).
+   * Omitted by the program-less catalog browse, where nothing is suppressed.
+   */
+  programReferenced?: ReadonlySet<string>;
+  /** Drop rows that come back ineligible. */
+  hideUnmetPrereqs: boolean;
+  /** Target term's level ("2A") for level-gated prereqs. */
+  level?: string;
+  /** Student's program for program-restriction prereqs. */
+  program?: ProgramIdentity;
+  /** Codes co-scheduled in the target term (lets coreqs resolve same-term). */
+  sameTerm?: ReadonlySet<string>;
 }
 
 /**
- * Annotate rows with eligibility against `completed` and optionally drop rows
- * with unmet prereqs. Empty `completed` short-circuits — eligibility stays
- * null and hideUnmetPrereqs becomes a no-op (an unknown eligibility is not
- * "unmet").
+ * Annotate rows with an eligibility verdict and optionally drop ineligible ones.
  *
- * `level` (e.g. "2A") resolves level-gated prereqs to eligible/missing instead
- * of "check"; omit it for slots with no academic level (pre-arrival / co-op).
- * `program` resolves program-restriction prereqs the same way.
+ * With an empty `completed` set we can't judge prereqs, so prereq/level/program
+ * verdicts carry no chip and aren't hidden. The term-independent antireq check
+ * still applies (e.g. an antireq in a later term blocks adding to term 1A).
  */
 export function attachEligibility(
   rows: EligibilityRow[],
-  completed: ReadonlySet<string>,
-  hideUnmetPrereqs: boolean,
-  level?: string,
-  program?: ProgramIdentity,
+  opts: AttachEligibilityOptions,
 ): EligibilityRow[] {
-  if (completed.size === 0) return rows;
+  const {
+    completed,
+    placedAnywhere,
+    programReferenced = EMPTY_SET,
+    hideUnmetPrereqs,
+    level,
+    program,
+    sameTerm,
+  } = opts;
+  const canAssessPrereqs = completed.size > 0;
   return rows
-    .map<EligibilityRow>((r) => ({
-      course: r.course,
-      eligibility: evaluate(cachedParsePrereqs(r.course.prereqs), {
+    .map<EligibilityRow>((r) => {
+      const verdict = evaluateCourseEligibility(r.course, {
         completed,
+        sameTerm,
         level,
         program,
-      }),
-    }))
+        programReferenced,
+        placedAnywhere,
+      });
+      // Without a completed set, only the term-independent antireq verdict is
+      // trustworthy; suppress prereq-based chips/filtering. (The duplicate
+      // verdict never fires here — picker candidates are pre-filtered by the
+      // placed set in useFilteredCourses.)
+      const trustworthy =
+        canAssessPrereqs || verdict.antireqConflicts.length > 0;
+      return { course: r.course, eligibility: trustworthy ? verdict : null };
+    })
     .filter(
-      (r) => !hideUnmetPrereqs || !r.eligibility || r.eligibility.satisfied,
+      (r) =>
+        !hideUnmetPrereqs ||
+        !r.eligibility ||
+        r.eligibility.state !== "ineligible",
     );
 }

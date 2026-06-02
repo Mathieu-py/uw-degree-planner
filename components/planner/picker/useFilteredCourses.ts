@@ -46,6 +46,10 @@ export interface UseFilteredCoursesArgs {
   level?: string;
   /** Student's program for resolving program-restriction prereqs. */
   program?: ProgramIdentity;
+  /** Codes the student's program references (suppresses stale program blocks). */
+  programReferenced?: ReadonlySet<string>;
+  /** Codes already in the target slot (lets coreqs resolve same-term). */
+  sameTerm?: ReadonlySet<string>;
   focusCodes?: string[];
 }
 
@@ -76,6 +80,8 @@ export function useFilteredCourses({
   completedBefore,
   level,
   program,
+  programReferenced,
+  sameTerm,
   focusCodes,
 }: UseFilteredCoursesArgs): UseFilteredCoursesResult {
   const [filters, setFilters] = useState<PickerFilters>(DEFAULT_FILTERS);
@@ -139,13 +145,15 @@ export function useFilteredCourses({
         course,
         eligibility: null,
       }));
-      const annotated = attachEligibility(
-        baseRows,
-        completedBefore,
-        true,
+      const annotated = attachEligibility(baseRows, {
+        completed: completedBefore,
+        placedAnywhere: placedCodes,
+        programReferenced,
+        hideUnmetPrereqs: true,
         level,
         program,
-      );
+        sameTerm,
+      });
       return [...annotated].sort((a, b) =>
         compareCourses(a.course, b.course, sortKey, sortDir),
       );
@@ -160,6 +168,9 @@ export function useFilteredCourses({
   }, [
     searched,
     completedBefore,
+    placedCodes,
+    programReferenced,
+    sameTerm,
     level,
     program,
     filters.hideUnmetPrereqs,
@@ -172,11 +183,22 @@ export function useFilteredCourses({
     // In gating mode, slice rows already carry annotations from the
     // pre-pagination pass — re-annotating would be wasted work.
     if (filters.hideUnmetPrereqs) return slice;
-    return attachEligibility(slice, completedBefore, false, level, program);
+    return attachEligibility(slice, {
+      completed: completedBefore,
+      placedAnywhere: placedCodes,
+      programReferenced,
+      hideUnmetPrereqs: false,
+      level,
+      program,
+      sameTerm,
+    });
   }, [
     sortedCourses,
     limit,
     completedBefore,
+    placedCodes,
+    programReferenced,
+    sameTerm,
     level,
     program,
     filters.hideUnmetPrereqs,
