@@ -8,10 +8,28 @@ import {
   buildProgramSlug,
   buildSpecializationSlug,
   normalizeCourseCode,
+  parseDegreeRequirements,
   parseElectives,
   parseProgramRequirements,
   parseSpecializationsList,
+  parseUnitPlan,
 } from "../scrape-programs.parser";
+
+const rawJson = (slug: string): Record<string, string> =>
+  JSON.parse(
+    readFileSync(
+      path.join(__dirname, "..", "diagnostic", "raw", `${slug}.json`),
+      "utf-8",
+    ),
+  );
+
+const rawGradReqs = (slug: string): string =>
+  JSON.parse(
+    readFileSync(
+      path.join(__dirname, "..", "diagnostic", "raw", `${slug}.json`),
+      "utf-8",
+    ),
+  ).graduationRequirements ?? "";
 
 const fixture = (name: string) =>
   readFileSync(path.join(__dirname, "fixtures", `${name}.html`), "utf-8");
@@ -1015,5 +1033,83 @@ describe("buildSpecializationSlug", () => {
     expect(buildSpecializationSlug("ENGL-Communication Design")).toBe(
       "engl-communication-design",
     );
+  });
+});
+
+describe("parseUnitPlan", () => {
+  it("parses a total + required/subject/open buckets (biology)", () => {
+    const { unitPlan, degreeRef } = parseUnitPlan(rawGradReqs("h-biology"));
+    expect(unitPlan?.totalUnits).toBe(21.5);
+    expect(degreeRef?.pid).toBe("BJod_8jW6");
+    const scopes = unitPlan?.buckets.map((b) => [
+      b.requiredUnits,
+      b.scope.kind,
+    ]);
+    expect(scopes).toEqual([
+      [9.0, "required"],
+      [7.0, "subject"],
+      [5.5, "open"],
+    ]);
+    const biol = unitPlan?.buckets.find((b) => b.scope.kind === "subject");
+    expect(biol?.scope.kind === "subject" && biol.scope.subjects).toEqual([
+      "biol",
+    ]);
+  });
+
+  it("captures a level constraint (climate)", () => {
+    const { unitPlan } = parseUnitPlan(
+      rawGradReqs("climate-and-environmental-change"),
+    );
+    expect(unitPlan?.totalUnits).toBe(20.0);
+    expect(unitPlan?.constraints?.[0]).toMatchObject({
+      minUnits: 14.5,
+      minLevel: 200,
+    });
+  });
+
+  it("models math vs non-math as subject vs subjectExcept (pure math)", () => {
+    const { unitPlan } = parseUnitPlan(rawGradReqs("h-pure-mathematics"));
+    const kinds = unitPlan?.buckets.map((b) => b.scope.kind);
+    expect(kinds).toEqual(["subject", "subjectExcept"]);
+    expect(unitPlan?.buckets[0].requiredUnits).toBe(13.0);
+    expect(unitPlan?.buckets[1].requiredUnits).toBe(5.0);
+  });
+
+  it("retains verbatim sourceText on every bucket", () => {
+    const { unitPlan } = parseUnitPlan(rawGradReqs("h-kinesiology"));
+    for (const b of unitPlan?.buckets ?? [])
+      expect(b.sourceText?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("parseDegreeRequirements", () => {
+  it("parses the BA breadth table into subject-scoped buckets", () => {
+    const { degree, honoursTotal } = parseDegreeRequirements(
+      rawJson("degree-arts"),
+      "SyLzAe5R3",
+    );
+    expect(honoursTotal).toBe(20.0);
+    const labels = degree.buckets?.map((b) => b.label) ?? [];
+    expect(labels.some((l) => /Humanities/.test(l))).toBe(true);
+    expect(labels.some((l) => /Social Sciences/.test(l))).toBe(true);
+    const social = degree.buckets?.find((b) => /Social Sciences/.test(b.label));
+    expect(social?.requiredUnits).toBe(2.0);
+    expect(social?.scope.kind === "subject" && social.scope.subjects).toContain(
+      "anth",
+    );
+    // communication options recovered
+    expect(degree.communication?.options).toContain("arts160");
+  });
+
+  it("parses BSc communication and omits breadth (Science has none)", () => {
+    const { degree } = parseDegreeRequirements(
+      rawJson("degree-science"),
+      "BJod_8jW6",
+    );
+    expect(degree.buckets ?? []).toHaveLength(0);
+    expect(degree.communication?.options.sort()).toEqual([
+      "commst193",
+      "engl193",
+    ]);
   });
 });

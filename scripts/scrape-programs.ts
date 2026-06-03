@@ -22,8 +22,10 @@ import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
+  type DegreeRequirements,
   type Program,
   type Specialization,
+  type UnitPlan,
   validatePrograms,
 } from "../lib/programs";
 import { applyRuleOverrides } from "./scrape-programs.overrides";
@@ -31,9 +33,13 @@ import {
   buildConflictCounts,
   buildProgramSlug,
   buildSpecializationSlug,
+  type DegreeParseResult,
+  parseDegreeRequirements,
   parseElectives,
   parseProgramRequirements,
   parseSpecializationsList,
+  parseUnitPlan,
+  reconcileUnitsAndElectives,
 } from "./scrape-programs.parser";
 
 const FALLBACK_CATALOG_ID = "67e557ed6ed2fe2bd3a38956";
@@ -307,6 +313,8 @@ export async function discoverCatalogId(
 interface PhaseAResult {
   programs: Record<string, Program>;
   specRefsByParent: Map<string, SpecializationRef[]>;
+  /** Each program's referenced "Bachelor of X degree-level requirements" pid. */
+  degreeRefBySlug: Map<string, { pid: string; name: string }>;
   withData: number;
   skippedNoData: string[];
   failed: string[];
@@ -326,6 +334,7 @@ async function runPhaseA(
 ): Promise<PhaseAResult> {
   const programs: Record<string, Program> = {};
   const specRefsByParent = new Map<string, SpecializationRef[]>();
+  const degreeRefBySlug = new Map<string, { pid: string; name: string }>();
   const skippedNoData: string[] = [];
   const failed: string[] = [];
   const warnings: string[] = [];
@@ -348,9 +357,30 @@ async function runPhaseA(
       }
       const electivesResult = parseElectives(detail, slug);
       warnings.push(...electivesResult.warnings);
+
+      // Unit accounting from grad-req prose, reconciled against the elective
+      // lists so a requirement isn't counted twice.
+      const planResult = parseUnitPlan(
+        detail.graduationRequirements ?? "",
+        slug,
+      );
+      warnings.push(...planResult.warnings);
+      const reconciled = reconcileUnitsAndElectives(
+        planResult.unitPlan,
+        electivesResult.electives,
+      );
+      if (planResult.degreeRef) degreeRefBySlug.set(slug, planResult.degreeRef);
+
       const electivesField =
-        electivesResult.electives.length > 0
-          ? { electives: electivesResult.electives }
+        reconciled.electives.length > 0
+          ? { electives: reconciled.electives }
+          : {};
+      const unitPlanField = reconciled.unitPlan
+        ? { unitPlan: reconciled.unitPlan }
+        : {};
+      const informationalField =
+        planResult.informational.length > 0
+          ? { informational: planResult.informational }
           : {};
       const base = {
         name: p.title,
@@ -364,12 +394,16 @@ async function runPhaseA(
               ...base,
               terms: result.terms,
               ...electivesField,
+              ...unitPlanField,
+              ...informationalField,
             }
           : {
               kind: "flexible",
               ...base,
               rules: applyRuleOverrides(slug, result.rules),
               ...electivesField,
+              ...unitPlanField,
+              ...informationalField,
             };
       const specRefs = parseSpecializationsList(detail.specializationsList);
       if (specRefs.length > 0) specRefsByParent.set(slug, specRefs);
@@ -388,11 +422,79 @@ async function runPhaseA(
   return {
     programs,
     specRefsByParent,
+    degreeRefBySlug,
     withData,
     skippedNoData,
     failed,
     warnings,
   };
+}
+
+/**
+ * Fetch each unique degree-level page once and parse it. Programs reference
+ * these by pid; the same "Bachelor of Science degree-level requirements" is
+ * shared by every Science major, so we dedup before fetching.
+ */
+async function runPhaseDegrees(
+  catalogId: string,
+  degreeRefBySlug: ReadonlyMap<string, { pid: string; name: string }>,
+): Promise<Map<string, DegreeParseResult>> {
+  const byPid = new Map<string, DegreeParseResult>();
+  const pids = [...new Set([...degreeRefBySlug.values()].map((r) => r.pid))];
+  if (pids.length === 0) return byPid;
+  console.log(`\nFetching ${pids.length} degree-level requirement pages...`);
+  await fetchEachPaced({
+    items: pids,
+    label: (pid) => `degree ${pid}`,
+    fetcher: (pid) =>
+      fetchJson<Record<string, string>>(
+        `${API_BASE}/program/${catalogId}/${encodeURIComponent(pid)}`,
+      ),
+    onResult: (detail, pid) => {
+      const parsed = parseDegreeRequirements(
+        detail,
+        pid,
+        `${VIEW_BASE}/${encodeURIComponent(pid)}`,
+      );
+      byPid.set(pid, parsed);
+      const b = parsed.degree.buckets?.length ?? 0;
+      return `ok (${b} breadth bucket${b === 1 ? "" : "s"})`;
+    },
+    onError: () => {},
+  });
+  return byPid;
+}
+
+/**
+ * Attach the shared degree-level requirements to each referencing program:
+ * set `degreeRequirements`, propagate the honours total into an own-total-less
+ * unit plan, and fold the degree-level communication into a unit bucket the
+ * audit can track.
+ */
+function attachDegreeRequirements(
+  programs: Record<string, Program>,
+  degreeRefBySlug: ReadonlyMap<string, { pid: string; name: string }>,
+  degreesByPid: ReadonlyMap<string, DegreeParseResult>,
+): number {
+  let attached = 0;
+  for (const [slug, ref] of degreeRefBySlug) {
+    const program = programs[slug];
+    const parsed = degreesByPid.get(ref.pid);
+    if (!program || !parsed) continue;
+    const degree: DegreeRequirements = parsed.degree;
+    program.degreeRequirements = degree;
+
+    // Propagate the honours total to a program that doesn't state its own
+    // (e.g. Math majors whose total lives only on the degree page).
+    if (parsed.honoursTotal != null) {
+      const plan: UnitPlan = program.unitPlan ?? { buckets: [] };
+      if (plan.totalUnits == null) {
+        program.unitPlan = { ...plan, totalUnits: parsed.honoursTotal };
+      }
+    }
+    attached++;
+  }
+  return attached;
 }
 
 interface PhaseBResult {
@@ -488,7 +590,18 @@ async function main() {
     phaseB.specById,
   );
 
+  const degreesByPid = await runPhaseDegrees(catalogId, phaseA.degreeRefBySlug);
+  const degreesAttached = attachDegreeRequirements(
+    phaseA.programs,
+    phaseA.degreeRefBySlug,
+    degreesByPid,
+  );
+
   const outPath = await writeOutput(phaseA.programs);
+
+  console.log(
+    `Degree-level requirements: ${degreesByPid.size} pages fetched, attached to ${degreesAttached} programs`,
+  );
 
   console.log(
     `\nWrote ${path.relative(process.cwd(), outPath)}: ${phaseA.withData} programs (${phaseA.skippedNoData.length} skipped for having no parseable data, ${phaseA.failed.length} failed) of ${majors.length} majors`,

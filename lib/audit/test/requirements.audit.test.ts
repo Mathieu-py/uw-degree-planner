@@ -17,10 +17,18 @@ import {
   type RuleNode,
   TERM_LETTERS,
 } from "../../programs";
-import { type AuditNode, type AuditRoot, compileAudit, summarize } from "../compile";
+import {
+  type AuditNode,
+  type AuditRoot,
+  compileAudit,
+  summarize,
+} from "../compile";
 import { deriveElectiveSections } from "../electives";
 
-function emptyPlan(programId: string, specializationId: string | null): LocalPlan {
+function emptyPlan(
+  programId: string,
+  specializationId: string | null,
+): LocalPlan {
   return {
     schemaVersion: 1,
     programId,
@@ -56,7 +64,8 @@ function headlineSectionNodes(audit: AuditRoot): AuditNode[] {
 /** Total satisfied requirement-slots the headline would count (≡ numerator). */
 function headlineSatisfied(audit: AuditRoot): number {
   let satisfied = 0;
-  for (const n of headlineSectionNodes(audit)) satisfied += summarize(n).satisfied;
+  for (const n of headlineSectionNodes(audit))
+    satisfied += summarize(n).satisfied;
   return satisfied;
 }
 
@@ -87,10 +96,7 @@ describe("requirements audit — accuracy invariants across all programs", () =>
   // with no selectMin is vacuously "met" but must contribute 0 satisfied slots
   // until something is actually placed.
   it.each(programIds)("scores 0%% on an empty plan: %s", (programId) => {
-    const audit = compileAudit(
-      PROGRAMS[programId],
-      emptyPlan(programId, null),
-    );
+    const audit = compileAudit(PROGRAMS[programId], emptyPlan(programId, null));
     expect(
       headlineSatisfied(audit),
       `${programId} reports progress on an empty plan`,
@@ -98,17 +104,19 @@ describe("requirements audit — accuracy invariants across all programs", () =>
   });
 
   // The two programs named in #95 — optional picks made them read ~22%.
-  it.each(["computational-mathematics", "h-actuarial-science"])(
-    "no non-zero headline on empty plan (issue #95 repro): %s",
-    (programId) => {
-      if (!PROGRAMS[programId]) return; // fixture may rename; skip rather than fail
-      const audit = compileAudit(PROGRAMS[programId], emptyPlan(programId, null));
-      expect(headlineSatisfied(audit)).toBe(0);
-    },
-  );
+  it.each([
+    "computational-mathematics",
+    "h-actuarial-science",
+  ])("no non-zero headline on empty plan (issue #95 repro): %s", (programId) => {
+    if (!PROGRAMS[programId]) return; // fixture may rename; skip rather than fail
+    const audit = compileAudit(PROGRAMS[programId], emptyPlan(programId, null));
+    expect(headlineSatisfied(audit)).toBe(0);
+  });
 
   // (2) No malformed elective note (missing count, e.g. the Kuali typo in #49).
-  it.each(programIds)("has no malformed elective descriptions: %s", (programId) => {
+  it.each(
+    programIds,
+  )("has no malformed elective descriptions: %s", (programId) => {
     for (const e of PROGRAMS[programId].electives ?? []) {
       expect(
         /^complete\s+of\s+the\s+following/i.test(e.description.trim()),
@@ -119,7 +127,9 @@ describe("requirements audit — accuracy invariants across all programs", () =>
 
   // (3) subjectPool level bounds must be on the hundred scale the compiler
   // buckets to (levelBucket), or the counted set and Browse set diverge.
-  it.each(programIds)("uses hundred-scale subjectPool levels: %s", (programId) => {
+  it.each(
+    programIds,
+  )("uses hundred-scale subjectPool levels: %s", (programId) => {
     const pools: RuleNode[] = [];
     for (const root of allRuleRoots(PROGRAMS[programId]))
       collectSubjectPools(root, pools);

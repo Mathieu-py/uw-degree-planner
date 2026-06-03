@@ -33,7 +33,16 @@ export interface UWFlowCourse {
  * by the /course/[code] route, so it lives in a sibling descriptions file
  * instead of being shipped with every catalog payload.
  */
-export type CatalogCourse = Omit<UWFlowCourse, "description">;
+export type CatalogCourse = Omit<UWFlowCourse, "description"> & {
+  /**
+   * Course unit weight (credits): 0.5 for a standard course, 0.25 for a
+   * lab/seminar, 1.0+ for a full-year course. UWFlow doesn't expose this, so
+   * the fetch script enriches each course from the Kuali course catalog.
+   * `undefined` when no weight is known — the audit then counts the course
+   * rather than misreporting its units.
+   */
+  units?: number;
+};
 
 /**
  * Course enriched with derived fields used by filters and UI.

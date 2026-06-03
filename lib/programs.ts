@@ -83,11 +83,119 @@ export type SubjectPoolNode = Extract<RuleNode, { kind: "subjectPool" }>;
 
 const ElectiveCategorySchema = z.object({
   description: z.string(),
+  /** Units required, e.g. 6.0 for "6.0 units of ANTH courses". */
   unitRequirement: z.number().optional(),
+  /** Course count required, e.g. 2 for "Complete 2 of the following". */
+  requiredCount: z.number().optional(),
+  /** Explicit approved-course list (catalog form, lowercase). */
   approvedCourses: z.array(z.string()).optional(),
+  /**
+   * Subject prefixes that satisfy a unit-based bucket when there's no fixed
+   * list — e.g. ["anth"] for "6.0 units of ANTH courses". Lets the audit sum
+   * the units of any in-scope placed course instead of leaving it untracked.
+   */
+  subjectScope: z.array(z.string()).optional(),
+  /**
+   * Verbatim requirement statement from the UW source. Always shown to the
+   * student so the exact wording is preserved even when our structured parse
+   * is partial.
+   */
+  sourceText: z.string().optional(),
 });
 
 export type ElectiveCategory = z.infer<typeof ElectiveCategorySchema>;
+
+/* --------------------------- unit accounting ---------------------------- */
+/*
+ * UW degrees are measured in units (credits), not course counts: "21.5 units
+ * total = 9.0 required + 7.0 BIOL + 5.5 elective, min 14.5 at the 200-level".
+ * A `UnitPlan` captures that bucketed total so the audit can allocate every
+ * placed course's catalog units across buckets (most-specific first) and report
+ * exact unit progress. Buckets also carry the faculty degree-level requirements
+ * (breadth) via `degreeRequirements`.
+ */
+
+/** What counts toward a unit bucket. */
+const UnitScopeSchema = z.discriminatedUnion("kind", [
+  // The program's own required courses (their units, wherever placed).
+  z.object({ kind: z.literal("required") }),
+  // Any course in these subjects (optionally at/above a level), e.g. BIOL.
+  z.object({
+    kind: z.literal("subject"),
+    subjects: z.array(z.string()),
+    minLevel: z.number().optional(),
+  }),
+  // Any course NOT in these subjects, e.g. "non-math units" (Math faculty).
+  z.object({
+    kind: z.literal("subjectExcept"),
+    exclude: z.array(z.string()),
+    minLevel: z.number().optional(),
+  }),
+  // A fixed approved-course list.
+  z.object({ kind: z.literal("list"), courses: z.array(z.string()) }),
+  // Free electives: any units left after the specific buckets are filled.
+  z.object({ kind: z.literal("open") }),
+]);
+
+export type UnitScope = z.infer<typeof UnitScopeSchema>;
+
+const UnitBucketSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  requiredUnits: z.number(),
+  scope: UnitScopeSchema,
+  sourceText: z.string().optional(),
+});
+
+export type UnitBucket = z.infer<typeof UnitBucketSchema>;
+
+/** A non-bucket degree rule, e.g. "min 14.5 units at the 200-level or above". */
+const UnitConstraintSchema = z.object({
+  label: z.string(),
+  minUnits: z.number().optional(),
+  minLevel: z.number().optional(),
+  sourceText: z.string().optional(),
+});
+
+export type UnitConstraint = z.infer<typeof UnitConstraintSchema>;
+
+const UnitPlanSchema = z.object({
+  totalUnits: z.number().optional(),
+  buckets: z.array(UnitBucketSchema),
+  constraints: z.array(UnitConstraintSchema).optional(),
+});
+
+export type UnitPlan = z.infer<typeof UnitPlanSchema>;
+
+/** A degree rule we surface verbatim but don't progress-track (residency etc.). */
+const InformationalItemSchema = z.object({
+  label: z.string(),
+  text: z.string(),
+});
+
+export type InformationalItem = z.infer<typeof InformationalItemSchema>;
+
+/**
+ * Faculty-wide "Bachelor of X degree-level requirements" shared by every major
+ * in that faculty: breadth buckets, a communication requirement, unit minimums,
+ * and informational items (residency, averages, co-op work terms).
+ */
+const DegreeRequirementsSchema = z.object({
+  kualiId: z.string().optional(),
+  name: z.string(),
+  source: z.string().optional(),
+  buckets: z.array(UnitBucketSchema).optional(),
+  communication: z
+    .object({
+      options: z.array(z.string()),
+      sourceText: z.string().optional(),
+    })
+    .optional(),
+  constraints: z.array(UnitConstraintSchema).optional(),
+  informational: z.array(InformationalItemSchema).optional(),
+});
+
+export type DegreeRequirements = z.infer<typeof DegreeRequirementsSchema>;
 
 const SpecializationSchema = z.object({
   slug: z.string(),
@@ -119,6 +227,9 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     source: z.string().optional(),
     terms: TermsSchema,
     electives: z.array(ElectiveCategorySchema).optional(),
+    unitPlan: UnitPlanSchema.optional(),
+    degreeRequirements: DegreeRequirementsSchema.optional(),
+    informational: z.array(InformationalItemSchema).optional(),
     specializations: z.array(SpecializationSchema).optional(),
   }),
   z.object({
@@ -128,6 +239,9 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     source: z.string().optional(),
     rules: RuleNodeSchema,
     electives: z.array(ElectiveCategorySchema).optional(),
+    unitPlan: UnitPlanSchema.optional(),
+    degreeRequirements: DegreeRequirementsSchema.optional(),
+    informational: z.array(InformationalItemSchema).optional(),
     specializations: z.array(SpecializationSchema).optional(),
   }),
 ]);

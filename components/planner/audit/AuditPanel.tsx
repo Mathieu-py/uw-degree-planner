@@ -8,11 +8,11 @@ import {
   compileAudit,
   summarize,
 } from "@/lib/audit/compile";
-import { levelBucket } from "@/lib/courses/code";
 import {
   deriveElectiveSections,
   type ElectiveSection,
 } from "@/lib/audit/electives";
+import { levelBucket } from "@/lib/courses/code";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { courseDragProps } from "@/lib/plan/dnd";
@@ -91,6 +91,21 @@ type Section =
       caption: string;
       eligibleCodes: string[];
       unitBased: boolean;
+    }
+  | {
+      kind: "unitBucket";
+      key: string;
+      title: string;
+      caption: string;
+      appliedUnits: number;
+      requiredUnits: number;
+      status: "met" | "partial" | "unmet";
+    }
+  | {
+      kind: "info";
+      key: string;
+      title: string;
+      caption: string;
     };
 
 type NodeSection = Extract<Section, { kind: "node" }>;
@@ -114,11 +129,17 @@ export const AuditPanel = memo(function AuditPanel({
   );
 
   const audit = useMemo(
-    () => compileAudit(program, plan, plan.specializationId),
-    [plan, program],
+    () =>
+      compileAudit(
+        program,
+        plan,
+        plan.specializationId,
+        (code) => catalogByCode.get(code)?.units,
+      ),
+    [plan, program, catalogByCode],
   );
 
-  const { groups, totals, untrackedCount, headerCaption } = useMemo(
+  const { groups, totals, unitTotals, untrackedCount, headerCaption } = useMemo(
     () => deriveSections(audit, program),
     [audit, program],
   );
@@ -146,8 +167,22 @@ export const AuditPanel = memo(function AuditPanel({
   // finite electives). When count-less elective requirements remain (open or
   // unit-based lists the catalog can't measure), never let it read 100% — that
   // would imply the degree is done when electives are still owed.
-  const pct =
-    untrackedCount > 0 ? Math.min(trackedPct, 99) : trackedPct;
+  const pct = untrackedCount > 0 ? Math.min(trackedPct, 99) : trackedPct;
+
+  // When the program has a unit plan, units are the authoritative metric (a
+  // 0.25 lab ≠ a 1.0 course), so the headline reports degree-unit progress.
+  const unitPct =
+    unitTotals && unitTotals.required > 0
+      ? Math.min(
+          Math.round((unitTotals.applied / unitTotals.required) * 100),
+          100,
+        )
+      : null;
+  const headlinePct = unitPct ?? pct;
+  const headlineFraction = unitTotals
+    ? `${unitTotals.applied.toFixed(1)}/${unitTotals.required} units`
+    : `${totals.satisfied}/${totals.needed}`;
+  const headlineLabel = unitTotals ? "of degree units" : "requirements met";
 
   // Default-open only the first incomplete section, to avoid a wall of open
   // rows. Browse/unit sections (no honest count) never auto-open.
@@ -163,18 +198,16 @@ export const AuditPanel = memo(function AuditPanel({
         <div className="pw-audit-top">
           <div className="flex items-baseline justify-between gap-2">
             <span className="u-eyebrow">Degree audit</span>
-            <span className="u-mono u-small">
-              {totals.satisfied}/{totals.needed}
-            </span>
+            <span className="u-mono u-small">{headlineFraction}</span>
           </div>
           <div className="flex items-baseline gap-1.5 mt-2">
             <span className="text-[30px] font-bold tracking-tight leading-none">
-              {pct}%
+              {headlinePct}%
             </span>
-            <span className="u-small">requirements met</span>
+            <span className="u-small">{headlineLabel}</span>
           </div>
           <div className="mp-bar mt-2">
-            <span style={{ width: `${pct}%` }} />
+            <span style={{ width: `${headlinePct}%` }} />
           </div>
           {headerCaption ? (
             <div className="av-note">{headerCaption}</div>
@@ -232,6 +265,48 @@ function SectionRow({
   onDrill?: (codes: string[]) => void;
   drag?: DragWiring;
 }) {
+  if (section.kind === "unitBucket") {
+    const pct =
+      section.requiredUnits > 0
+        ? Math.min(
+            Math.round((section.appliedUnits / section.requiredUnits) * 100),
+            100,
+          )
+        : 100;
+    return (
+      <div className="av-row">
+        <div className="av-row-head">
+          <span className="av-ring-wrap">
+            <Ring pct={pct} />
+            <span className="av-ring-num">
+              {section.appliedUnits.toFixed(1)}
+            </span>
+          </span>
+          <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
+            <span className="av-sec-label truncate">{section.title}</span>
+            <span className="u-small">{section.caption}</span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (section.kind === "info") {
+    return (
+      <div className="av-row">
+        <div className="av-row-head items-start">
+          <span className="av-unit-ring shrink-0">
+            <Icon name="doc" size="sm" aria-hidden="true" />
+          </span>
+          <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
+            <span className="av-sec-label">{section.title}</span>
+            <span className="u-small">{section.caption}</span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   if (section.kind === "node") {
     const pct =
       section.summary.needed > 0
@@ -889,6 +964,8 @@ function deriveSections(
 ): {
   groups: SectionGroup[];
   totals: { needed: number; satisfied: number };
+  /** Degree-wide unit progress, when the program has a unit plan with a total. */
+  unitTotals: { applied: number; required: number } | null;
   /** Count-less elective requirements (open/unit lists) that the % can't cover. */
   untrackedCount: number;
   headerCaption: string | null;
@@ -958,9 +1035,60 @@ function deriveSections(
       groups.push({ heading: "Specialization", sections });
   }
 
+  // Degree units (full unit accounting) ----------------------------------
+  const unitTotals =
+    audit.unitAudit && audit.unitAudit.totalRequired != null
+      ? {
+          applied: audit.unitAudit.totalApplied,
+          required: audit.unitAudit.totalRequired,
+        }
+      : null;
+  if (audit.unitAudit && audit.unitAudit.buckets.length > 0) {
+    const unitSections: Section[] = audit.unitAudit.buckets.map((b, i) => ({
+      kind: "unitBucket",
+      key: `unit-${b.bucket.id}-${i}`,
+      title: b.bucket.label,
+      caption: `${b.appliedUnits.toFixed(1)} of ${b.bucket.requiredUnits} units`,
+      appliedUnits: b.appliedUnits,
+      requiredUnits: b.bucket.requiredUnits,
+      status: b.status,
+    }));
+    groups.push({ heading: "Degree units", sections: unitSections });
+  }
+
+  // Degree requirements (communication + informational) ------------------
+  if (program) {
+    const infoSections: Section[] = [];
+    const deg = program.degreeRequirements;
+    if (deg?.communication && deg.communication.options.length > 0) {
+      const met = deg.communication.options.some((c) => placedCodes.has(c));
+      infoSections.push({
+        kind: "info",
+        key: "deg-comm",
+        title: "Communication requirement",
+        caption: `${met ? "✓ " : ""}${deg.communication.options.map(formatCourseCode).join(" or ")}`,
+      });
+    }
+    const items = [
+      ...(program.informational ?? []),
+      ...(deg?.informational ?? []),
+    ];
+    items.forEach((it, i) => {
+      infoSections.push({
+        kind: "info",
+        key: `info-${i}`,
+        title: it.label,
+        caption: it.text,
+      });
+    });
+    if (infoSections.length > 0)
+      groups.push({ heading: "Degree requirements", sections: infoSections });
+  }
+
   return {
     groups,
     totals: { needed: totalNeeded, satisfied: totalSatisfied },
+    unitTotals,
     untrackedCount,
     headerCaption: buildHeaderCaption(program, untrackedCount),
   };
@@ -1048,7 +1176,8 @@ function buildHeaderCaption(
   if (untrackedCount > 0) {
     return `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan — not counted above.`;
   }
-  if (program.kind === "engineering") return `${TERM_LETTERS.length} academic terms`;
+  if (program.kind === "engineering")
+    return `${TERM_LETTERS.length} academic terms`;
   return null;
 }
 

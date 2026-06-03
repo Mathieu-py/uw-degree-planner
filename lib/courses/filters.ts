@@ -37,6 +37,7 @@ export function enrichCourse(raw: CatalogCourse): Course {
   const hasSeats = raw.sections.some(
     (s) => s.enrollment_capacity > s.enrollment_total,
   );
+  // `units` rides along on `raw` (a CatalogCourse field) — no join needed.
   return { ...raw, prefix, level, hasSeats };
 }
 

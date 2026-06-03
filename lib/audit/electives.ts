@@ -29,6 +29,8 @@ export interface FiniteElectiveSection {
   need: number;
   /** Approved course codes (lowercase, catalog form). */
   options: string[];
+  /** Verbatim requirement statement, when the source provides one. */
+  sourceText?: string;
 }
 
 export interface BrowseElectiveSection {
@@ -38,6 +40,8 @@ export interface BrowseElectiveSection {
   eligibleCodes: string[];
   /** Measured in units rather than a course count — no honest progress ring. */
   unitBased: boolean;
+  /** Verbatim requirement statement, when the source provides one. */
+  sourceText?: string;
 }
 
 export type ElectiveSection = FiniteElectiveSection | BrowseElectiveSection;
@@ -61,12 +65,18 @@ function electiveTitle(e: ElectiveCategory): string {
 export function classifyElective(e: ElectiveCategory): ElectiveSection {
   const desc = e.description.trim();
   const m = desc.match(FINITE_RE);
-  if (m && e.approvedCourses && e.approvedCourses.length > 0) {
+  // A finite count comes from the description ("Complete N of the following")
+  // or the recovered `requiredCount` (a "Technical Electives List" whose count
+  // lived in the source rule text). Either way, with an approved list it's a
+  // trackable, draggable finite elective.
+  const need = m ? Number(m[1]) : e.requiredCount;
+  if (need != null && e.approvedCourses && e.approvedCourses.length > 0) {
     return {
       kind: "finite",
       title: electiveTitle(e),
-      need: Number(m[1]),
+      need,
       options: e.approvedCourses,
+      ...(e.sourceText ? { sourceText: e.sourceText } : {}),
     };
   }
   return {
@@ -74,6 +84,7 @@ export function classifyElective(e: ElectiveCategory): ElectiveSection {
     title: electiveTitle(e),
     eligibleCodes: e.approvedCourses ?? [],
     unitBased: e.unitRequirement != null || /\bunits?\b/i.test(desc),
+    ...(e.sourceText ? { sourceText: e.sourceText } : {}),
   };
 }
 

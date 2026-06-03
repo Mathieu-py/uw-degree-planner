@@ -1,5 +1,15 @@
 import * as cheerio from "cheerio";
-import type { ElectiveCategory, RuleNode, TermLetter } from "../lib/programs";
+import type {
+  DegreeRequirements,
+  ElectiveCategory,
+  InformationalItem,
+  RuleNode,
+  TermLetter,
+  UnitBucket,
+  UnitConstraint,
+  UnitPlan,
+  UnitScope,
+} from "../lib/programs";
 import { isTermLetter, TERM_LETTERS } from "../lib/programs";
 
 export function normalizeCourseCode(raw: string): string | null {
@@ -593,7 +603,17 @@ function parseCourseListsSections(
       .map((t) => COMPLETE_N_UNITS_RE.exec(t))
       .find((m): m is RegExpExecArray => m !== null);
     const unitRequirement = unitMatch ? Number(unitMatch[1]) : undefined;
+    // Recover the "Complete N of the following" count that was previously
+    // dropped — it turns a count-less "Technical Electives List" into a
+    // trackable finite elective (e.g. SDE's list of 42 → "complete N").
+    const countMatch = ruleTexts
+      .map((t) => /Complete\s+(\d+)\s+of (?:the )?following/i.exec(t))
+      .find((m): m is RegExpExecArray => m !== null);
+    const requiredCount = countMatch ? Number(countMatch[1]) : undefined;
     const description = heading || ruleTexts[0];
+    // The verbatim rule statement, shown to the student so the exact wording
+    // (and any caveats the count can't capture) is preserved.
+    const sourceText = ruleTexts.find((t) => /^Complete /i.test(t));
 
     if (!description) {
       if (courses.length > 0) {
@@ -607,6 +627,8 @@ function parseCourseListsSections(
     out.push({
       description,
       ...(unitRequirement !== undefined ? { unitRequirement } : {}),
+      ...(requiredCount !== undefined ? { requiredCount } : {}),
+      ...(sourceText ? { sourceText } : {}),
       ...(courses.length > 0
         ? { approvedCourses: [...new Set(courses)].sort() }
         : {}),
@@ -618,6 +640,351 @@ function parseCourseListsSections(
     DESCRIPTION_COLLATOR.compare(a.description, b.description),
   );
   return out;
+}
+
+/* ----------------------- unit-accounting parser ------------------------- */
+
+// UW "math courses" (Faculty of Mathematics) — the subject set that satisfies
+// "N units of math courses"; "non-math" is the complement.
+const MATH_SUBJECTS = ["math", "amath", "pmath", "co", "cs", "stat", "actsc"];
+
+const TOTAL_UNITS_RE = /complete a total of\s+(\d+(?:\.\d+)?)\s*units/i;
+const ADDITIONAL_SUBJ_UNITS_RE =
+  /(\d+(?:\.\d+)?)\s+additional\s+([A-Z]{2,8})\s+units/;
+// "minimum of 14.5 units must be at the 200-level or above"
+const LEVEL_CONSTRAINT_RE =
+  /(\d+(?:\.\d+)?)\s*units?\b[^.]*?\bat the\s+(\d)00-level\s+or above/i;
+const FAILED_UNITS_RE = /maximum of\s+(\d+(?:\.\d+)?)\s*(?:failed )?units/i;
+
+/** Map a unit-bucket noun phrase ("required courses", "BIOL", "non-math") to a scope. */
+function scopeFromNoun(noun: string): { scope: UnitScope; warn?: string } {
+  const n = noun.trim();
+  if (/required courses?/i.test(n)) return { scope: { kind: "required" } };
+  if (/elective courses?/i.test(n)) return { scope: { kind: "open" } };
+  if (/approved courses?/i.test(n)) return { scope: { kind: "open" } };
+  if (/non[\s-]?math/i.test(n))
+    return { scope: { kind: "subjectExcept", exclude: MATH_SUBJECTS } };
+  if (/\bmath courses?\b/i.test(n))
+    return { scope: { kind: "subject", subjects: MATH_SUBJECTS } };
+  const m = n.match(/\b([A-Z]{2,8})\b/);
+  if (m) return { scope: { kind: "subject", subjects: [m[1].toLowerCase()] } };
+  return {
+    scope: { kind: "open" },
+    warn: `unrecognized unit scope: "${noun}"`,
+  };
+}
+
+export interface UnitPlanResult {
+  unitPlan: UnitPlan | null;
+  informational: InformationalItem[];
+  /** Referenced "Bachelor of X degree-level requirements" Kuali pid, if any. */
+  degreeRef: { pid: string; name: string } | null;
+  warnings: string[];
+}
+
+/**
+ * Parse the `graduationRequirements` prose into a unit plan: a total, the unit
+ * buckets ("9.0 units of required courses", "7.0 additional BIOL units",
+ * "5.5 units of elective courses"), level constraints, plus informational notes
+ * (failed-unit caps, communication prose) and the degree-level reference.
+ */
+export function parseUnitPlan(
+  html: string,
+  programLabel = "(unknown)",
+): UnitPlanResult {
+  const $ = cheerio.load(html);
+  const warnings: string[] = [];
+  const buckets: UnitBucket[] = [];
+  const constraints: UnitConstraint[] = [];
+  const informational: InformationalItem[] = [];
+
+  // Degree-level reference: <a href="#/programs/PID">Bachelor of X degree-level…</a>
+  let degreeRef: { pid: string; name: string } | null = null;
+  $("a").each((_, a) => {
+    const href = $(a).attr("href") ?? "";
+    const text = $(a).text().replace(/\s+/g, " ").trim();
+    const m = href.match(/#\/programs\/([A-Za-z0-9_-]+)/);
+    if (m && /degree-level requirements/i.test(text)) {
+      degreeRef = { pid: m[1], name: text };
+    }
+  });
+
+  // The "Complete a total of N units:" line is usually a parent <li> wrapping
+  // the bucket sub-list, so read the total from the whole document text.
+  const totalMatch = $.root().text().match(TOTAL_UNITS_RE);
+  const totalUnits = totalMatch ? Number(totalMatch[1]) : undefined;
+  let bucketIdx = 0;
+
+  // Walk every leaf <li>; classify by phrasing.
+  $("li")
+    .filter((_, li) => $(li).find("ul, ol").length === 0)
+    .each((_, li) => {
+      const text = $(li).text().replace(/\s+/g, " ").trim();
+      if (!text) return;
+
+      const level = text.match(LEVEL_CONSTRAINT_RE);
+      if (level) {
+        constraints.push({
+          label: text,
+          minUnits: Number(level[1]),
+          minLevel: Number(level[2]) * 100,
+          sourceText: text,
+        });
+        return;
+      }
+
+      const failed = text.match(FAILED_UNITS_RE);
+      if (failed) {
+        informational.push({ label: "Failed units", text });
+        return;
+      }
+
+      // "7.0 additional BIOL units"
+      const addl = text.match(ADDITIONAL_SUBJ_UNITS_RE);
+      if (addl) {
+        buckets.push({
+          id: `u${bucketIdx++}`,
+          label: text,
+          requiredUnits: Number(addl[1]),
+          scope: { kind: "subject", subjects: [addl[2].toLowerCase()] },
+          sourceText: text,
+        });
+        return;
+      }
+
+      // "N units of <noun>". A bare "Complete a total of N units:" header has no
+      // "of <noun>" so it won't match; a combined "total of N units of HIST…"
+      // (no sub-list) legitimately yields one bucket.
+      const unitsOf = text.match(UNITS_OF_RE);
+      if (unitsOf) {
+        const { scope, warn } = scopeFromNoun(unitsOf[2]);
+        if (warn) warnings.push(`${programLabel}: ${warn}`);
+        buckets.push({
+          id: `u${bucketIdx++}`,
+          label: text,
+          requiredUnits: Number(unitsOf[1]),
+          scope,
+          sourceText: text,
+        });
+      }
+    });
+
+  // Communication prose lives in a <p> after an <h4>Undergraduate Communications…
+  const commText = $("h4")
+    .filter((_, h) => /communication/i.test($(h).text()))
+    .next("p")
+    .text()
+    .replace(/\s+/g, " ")
+    .trim();
+  if (commText) {
+    informational.push({ label: "Communication requirement", text: commText });
+  }
+
+  // Sanity guard: if the buckets we parsed require more units than the total we
+  // parsed, the "total" we grabbed is a sub-statement, not the degree total
+  // (prose ambiguity). Drop it rather than report a total we can't trust.
+  const bucketSum = buckets.reduce((s, b) => s + b.requiredUnits, 0);
+  const resolvedTotal =
+    totalUnits !== undefined && bucketSum > totalUnits + 0.01
+      ? undefined
+      : totalUnits;
+  if (resolvedTotal === undefined && totalUnits !== undefined) {
+    warnings.push(
+      `${programLabel}: dropped inconsistent total ${totalUnits} (buckets sum to ${bucketSum})`,
+    );
+  }
+
+  const unitPlan: UnitPlan | null =
+    buckets.length > 0 || constraints.length > 0 || resolvedTotal !== undefined
+      ? {
+          ...(resolvedTotal !== undefined ? { totalUnits: resolvedTotal } : {}),
+          buckets,
+          ...(constraints.length > 0 ? { constraints } : {}),
+        }
+      : null;
+
+  return { unitPlan, informational, degreeRef, warnings };
+}
+
+/**
+ * Reconcile the unit plan (from grad-req prose) with the elective lists (from
+ * courseListsNew) so a requirement isn't counted twice:
+ *  - A pure unit bucket already in the plan ("5.5 units of elective courses",
+ *    no course list) is dropped from `electives` — the plan owns it.
+ *  - An approved list whose unit count matches an open plan bucket links into
+ *    that bucket as a concrete `list` scope (and is dropped from `electives`).
+ *  - Finite count-based lists ("Technical Electives List: complete 6 of …")
+ *    with no matching unit bucket stay as electives.
+ */
+export function reconcileUnitsAndElectives(
+  unitPlan: UnitPlan | null,
+  electives: ElectiveCategory[],
+): {
+  unitPlan: UnitPlan | null;
+  electives: ElectiveCategory[];
+  linked: number;
+} {
+  const isPureUnitBucket = (e: ElectiveCategory) =>
+    e.unitRequirement != null &&
+    !(e.approvedCourses && e.approvedCourses.length > 0) &&
+    e.requiredCount == null;
+
+  if (!unitPlan) {
+    return {
+      unitPlan,
+      electives: electives.filter((e) => !isPureUnitBucket(e)),
+      linked: 0,
+    };
+  }
+
+  const buckets = unitPlan.buckets.map((b) => ({ ...b }));
+  const kept: ElectiveCategory[] = [];
+  let linked = 0;
+  for (const e of electives) {
+    if (isPureUnitBucket(e)) continue; // plan owns it
+    if (e.unitRequirement != null && e.approvedCourses?.length) {
+      const target = buckets.find(
+        (b) => b.scope.kind === "open" && b.requiredUnits === e.unitRequirement,
+      );
+      if (target) {
+        target.scope = { kind: "list", courses: e.approvedCourses };
+        if (e.sourceText && !target.sourceText)
+          target.sourceText = e.sourceText;
+        linked++;
+        continue;
+      }
+    }
+    kept.push(e);
+  }
+  return { unitPlan: { ...unitPlan, buckets }, electives: kept, linked };
+}
+
+/* --------------------- degree-level requirements ------------------------ */
+
+interface DegreeDetailFields {
+  title?: string;
+  degreeRequirements?: string;
+  minimumAverageSRequired?: string;
+  coOperativeRequirementsUndergraduate?: string;
+}
+
+export interface DegreeParseResult {
+  degree: DegreeRequirements;
+  /** Honours total units, propagated to majors that don't state their own. */
+  honoursTotal?: number;
+  warnings: string[];
+}
+
+const HONOURS_TOTAL_RE =
+  /honours[^.]*?complete a total of\s+(\d+(?:\.\d+)?)\s*units/i;
+const UNIT_AMOUNT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
+
+function stripHtml(html: string | undefined): string {
+  return (html ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Parse a faculty "Bachelor of X degree-level requirements" page: the breadth
+ * table (each row → a subject-scoped unit bucket), the communication course
+ * options, unit minimums/total, and informational notes (averages, co-op).
+ */
+export function parseDegreeRequirements(
+  detail: DegreeDetailFields,
+  pid: string,
+  source?: string,
+): DegreeParseResult {
+  const $ = cheerio.load(detail.degreeRequirements ?? "");
+  const warnings: string[] = [];
+  const buckets: UnitBucket[] = [];
+  const constraints: UnitConstraint[] = [];
+  const informational: InformationalItem[] = [];
+
+  // Breadth table: a <table> whose header row mentions "Subject Codes".
+  $("table").each((_, table) => {
+    const $t = $(table);
+    const headers = $t
+      .find("th")
+      .toArray()
+      .map((th) => $(th).text().toLowerCase());
+    if (!headers.some((h) => /subject codes/.test(h))) return;
+    $t.find("tbody tr").each((_, tr) => {
+      const tds = $(tr)
+        .find("td")
+        .toArray()
+        .map((td) => $(td).text().replace(/\s+/g, " ").trim());
+      if (tds.length < 3) return;
+      const [label, unitsTxt, codesTxt] = tds;
+      const um = unitsTxt.match(UNIT_AMOUNT_RE);
+      const subjects = (codesTxt.match(/[A-Z]{2,8}/g) ?? []).map((s) =>
+        s.toLowerCase(),
+      );
+      if (!um || subjects.length === 0) return;
+      buckets.push({
+        id: `breadth-${buckets.length}`,
+        label: `Breadth — ${label}`,
+        requiredUnits: Number(um[1]),
+        scope: { kind: "subject", subjects },
+        sourceText: `${label} — ${unitsTxt}: ${codesTxt}`,
+      });
+    });
+  });
+
+  const text = stripHtml(detail.degreeRequirements);
+
+  const ht = text.match(HONOURS_TOTAL_RE);
+  const honoursTotal = ht ? Number(ht[1]) : undefined;
+
+  // Degree-level "min N units at the 200-level" rules are conditional on the
+  // major type (e.g. BA: 12.5 for Liberal Studies, 8.0 for all others), so we
+  // can't attach them as a single hard constraint without sometimes being
+  // wrong. Surface the whole Unit Requirements section verbatim instead.
+  const unitReqText = $("h4")
+    .filter((_, h) => /unit requirements?/i.test($(h).text()))
+    .nextUntil("h4")
+    .text()
+    .replace(/\s+/g, " ")
+    .trim();
+  if (unitReqText)
+    informational.push({ label: "Unit requirements", text: unitReqText });
+
+  // Communication: course codes near "Communication Requirement".
+  let communication: DegreeRequirements["communication"];
+  const ci = text.search(/communication requirement/i);
+  if (ci >= 0) {
+    const window = text.slice(ci, ci + 220);
+    const codes = (window.match(/[A-Z]{2,8}\d{3}[A-Z]?/g) ?? [])
+      .map((c) => c.toLowerCase())
+      .filter((c, i, a) => a.indexOf(c) === i);
+    if (codes.length > 0) {
+      communication = {
+        options: codes,
+        sourceText: `${window.split(".")[0].trim()}.`,
+      };
+    }
+  }
+
+  const minAvg = stripHtml(detail.minimumAverageSRequired);
+  if (minAvg) informational.push({ label: "Minimum average", text: minAvg });
+  const coop = stripHtml(detail.coOperativeRequirementsUndergraduate);
+  if (coop)
+    informational.push({
+      label: "Co-op requirements",
+      text: coop.slice(0, 300),
+    });
+
+  const degree: DegreeRequirements = {
+    kualiId: pid,
+    name: detail.title ?? "Degree-level requirements",
+    ...(source ? { source } : {}),
+    ...(buckets.length > 0 ? { buckets } : {}),
+    ...(communication ? { communication } : {}),
+    ...(constraints.length > 0 ? { constraints } : {}),
+    ...(informational.length > 0 ? { informational } : {}),
+  };
+  return { degree, honoursTotal, warnings };
 }
 
 const CREDENTIAL_PREFIX_RE = /^(h|jh|3g|4g)-/;

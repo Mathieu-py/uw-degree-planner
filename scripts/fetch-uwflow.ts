@@ -19,8 +19,15 @@ import {
   validateDescriptionsFile,
 } from "../lib/courses/validation";
 import { PINNED_TERM } from "../lib/terms";
+import { discoverCatalogId } from "./scrape-programs";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
+
+// UWFlow exposes no unit weights, so we enrich each course from UW's public
+// Kuali course catalog (keyless): one list call for the codes+pids, then one
+// detail call per course for its `credits.value`.
+const KUALI_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";
+const UNITS_CONCURRENCY = 12;
 
 // UWFlow returns the calendar description; we keep it through the fetch and
 // then split it into a sibling descriptions file so the committed catalog
@@ -82,7 +89,57 @@ async function fetchTerm(termId: number): Promise<FetchedCourse[]> {
   return json.data.course;
 }
 
-async function writeSnapshot(termId: number, courses: FetchedCourse[]) {
+/** Fetch per-course unit weights keyed by lowercased course code from Kuali. */
+async function fetchKualiUnits(): Promise<Record<string, number>> {
+  const getJson = async <T>(url: string): Promise<T> => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as T;
+      } catch (err) {
+        if (attempt === 2) throw err;
+      }
+    }
+    throw new Error("unreachable");
+  };
+
+  const catalogId = await discoverCatalogId();
+  const list = await getJson<
+    Array<{ __catalogCourseId?: string; pid: string }>
+  >(`${KUALI_BASE}/courses/${catalogId}`);
+
+  const units: Record<string, number> = {};
+  let next = 0;
+  const worker = async () => {
+    while (true) {
+      const i = next++;
+      if (i >= list.length) return;
+      const entry = list[i];
+      const code = entry.__catalogCourseId?.replace(/\s+/g, "").toLowerCase();
+      if (!code) continue;
+      try {
+        const detail = await getJson<{ credits?: { value?: string } | null }>(
+          `${KUALI_BASE}/course/${catalogId}/${encodeURIComponent(entry.pid)}`,
+        );
+        const value = Number(detail.credits?.value);
+        if (Number.isFinite(value)) units[code] = value;
+      } catch {
+        // skip; the course loads without a weight (audit counts it)
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(UNITS_CONCURRENCY, list.length) }, worker),
+  );
+  return units;
+}
+
+async function writeSnapshot(
+  termId: number,
+  courses: FetchedCourse[],
+  units: Record<string, number>,
+) {
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
   const fetchedAt = new Date().toISOString();
@@ -92,7 +149,8 @@ async function writeSnapshot(termId: number, courses: FetchedCourse[]) {
   const lean: CatalogCourse[] = [];
   const descriptions: Record<string, string> = {};
   for (const { description, ...rest } of courses) {
-    lean.push(rest);
+    const u = units[rest.code];
+    lean.push(u != null ? { ...rest, units: u } : rest);
     if (description && description.trim() !== "") {
       descriptions[rest.code] = description;
     }
@@ -130,6 +188,10 @@ async function main() {
   const args = process.argv.slice(2);
   const terms =
     args.length > 0 ? args.map((a) => parseInt(a, 10)) : [PINNED_TERM];
+  process.stdout.write("Fetching unit weights from Kuali... ");
+  const units = await fetchKualiUnits();
+  console.log(`${Object.keys(units).length} courses`);
+
   for (const term of terms) {
     if (!Number.isInteger(term)) {
       console.error(`Skipping non-numeric term arg: ${term}`);
@@ -141,9 +203,11 @@ async function main() {
     const { coursesPath, descriptionsPath } = await writeSnapshot(
       term,
       courses,
+      units,
     );
+    const withUnits = courses.filter((c) => units[c.code] != null).length;
     console.log(
-      `${courses.length} courses → ${path.relative(process.cwd(), coursesPath)} + ${path.relative(process.cwd(), descriptionsPath)}`,
+      `${courses.length} courses (${withUnits} with units) → ${path.relative(process.cwd(), coursesPath)} + ${path.relative(process.cwd(), descriptionsPath)}`,
     );
   }
 }

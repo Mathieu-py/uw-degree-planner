@@ -32,6 +32,9 @@ export const CourseSchema = z.object({
   antireqs: z.string().nullable(),
   rating: RatingSchema,
   sections: z.array(SectionSchema),
+  // Unit weight (credits), enriched from the Kuali course catalog at fetch time.
+  // Optional so older snapshots (and synthetic test courses) stay valid.
+  units: z.number().optional(),
 });
 
 const CoursesFileSchema = z.object({
