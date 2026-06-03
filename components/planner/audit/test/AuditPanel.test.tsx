@@ -121,7 +121,9 @@ describe("AuditPanel", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     render(<AuditPanel plan={mkPlan({ programId: engId })} />);
-    expect(screen.getByText(/requirements met/i)).toBeTruthy();
+    // Engineering states a degree total (no distribution buckets), so the
+    // headline reports unit progress rather than a requirement count.
+    expect(screen.getByText(/of degree units/i)).toBeTruthy();
   });
 
   it("makes an unplaced course row an 'add' drag source when drill is enabled", () => {
@@ -203,6 +205,22 @@ describe("AuditPanel", () => {
       />,
     );
     expect(container.querySelector(".av-item.dim")).not.toBeNull();
+  });
+
+  it("flags an unscoped unit bucket with a manual-verification marker, not a 0% ring", () => {
+    // psychology-bsc carries a 9.5-unit "Science and Mathematics" bucket whose
+    // scope we can't verify. It must show a manual-verification marker (with a
+    // "check it by hand" affordance) and say so in the caption, instead of a
+    // permanently-empty progress ring that reads like a forgotten requirement.
+    if (!("psychology-bsc" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "psychology-bsc" })} />,
+    );
+    expect(
+      container.querySelector('[title*="check it by hand"]'),
+      "expected an unscoped bucket's manual-verification marker",
+    ).not.toBeNull();
+    expect(screen.getAllByText(/verify manually/i).length).toBeGreaterThan(0);
   });
 
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {

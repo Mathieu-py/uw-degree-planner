@@ -486,12 +486,13 @@ function attachDegreeRequirements(
 
     // Propagate the degree-page total to a program that doesn't state its own
     // (e.g. Math majors whose total lives only on the degree page). Pick the
-    // total matching the program's degree type: `3g-`/`4g-` slugs are
-    // three/four-year general degrees, everything else is honours.
-    const isGeneral = /^(3g|4g)-/.test(slug);
-    const degreeTotal = isGeneral
+    // total matching the program's degree type — three-year (`3g-`), four-year
+    // (`4g-`), and honours can each differ (15.0 vs 20.0 vs 20.0).
+    const degreeTotal = /^3g-/.test(slug)
       ? (parsed.generalTotal ?? parsed.honoursTotal)
-      : parsed.honoursTotal;
+      : /^4g-/.test(slug)
+        ? (parsed.fourYearTotal ?? parsed.generalTotal ?? parsed.honoursTotal)
+        : parsed.honoursTotal;
     if (degreeTotal != null) {
       const plan: UnitPlan = program.unitPlan ?? { buckets: [] };
       const bucketSum = plan.buckets.reduce((s, b) => s + b.requiredUnits, 0);

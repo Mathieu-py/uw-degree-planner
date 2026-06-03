@@ -10,7 +10,7 @@ import type {
   UnitPlan,
   UnitScope,
 } from "../lib/programs";
-import { isTermLetter, TERM_LETTERS } from "../lib/programs";
+import { isTermLetter, MATH_SUBJECTS, TERM_LETTERS } from "../lib/programs";
 
 export function normalizeCourseCode(raw: string): string | null {
   const cleaned = raw.replace(/\s+/g, "").toUpperCase();
@@ -693,10 +693,8 @@ function parseCourseListsSections(
 
 /* ----------------------- unit-accounting parser ------------------------- */
 
-// UW "math courses" (Faculty of Mathematics) — the subject set that satisfies
-// "N units of math courses"; "non-math" is the complement. This is UW's
-// documented Faculty-of-Mathematics subject set (not inferred).
-const MATH_SUBJECTS = ["math", "amath", "pmath", "co", "cs", "stat", "actsc"];
+// `MATH_SUBJECTS` (UW's documented Faculty-of-Mathematics subject set) is shared
+// from lib/programs so the audit's bucket titles use the same set.
 
 // Named subjects that appear spelled-out (no all-caps code) in unit prose, with
 // an unambiguous single subject code.
@@ -705,11 +703,14 @@ const SUBJECT_NAME_MAP: Array<[RegExp, string[]]> = [
   [/social work/i, ["socwk"]],
 ];
 
-// A degree total ("Complete a total of 20.0 units:"). The negative lookahead
-// rejects "Complete a total of 8.0 units of HIST" — that's a subject-bucket
-// requirement, not the degree total (which lives on the degree page).
+// A degree total ("Complete a total of 20.0 units:"). Some programs qualify it
+// as "academic units" (e.g. engineering: "Complete a total of 21.25 academic
+// units (excluding COOP, PD, WKRPT)"), so the qualifier is optional. The
+// negative lookahead rejects "Complete a total of 8.0 units of HIST" — that's a
+// subject-bucket requirement, not the degree total (which lives on the degree
+// page).
 const TOTAL_UNITS_RE =
-  /complete a total of\s+(\d+(?:\.\d+)?)\s*units\b(?!\s+of\b)/i;
+  /complete a total of\s+(\d+(?:\.\d+)?)\s*(?:academic\s+)?units\b(?!\s+of\b)/i;
 const ADDITIONAL_SUBJ_UNITS_RE =
   /(\d+(?:\.\d+)?)\s+additional\s+([A-Z]{2,8})\s+units/;
 // "minimum of 14.5 units must be at the 200-level or above"
@@ -743,7 +744,8 @@ function scopeFromNoun(noun: string): UnitScope | null {
   // An explicit subject code (HIST, GSJ, …) — before the approved/elective
   // fallback so "HIST and approved courses" scopes to HIST.
   const m = n.match(/\b([A-Z]{2,7})\b/);
-  if (m && m[1] !== "UCR") return { kind: "subject", subjects: [m[1].toLowerCase()] };
+  if (m && m[1] !== "UCR")
+    return { kind: "subject", subjects: [m[1].toLowerCase()] };
   // A spelled-out named subject ("Classical Studies", "Social Work").
   for (const [re, subjects] of SUBJECT_NAME_MAP)
     if (re.test(n)) return { kind: "subject", subjects };
@@ -845,20 +847,23 @@ export function parseUnitPlan(
       // (no sub-list) legitimately yields one bucket.
       const unitsOf = text.match(UNITS_OF_RE);
       if (unitsOf) {
-        const scope = scopeFromNoun(unitsOf[2]);
-        if (scope === null) {
-          // No verifiable scope — surface the exact requirement, don't fake it.
-          informational.push({ label: "Unit requirement", text });
-          warnings.push(`${programLabel}: untracked unit scope: "${unitsOf[2]}"`);
-        } else {
-          buckets.push({
-            id: `u${bucketIdx++}`,
-            label: text,
-            requiredUnits: Number(unitsOf[1]),
-            scope,
-            sourceText: text,
-          });
-        }
+        // No verifiable scope → an `unscoped` bucket: it still carries its real
+        // unit weight (so the degree total adds up) and shows verbatim, but is
+        // never auto-allocated. We don't fabricate a scope.
+        const scope: UnitScope = scopeFromNoun(unitsOf[2]) ?? {
+          kind: "unscoped",
+        };
+        if (scope.kind === "unscoped")
+          warnings.push(
+            `${programLabel}: unscoped unit requirement: "${unitsOf[2]}"`,
+          );
+        buckets.push({
+          id: `u${bucketIdx++}`,
+          label: text,
+          requiredUnits: Number(unitsOf[1]),
+          scope,
+          sourceText: text,
+        });
       }
     });
 
@@ -965,17 +970,32 @@ export interface DegreeParseResult {
   degree: DegreeRequirements;
   /** Honours-degree total, propagated to honours majors lacking their own. */
   honoursTotal?: number;
-  /** Three/four-year general-degree total, for the `3g-`/`4g-` majors. */
+  /** Three-year general (or plain "general degree") total, for `3g-` majors. */
   generalTotal?: number;
+  /** Four-year general total, for `4g-` majors (distinct from three-year!). */
+  fourYearTotal?: number;
   warnings: string[];
 }
 
-// Faculties phrase the total as either "Complete a total of N units" (Arts) or
-// "Complete a minimum of N units" (Math), per degree type.
+// Faculties phrase the total as "Complete a total of N units" (Arts) or
+// "Complete a minimum of N units" (Math), PER DEGREE TYPE — three-year general,
+// four-year general, and honours can each be different (15.0 vs 20.0 vs 20.0),
+// so they're matched separately and picked by the program's degree type.
 const HONOURS_TOTAL_RE =
   /honours[^.]*?(?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units/i;
 const GENERAL_TOTAL_RE =
-  /(?:three-year general|four-year general|general degree)[^.]*?(?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units/i;
+  /(?:three-year general|general degree)[^.]*?(?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units/i;
+const FOUR_YEAR_TOTAL_RE =
+  /four-year general[^.]*?(?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units/i;
+// Some degree pages state a single, unqualified total (e.g. the Bachelor of
+// Computer Science page: "Complete a minimum of 20.0 units, exceptions noted
+// below.") with no three-year/four-year/honours split. The lookahead rejects a
+// level constraint ("…units at the 200-level") and a subject bucket
+// ("…units of HIST"); "Minimum of 26.0 units" (double-degree variant) lacks the
+// "Complete a" lead-in and is skipped. Used only as a fallback when none of the
+// degree-type-qualified totals match.
+const GENERIC_TOTAL_RE =
+  /complete a (?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units\b(?!\s+(?:of\b|at\b))/i;
 const UNIT_AMOUNT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
 
 function stripHtml(html: string | undefined): string {
@@ -1034,22 +1054,20 @@ export function parseDegreeRequirements(
   const text = stripHtml(detail.degreeRequirements);
 
   const ht = text.match(HONOURS_TOTAL_RE);
-  const honoursTotal = ht ? Number(ht[1]) : undefined;
   const gt = text.match(GENERAL_TOTAL_RE);
   const generalTotal = gt ? Number(gt[1]) : undefined;
-
-  // Degree-level "min N units at the 200-level" rules are conditional on the
-  // major type (e.g. BA: 12.5 for Liberal Studies, 8.0 for all others), so we
-  // can't attach them as a single hard constraint without sometimes being
-  // wrong. Surface the whole Unit Requirements section verbatim instead.
-  const unitReqText = $("h4")
-    .filter((_, h) => /unit requirements?/i.test($(h).text()))
-    .nextUntil("h4")
-    .text()
-    .replace(/\s+/g, " ")
-    .trim();
-  if (unitReqText)
-    informational.push({ label: "Unit requirements", text: unitReqText });
+  const ft = text.match(FOUR_YEAR_TOTAL_RE);
+  const fourYearTotal = ft ? Number(ft[1]) : undefined;
+  // A page with no degree-type-qualified total states a single degree total
+  // (e.g. BCS): adopt it as the honours total so it propagates to its programs.
+  let honoursTotal = ht ? Number(ht[1]) : undefined;
+  if (honoursTotal == null && generalTotal == null && fourYearTotal == null) {
+    const g = text.match(GENERIC_TOTAL_RE);
+    if (g) honoursTotal = Number(g[1]);
+  }
+  // The verbatim "Unit Requirements" prose lists every degree type at once,
+  // which is noise on a specific plan — we extract the right total per degree
+  // type above, so we don't surface that blob.
 
   // Communication: course codes near "Communication Requirement".
   let communication: DegreeRequirements["communication"];
@@ -1069,12 +1087,16 @@ export function parseDegreeRequirements(
 
   const minAvg = stripHtml(detail.minimumAverageSRequired);
   if (minAvg) informational.push({ label: "Minimum average", text: minAvg });
-  const coop = stripHtml(detail.coOperativeRequirementsUndergraduate);
-  if (coop)
-    informational.push({
-      label: "Co-op requirements",
-      text: coop.slice(0, 300),
-    });
+  // The co-op field appends a Study/Work Sequences chart (an HTML <table> under
+  // a "Legend for Study/Work Sequence(s) Chart" heading) that flattens into
+  // meaningless prose. Cut at whichever comes first — the legend heading or the
+  // table — and keep the requirement + constraints prose before it, in full.
+  // (The old 300-char cap cut real PD-course rules off mid-word.)
+  const coopHtml = detail.coOperativeRequirementsUndergraduate ?? "";
+  const coop = stripHtml(
+    coopHtml.split(/<table|Legend for Study\/Work Sequences? Chart/i)[0],
+  ).trim();
+  if (coop) informational.push({ label: "Co-op requirements", text: coop });
 
   const degree: DegreeRequirements = {
     kualiId: pid,
@@ -1085,7 +1107,7 @@ export function parseDegreeRequirements(
     ...(constraints.length > 0 ? { constraints } : {}),
     ...(informational.length > 0 ? { informational } : {}),
   };
-  return { degree, honoursTotal, generalTotal, warnings };
+  return { degree, honoursTotal, generalTotal, fourYearTotal, warnings };
 }
 
 const CREDENTIAL_PREFIX_RE = /^(h|jh|3g|4g)-/;

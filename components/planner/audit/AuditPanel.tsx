@@ -100,6 +100,9 @@ type Section =
       appliedUnits: number;
       requiredUnits: number;
       status: "met" | "partial" | "unmet";
+      /** True when the bucket's scope can't be verified — the student checks it
+       * by hand, so it shows a manual-verification marker instead of a 0% ring. */
+      unscoped: boolean;
     }
   | {
       kind: "info";
@@ -276,12 +279,23 @@ function SectionRow({
     return (
       <div className="av-row">
         <div className="av-row-head">
-          <span className="av-ring-wrap">
-            <Ring pct={pct} />
-            <span className="av-ring-num">
-              {section.appliedUnits.toFixed(1)}
+          {section.unscoped ? (
+            // No verifiable scope, so a progress ring would be a permanent,
+            // misleading "0%". Show a manual-verification marker instead.
+            <span
+              className="av-unit-ring shrink-0"
+              title="We can't verify this requirement's scope automatically — check it by hand."
+            >
+              <Icon name="shield" size="sm" aria-hidden="true" />
             </span>
-          </span>
+          ) : (
+            <span className="av-ring-wrap">
+              <Ring pct={pct} />
+              <span className="av-ring-num">
+                {section.appliedUnits.toFixed(1)}
+              </span>
+            </span>
+          )}
           <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
             <span className="av-sec-label truncate">{section.title}</span>
             <span className="u-small">{section.caption}</span>
@@ -329,7 +343,9 @@ function SectionRow({
         );
     return (
       <SectionShell
-        title={section.title}
+        // An optional group reaches a green 100% after a single pick, so tag it
+        // "(optional)" — a satisfied optional group isn't a completed required one.
+        title={optional ? `${section.title} (optional)` : section.title}
         caption={section.caption}
         ring={{ pct, num: chosen }}
         excludedViolationCount={section.summary.excludedViolationCount}
@@ -458,7 +474,7 @@ function SectionShell({
         </span>
         {excludedViolationCount > 0 ? (
           <span
-            className="inline-flex items-center gap-0.5 rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
+            className="inline-flex items-center gap-0.5 rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
             title={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} cannot count toward this section`}
           >
             <Icon name="warning" size="xs" aria-hidden="true" />
@@ -1068,22 +1084,47 @@ function deriveSections(
   }
 
   // Degree units (full unit accounting) ----------------------------------
-  const unitTotals =
-    audit.unitAudit && audit.unitAudit.totalRequired != null
-      ? {
-          applied: audit.unitAudit.totalApplied,
-          required: audit.unitAudit.totalRequired,
-        }
-      : null;
-  if (audit.unitAudit && audit.unitAudit.buckets.length > 0) {
-    const unitSections: Section[] = audit.unitAudit.buckets.map((b, i) => ({
+  // A program is unit-based whenever it has a compiled unit audit. The headline
+  // denominator is the stated degree total, or — when UW doesn't state one
+  // (joint-honours half-plans) — the sum of the stated bucket requirements. No
+  // total is fabricated; a course-count program has no unit audit at all.
+  const ua = audit.unitAudit;
+  const unitTotals = (() => {
+    if (!ua) return null;
+    const required =
+      ua.totalRequired ??
+      Math.round(
+        ua.buckets.reduce((s, b) => s + b.bucket.requiredUnits, 0) * 100,
+      ) / 100;
+    // With buckets, the numerator is allocated units, not raw placed units: a
+    // course that landed in no bucket (an unscoped requirement we won't
+    // auto-fill, or overflow once every eligible bucket is full) doesn't count
+    // toward the %, so the headline can't read 100% while an unscoped bucket
+    // says "verify manually", and it stays consistent with the per-bucket rings.
+    // A bare-total program (engineering: a total, no distribution buckets) has
+    // nothing to allocate into, so every placed unit counts toward the total.
+    const applied = ua.buckets.length > 0 ? ua.allocatedUnits : ua.totalApplied;
+    return required > 0 ? { applied, required } : null;
+  })();
+  // The bucket breakdown only renders when there are real buckets: an
+  // engineering degree carries a unit total but no distribution buckets, so it
+  // shows the unit headline alone.
+  if (ua && ua.buckets.length > 0) {
+    const unitSections: Section[] = ua.buckets.map((b, i) => ({
       kind: "unitBucket",
       key: `unit-${b.bucket.id}-${i}`,
-      title: b.bucket.label,
-      caption: `${b.appliedUnits.toFixed(1)} of ${b.bucket.requiredUnits} units`,
+      title: b.title,
+      // Unscoped buckets carry real units toward the total but can't be
+      // auto-tracked (we won't guess their scope), so say so rather than
+      // showing a misleading "0 of N".
+      caption:
+        b.bucket.scope.kind === "unscoped"
+          ? `${b.bucket.requiredUnits} units · counts toward the total — verify manually`
+          : `${b.appliedUnits.toFixed(1)} of ${b.bucket.requiredUnits} units`,
       appliedUnits: b.appliedUnits,
       requiredUnits: b.bucket.requiredUnits,
       status: b.status,
+      unscoped: b.bucket.scope.kind === "unscoped",
     }));
     groups.push({ heading: "Degree units", sections: unitSections });
   }
@@ -1122,7 +1163,12 @@ function deriveSections(
     totals: { needed: totalNeeded, satisfied: totalSatisfied },
     unitTotals,
     untrackedCount,
-    headerCaption: buildHeaderCaption(program, untrackedCount),
+    headerCaption: buildHeaderCaption(
+      program,
+      untrackedCount,
+      ua?.unscopedUnits ?? 0,
+      unitTotals != null,
+    ),
   };
 }
 
@@ -1212,13 +1258,26 @@ function nodeCaption(node: AuditNode, summary: SectionSummary): string {
 function buildHeaderCaption(
   program: Program | null,
   untrackedCount: number,
+  unscopedUnits: number,
+  unitBased: boolean,
 ): string | null {
   if (!program) return null;
-  // The honest, actionable line: how many elective requirements remain that the
-  // % can't measure. These are real degree requirements, not optional extras.
-  if (untrackedCount > 0) {
-    return `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan — not counted above.`;
-  }
+  // The honest, actionable lines: what the headline % can't measure. These are
+  // real degree requirements, not optional extras.
+  const parts: string[] = [];
+  // Browse electives only sit *outside* the headline in a course-count program.
+  // When the headline is units, a placed elective's units already count toward
+  // it, so "not counted above" would be false — skip the line (the electives
+  // still appear in their own section to plan from).
+  if (!unitBased && untrackedCount > 0)
+    parts.push(
+      `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan`,
+    );
+  // Unscoped buckets carry real units toward the total but we won't guess their
+  // scope, so they're excluded from the headline — say how many to verify.
+  if (unscopedUnits > 0)
+    parts.push(`${unscopedUnits} units to verify manually`);
+  if (parts.length > 0) return `${parts.join(" · ")} — not counted above.`;
   if (program.kind === "engineering")
     return `${TERM_LETTERS.length} academic terms`;
   return null;

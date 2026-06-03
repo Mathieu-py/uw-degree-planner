@@ -115,6 +115,29 @@ export type ElectiveCategory = z.infer<typeof ElectiveCategorySchema>;
  * (breadth) via `degreeRequirements`.
  */
 
+// UW "math courses" (Faculty of Mathematics) — the subject set that satisfies
+// "N units of math courses"; "non-math" is the complement. Shared by the
+// scraper (scope resolution) and the audit (bucket titles).
+//
+// UW defines math units as "courses offered by the Math Faculty … except COMM
+// and MTHEL, plus a set of math-intensive courses offered by other Faculties."
+// So this is every Faculty-of-Mathematics subject *except* MTHEL (explicitly
+// excluded by UW). The cross-faculty "math-intensive" exception can't be
+// expressed as a subject prefix and isn't captured here. The joint subjects SE
+// (Math+Engineering) and CFM (Math+Arts) are intentionally omitted — their
+// math/non-math classification is genuinely ambiguous and we don't guess.
+export const MATH_SUBJECTS = [
+  "math",
+  "amath",
+  "pmath",
+  "co",
+  "cs",
+  "stat",
+  "actsc",
+  "cm", // Computational Mathematics
+  "matbus", // Mathematics/Business
+];
+
 /** What counts toward a unit bucket. */
 const UnitScopeSchema = z.discriminatedUnion("kind", [
   // The program's own required courses (their units, wherever placed).
@@ -135,6 +158,10 @@ const UnitScopeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("list"), courses: z.array(z.string()) }),
   // Free electives: any units left after the specific buckets are filled.
   z.object({ kind: z.literal("open") }),
+  // A real unit requirement whose scope we can't verify (e.g. "Science
+  // courses" with no authoritative subject list). Counted toward the degree
+  // total and shown verbatim, but never auto-allocated — the student verifies.
+  z.object({ kind: z.literal("unscoped") }),
 ]);
 
 export type UnitScope = z.infer<typeof UnitScopeSchema>;

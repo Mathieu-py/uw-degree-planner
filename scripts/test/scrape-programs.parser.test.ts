@@ -1080,16 +1080,25 @@ describe("parseUnitPlan", () => {
     for (const b of unitPlan?.buckets ?? [])
       expect(b.sourceText?.length).toBeGreaterThan(0);
   });
+
+  it('extracts a total qualified as "academic units" (engineering)', () => {
+    // Engineering states "Complete a total of 21.25 academic units (excluding
+    // COOP, PD, WKRPT)"; the "academic" qualifier must not defeat the match.
+    const { unitPlan } = parseUnitPlan(
+      "<p>Complete a total of 21.25 academic units (excluding COOP, PD, WKRPT): " +
+        "Complete all the required courses listed below.</p>",
+    );
+    expect(unitPlan?.totalUnits).toBe(21.25);
+  });
 });
 
 describe("parseDegreeRequirements", () => {
   it("parses the BA breadth table into subject-scoped buckets", () => {
-    const { degree, honoursTotal, generalTotal } = parseDegreeRequirements(
-      rawJson("degree-arts"),
-      "SyLzAe5R3",
-    );
+    const { degree, honoursTotal, generalTotal, fourYearTotal } =
+      parseDegreeRequirements(rawJson("degree-arts"), "SyLzAe5R3");
     expect(honoursTotal).toBe(20.0);
-    expect(generalTotal).toBe(15.0);
+    expect(generalTotal).toBe(15.0); // three-year general
+    expect(fourYearTotal).toBe(20.0); // four-year general — distinct!
     const labels = degree.buckets?.map((b) => b.label) ?? [];
     expect(labels.some((l) => /Humanities/.test(l))).toBe(true);
     expect(labels.some((l) => /Social Sciences/.test(l))).toBe(true);
@@ -1112,5 +1121,51 @@ describe("parseDegreeRequirements", () => {
       "commst193",
       "engl193",
     ]);
+  });
+
+  it("recovers a single unqualified degree total (Bachelor of Computer Science)", () => {
+    // The BCS page states one total for all plans, with no honours/general
+    // split, and a separate double-degree figure. We take the 20.0 and ignore
+    // the 26.0 double-degree variant and the failed-unit maximum.
+    const detail = {
+      degreeRequirements:
+        "<p>Unit Requirements</p>" +
+        "<p>Complete a minimum of 20.0 units, exceptions noted below.</p>" +
+        "<p>Students in the double degree academic plan: Minimum of 26.0 units.</p>" +
+        "<p>Maximum failed or excluded course units (excluding COOP, PD): 2.0.</p>",
+    };
+    const { honoursTotal, generalTotal, fourYearTotal } =
+      parseDegreeRequirements(detail, "r1y1WO5ka");
+    expect(honoursTotal).toBe(20.0);
+    expect(generalTotal).toBeUndefined();
+    expect(fourYearTotal).toBeUndefined();
+  });
+
+  it("does not let the generic total shadow a qualified one (Arts honours 20, not three-year 15)", () => {
+    const { honoursTotal, generalTotal } = parseDegreeRequirements(
+      rawJson("degree-arts"),
+      "SyLzAe5R3",
+    );
+    expect(honoursTotal).toBe(20.0);
+    expect(generalTotal).toBe(15.0);
+  });
+
+  it("keeps the co-op requirement text but drops the study/work sequences chart", () => {
+    const detail = {
+      coOperativeRequirementsUndergraduate:
+        "<p>Complete a minimum of four work terms.</p>" +
+        "<ol><li>PD1: Must be taken before the first work term.</li></ol>" +
+        "<h4>Legend for Study/Work Sequences Chart</h4>" +
+        "<table><tbody><tr><td>1A</td><td>WT</td></tr></tbody></table>",
+    };
+    const { degree } = parseDegreeRequirements(detail, "pid");
+    const coop = degree.informational?.find(
+      (i) => i.label === "Co-op requirements",
+    );
+    expect(coop?.text).toContain("four work terms");
+    expect(coop?.text).toContain("PD1");
+    // The flattened chart and its dangling legend heading are gone — not cut
+    // mid-word like the old 300-char cap.
+    expect(coop?.text).not.toMatch(/Legend|WT|1A/);
   });
 });
