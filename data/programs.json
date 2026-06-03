@@ -53,7 +53,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -67,7 +66,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of ANTH courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -942,7 +942,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -956,7 +955,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of Classical Studies courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -1525,7 +1525,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -1539,7 +1538,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -2136,7 +2136,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -2150,7 +2149,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -2810,7 +2810,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -2824,7 +2823,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -3331,7 +3331,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -3345,7 +3344,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of FR courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -3626,7 +3626,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -3640,7 +3639,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of GSJ courses and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -4055,7 +4055,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -4069,7 +4068,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of GER courses and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -4340,7 +4340,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -4354,7 +4353,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of HIST and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -5088,7 +5088,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -5102,7 +5101,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of MEDVL and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -5278,7 +5278,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -5292,7 +5291,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of MUSIC courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -6290,7 +6290,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -6304,7 +6303,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of PHIL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -6495,7 +6495,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -6509,7 +6508,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of PSCI courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -6796,7 +6796,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -6810,7 +6809,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of PSYCH courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -6979,7 +6979,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -6993,7 +6992,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of RCS courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -7437,7 +7437,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -7451,7 +7450,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of SDS and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -8202,7 +8202,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -8216,7 +8215,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of SPAN courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -8644,7 +8644,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -8658,7 +8657,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ANTH courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -9533,7 +9533,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -9547,7 +9546,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of Classical Studies courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -10175,7 +10175,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -10189,7 +10188,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ECON courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -10714,7 +10714,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -10728,7 +10727,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -11291,7 +11291,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -11305,7 +11304,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -11961,7 +11961,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -11975,7 +11974,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -12630,7 +12630,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -12644,7 +12643,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -13140,7 +13140,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -13154,7 +13153,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of FR courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -13435,7 +13435,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -13449,7 +13448,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of GSJ courses and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -13721,7 +13721,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -13735,7 +13734,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of HIST and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -14637,7 +14637,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -14651,7 +14650,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of MEDVL and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -14827,7 +14827,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -14841,7 +14840,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of MUSIC courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -15877,7 +15877,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -15891,7 +15890,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of PHIL courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -16118,7 +16118,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -16132,7 +16131,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of PSCI courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -16441,7 +16441,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -16455,7 +16454,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of PSYCH courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -16624,7 +16624,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -16638,7 +16637,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of RCS courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -16917,7 +16917,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -16931,7 +16930,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of SRF and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -17214,7 +17214,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -17228,7 +17227,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of SDS and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "specializations": [
       {
@@ -18005,7 +18005,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -18019,7 +18018,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of SPAN courses."
         }
-      ]
+      ],
+      "totalUnits": 15
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -18994,7 +18994,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 3,
+        "requiredCount": 7,
         "sourceText": "Complete a total of 7 Technical Electives.",
         "approvedCourses": [
           "ae301",
@@ -19403,10 +19403,6 @@
         }
       ]
     },
-    "unitPlan": {
-      "totalUnits": 7,
-      "buckets": []
-    },
     "informational": [
       {
         "label": "Unit requirement",
@@ -19561,6 +19557,10 @@
           "text": "For Bachelor of Arts students in Honours Arts co-op or Honours Arts and Busines co-op. Complete a minimum of four work terms: A minimum of three must be standard work terms. Complete a minimum of four Professional Development (PD) courses: PD1: Must be taken in an academic term prior to the first wo"
         }
       ]
+    },
+    "unitPlan": {
+      "buckets": [],
+      "totalUnits": 20
     }
   },
   "bba-and-bcs-double-degree": {
@@ -21431,6 +21431,7 @@
       },
       {
         "description": "Complete 3 additional courses from the above lists, including no more than 2 from List 3.",
+        "requiredCount": 3,
         "sourceText": "Complete 3 additional courses from the above lists, including no more than 2 from List 3."
       },
       {
@@ -21439,7 +21440,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 1,
+        "requiredCount": 7,
         "sourceText": "Complete a total of seven technical electives.",
         "approvedCourses": [
           "amath382",
@@ -22528,6 +22529,7 @@
     "electives": [
       {
         "description": "Complete 2 additional courses from List 1 or List 2. See Additional Constraints.",
+        "requiredCount": 2,
         "sourceText": "Complete 2 additional courses from List 1 or List 2. See Additional Constraints.",
         "approvedCourses": [
           "che499",
@@ -22593,7 +22595,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 2,
+        "requiredCount": 4,
         "sourceText": "Complete a total of 4 Technical Electives.",
         "approvedCourses": [
           "che499",
@@ -23391,7 +23393,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 3,
+        "requiredCount": 7,
         "sourceText": "Complete a total of 7 Technical Electives.",
         "approvedCourses": [
           "ae450",
@@ -23819,7 +23821,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -23833,7 +23834,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of CLAS, GRK, and LAT courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -25305,6 +25307,7 @@
       },
       {
         "description": "Complete one course from this list or an additional course from List 1",
+        "requiredCount": 1,
         "sourceText": "Complete one course from this list or an additional course from List 1",
         "approvedCourses": [
           "ece313",
@@ -25315,6 +25318,7 @@
       },
       {
         "description": "Complete one course from this list or any additional course from List 1, 2, 3, or 4",
+        "requiredCount": 1,
         "sourceText": "Complete one course from this list or any additional course from List 1, 2, 3, or 4",
         "approvedCourses": [
           "actsc446",
@@ -25355,6 +25359,7 @@
       },
       {
         "description": "Natural Science List",
+        "requiredCount": 2,
         "sourceText": "Complete a total of 2 lecture courses (see Additional Constraints)",
         "approvedCourses": [
           "biol110",
@@ -25414,7 +25419,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 2,
+        "requiredCount": 8,
         "sourceText": "Complete a total of 8 Technical Electives. At least one TE, to a maximum of two, must be from an engineering plan other than Computer Engineering or Electrical Engineering (see Additional Constraints)",
         "approvedCourses": [
           "actsc446",
@@ -27850,6 +27855,7 @@
       },
       {
         "description": "Complete one course from this list or an additional course from List 1",
+        "requiredCount": 1,
         "sourceText": "Complete one course from this list or an additional course from List 1",
         "approvedCourses": [
           "ece320",
@@ -27860,6 +27866,7 @@
       },
       {
         "description": "Complete one course from this list or any additional course from List 1, 2, 3, or 4",
+        "requiredCount": 1,
         "sourceText": "Complete one course from this list or any additional course from List 1, 2, 3, or 4",
         "approvedCourses": [
           "actsc446",
@@ -27902,6 +27909,7 @@
       },
       {
         "description": "Natural Science List",
+        "requiredCount": 2,
         "sourceText": "Complete a total of 2 lecture courses (see Additional Constraints)",
         "approvedCourses": [
           "biol110",
@@ -27960,7 +27968,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 2,
+        "requiredCount": 8,
         "sourceText": "Complete a total of 8 Technical Electives. At least one TE, to a maximum of two, must be from an Engineering plan other than Computer Engineering or Electrical Engineering (see Additional Constraints)",
         "approvedCourses": [
           "actsc446",
@@ -28287,7 +28295,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -28301,7 +28308,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -29337,7 +29345,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 5,
+        "requiredCount": 9,
         "sourceText": "Complete a total of 9 Technical Electives.",
         "approvedCourses": [
           "ae572",
@@ -30479,7 +30487,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 6,
       "buckets": [
         {
           "id": "u0",
@@ -30493,7 +30500,8 @@
           },
           "sourceText": "Complete a total of 6.0 units of FINE courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -30825,7 +30833,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -30839,7 +30846,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of FINE courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -32601,7 +32609,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -32615,7 +32622,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ANTH courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -34445,7 +34453,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -34459,7 +34466,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of Classical Studies courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -37418,7 +37426,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -37432,7 +37439,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ECON courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -37978,7 +37986,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -37992,7 +37999,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -38567,7 +38575,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -38581,7 +38588,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -39249,7 +39257,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -39263,7 +39270,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -39930,7 +39938,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -39944,7 +39951,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of ENGL courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -40567,7 +40575,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -40581,7 +40588,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of FR courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -40982,7 +40990,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -40996,7 +41003,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of GSJ courses and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -42179,7 +42187,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -42193,7 +42200,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of GER courses and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -42465,7 +42473,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -42479,7 +42486,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of HIST and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -43394,7 +43402,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -43408,7 +43415,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of MEDVL and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -43584,7 +43592,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -43598,7 +43605,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of MUSIC courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -44646,7 +44654,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -44660,7 +44667,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of PHIL courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -45055,7 +45063,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -45069,7 +45076,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of PSCI courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -45623,7 +45631,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -45637,7 +45644,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of RCS courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -46105,7 +46113,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -46119,7 +46126,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of SRF and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -46476,7 +46484,6 @@
       }
     ],
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -46490,7 +46497,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of SDS and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -47267,7 +47275,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -47281,7 +47288,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of SPAN courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
@@ -51132,7 +51140,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 7,
       "buckets": [
         {
           "id": "u0",
@@ -52761,7 +52768,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 4,
+        "requiredCount": 6,
         "sourceText": "Complete a total of 6 Technical Electives.",
         "approvedCourses": [
           "cive343",
@@ -56738,7 +56745,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 4,
+        "requiredCount": 6,
         "sourceText": "Complete a total of 6 Technical Electives.",
         "approvedCourses": [
           "ae572",
@@ -57778,7 +57785,7 @@
       },
       {
         "description": "Technical Electives List",
-        "requiredCount": 4,
+        "requiredCount": 8,
         "sourceText": "Complete a total of 8 Technical Electives, with a minimum of 4 taken from List 1 (see Additional Constraints).",
         "approvedCourses": [
           "ae311",
@@ -58964,7 +58971,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -58978,7 +58984,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of PSYCH courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
@@ -61447,7 +61454,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 9,
       "buckets": [
         {
           "id": "u0",
@@ -61716,7 +61722,7 @@
       {
         "description": "Additional Requirements",
         "requiredCount": 1,
-        "sourceText": "Complete 1 sustainability-related course, from the following list. This course may also be counted towards another elective requirement (e.g., Natural Science elective, Complementary Studies elective) if part of that list.",
+        "sourceText": "Complete 1 of the following: BIOL489 - Arctic Ecology (0.50)EARTH270 - Disasters and Natural Hazards (0.50)EARTH305 - Physical Science of Climate Change (0.50)ENBUS102 - Introduction to Environment and Business (0.50)ENBUS211 - Principles of Marketing for Sustainability Professionals (0.50)ENGL248 - Literature for an Ailing Planet (0.50)ENVS105 - Environmental Sustainability and Ethics (0.50)ENVS200 - Field Ecology (0.50)ENVS205 - Sustainability: The Future We Want (0.50)ENVS220 - Ecological Economics (0.50)ERS215 - Environmental and Sustainability Assessment 1 (0.50)ERS225 - Gendering Environmental Politics (0.50)ERS253 - Communities and Sustainability (0.50)ERS270 - Introduction to Sustainable Agroecosystems (0.50)ERS294 - Spirituality, Religion, and Ecology (0.50)ERS310 - Peace and the Environment (0.50)ERS316 - Urban Water and Wastewater Systems: Integrated Planning and Management (0.50)ERS320 - Economics and Sustainability (0.50)ERS328 - Environmental Politics and System Change (0.50)ERS361 - Food Systems and Sustainability (0.50)ERS372 - First Nations and the Environment (0.50)ERS404 - Global Environmental Governance (0.50)GEOG207 - Climate Change Fundamentals (0.50)GEOG225 - Global Environment and Health (0.50)GEOG326 - Environment and Development in a Global Perspective (0.50)GEOG361 - Food Systems and Sustainability (0.50)PACS310 - Peace and the Environment (0.50)PHIL224 - Environmental Ethics (0.50)PLAN451 - Environmental Planning in Rural and Regional Systems (0.50)PSCI432 - Global Environmental Governance (0.50)RCS285 - Spirituality, Religion, and Ecology (0.50)SCI200 - Energy - Its Development, Use, and Issues (0.50)SCI205 - Climate Change Fundamentals (0.50)THPERF374 - Sustainability in Design (0.50)",
         "approvedCourses": [
           "biol489",
           "earth270",
@@ -61820,6 +61826,7 @@
       },
       {
         "description": "Complete 2 additional course from List 1, List 2, or List 3.",
+        "requiredCount": 2,
         "sourceText": "Complete 2 additional course from List 1, List 2, or List 3.",
         "approvedCourses": [
           "biol487",
@@ -61854,6 +61861,7 @@
       },
       {
         "description": "Natural Science List",
+        "requiredCount": 3,
         "sourceText": "Complete a total of 3 lecture courses (see Additional Constraints).",
         "approvedCourses": [
           "amath382",
@@ -61928,7 +61936,7 @@
       {
         "description": "Technical Electives List",
         "requiredCount": 1,
-        "sourceText": "Complete a minimum of 4 Technical Electives.",
+        "sourceText": "Complete 1 of the following: AMATH242 - Introduction to Computational Mathematics (0.50)AMATH449 - Neural Networks (0.50)CS360 - Introduction to the Theory of Computing (0.50)CS365 - Models of Computation (0.50)CS370 - Numerical Computation (0.50)CS371 - Introduction to Computational Mathematics (0.50)CS442 - Principles of Programming Languages (0.50)CS444 - Compiler Construction (0.50)CS448 - Database Systems Implementation (0.50)CS450 - Computer Architecture (0.50)CS451 - Data-Intensive Distributed Computing (0.50)CS452 - Real-Time Programming (0.50)CS453 - Software and Systems Security (0.50)CS454 - Distributed Systems (0.50)CS457 - System Performance Evaluation (0.50)CS459 - Privacy, Cryptography, Network and Data Security (0.50)CS462 - Formal Languages and Parsing (0.50)CS466 - Algorithm Design and Analysis (0.50)CS479 - Neural Networks (0.50)CS480 - Introduction to Machine Learning (0.50)CS484 - Computational Vision (0.50)CS485 - Statistical and Computational Foundations of Machine Learning (0.50)CS486 - Introduction to Artificial Intelligence (0.50)CS487 - Introduction to Symbolic Computation (0.50)CS488 - Introduction to Computer Graphics (0.50)CS489 - Advanced Topics in Computer Science (0.50)",
         "approvedCourses": [
           "amath242",
           "amath449",
@@ -63156,7 +63164,6 @@
       ]
     },
     "unitPlan": {
-      "totalUnits": 8,
       "buckets": [
         {
           "id": "u0",
@@ -63170,7 +63177,8 @@
           },
           "sourceText": "Complete a total of 8.0 units of THPERF and approved courses."
         }
-      ]
+      ],
+      "totalUnits": 20
     },
     "specializations": [
       {
