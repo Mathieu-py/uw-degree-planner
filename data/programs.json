@@ -19405,18 +19405,14 @@
     },
     "unitPlan": {
       "totalUnits": 7,
-      "buckets": [
-        {
-          "id": "u0",
-          "label": "Complete a total of 7.0 units of Arts and Business courses.",
-          "requiredUnits": 7,
-          "scope": {
-            "kind": "open"
-          },
-          "sourceText": "Complete a total of 7.0 units of Arts and Business courses."
-        }
-      ]
+      "buckets": []
     },
+    "informational": [
+      {
+        "label": "Unit requirement",
+        "text": "Complete a total of 7.0 units of Arts and Business courses."
+      }
+    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -22122,23 +22118,6 @@
         },
         {
           "id": "u2",
-          "label": "2.0 units of Science electives.",
-          "requiredUnits": 2,
-          "scope": {
-            "kind": "subject",
-            "subjects": [
-              "biol",
-              "chem",
-              "earth",
-              "phys",
-              "sci",
-              "scbus"
-            ]
-          },
-          "sourceText": "2.0 units of Science electives."
-        },
-        {
-          "id": "u3",
           "label": "1.5 units of approved elective courses.",
           "requiredUnits": 1.5,
           "scope": {
@@ -22147,7 +22126,7 @@
           "sourceText": "1.5 units of approved elective courses."
         },
         {
-          "id": "u4",
+          "id": "u3",
           "label": "5.0 units of elective courses.",
           "requiredUnits": 5,
           "scope": {
@@ -22157,6 +22136,12 @@
         }
       ]
     },
+    "informational": [
+      {
+        "label": "Unit requirement",
+        "text": "2.0 units of Science electives."
+      }
+    ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",
       "name": "Bachelor of Science Degree Requirements (Science)",
@@ -32241,15 +32226,6 @@
         },
         {
           "id": "u1",
-          "label": "0.5 unit of Undergraduate Communication Requirement courses (see below).",
-          "requiredUnits": 0.5,
-          "scope": {
-            "kind": "open"
-          },
-          "sourceText": "0.5 unit of Undergraduate Communication Requirement courses (see below)."
-        },
-        {
-          "id": "u2",
           "label": "1.0 unit of language courses from the following subject codes: ARABIC, CHINA, CROAT, DUTCH, FR, GER, GRK, ITAL, JAPAN, KOREA, LAT, MOHAWK, PORT, RUSS, SPAN.",
           "requiredUnits": 1,
           "scope": {
@@ -32261,7 +32237,7 @@
           "sourceText": "1.0 unit of language courses from the following subject codes: ARABIC, CHINA, CROAT, DUTCH, FR, GER, GRK, ITAL, JAPAN, KOREA, LAT, MOHAWK, PORT, RUSS, SPAN."
         },
         {
-          "id": "u3",
+          "id": "u2",
           "label": "Complete 3.5 units of elective courses.",
           "requiredUnits": 3.5,
           "scope": {
@@ -32272,6 +32248,10 @@
       ]
     },
     "informational": [
+      {
+        "label": "Unit requirement",
+        "text": "0.5 unit of Undergraduate Communication Requirement courses (see below)."
+      },
       {
         "label": "Communication requirement",
         "text": "All students normally satisfy the Undergraduate Communication Requirement by successfully completing ARTS 160 or 160E, which fosters the development of foundational competencies in inquiry, communication, and analysis in students’ first year to support their success."
@@ -52280,15 +52260,6 @@
             "kind": "open"
           },
           "sourceText": "Complete 8.0 units of elective courses, a maximum of 1.0 LAB unit may be counted."
-        },
-        {
-          "id": "u2",
-          "label": "Complete 5.0 units of breadth courses.",
-          "requiredUnits": 5,
-          "scope": {
-            "kind": "open"
-          },
-          "sourceText": "Complete 5.0 units of breadth courses."
         }
       ],
       "constraints": [
@@ -52301,6 +52272,10 @@
       ]
     },
     "informational": [
+      {
+        "label": "Unit requirement",
+        "text": "Complete 5.0 units of breadth courses."
+      },
       {
         "label": "Communication requirement",
         "text": "Students are required to complete ENVS131 with a final grade of 60.0% or higher to meet the Undergraduate Communication Requirement (UCR). The UCR milestone on a student's academic record will indicate one of the following rules has been met:"
@@ -59313,24 +59288,6 @@
       "buckets": [
         {
           "id": "u0",
-          "label": "9.5 units of Science and Mathematics courses, including the Undergraduate Communication Requirement course, listed below.",
-          "requiredUnits": 9.5,
-          "scope": {
-            "kind": "subject",
-            "subjects": [
-              "math",
-              "amath",
-              "pmath",
-              "co",
-              "cs",
-              "stat",
-              "actsc"
-            ]
-          },
-          "sourceText": "9.5 units of Science and Mathematics courses, including the Undergraduate Communication Requirement course, listed below."
-        },
-        {
-          "id": "u1",
           "label": "9.0 units of PSYCH courses, listed below.",
           "requiredUnits": 9,
           "scope": {
@@ -59342,7 +59299,7 @@
           "sourceText": "9.0 units of PSYCH courses, listed below."
         },
         {
-          "id": "u2",
+          "id": "u1",
           "label": "2.5 units of elective courses.",
           "requiredUnits": 2.5,
           "scope": {
@@ -59352,6 +59309,12 @@
         }
       ]
     },
+    "informational": [
+      {
+        "label": "Unit requirement",
+        "text": "9.5 units of Science and Mathematics courses, including the Undergraduate Communication Requirement course, listed below."
+      }
+    ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",
       "name": "Bachelor of Science Degree Requirements (Science)",
@@ -60272,23 +60235,6 @@
         },
         {
           "id": "u3",
-          "label": "1.0 unit of additional Science or approved courses.",
-          "requiredUnits": 1,
-          "scope": {
-            "kind": "subject",
-            "subjects": [
-              "biol",
-              "chem",
-              "earth",
-              "phys",
-              "sci",
-              "scbus"
-            ]
-          },
-          "sourceText": "1.0 unit of additional Science or approved courses."
-        },
-        {
-          "id": "u4",
           "label": "0.5 unit of elective courses.",
           "requiredUnits": 0.5,
           "scope": {
@@ -60313,6 +60259,10 @@
       ]
     },
     "informational": [
+      {
+        "label": "Unit requirement",
+        "text": "1.0 unit of additional Science or approved courses."
+      },
       {
         "label": "Failed units",
         "text": "A maximum of 2.0 failed units is permitted."
