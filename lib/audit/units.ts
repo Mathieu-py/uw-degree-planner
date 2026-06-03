@@ -164,11 +164,10 @@ export function compileUnits(
     const eligibleBuckets = buckets
       .filter((b) => eligible(b.scope, code, requiredSet))
       .sort((a, b) => specificity(b.scope) - specificity(a.scope));
-    // Prefer a bucket that still needs units; else the most specific eligible
-    // one (overflow, still surfaced as a satisfier so the course isn't "lost").
-    const target =
-      eligibleBuckets.find((b) => (remaining.get(b.id) ?? 0) > 0) ??
-      eligibleBuckets[0];
+    // Fill the most specific eligible bucket that still needs units. If every
+    // eligible bucket is already full, don't over-fill one — the units still
+    // count toward the degree total (excess flows to free electives / overflow).
+    const target = eligibleBuckets.find((b) => (remaining.get(b.id) ?? 0) > 0);
     if (!target) continue; // counts toward the degree total only
 
     applied.set(target.id, (applied.get(target.id) ?? 0) + units);

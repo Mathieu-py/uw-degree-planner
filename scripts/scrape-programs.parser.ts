@@ -482,6 +482,52 @@ const UNITS_OF_RE = /(\d+(?:\.\d+)?)\s*units?\s+of\s+([^.<]+)/i;
 const REQUIRED_COURSES_RE = /required\s+courses?/i;
 const COMPLETE_N_UNITS_RE = /Complete\s+(\d+(?:\.\d+)?)\s*units?/i;
 
+// A finite course count from varied phrasings, including spelled-out numbers.
+const WORD_NUMS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+const NUM = "(\\d+|one|two|three|four|five|six|seven|eight|nine|ten)";
+// The authoritative whole-requirement count ("Complete a total of 7 Technical
+// Electives", "Complete a total of seven …").
+const TOTAL_OF_RE = new RegExp(`\\bcomplete a total of\\s+${NUM}\\b`, "i");
+// A list count: "Complete 6 of the following", "Complete one course from this
+// list", "Complete two courses from the following choices".
+const COMPLETE_COUNT_RE = new RegExp(
+  `\\bcomplete\\s+${NUM}\\s+(?:course|of\\b|additional|from\\b)`,
+  "i",
+);
+function numFromToken(tok: string): number | undefined {
+  const n = WORD_NUMS[tok.toLowerCase()] ?? Number(tok);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * The requirement count *and* the statement it came from, so the two never
+ * disagree. Prefers the authoritative "Complete a total of N" over a sub-list
+ * "Complete N of the following"; returns undefined when no count is stated.
+ */
+function findCountStatement(
+  texts: readonly string[],
+): { count: number; text: string } | undefined {
+  for (const re of [TOTAL_OF_RE, COMPLETE_COUNT_RE]) {
+    for (const t of texts) {
+      const m = re.exec(t);
+      const n = m ? numFromToken(m[1]) : undefined;
+      if (n !== undefined) return { count: n, text: t };
+    }
+  }
+  return undefined;
+}
+
 // Pinned to "en" so description sorting is deterministic across machines
 // regardless of LANG. Constructed once and reused.
 const DESCRIPTION_COLLATOR = new Intl.Collator("en");
@@ -603,17 +649,20 @@ function parseCourseListsSections(
       .map((t) => COMPLETE_N_UNITS_RE.exec(t))
       .find((m): m is RegExpExecArray => m !== null);
     const unitRequirement = unitMatch ? Number(unitMatch[1]) : undefined;
-    // Recover the "Complete N of the following" count that was previously
-    // dropped — it turns a count-less "Technical Electives List" into a
-    // trackable finite elective (e.g. SDE's list of 42 → "complete N").
-    const countMatch = ruleTexts
-      .map((t) => /Complete\s+(\d+)\s+of (?:the )?following/i.exec(t))
-      .find((m): m is RegExpExecArray => m !== null);
-    const requiredCount = countMatch ? Number(countMatch[1]) : undefined;
+    // Recover the course count (incl. spelled-out, e.g. "Complete one course
+    // from this list") that was previously dropped — it turns a count-less list
+    // into a trackable finite elective (SDE's 42 → "complete 6"; a "Complete
+    // one course from this list" → a 1-of-N choice the ring can complete).
+    const countSources = [heading, ...ruleTexts].filter(
+      (t): t is string => t.length > 0,
+    );
+    // Count and verbatim sourceText come from the same statement so they can't
+    // disagree (e.g. don't show count 3 next to "Complete a total of 7 …").
+    const countStmt = findCountStatement(countSources);
+    const requiredCount = countStmt?.count;
     const description = heading || ruleTexts[0];
-    // The verbatim rule statement, shown to the student so the exact wording
-    // (and any caveats the count can't capture) is preserved.
-    const sourceText = ruleTexts.find((t) => /^Complete /i.test(t));
+    const sourceText =
+      countStmt?.text ?? countSources.find((t) => /^Complete /i.test(t));
 
     if (!description) {
       if (courses.length > 0) {
@@ -656,7 +705,11 @@ const SUBJECT_NAME_MAP: Array<[RegExp, string[]]> = [
   [/social work/i, ["socwk"]],
 ];
 
-const TOTAL_UNITS_RE = /complete a total of\s+(\d+(?:\.\d+)?)\s*units/i;
+// A degree total ("Complete a total of 20.0 units:"). The negative lookahead
+// rejects "Complete a total of 8.0 units of HIST" — that's a subject-bucket
+// requirement, not the degree total (which lives on the degree page).
+const TOTAL_UNITS_RE =
+  /complete a total of\s+(\d+(?:\.\d+)?)\s*units\b(?!\s+of\b)/i;
 const ADDITIONAL_SUBJ_UNITS_RE =
   /(\d+(?:\.\d+)?)\s+additional\s+([A-Z]{2,8})\s+units/;
 // "minimum of 14.5 units must be at the 200-level or above"

@@ -308,20 +308,30 @@ function SectionRow({
   }
 
   if (section.kind === "node") {
-    const pct =
-      section.summary.needed > 0
-        ? Math.min(
-            Math.round(
-              (section.summary.satisfied / section.summary.needed) * 100,
-            ),
-            100,
-          )
-        : 100;
+    // An optional group ("Choose any of the following", needed === 0) has no
+    // target, so the ring reflects what's actually *chosen*: grey 0 with
+    // nothing placed, and a green count once the student picks from the list
+    // (any choice satisfies an optional group). Required groups (needed > 0)
+    // keep their normal progress ring.
+    const optional = section.summary.needed === 0;
+    const chosen = optional
+      ? section.node.satisfiers.length
+      : section.summary.satisfied;
+    const pct = optional
+      ? chosen > 0
+        ? 100
+        : 0
+      : Math.min(
+          Math.round(
+            (section.summary.satisfied / section.summary.needed) * 100,
+          ),
+          100,
+        );
     return (
       <SectionShell
         title={section.title}
         caption={section.caption}
-        ring={{ pct, num: section.summary.satisfied }}
+        ring={{ pct, num: chosen }}
         excludedViolationCount={section.summary.excludedViolationCount}
         open={open}
       >
@@ -368,8 +378,40 @@ function SectionRow({
     );
   }
 
-  // electiveBrowse — open / cross-list / unit-based: no fixed list to drag.
-  // Omitting `ring` renders the neutral doc glyph instead of a progress ring.
+  // electiveBrowse. When we have a concrete eligible list, show it as draggable
+  // chips (no count target → neutral grey ring). Only when there's genuinely no
+  // fixed list (unit-based / open pool) do we fall back to "browse the catalog".
+  const hasList = section.eligibleCodes.length > 0;
+  if (hasList) {
+    const placed = section.eligibleCodes.filter((c) =>
+      placedCodes.has(c),
+    ).length;
+    return (
+      <SectionShell
+        title={section.title}
+        caption={section.caption}
+        ring={{ pct: 0, num: placed }}
+        open={open}
+      >
+        <p className="av-hint mb-1.5">
+          Drag any from this list, or click to add.
+        </p>
+        <div className="av-chips">
+          {section.eligibleCodes.map((code) => (
+            <OptionChip
+              key={code}
+              code={code}
+              placed={placedCodes.has(code)}
+              catalogByCode={catalogByCode}
+              onDrill={onDrill}
+              drag={drag}
+            />
+          ))}
+        </div>
+      </SectionShell>
+    );
+  }
+  // No fixed list — unit-based or an open pool: browse the catalog.
   return (
     <SectionShell title={section.title} caption={section.caption} open={open}>
       <p className="av-hint mb-1.5">
@@ -377,16 +419,6 @@ function SectionRow({
           ? "Measured in units — there's no fixed list to drag, so browse the catalog."
           : "There's no fixed list to drag, so browse the catalog."}
       </p>
-      {onDrill && section.eligibleCodes.length > 0 ? (
-        <button
-          type="button"
-          className="av-browse"
-          onClick={() => onDrill(section.eligibleCodes)}
-        >
-          <Icon name="search" size="xs" aria-hidden="true" /> Browse eligible
-          courses <Icon name="arrow" size="xs" aria-hidden="true" />
-        </button>
-      ) : null}
     </SectionShell>
   );
 }
@@ -1095,11 +1127,22 @@ function deriveSections(
 }
 
 function explodeRoot(root: AuditNode, fallbackTitle: string): NodeSection[] {
-  const toSection = (node: AuditNode, title: string): NodeSection => {
+  // Two sibling groups can share a description (e.g. "Complete 2 courses from
+  // the following choices"), so the key is index-based (unique) and repeated
+  // titles get a trailing count for the reader.
+  const seen = new Map<string, number>();
+  const toSection = (
+    node: AuditNode,
+    baseTitle: string,
+    idx: number,
+  ): NodeSection => {
+    const n = (seen.get(baseTitle) ?? 0) + 1;
+    seen.set(baseTitle, n);
+    const title = n > 1 ? `${baseTitle} (${n})` : baseTitle;
     const summary = summarize(node);
     return {
       kind: "node",
-      key: `grp-${title}`,
+      key: `grp-${fallbackTitle}-${idx}`,
       title,
       caption: nodeCaption(node, summary),
       node,
@@ -1108,10 +1151,10 @@ function explodeRoot(root: AuditNode, fallbackTitle: string): NodeSection[] {
   };
   if (root.ruleNode.kind === "all" && root.children.length > 0) {
     return root.children.map((child, i) =>
-      toSection(child, child.description ?? `${fallbackTitle} ${i + 1}`),
+      toSection(child, child.description ?? `${fallbackTitle} ${i + 1}`, i),
     );
   }
-  return [toSection(root, root.description ?? fallbackTitle)];
+  return [toSection(root, root.description ?? fallbackTitle, 0)];
 }
 
 function toElectiveSection(
