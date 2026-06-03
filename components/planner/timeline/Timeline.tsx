@@ -18,6 +18,11 @@ interface Props {
   onRemoveCourse: (slotId: string, code: string) => void;
   /** Present only in editable views; absent makes term columns inert as drop targets. */
   onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
+  /**
+   * Slot ids where the dragged audit course is eligible; non-null only mid-drag.
+   * Drives the per-term green/muted highlight. Absent in read-only views.
+   */
+  eligibleSlotIds?: Set<string> | null;
   readOnly?: boolean;
   /** `?from=plan` for course links so the detail page hides its "Add to plan".
    *  Set by the editable planner; omitted by the shared view. */
@@ -37,6 +42,7 @@ export function Timeline({
   onSlotClick,
   onRemoveCourse,
   onCourseDrop,
+  eligibleSlotIds = null,
   readOnly = false,
   planOriginQuery,
 }: Props) {
@@ -58,6 +64,13 @@ export function Timeline({
             onSlotClick={onSlotClick}
             onRemoveCourse={onRemoveCourse}
             onCourseDrop={onCourseDrop}
+            eligibility={
+              eligibleSlotIds == null
+                ? null
+                : eligibleSlotIds.has(slot.id)
+                  ? "eligible"
+                  : "ineligible"
+            }
             readOnly={readOnly}
             planOriginQuery={planOriginQuery}
           />

@@ -190,8 +190,15 @@ function compilePick(
   }
   // Mixed/nested children: each must be independently met to count as 1.
   const children = node.children.map((c) => compile(c, placement));
+  // A child only counts toward the parent's threshold when placements actually
+  // satisfy it. An *optional* child (e.g. "Choose any of the following", with
+  // selectMin 0/undefined) is vacuously "met" with nothing placed; counting it
+  // would inflate the parent's progress on an empty plan (issue #95). Requiring
+  // ≥1 satisfier excludes those vacuous mets without affecting genuine ones.
   const count = children.filter(
-    (c) => c.status === "met" || c.status === "overSatisfied",
+    (c) =>
+      (c.status === "met" || c.status === "overSatisfied") &&
+      c.satisfiers.length > 0,
   ).length;
   const anyPartial = children.some((c) => c.status === "partial");
   return {
@@ -204,6 +211,9 @@ function compilePick(
     ),
     description: describeRule(node),
     satisfiers: children.flatMap((c) => c.satisfiers),
+    // No definite missing set: a compound pick needs only `selectMin` of its
+    // children, so there's no single list of codes that "would complete it".
+    // The panel surfaces the per-child state by recursing into `children`.
     missingCodes: [],
     satisfiedCount: count,
     selectMin: node.selectMin,

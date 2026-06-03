@@ -13,6 +13,12 @@ export interface UserState {
   level?: string;
   /** Student's program, so program-restriction clauses resolve instead of "check". */
   program?: ProgramIdentity;
+  /**
+   * Demote a program-restriction "block" to a "check" instead of a hard fail.
+   * Set when the student's own program references this course, so a stale prose
+   * restriction can't grey it out. Other prereqs still gate normally.
+   */
+  suppressProgramBlock?: boolean;
 }
 
 export interface EligibilityResult {
@@ -90,9 +96,13 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
         parseProgramClause(node.clause),
         state.program ?? null,
       );
-      // block → hard fail (surfaced via raw so the UI can explain why, since
-      // there's no missing course to point at); unknown → "check"; allow → pass.
+      // block → hard fail (surfaced via raw, since there's no missing course to
+      // point at); unknown → "check"; allow → pass. suppressProgramBlock demotes
+      // a block to "check" (see UserState).
       if (verdict === "block") {
+        if (state.suppressProgramBlock) {
+          return res({ uncertain: true, raw: [node.clause] });
+        }
         return res({
           satisfied: false,
           raw: [node.clause],

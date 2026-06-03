@@ -1,11 +1,16 @@
 import { useMemo } from "react";
+import {
+  type CourseEligibilityContext,
+  evaluateCourseEligibility,
+} from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
-import { formatCourseCode } from "@/lib/format";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
-import { type PrereqNode, parsePrereqs } from "@/lib/prereqs/parse";
-import { evaluate } from "@/lib/prereqs/satisfied";
-import { type ProgramIdentity, programIdentity } from "@/lib/programs";
+import {
+  type ProgramIdentity,
+  programIdentity,
+  programReferencedCodes,
+} from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 
 export type TermState = "eligible" | "check" | "missing";
@@ -18,46 +23,44 @@ export interface TermOption {
 }
 
 /**
- * Per-term eligibility for adding `course` to a plan from the catalog. The
- * catalog has no target term, so we run the prereq check against every
- * academic term: a course is "missing prereqs" in early terms and becomes
- * "eligible" once its prereqs sit in earlier terms.
+ * Per-term eligibility for adding `course` from the catalog. With no target
+ * term, we check every academic term: a course is "missing" early and becomes
+ * "eligible" once its prereqs sit in earlier terms. Delegates to the shared
+ * {@link evaluateCourseEligibility}.
  *
- * Pure and plan-shape-agnostic (reads only `slots`) so the signed-out local
- * plan and a signed-in `ServerPlan` share one source of eligibility truth.
- * Pre-arrival and co-op slots are not addable targets and are excluded.
+ * Pure and plan-shape-agnostic (reads only `slots`) so the local and server
+ * plans share one source of truth. Pre-arrival and co-op slots are excluded.
  */
 export function computeTermOptions(
   slots: PlanSlot[],
-  prereqNode: PrereqNode | null,
-  program?: ProgramIdentity,
+  course: Course,
+  program: ProgramIdentity | undefined,
+  programReferenced: ReadonlySet<string>,
+  placedAnywhere: ReadonlySet<string>,
 ): TermOption[] {
   return slots
     .filter((s) => s.position !== "pre" && !s.isCoop)
     .map((slot) => {
-      const completed = completedSetFromPlan(
-        { slots },
-        slot.termId ?? undefined,
-      );
-      const result = evaluate(prereqNode, {
-        completed,
+      const ctx: CourseEligibilityContext = {
+        completed: completedSetFromPlan({ slots }, slot.termId ?? undefined),
+        sameTerm: new Set(slot.courses.map((c) => c.code)),
         level: slot.position,
         program,
-      });
-      const state: TermState = !result.satisfied
-        ? "missing"
-        : result.uncertain
-          ? "check"
-          : "eligible";
+        programReferenced,
+        placedAnywhere,
+      };
+      const verdict = evaluateCourseEligibility(course, ctx);
+      const state: TermState =
+        verdict.state === "ineligible"
+          ? "missing"
+          : verdict.state === "check"
+            ? "check"
+            : "eligible";
       const hint =
-        state === "missing"
-          ? result.missingCourses.length > 0
-            ? `Needs ${result.missingCourses.map(formatCourseCode).join(", ")}`
-            : // No missing course → a program restriction blocked it.
-              result.rawRequirements.join(" · ") || "Needs earlier prereqs"
-          : state === "check"
-            ? result.rawRequirements.join(" · ") || "Manual check"
-            : "Prerequisites met";
+        state === "eligible"
+          ? "Prerequisites met"
+          : verdict.reasons.join(" · ") ||
+            (state === "check" ? "Manual check" : "Needs earlier prereqs");
       return {
         slot,
         label:
@@ -85,10 +88,10 @@ export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
 
 /**
  * Shared derivation behind every course→term "add" surface (catalog local +
- * server bodies, planner audit drill-in): parse the course's prereqs once, then
- * derive the per-term {@link computeTermOptions} and {@link alreadyInLabel}.
- * `slots` is nullable so callers can render before the plan loads — options
- * stay empty until it arrives.
+ * server bodies, planner audit drill-in): derive the per-term
+ * {@link computeTermOptions} and {@link alreadyInLabel}. `slots` is nullable so
+ * callers can render before the plan loads — options stay empty until it
+ * arrives.
  */
 export function useTermOptions(
   course: Course,
@@ -96,17 +99,30 @@ export function useTermOptions(
   plan?: { programId: string | null; specializationId: string | null } | null,
 ): { options: TermOption[]; alreadyIn: string | null } {
   const code = course.code.toLowerCase();
-  const prereqNode = useMemo(
-    () => parsePrereqs(course.prereqs),
-    [course.prereqs],
-  );
   const program = useMemo(
     () => programIdentity(plan?.programId, plan?.specializationId) ?? undefined,
     [plan?.programId, plan?.specializationId],
   );
+  const programReferenced = useMemo(
+    () => programReferencedCodes(plan?.programId, plan?.specializationId),
+    [plan?.programId, plan?.specializationId],
+  );
+  const placedAnywhere = useMemo(
+    () => new Set((slots ?? []).flatMap((s) => s.courses.map((c) => c.code))),
+    [slots],
+  );
   const options = useMemo(
-    () => (slots ? computeTermOptions(slots, prereqNode, program) : []),
-    [slots, prereqNode, program],
+    () =>
+      slots
+        ? computeTermOptions(
+            slots,
+            course,
+            program,
+            programReferenced,
+            placedAnywhere,
+          )
+        : [],
+    [slots, course, program, programReferenced, placedAnywhere],
   );
   const alreadyIn = slots ? alreadyInLabel(slots, code) : null;
   return { options, alreadyIn };

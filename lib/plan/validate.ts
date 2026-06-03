@@ -106,7 +106,7 @@ export function validatePlan(
 
       // ---- Antireq ----
       if (courseData.antireqs) {
-        const antiCodes = extractCourseCodes(courseData.antireqs).filter(
+        const antiCodes = cachedExtractCourseCodes(courseData.antireqs).filter(
           (a) => a !== c.code,
         );
         const collisions = antiCodes.filter((a) => allPlacedCodes.has(a));
@@ -159,6 +159,24 @@ export function extractCourseCodes(text: string): string[] {
     out.add(`${m[1]}${m[2]}`.toLowerCase());
   }
   return [...out];
+}
+
+const extractCache = new Map<string, readonly string[]>();
+
+/**
+ * Memoized {@link extractCourseCodes}, keyed on the raw string. The eligibility
+ * core re-checks antireqs for many rows on every picker keystroke; the cache
+ * avoids re-running the regex over thousands of strings. Mirrors `cachedParsePrereqs`.
+ */
+export function cachedExtractCourseCodes(
+  text: string | null | undefined,
+): readonly string[] {
+  const key = text ?? "";
+  const hit = extractCache.get(key);
+  if (hit) return hit;
+  const out = text ? extractCourseCodes(text) : [];
+  extractCache.set(key, out);
+  return out;
 }
 
 /** Group issues by `slotId` for O(1) UI lookup. */

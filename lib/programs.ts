@@ -480,3 +480,60 @@ export function getSubjectPools(program: Program): SubjectPoolNode[] {
   }
   return out;
 }
+
+const EMPTY_CODE_SET: ReadonlySet<string> = new Set();
+const referencedCodesCache = new Map<string, ReadonlySet<string>>();
+
+/** Collect every explicit course code a rule tree names (lowercased). */
+function collectReferenced(root: RuleNode, out: Set<string>): void {
+  // Only `courses` names explicit codes; `excluded` is forbidden (not
+  // referenced) and `subjectPool` matches by prefix/level.
+  walkRule(root, (n) => {
+    if (n.kind === "courses") {
+      for (const c of n.courses) out.add(c.toLowerCase());
+    }
+  });
+}
+
+/**
+ * Every course code the program (and optional specialization) references,
+ * lowercased. Broader than {@link getRequiredCourses} — includes choice-group
+ * options and elective pools. Used by the eligibility core to suppress a stale
+ * program restriction (`suppressProgramBlock`): a program can't sensibly require
+ * a course its own restriction would block. Memoized on the static program data.
+ */
+export function programReferencedCodes(
+  programId: string | null | undefined,
+  specializationId?: string | null,
+): ReadonlySet<string> {
+  if (!programId) return EMPTY_CODE_SET;
+  const key = `${programId}::${specializationId ?? ""}`;
+  const cached = referencedCodesCache.get(key);
+  if (cached) return cached;
+
+  const program = PROGRAMS[programId];
+  if (!program) {
+    referencedCodesCache.set(key, EMPTY_CODE_SET);
+    return EMPTY_CODE_SET;
+  }
+
+  const out = new Set<string>();
+  if (program.kind === "engineering") {
+    for (const t of TERM_LETTERS) collectReferenced(program.terms[t], out);
+  } else {
+    collectReferenced(program.rules, out);
+  }
+  for (const e of program.electives ?? []) {
+    for (const c of e.approvedCourses ?? []) out.add(c.toLowerCase());
+  }
+  if (specializationId) {
+    const spec = getSpecialization(programId, specializationId);
+    if (spec?.rules) collectReferenced(spec.rules, out);
+    for (const e of spec?.electives ?? []) {
+      for (const c of e.approvedCourses ?? []) out.add(c.toLowerCase());
+    }
+  }
+
+  referencedCodesCache.set(key, out);
+  return out;
+}

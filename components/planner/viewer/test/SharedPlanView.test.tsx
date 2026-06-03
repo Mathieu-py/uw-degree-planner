@@ -9,9 +9,11 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ServerPlan } from "@/lib/plan/server/types";
 
-// Capture the props Timeline is rendered with so we can assert readOnly.
-const { timelineProps } = vi.hoisted(() => ({
+// Capture the props Timeline and AuditPanel are rendered with so we can assert
+// the read-only view never wires up the editable drag/drop affordances.
+const { timelineProps, auditProps } = vi.hoisted(() => ({
   timelineProps: { current: null as Record<string, unknown> | null },
+  auditProps: { current: null as Record<string, unknown> | null },
 }));
 
 vi.mock("@/components/planner/timeline/Timeline", () => ({
@@ -22,7 +24,10 @@ vi.mock("@/components/planner/timeline/Timeline", () => ({
 }));
 
 vi.mock("@/components/planner/audit/AuditPanel", () => ({
-  AuditPanel: () => <div data-testid="audit-panel" />,
+  AuditPanel: (props: Record<string, unknown>) => {
+    auditProps.current = props;
+    return <div data-testid="audit-panel" />;
+  },
 }));
 
 vi.mock("@/lib/plan/validate", () => ({
@@ -81,6 +86,7 @@ function makePlan(overrides: Partial<ServerPlan> = {}): ServerPlan {
 afterEach(() => {
   cleanup();
   timelineProps.current = null;
+  auditProps.current = null;
 });
 
 describe("SharedPlanView", () => {
@@ -127,6 +133,23 @@ describe("SharedPlanView", () => {
       />,
     );
     expect(screen.getByTestId("audit-panel")).toBeTruthy();
+  });
+
+  it("wires no editable drag/drop affordances (inert by omission)", () => {
+    render(
+      <SharedPlanView
+        plan={makePlan()}
+        catalog={[]}
+        programOptions={PROGRAM_OPTIONS}
+      />,
+    );
+    // No drop handling and no eligibility highlight on the timeline…
+    expect(timelineProps.current?.onCourseDrop).toBeUndefined();
+    expect(timelineProps.current?.eligibleSlotIds ?? null).toBeNull();
+    // …and the audit panel gets neither the drill nor the drag wiring, so its
+    // missing chips stay inert spans.
+    expect(auditProps.current?.onDrillToRequirement).toBeUndefined();
+    expect(auditProps.current?.drag).toBeUndefined();
   });
 
   it("renders without crashing when plan.stream is null (defaults to regular)", () => {

@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDeferredValue, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
 import { DemoModeBanner } from "@/components/planner/DemoModeBanner";
 import { HandoffModal } from "@/components/planner/modals/HandoffModal";
@@ -19,12 +25,17 @@ import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { completedSetFromPlan } from "@/lib/plan/derive";
+import { eligibleSlotIdsForCourse } from "@/lib/plan/eligibleTerms";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
-import { type ProgramOption, programIdentity } from "@/lib/programs";
+import {
+  type ProgramOption,
+  programIdentity,
+  programReferencedCodes,
+} from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 import { ProgramHeader } from "./ProgramHeader";
 import { usePlanEditors } from "./usePlanEditors";
@@ -173,6 +184,54 @@ function PlannerShellInner({
   // recomputes the audit in a lower-priority pass, keeping edits snappy.
   const deferredPlan = useDeferredValue(plan);
 
+  // Code of the audit chip being dragged, so the timeline can tint its eligible
+  // terms. Owned here (not a context) since the eligibility math already needs
+  // the shell's plan/catalog/program.
+  const [draggingAddCode, setDraggingAddCode] = useState<string | null>(null);
+  // A successful drop can unmount the source chip before its `dragend` fires,
+  // leaving the flag stale and the timeline stuck highlighted. A drop always
+  // yields a new `plan` ref, so clear the flag on any plan change (the same
+  // render-phase reset SlotBody uses for in-flight "move" chips).
+  const planRef = useRef(plan);
+  if (planRef.current !== plan) {
+    planRef.current = plan;
+    if (draggingAddCode !== null) setDraggingAddCode(null);
+  }
+  const handleAddDragStart = useCallback(
+    (code: string) => setDraggingAddCode(code),
+    [],
+  );
+  const handleAddDragEnd = useCallback(() => setDraggingAddCode(null), []);
+  // Codes the program references, so a stale restriction can't grey out a
+  // course the program requires. Shared by the drag highlight and the picker.
+  const programReferenced = useMemo(
+    () => programReferencedCodes(plan?.programId, plan?.specializationId),
+    [plan?.programId, plan?.specializationId],
+  );
+  // Eligible terms for the dragged course, from the synchronous `plan` (the drop
+  // surface), not `deferredPlan`. Null when idle so the timeline skips the work.
+  const eligibleSlotIds = useMemo(
+    () =>
+      draggingAddCode && plan
+        ? eligibleSlotIdsForCourse(
+            plan,
+            draggingAddCode,
+            catalogByCode,
+            programIdentity(plan.programId, plan.specializationId) ?? undefined,
+            programReferenced,
+          )
+        : null,
+    [draggingAddCode, plan, catalogByCode, programReferenced],
+  );
+  const auditDrag = useMemo(
+    () => ({
+      draggingCode: draggingAddCode,
+      onStart: handleAddDragStart,
+      onEnd: handleAddDragEnd,
+    }),
+    [draggingAddCode, handleAddDragStart, handleAddDragEnd],
+  );
+
   const pickerMeta = useMemo(() => {
     if (!plan || !picker) return null;
     const slot = plan.slots.find((s) => s.id === picker.slotId);
@@ -195,7 +254,17 @@ function PlannerShellInner({
     // The plan's program lets the picker resolve program-restriction prereqs.
     const program =
       programIdentity(plan.programId, plan.specializationId) ?? undefined;
-    return { slot, completedBefore, placedCodes, termLabel, level, program };
+    // Codes already in the target slot, so coreqs can resolve same-term.
+    const sameTerm = new Set(slot.courses.map((c) => c.code));
+    return {
+      slot,
+      completedBefore,
+      placedCodes,
+      termLabel,
+      level,
+      program,
+      sameTerm,
+    };
   }, [plan, picker]);
 
   const termChoiceCourse = termChoiceCode
@@ -300,6 +369,8 @@ function PlannerShellInner({
               completedBefore={pickerMeta.completedBefore}
               level={pickerMeta.level}
               program={pickerMeta.program}
+              programReferenced={programReferenced}
+              sameTerm={pickerMeta.sameTerm}
               focusCodes={picker.focusCodes}
               onPick={handlePickCode}
               onClose={closePicker}
@@ -341,10 +412,12 @@ function PlannerShellInner({
             >
               <AuditPanel
                 plan={deferredPlan ?? plan}
+                catalog={catalog}
                 onDrillToRequirement={(codes) => {
                   handleDrillToRequirement(codes);
                   setAuditSheetOpen(false);
                 }}
+                drag={auditDrag}
               />
             </BottomSheet>
           ) : null}
@@ -466,6 +539,7 @@ function PlannerShellInner({
                 onSlotClick={openPicker}
                 onRemoveCourse={handleRemoveCourse}
                 onCourseDrop={handleCourseDrop}
+                eligibleSlotIds={eligibleSlotIds}
                 planOriginQuery={planOriginQuery}
               />
             </div>
@@ -475,7 +549,9 @@ function PlannerShellInner({
           <div className="hidden lg:block lg:min-h-0">
             <AuditPanel
               plan={deferredPlan ?? plan}
+              catalog={catalog}
               onDrillToRequirement={handleDrillToRequirement}
+              drag={auditDrag}
             />
           </div>
         </div>

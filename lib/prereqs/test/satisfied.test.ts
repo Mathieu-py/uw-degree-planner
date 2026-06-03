@@ -99,6 +99,24 @@ describe("evaluate", () => {
     expect(result.uncertain).toBe(false);
   });
 
+  it("suppressProgramBlock demotes a wrong-program block to an uncertain check", () => {
+    const node = parsePrereqs("Anthropology students only");
+    // Without suppression: a hard fail.
+    const hard = evaluate(node, { completed: new Set(), program: SYDE });
+    expect(hard.satisfied).toBe(false);
+    expect(hard.blockedByProgram).toBe(true);
+    // With suppression (course is program-referenced): satisfied + uncertain,
+    // and no longer attributed to a program block.
+    const soft = evaluate(node, {
+      completed: new Set(),
+      program: SYDE,
+      suppressProgramBlock: true,
+    });
+    expect(soft.satisfied).toBe(true);
+    expect(soft.uncertain).toBe(true);
+    expect(soft.blockedByProgram).toBe(false);
+  });
+
   it("program restriction stays uncertain when the program is unknown", () => {
     const node = parsePrereqs("Anthropology students only");
     const result = evaluate(node, { completed: new Set() });

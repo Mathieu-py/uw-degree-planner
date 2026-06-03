@@ -144,7 +144,7 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
             readOnly
           />
         </div>
-        <AuditPanel plan={localPlan} />
+        <AuditPanel plan={localPlan} catalog={catalog} />
       </div>
     </div>
   );

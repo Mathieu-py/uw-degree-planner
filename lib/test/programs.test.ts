@@ -10,6 +10,7 @@ import {
   PROGRAMS,
   type Program,
   programIdentity,
+  programReferencedCodes,
   programShortNames,
   type RuleNode,
   requiredCoursesIn,
@@ -24,6 +25,40 @@ function hasAnyPick(node: RuleNode): boolean {
   });
   return found;
 }
+
+describe("programReferencedCodes", () => {
+  it("includes a required course (MATH119) for Systems Design Engineering", () => {
+    // The bug case: MATH119 is required by SYDE even though its prose
+    // restriction names only ECE/SWE/Nano — so it must be 'referenced'.
+    const codes = programReferencedCodes("systems-design-engineering");
+    expect(codes.has("math119")).toBe(true);
+  });
+
+  it("supersets getRequiredCourses (also covers choice-group / elective codes)", () => {
+    const prog = PROGRAMS["systems-design-engineering"];
+    if (!prog) throw new Error("systems-design-engineering missing");
+    const referenced = programReferencedCodes("systems-design-engineering");
+    for (const code of getRequiredCourses(prog)) {
+      expect(referenced.has(code.toLowerCase())).toBe(true);
+    }
+  });
+
+  it("returns lowercase codes", () => {
+    const codes = programReferencedCodes("systems-design-engineering");
+    for (const c of codes) expect(c).toBe(c.toLowerCase());
+  });
+
+  it("returns an empty set for an unknown / missing program", () => {
+    expect(programReferencedCodes(null).size).toBe(0);
+    expect(programReferencedCodes("not-a-real-program").size).toBe(0);
+  });
+
+  it("memoizes — returns the same set reference for the same key", () => {
+    const a = programReferencedCodes("systems-design-engineering");
+    const b = programReferencedCodes("systems-design-engineering");
+    expect(a).toBe(b);
+  });
+});
 
 describe("programs.json schema integrity", () => {
   it("every entry has a kind field", () => {

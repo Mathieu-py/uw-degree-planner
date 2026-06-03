@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ProgramIdentity } from "@/lib/programs";
-import { attachEligibility, type EligibilityRow } from "../eligibility";
+import {
+  type AttachEligibilityOptions,
+  attachEligibility,
+  type EligibilityRow,
+} from "../eligibility";
 import { enrichCourse } from "../filters";
 import type { Course, UWFlowCourse } from "../types";
 
@@ -25,116 +29,131 @@ function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
   return enrichCourse({ ...base, ...overrides });
 }
 
-describe("attachEligibility", () => {
-  function makeRows(courses: Course[]): EligibilityRow[] {
-    return courses.map((course) => ({ course, eligibility: null }));
-  }
+function makeRows(courses: Course[]): EligibilityRow[] {
+  return courses.map((course) => ({ course, eligibility: null }));
+}
 
-  it("returns the same array reference when completed is empty", () => {
+// attachEligibility with the always-required fields defaulted, so each test
+// only states the bits it cares about.
+function attach(
+  rows: EligibilityRow[],
+  opts: Partial<AttachEligibilityOptions> &
+    Pick<AttachEligibilityOptions, "completed">,
+): EligibilityRow[] {
+  return attachEligibility(rows, {
+    placedAnywhere: opts.placedAnywhere ?? new Set(),
+    hideUnmetPrereqs: opts.hideUnmetPrereqs ?? false,
+    ...opts,
+  });
+}
+
+describe("attachEligibility", () => {
+  it("leaves eligibility null (and keeps the row) when completed is empty and there's no antireq/duplicate", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    expect(attachEligibility(rows, new Set(), false)).toBe(rows);
+    const out = attach(rows, { completed: new Set(), hideUnmetPrereqs: true });
+    expect(out).toHaveLength(1);
+    expect(out[0].eligibility).toBeNull();
   });
 
-  it("computes non-null eligibility for every row when completed is non-empty", () => {
+  it("computes a verdict for every row when completed is non-empty", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const result = attachEligibility(rows, new Set(["cs135"]), false);
-    expect(result[0].eligibility).not.toBeNull();
-    expect(result[0].eligibility?.satisfied).toBe(true);
+    const out = attach(rows, { completed: new Set(["cs135"]) });
+    expect(out[0].eligibility?.state).toBe("eligible");
   });
 
   it("filters out rows with unmet prereqs when hideUnmetPrereqs=true", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const result = attachEligibility(rows, new Set(["math137"]), true);
-    expect(result).toHaveLength(0);
+    const out = attach(rows, {
+      completed: new Set(["math137"]),
+      hideUnmetPrereqs: true,
+    });
+    expect(out).toHaveLength(0);
   });
 
-  it("keeps rows with unmet prereqs when hideUnmetPrereqs=false", () => {
+  it("keeps rows with unmet prereqs as ineligible when hideUnmetPrereqs=false", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const result = attachEligibility(rows, new Set(["math137"]), false);
-    expect(result).toHaveLength(1);
-    expect(result[0].eligibility?.satisfied).toBe(false);
+    const out = attach(rows, { completed: new Set(["math137"]) });
+    expect(out).toHaveLength(1);
+    expect(out[0].eligibility?.state).toBe("ineligible");
   });
 
   it("resolves a level-gated prereq definitively when level is provided", () => {
-    // Target level decides "Level at least 2A" instead of "check". Non-empty
-    // completed clears the short-circuit; the dummy course isn't the gate.
-    const rows = makeRows([
-      makeCourse({ code: "cs246", prereqs: "Level at least 2A" }),
-    ]);
-    const met = attachEligibility(rows, new Set(["cs135"]), false, "2A");
-    expect(met[0].eligibility?.satisfied).toBe(true);
-    expect(met[0].eligibility?.uncertain).toBe(false);
-
-    const unmet = attachEligibility(rows, new Set(["cs135"]), false, "1B");
-    expect(unmet[0].eligibility?.satisfied).toBe(false);
-    expect(unmet[0].eligibility?.uncertain).toBe(false);
-  });
-
-  it("leaves a level-gated prereq uncertain ('check') when no level is given", () => {
-    const rows = makeRows([
-      makeCourse({ code: "cs246", prereqs: "Level at least 2A" }),
-    ]);
-    const result = attachEligibility(rows, new Set(["cs135"]), false);
-    expect(result[0].eligibility?.satisfied).toBe(true);
-    expect(result[0].eligibility?.uncertain).toBe(true);
-  });
-
-  it("hides a level-gated course in an earlier term, keeps it from the qualifying term", () => {
     const rows = makeRows([
       makeCourse({ code: "cs246", prereqs: "Level at least 2A" }),
     ]);
     expect(
-      attachEligibility(rows, new Set(["cs135"]), true, "1B"),
-    ).toHaveLength(0);
+      attach(rows, { completed: new Set(["cs135"]), level: "2A" })[0]
+        .eligibility?.state,
+    ).toBe("eligible");
     expect(
-      attachEligibility(rows, new Set(["cs135"]), true, "2A"),
-    ).toHaveLength(1);
+      attach(rows, { completed: new Set(["cs135"]), level: "1B" })[0]
+        .eligibility?.state,
+    ).toBe("ineligible");
   });
 
-  it("blocks a course reserved to another program for the student's program", () => {
+  it("leaves a level-gated prereq as 'check' when no level is given", () => {
+    const rows = makeRows([
+      makeCourse({ code: "cs246", prereqs: "Level at least 2A" }),
+    ]);
+    expect(
+      attach(rows, { completed: new Set(["cs135"]) })[0].eligibility?.state,
+    ).toBe("check");
+  });
+
+  it("blocks a course reserved to another program (not program-referenced)", () => {
     const rows = makeRows([
       makeCourse({ code: "anth101", prereqs: "Anthropology students only" }),
     ]);
-    const result = attachEligibility(
-      rows,
-      new Set(["cs135"]),
-      false,
-      undefined,
-      SYDE,
-    );
-    expect(result[0].eligibility?.satisfied).toBe(false);
-    expect(result[0].eligibility?.uncertain).toBe(false);
-    // Hidden under the default hide-unmet filter.
+    const out = attach(rows, { completed: new Set(["cs135"]), program: SYDE });
+    expect(out[0].eligibility?.state).toBe("ineligible");
     expect(
-      attachEligibility(rows, new Set(["cs135"]), true, undefined, SYDE),
+      attach(rows, {
+        completed: new Set(["cs135"]),
+        hideUnmetPrereqs: true,
+        program: SYDE,
+      }),
     ).toHaveLength(0);
   });
 
-  it("keeps a course whose program restriction matches the student", () => {
+  it("does NOT block a program-restricted course the program references (required-aware)", () => {
+    // MATH 119-style: restricted to SWE only, but the SYDE program references it
+    // and the OR-prereq is met. The program clause demotes to a soft "check"
+    // rather than greying the course out.
     const rows = makeRows([
       makeCourse({
-        code: "ge101",
-        prereqs: "Open only to students in Engineering",
+        code: "math119",
+        prereqs:
+          "One of MATH116, MATH117; Open only to students in Software Engineering",
       }),
     ]);
-    const result = attachEligibility(
-      rows,
-      new Set(["cs135"]),
-      true,
-      undefined,
-      SYDE,
-    );
-    expect(result).toHaveLength(1);
-    expect(result[0].eligibility?.satisfied).toBe(true);
-    expect(result[0].eligibility?.uncertain).toBe(false);
+    const out = attach(rows, {
+      completed: new Set(["math117"]),
+      placedAnywhere: new Set(["math117"]),
+      hideUnmetPrereqs: true,
+      level: "2A",
+      program: SYDE,
+      programReferenced: new Set(["math119"]),
+    });
+    expect(out).toHaveLength(1); // not hidden
+    expect(out[0].eligibility?.state).not.toBe("ineligible");
   });
 
-  it("leaves a program restriction as 'check' when no program is given", () => {
+  it("blocks a course whose antireq is already placed — even with an empty completed set", () => {
     const rows = makeRows([
-      makeCourse({ code: "anth101", prereqs: "Anthropology students only" }),
+      makeCourse({ code: "math119", antireqs: "MATH138" }),
     ]);
-    const result = attachEligibility(rows, new Set(["cs135"]), false);
-    expect(result[0].eligibility?.satisfied).toBe(true);
-    expect(result[0].eligibility?.uncertain).toBe(true);
+    // Empty completed (e.g. picking for term 1A) must still hide the antireq.
+    const out = attach(rows, {
+      completed: new Set(),
+      placedAnywhere: new Set(["math138"]),
+      hideUnmetPrereqs: true,
+    });
+    expect(out).toHaveLength(0);
+    const shown = attach(rows, {
+      completed: new Set(),
+      placedAnywhere: new Set(["math138"]),
+    });
+    expect(shown[0].eligibility?.state).toBe("ineligible");
+    expect(shown[0].eligibility?.antireqConflicts).toContain("MATH 138");
   });
 });

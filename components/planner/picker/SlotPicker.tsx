@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
+import type { CourseEligibilityVerdict } from "@/lib/courses/courseEligibility";
 import type { SortDir, SortKey } from "@/lib/courses/courseSort";
 import type { EligibilityRow } from "@/lib/courses/eligibility";
 import { seatsAvailable } from "@/lib/courses/filters";
@@ -13,7 +14,6 @@ import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
-import type { EligibilityResult } from "@/lib/prereqs/satisfied";
 import type { ProgramIdentity } from "@/lib/programs";
 import { FilterSidebar } from "./FilterSidebar";
 import { PICKER_PAGE_SIZE, useFilteredCourses } from "./useFilteredCourses";
@@ -29,6 +29,10 @@ interface Props {
   level?: string;
   /** Student's program so program-restriction prereqs resolve instead of "check". */
   program?: ProgramIdentity;
+  /** Codes the student's program references (suppresses stale program blocks). */
+  programReferenced?: ReadonlySet<string>;
+  /** Codes already in the target slot (lets coreqs resolve same-term). */
+  sameTerm?: ReadonlySet<string>;
   /** Optional restriction to specific codes (e.g. audit drill-in). */
   focusCodes?: string[];
   onPick: (code: string) => void;
@@ -47,6 +51,8 @@ export function SlotPicker({
   completedBefore,
   level,
   program,
+  programReferenced,
+  sameTerm,
   focusCodes,
   onPick,
   onClose,
@@ -70,6 +76,8 @@ export function SlotPicker({
     completedBefore,
     level,
     program,
+    programReferenced,
+    sameTerm,
     focusCodes,
   });
 
@@ -298,7 +306,7 @@ function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
           className="text-left flex items-center gap-2 min-w-0 w-full"
         >
           <span className="text-ink line-clamp-2 min-w-0">{course.name}</span>
-          {eligibility ? <EligibilityChip result={eligibility} /> : null}
+          {eligibility ? <EligibilityChip verdict={eligibility} /> : null}
         </button>
       </td>
       <RatingCell value={course.rating?.useful} />
@@ -350,32 +358,43 @@ function RatingCell({ value }: { value: number | null | undefined }) {
   );
 }
 
-function EligibilityChip({ result }: { result: EligibilityResult }) {
-  if (result.satisfied && !result.uncertain) {
+function EligibilityChip({ verdict }: { verdict: CourseEligibilityVerdict }) {
+  if (verdict.state === "eligible") {
     return (
       <span className="inline-flex shrink-0 items-center rounded-full bg-met-soft text-met px-1.5 py-0.5 text-[10px] font-medium">
         Eligible
       </span>
     );
   }
-  if (result.satisfied && result.uncertain) {
-    const hint = result.rawRequirements[0] ?? "manual check";
+  if (verdict.state === "check") {
+    const hint = verdict.reasons[0] ?? "manual check";
     return (
       <span
         className="inline-flex shrink-0 items-center rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium"
-        title={result.rawRequirements.join(" · ")}
+        title={verdict.reasons.join(" · ")}
       >
         Check: {truncate(hint, 18)}
       </span>
     );
   }
-  // A confirmed program/faculty restriction (e.g. "Anthropology students
-  // only") — label it as such rather than as missing prereqs.
-  if (result.blockedByProgram) {
+  // Ineligible — label the specific reason rather than a bare "missing prereqs".
+  // (A picker row is never `alreadyPlaced`: candidates are pre-filtered by the
+  // placed set in useFilteredCourses, so that verdict can't reach here.)
+  if (verdict.antireqConflicts.length > 0) {
     return (
       <span
         className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
-        title={result.rawRequirements.join(" · ")}
+        title={`Antireq conflict: ${verdict.antireqConflicts.join(", ")}`}
+      >
+        Antireq conflict
+      </span>
+    );
+  }
+  if (verdict.blockedByProgram) {
+    return (
+      <span
+        className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
+        title={verdict.rawRequirements.join(" · ")}
       >
         Wrong program
       </span>
@@ -384,7 +403,11 @@ function EligibilityChip({ result }: { result: EligibilityResult }) {
   return (
     <span
       className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
-      title={result.missingCourses.map(formatCourseCode).join(", ")}
+      title={
+        verdict.missingCourses.length > 0
+          ? verdict.missingCourses.map(formatCourseCode).join(", ")
+          : verdict.rawRequirements.join(" · ")
+      }
     >
       Missing prereqs
     </span>
