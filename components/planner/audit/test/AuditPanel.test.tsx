@@ -28,8 +28,8 @@ function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
   };
 }
 
-// An engineering program with an empty plan leaves every core course missing,
-// so the panel renders `.pw-areq.is-miss` chips to drag from.
+// An engineering program with an empty plan leaves every required course
+// unplaced, so the panel renders draggable `.av-item.drag` course rows.
 function engineeringProgramId(): string | undefined {
   return Object.entries(PROGRAMS).find(
     ([, p]) => p.kind === "engineering",
@@ -42,50 +42,33 @@ describe("AuditPanel", () => {
     expect(screen.queryByText(/pick a program/i)).not.toBeNull();
   });
 
-  it("renders the headline and a single Core Courses section for an engineering program", () => {
-    // Pick a real engineering program from PROGRAMS; rendering the panel
-    // exercises the full summarize() pipeline against actual data. The new
-    // category-based layout collapses all per-term locked courses into one
-    // synthetic "Core Courses" section, so per-term letters no longer surface
-    // as section titles.
-    const engId = Object.entries(PROGRAMS).find(
-      ([, p]) => p.kind === "engineering",
-    )?.[0];
-    expect(
-      engId,
-      "engineering program id not found in PROGRAMS fixture",
-    ).toBeDefined();
+  it("renders per-term sections for an engineering program (not a Core Courses blob)", () => {
+    // The redesign replaces the synthetic "Core Courses" blob with one section
+    // per academic term, so term titles surface and "Core Courses" does not.
+    const engId = engineeringProgramId();
+    expect(engId, "engineering program id not found").toBeDefined();
     if (!engId) return;
-    const plan = mkPlan({ programId: engId });
-    const { container } = render(<AuditPanel plan={plan} />);
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: engId })} />,
+    );
 
     const aside = container.querySelector("aside");
     expect(aside).not.toBeNull();
     if (!aside) return;
     expect(within(aside).queryByText(/degree audit/i)).not.toBeNull();
+    // "Academic terms" appears in both the group heading and the header
+    // caption ("8 academic terms · …"), so just assert it's present.
     expect(
-      within(aside).queryAllByText(/core courses/i).length,
+      within(aside).queryAllByText(/academic terms/i).length,
     ).toBeGreaterThan(0);
+    expect(within(aside).queryByText(/term 1a/i)).not.toBeNull();
+    expect(within(aside).queryByText(/core courses/i)).toBeNull();
   });
 
-  it("shows the overall percent-complete headline", () => {
-    // The redesign replaced the Missing/Placed/All filter tabs with a single
-    // "% requirements met" headline + progress bar; met and missing chips now
-    // render together per requirement group.
-    const engId = Object.entries(PROGRAMS).find(
-      ([, p]) => p.kind === "engineering",
-    )?.[0];
-    expect(
-      engId,
-      "engineering program id not found in PROGRAMS fixture",
-    ).toBeDefined();
-    if (!engId) return;
-    render(<AuditPanel plan={mkPlan({ programId: engId })} />);
-
-    expect(screen.getByText(/requirements met/i)).toBeTruthy();
-  });
-
-  it("makes the whole missing chip an 'add' drag source when drill is enabled", () => {
+  it("renders draggable option chips for a 'choose one' (pick) requirement", () => {
+    // The compiler unions a pick's `courses` leaves into one pool and leaves
+    // `node.children` empty, so the options must be read off the rule node.
+    // Regression guard: a "choose one" row must show its option chips.
     const engId = engineeringProgramId();
     if (!engId) return;
     const { container } = render(
@@ -95,22 +78,75 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const chip = container.querySelector(".pw-areq.is-miss");
-    expect(chip, "expected at least one missing chip").not.toBeNull();
-    if (!chip) return;
-    // The chip itself is draggable, so the chip (with its code) is the drag
-    // preview — not a separate handle.
-    expect(chip.tagName).toBe("BUTTON");
-    expect(chip.getAttribute("draggable")).toBe("true");
+    const choose = container.querySelector(".av-choose");
+    expect(choose, "expected at least one 'choose one' row").not.toBeNull();
+    expect(container.querySelectorAll(".av-chip.drag").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("flattens a 1-of-1 pick over nested single-course choices into one card", () => {
+    // jh-applied-mathematics has a pick: "choose 1 of { AMATH 271, one-of{AMATH
+    // 333, …} }". That's a flat 1-of-N, so it must render as ONE "choose one"
+    // card containing AMATH 271 alongside AMATH 333 — not a course row plus a
+    // separate nested choice card.
+    if (!("jh-applied-mathematics" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: "jh-applied-mathematics" })}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+    const norm = (t: string) => t.replace(/\s+/g, "").toUpperCase();
+    const grouped = [...container.querySelectorAll(".av-choose")].some(
+      (row) => {
+        const chips = [...row.querySelectorAll(".av-chip")].map((c) =>
+          norm(c.textContent ?? ""),
+        );
+        return chips.includes("AMATH271") && chips.includes("AMATH333");
+      },
+    );
+    expect(
+      grouped,
+      "AMATH 271 and AMATH 333 should share one choose-one card",
+    ).toBe(true);
+    // And AMATH 271 must NOT also appear as a standalone required course row.
+    const rowCodes = [...container.querySelectorAll(".av-item-code")].map((c) =>
+      norm(c.textContent ?? ""),
+    );
+    expect(rowCodes).not.toContain("AMATH271");
+  });
+
+  it("shows the overall percent-complete headline", () => {
+    const engId = engineeringProgramId();
+    if (!engId) return;
+    render(<AuditPanel plan={mkPlan({ programId: engId })} />);
+    expect(screen.getByText(/requirements met/i)).toBeTruthy();
+  });
+
+  it("makes an unplaced course row an 'add' drag source when drill is enabled", () => {
+    const engId = engineeringProgramId();
+    if (!engId) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: engId })}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+
+    const row = container.querySelector(".av-item.drag");
+    expect(row, "expected at least one draggable course row").not.toBeNull();
+    if (!row) return;
+    expect(row.getAttribute("draggable")).toBe("true");
 
     const dt = fakeDataTransfer();
-    fireEvent.dragStart(chip, { dataTransfer: dt });
+    fireEvent.dragStart(row, { dataTransfer: dt });
     expect(JSON.parse(dt.getData(COURSE_DRAG_MIME))).toMatchObject({
       kind: "add",
     });
   });
 
-  it("clicking a missing chip drills into the requirement", () => {
+  it("clicking a course row's Add button drills into the requirement", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const drilled: string[][] = [];
@@ -121,16 +157,16 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const chip = container.querySelector<HTMLButtonElement>(".pw-areq.is-miss");
-    expect(chip).not.toBeNull();
-    if (!chip) return;
+    const add = container.querySelector<HTMLButtonElement>(".av-item-add");
+    expect(add).not.toBeNull();
+    if (!add) return;
 
-    fireEvent.click(chip);
+    fireEvent.click(add);
     expect(drilled).toHaveLength(1);
     expect(drilled[0]).toHaveLength(1);
   });
 
-  it("fires the drag lifecycle and dims the in-flight chip", () => {
+  it("fires the drag lifecycle and dims the in-flight row", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     let started: string | null = null;
@@ -151,14 +187,14 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const chip = container.querySelector(".pw-areq.is-miss");
-    if (!chip) return;
-    fireEvent.dragStart(chip, { dataTransfer: fakeDataTransfer() });
+    const row = container.querySelector(".av-item.drag");
+    if (!row) return;
+    fireEvent.dragStart(row, { dataTransfer: fakeDataTransfer() });
     expect(started).not.toBeNull();
-    fireEvent.dragEnd(chip);
+    fireEvent.dragEnd(row);
     expect(ended).toBe(1);
 
-    // With that code marked as dragging, its chip dims (is-placing).
+    // With that code marked as dragging, its row dims (.dim).
     rerender(
       <AuditPanel
         plan={mkPlan({ programId: engId })}
@@ -166,20 +202,19 @@ describe("AuditPanel", () => {
         drag={{ draggingCode: started, onStart: () => {}, onEnd: () => {} }}
       />,
     );
-    expect(container.querySelector(".pw-areq.is-placing")).not.toBeNull();
+    expect(container.querySelector(".av-item.dim")).not.toBeNull();
   });
 
-  it("leaves missing chips inert (an inert span, not draggable) without a drill handler", () => {
+  it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const { container } = render(
       <AuditPanel plan={mkPlan({ programId: engId })} />,
     );
 
-    const chip = container.querySelector(".pw-areq.is-miss");
-    expect(chip).not.toBeNull();
-    expect(chip?.tagName).toBe("SPAN");
-    expect(chip?.getAttribute("draggable")).not.toBe("true");
-    expect(container.querySelector("button.pw-areq")).toBeNull();
+    // Unplaced rows still render, but with no drag affordance and no Add.
+    expect(container.querySelector(".av-item")).not.toBeNull();
+    expect(container.querySelector(".av-item.drag")).toBeNull();
+    expect(container.querySelector(".av-item-add")).toBeNull();
   });
 });

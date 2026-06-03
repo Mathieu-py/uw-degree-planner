@@ -991,64 +991,281 @@ body {
   overflow-y: auto;
   padding: 6px;
 }
-.pw-aud-g {
-  border-radius: 9px;
+/* Variant B — collapsible section rows + progress rings */
+.av-grouphead {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 10px 8px 6px;
 }
-.pw-aud-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 9px 8px;
-  border-radius: 8px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  transition: background 0.12s;
+.av-row {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
 }
-.pw-aud-head:hover {
+.av-row[open] {
+  border-color: var(--line);
   background: var(--bg-2);
 }
-.pw-aud-body {
-  padding: 2px 8px 12px;
+.av-row-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 9px 10px;
+  cursor: pointer;
+}
+.av-ring-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.av-ring-num {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+/* Neutral glyph in place of a ring for unit-based sections (no honest count). */
+.av-unit-ring {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  background: var(--bg-3);
+}
+.av-sec-label {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+.av-row-body {
+  padding: 2px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 5px;
 }
-.pw-areq {
+/* Required-course rows (draggable when unplaced, met when placed). */
+.av-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.av-item.drag {
+  cursor: grab;
+}
+.av-item.drag:hover {
+  border-color: var(--accent-line);
+  box-shadow: var(--sh-sm);
+}
+.av-item.drag:active {
+  cursor: grabbing;
+}
+.av-item.dim {
+  opacity: 0.35;
+}
+.av-item.met {
+  background: var(--met-soft);
+  border-color: transparent;
+}
+.av-item-grip {
+  color: var(--accent);
+  display: inline-flex;
+  flex: none;
+}
+.av-item-grip.met {
+  color: var(--met);
+}
+.av-item-code {
+  font-size: 12px;
+  font-weight: 700;
+}
+.av-item-name {
+  font-size: 11px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-item-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 4px 8px;
+  border-radius: 6px;
+  flex: none;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.av-item-add:hover {
+  background: var(--accent-soft);
+}
+/* Option chips for pick(1-of-N) "choose one" rows + finite elective pools. */
+.av-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.av-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+.av-chip.met {
+  background: var(--met-soft);
+  color: var(--met);
+}
+.av-chip.drag {
+  border: 1px dashed var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  cursor: grab;
+}
+.av-chip.drag:hover {
+  border-color: var(--accent-bg);
+  box-shadow: var(--sh-sm);
+}
+.av-chip.drag:active {
+  cursor: grabbing;
+}
+.av-chip.dim {
+  opacity: 0.35;
+}
+.av-grip {
+  opacity: 0.7;
+  margin-right: -1px;
+}
+/* "Choose one" rows. */
+.av-choose {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 9px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.av-choose.is-met {
+  background: var(--met-soft);
+  border-color: transparent;
+}
+.av-choose-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--met);
+  background: var(--bg);
+}
+.av-choose.is-met .av-choose-mark {
+  background: transparent;
+}
+.av-need {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-3);
+  width: 20px;
+  height: 20px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.av-choose-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+/* subjectPool / open elective Browse bodies. */
+.av-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 2px 2px 4px;
+}
+.av-pool-subj {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.av-subj {
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 600;
   padding: 3px 7px;
   border-radius: 5px;
-  border: 1px solid transparent;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
 }
-.pw-areq.is-met {
-  background: var(--met-soft);
-  color: var(--met);
-}
-.pw-areq.is-miss {
-  background: var(--bg);
-  border-color: var(--line-2);
+.av-hint {
+  font-size: 11.5px;
   color: var(--ink-3);
+  line-height: 1.5;
+  margin: 0;
 }
-/* Interactive missing chip: the whole chip drags; clicks open the term picker. */
-.pw-areq.is-miss[draggable="true"] {
-  cursor: grab;
+.av-browse {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-bg);
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 0;
 }
-.pw-areq.is-miss[draggable="true"]:hover {
-  border-color: var(--accent-bg);
+.av-browse:hover {
+  filter: brightness(1.05);
+}
+.av-browse.sm {
+  background: none;
   color: var(--accent);
-  background: var(--accent-soft);
+  padding: 4px 0 0;
+  font-size: 11.5px;
 }
-.pw-areq.is-miss[draggable="true"]:active {
-  cursor: grabbing;
+.av-browse.sm:hover {
+  filter: none;
+  text-decoration: underline;
 }
-/* The chip whose course is currently in flight. */
-.pw-areq.is-placing {
-  opacity: 0.5;
+.av-note {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 9px;
+  line-height: 1.45;
 }

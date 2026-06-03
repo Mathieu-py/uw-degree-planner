@@ -412,6 +412,7 @@ function PlannerShellInner({
             >
               <AuditPanel
                 plan={deferredPlan ?? plan}
+                catalog={catalog}
                 onDrillToRequirement={(codes) => {
                   handleDrillToRequirement(codes);
                   setAuditSheetOpen(false);
@@ -548,6 +549,7 @@ function PlannerShellInner({
           <div className="hidden lg:block lg:min-h-0">
             <AuditPanel
               plan={deferredPlan ?? plan}
+              catalog={catalog}
               onDrillToRequirement={handleDrillToRequirement}
               drag={auditDrag}
             />

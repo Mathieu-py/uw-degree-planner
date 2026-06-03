@@ -170,14 +170,26 @@ export function usePlanEditors({
     [plan, setPlan, setImportBanner],
   );
 
-  // Audit drill-in: the missing-requirement chip already names the course, so
-  // the only thing left to choose is the term. Open the term picker for that
-  // course rather than auto-appending it to the earliest term with room.
-  const handleDrillToRequirement = useCallback((codes: string[]) => {
-    const code = codes[0];
-    if (!code) return;
-    setTermChoiceCode(code);
-  }, []);
+  // Audit drill-in. A single named course (an "Add") only needs a term, so open
+  // the term picker for it. A multi-code "Browse" (an open pool / elective with
+  // no fixed course to drag) opens the slot picker pre-filtered to the eligible
+  // codes, targeting the first academic term.
+  const handleDrillToRequirement = useCallback(
+    (codes: string[]) => {
+      if (codes.length === 0) return;
+      if (codes.length === 1) {
+        setTermChoiceCode(codes[0]);
+        return;
+      }
+      const current = planRef.current;
+      const target =
+        current?.slots.find((s) => !s.isCoop && s.position !== "pre") ??
+        current?.slots[0];
+      if (!target) return;
+      setPicker({ slotId: target.id, focusCodes: codes });
+    },
+    [setPicker],
+  );
 
   const handlePickCode = useCallback(
     (code: string) => {
