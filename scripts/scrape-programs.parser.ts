@@ -870,13 +870,19 @@ interface DegreeDetailFields {
 
 export interface DegreeParseResult {
   degree: DegreeRequirements;
-  /** Honours total units, propagated to majors that don't state their own. */
+  /** Honours-degree total, propagated to honours majors lacking their own. */
   honoursTotal?: number;
+  /** Three/four-year general-degree total, for the `3g-`/`4g-` majors. */
+  generalTotal?: number;
   warnings: string[];
 }
 
+// Faculties phrase the total as either "Complete a total of N units" (Arts) or
+// "Complete a minimum of N units" (Math), per degree type.
 const HONOURS_TOTAL_RE =
-  /honours[^.]*?complete a total of\s+(\d+(?:\.\d+)?)\s*units/i;
+  /honours[^.]*?(?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units/i;
+const GENERAL_TOTAL_RE =
+  /(?:three-year general|four-year general|general degree)[^.]*?(?:total|minimum) of\s+(\d+(?:\.\d+)?)\s*units/i;
 const UNIT_AMOUNT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
 
 function stripHtml(html: string | undefined): string {
@@ -936,6 +942,8 @@ export function parseDegreeRequirements(
 
   const ht = text.match(HONOURS_TOTAL_RE);
   const honoursTotal = ht ? Number(ht[1]) : undefined;
+  const gt = text.match(GENERAL_TOTAL_RE);
+  const generalTotal = gt ? Number(gt[1]) : undefined;
 
   // Degree-level "min N units at the 200-level" rules are conditional on the
   // major type (e.g. BA: 12.5 for Liberal Studies, 8.0 for all others), so we
@@ -984,7 +992,7 @@ export function parseDegreeRequirements(
     ...(constraints.length > 0 ? { constraints } : {}),
     ...(informational.length > 0 ? { informational } : {}),
   };
-  return { degree, honoursTotal, warnings };
+  return { degree, honoursTotal, generalTotal, warnings };
 }
 
 const CREDENTIAL_PREFIX_RE = /^(h|jh|3g|4g)-/;

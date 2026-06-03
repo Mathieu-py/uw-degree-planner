@@ -484,12 +484,22 @@ function attachDegreeRequirements(
     const degree: DegreeRequirements = parsed.degree;
     program.degreeRequirements = degree;
 
-    // Propagate the honours total to a program that doesn't state its own
-    // (e.g. Math majors whose total lives only on the degree page).
-    if (parsed.honoursTotal != null) {
+    // Propagate the degree-page total to a program that doesn't state its own
+    // (e.g. Math majors whose total lives only on the degree page). Pick the
+    // total matching the program's degree type: `3g-`/`4g-` slugs are
+    // three/four-year general degrees, everything else is honours.
+    const isGeneral = /^(3g|4g)-/.test(slug);
+    const degreeTotal = isGeneral
+      ? (parsed.generalTotal ?? parsed.honoursTotal)
+      : parsed.honoursTotal;
+    if (degreeTotal != null) {
       const plan: UnitPlan = program.unitPlan ?? { buckets: [] };
-      if (plan.totalUnits == null) {
-        program.unitPlan = { ...plan, totalUnits: parsed.honoursTotal };
+      const bucketSum = plan.buckets.reduce((s, b) => s + b.requiredUnits, 0);
+      // The degree-level total is a faculty *minimum*; a program can require
+      // more. Only adopt it as the program's total when the program's own
+      // buckets don't already exceed it — otherwise we'd understate the degree.
+      if (plan.totalUnits == null && degreeTotal >= bucketSum - 0.01) {
+        program.unitPlan = { ...plan, totalUnits: degreeTotal };
       }
     }
     attached++;

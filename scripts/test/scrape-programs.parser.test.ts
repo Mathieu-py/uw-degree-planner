@@ -1084,11 +1084,12 @@ describe("parseUnitPlan", () => {
 
 describe("parseDegreeRequirements", () => {
   it("parses the BA breadth table into subject-scoped buckets", () => {
-    const { degree, honoursTotal } = parseDegreeRequirements(
+    const { degree, honoursTotal, generalTotal } = parseDegreeRequirements(
       rawJson("degree-arts"),
       "SyLzAe5R3",
     );
     expect(honoursTotal).toBe(20.0);
+    expect(generalTotal).toBe(15.0);
     const labels = degree.buckets?.map((b) => b.label) ?? [];
     expect(labels.some((l) => /Humanities/.test(l))).toBe(true);
     expect(labels.some((l) => /Social Sciences/.test(l))).toBe(true);
