@@ -648,6 +648,16 @@ function parseCourseListsSections(
 // "N units of math courses"; "non-math" is the complement.
 const MATH_SUBJECTS = ["math", "amath", "pmath", "co", "cs", "stat", "actsc"];
 
+// Faculty of Science subjects for "N units of Science courses/electives".
+// Approximate — the registry's list is broader, but this covers the core.
+const SCIENCE_SUBJECTS = ["biol", "chem", "earth", "phys", "sci", "scbus"];
+
+// Named subjects that appear spelled-out (no all-caps code) in unit prose.
+const SUBJECT_NAME_MAP: Array<[RegExp, string[]]> = [
+  [/classical studies/i, ["clas"]],
+  [/social work/i, ["socwk"]],
+];
+
 const TOTAL_UNITS_RE = /complete a total of\s+(\d+(?:\.\d+)?)\s*units/i;
 const ADDITIONAL_SUBJ_UNITS_RE =
   /(\d+(?:\.\d+)?)\s+additional\s+([A-Z]{2,8})\s+units/;
@@ -656,18 +666,49 @@ const LEVEL_CONSTRAINT_RE =
   /(\d+(?:\.\d+)?)\s*units?\b[^.]*?\bat the\s+(\d)00-level\s+or above/i;
 const FAILED_UNITS_RE = /maximum of\s+(\d+(?:\.\d+)?)\s*(?:failed )?units/i;
 
-/** Map a unit-bucket noun phrase ("required courses", "BIOL", "non-math") to a scope. */
+/**
+ * Map a unit-bucket noun phrase ("required courses", "HIST and approved
+ * courses", "non-math") to a scope. Order matters: a named subject must win
+ * over the generic "approved/elective courses" fallback, since UW phrases a
+ * subject requirement as "N units of HIST and approved courses".
+ */
 function scopeFromNoun(noun: string): { scope: UnitScope; warn?: string } {
   const n = noun.trim();
-  if (/required courses?/i.test(n)) return { scope: { kind: "required" } };
-  if (/elective courses?/i.test(n)) return { scope: { kind: "open" } };
-  if (/approved courses?/i.test(n)) return { scope: { kind: "open" } };
+  // Faculty groups (lowercase prose terms).
   if (/non[\s-]?math/i.test(n))
     return { scope: { kind: "subjectExcept", exclude: MATH_SUBJECTS } };
-  if (/\bmath courses?\b/i.test(n))
+  if (/\bmath(?:ematics)? courses?\b/i.test(n))
     return { scope: { kind: "subject", subjects: MATH_SUBJECTS } };
-  const m = n.match(/\b([A-Z]{2,8})\b/);
-  if (m) return { scope: { kind: "subject", subjects: [m[1].toLowerCase()] } };
+  // "Science electives" / "Science and Mathematics courses" → Science subjects.
+  // Exclude phrases where "science" isn't the faculty group (Social Sciences,
+  // Computer/Data Science, or "required Science courses" → the required set).
+  if (
+    /\bscience\b/i.test(n) &&
+    !/\b(?:required|social|computer|data|management)\b/i.test(n)
+  ) {
+    const subjects = /\bmath/i.test(n)
+      ? [...SCIENCE_SUBJECTS, ...MATH_SUBJECTS]
+      : SCIENCE_SUBJECTS;
+    return { scope: { kind: "subject", subjects } };
+  }
+  // An explicit subject code (HIST, GSJ, …) — before the approved/elective
+  // fallback so "HIST and approved courses" scopes to HIST.
+  const m = n.match(/\b([A-Z]{2,7})\b/);
+  if (m && m[1] !== "UCR")
+    return { scope: { kind: "subject", subjects: [m[1].toLowerCase()] } };
+  // A spelled-out named subject ("Classical Studies", "Social Work").
+  for (const [re, subjects] of SUBJECT_NAME_MAP)
+    if (re.test(n)) return { scope: { kind: "subject", subjects } };
+  // "required … courses" or "lecture/lab courses listed/see below" → the
+  // program's own required set (the "below" list is the required-course table).
+  if (
+    (/\brequired\b/i.test(n) && /\bcourses?\b/i.test(n)) ||
+    (/\blecture\b/i.test(n) && /\b(?:listed|see) below\b/i.test(n))
+  )
+    return { scope: { kind: "required" } };
+  // Generic free electives ("electives", "approved courses", "courses, any level").
+  if (/\b(?:electives?|approved)\b/i.test(n) || /any level/i.test(n))
+    return { scope: { kind: "open" } };
   return {
     scope: { kind: "open" },
     warn: `unrecognized unit scope: "${noun}"`,

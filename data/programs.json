@@ -381,7 +381,7 @@
           "label": "6.0 units of Social Development Studies required and approved courses (see below).",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "6.0 units of Social Development Studies required and approved courses (see below)."
         },
@@ -390,7 +390,10 @@
           "label": "9.5 units of Social Work courses (see below).",
           "requiredUnits": 9.5,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "socwk"
+            ]
           },
           "sourceText": "9.5 units of Social Work courses (see below)."
         },
@@ -946,7 +949,10 @@
           "label": "Complete a total of 6.0 units of Classical Studies courses.",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "clas"
+            ]
           },
           "sourceText": "Complete a total of 6.0 units of Classical Studies courses."
         }
@@ -3627,7 +3633,10 @@
           "label": "Complete a total of 6.0 units of GSJ courses and approved courses.",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "gsj"
+            ]
           },
           "sourceText": "Complete a total of 6.0 units of GSJ courses and approved courses."
         }
@@ -4053,7 +4062,10 @@
           "label": "Complete a total of 6.0 units of GER courses and approved courses.",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "ger"
+            ]
           },
           "sourceText": "Complete a total of 6.0 units of GER courses and approved courses."
         }
@@ -4335,7 +4347,10 @@
           "label": "Complete a total of 6.0 units of HIST and approved courses.",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "hist"
+            ]
           },
           "sourceText": "Complete a total of 6.0 units of HIST and approved courses."
         }
@@ -5080,7 +5095,10 @@
           "label": "Complete a total of 6.0 units of MEDVL and approved courses.",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "medvl"
+            ]
           },
           "sourceText": "Complete a total of 6.0 units of MEDVL and approved courses."
         }
@@ -7264,7 +7282,7 @@
           "label": "2.0 units of required Year One lecture courses (see below).",
           "requiredUnits": 2,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "2.0 units of required Year One lecture courses (see below)."
         },
@@ -7426,7 +7444,10 @@
           "label": "Complete a total of 6.0 units of SDS and approved courses.",
           "requiredUnits": 6,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "sds"
+            ]
           },
           "sourceText": "Complete a total of 6.0 units of SDS and approved courses."
         }
@@ -8951,7 +8972,7 @@
           "label": "8.0 units of Social Development Studies required and approved courses (see below).",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "8.0 units of Social Development Studies required and approved courses (see below)."
         },
@@ -8960,7 +8981,10 @@
           "label": "9.5 units of Social Work courses (see below).",
           "requiredUnits": 9.5,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "socwk"
+            ]
           },
           "sourceText": "9.5 units of Social Work courses (see below)."
         },
@@ -9516,7 +9540,10 @@
           "label": "Complete a total of 8.0 units of Classical Studies courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "clas"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of Classical Studies courses."
         }
@@ -13415,7 +13442,10 @@
           "label": "Complete a total of 8.0 units of GSJ courses and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "gsj"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of GSJ courses and approved courses."
         }
@@ -13698,7 +13728,10 @@
           "label": "Complete a total of 8.0 units of HIST and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "hist"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of HIST and approved courses."
         }
@@ -14611,7 +14644,10 @@
           "label": "Complete a total of 8.0 units of MEDVL and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "medvl"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of MEDVL and approved courses."
         }
@@ -16888,7 +16924,10 @@
           "label": "Complete a total of 8.0 units of SRF and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "srf"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of SRF and approved courses."
         }
@@ -17182,7 +17221,10 @@
           "label": "Complete a total of 8.0 units of SDS and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "sds"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of SDS and approved courses."
         }
@@ -22083,7 +22125,15 @@
           "label": "2.0 units of Science electives.",
           "requiredUnits": 2,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "biol",
+              "chem",
+              "earth",
+              "phys",
+              "sci",
+              "scbus"
+            ]
           },
           "sourceText": "2.0 units of Science electives."
         },
@@ -33450,7 +33500,7 @@
           "label": "8.0 units of Social Development Studies required and approved courses (see below).",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "8.0 units of Social Development Studies required and approved courses (see below)."
         },
@@ -33459,7 +33509,10 @@
           "label": "9.5 units of Social Work courses (see below).",
           "requiredUnits": 9.5,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "socwk"
+            ]
           },
           "sourceText": "9.5 units of Social Work courses (see below)."
         },
@@ -34419,7 +34472,10 @@
           "label": "Complete a total of 8.0 units of Classical Studies courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "clas"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of Classical Studies courses."
         }
@@ -40953,7 +41009,10 @@
           "label": "Complete a total of 8.0 units of GSJ courses and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "gsj"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of GSJ courses and approved courses."
         }
@@ -42147,7 +42206,10 @@
           "label": "Complete a total of 8.0 units of GER courses and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "ger"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of GER courses and approved courses."
         }
@@ -42430,7 +42492,10 @@
           "label": "Complete a total of 8.0 units of HIST and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "hist"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of HIST and approved courses."
         }
@@ -43356,7 +43421,10 @@
           "label": "Complete a total of 8.0 units of MEDVL and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "medvl"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of MEDVL and approved courses."
         }
@@ -45878,7 +45946,7 @@
           "label": "2.0 units of required Year One lecture courses (see below).",
           "requiredUnits": 2,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "2.0 units of required Year One lecture courses (see below)."
         },
@@ -46064,7 +46132,10 @@
           "label": "Complete a total of 8.0 units of SRF and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "srf"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of SRF and approved courses."
         }
@@ -46432,7 +46503,10 @@
           "label": "Complete a total of 8.0 units of SDS and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "sds"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of SDS and approved courses."
         }
@@ -53619,7 +53693,16 @@
           "label": "Complete a total of 6.5 units of Mathematics courses.",
           "requiredUnits": 6.5,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "math",
+              "amath",
+              "pmath",
+              "co",
+              "cs",
+              "stat",
+              "actsc"
+            ]
           },
           "sourceText": "Complete a total of 6.5 units of Mathematics courses."
         }
@@ -59233,7 +59316,16 @@
           "label": "9.5 units of Science and Mathematics courses, including the Undergraduate Communication Requirement course, listed below.",
           "requiredUnits": 9.5,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "math",
+              "amath",
+              "pmath",
+              "co",
+              "cs",
+              "stat",
+              "actsc"
+            ]
           },
           "sourceText": "9.5 units of Science and Mathematics courses, including the Undergraduate Communication Requirement course, listed below."
         },
@@ -59894,7 +59986,7 @@
           "label": "3.0 units of required Science courses listed below.",
           "requiredUnits": 3,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "3.0 units of required Science courses listed below."
         },
@@ -60165,7 +60257,7 @@
           "label": "2.0 units of lecture and lab courses listed below.",
           "requiredUnits": 2,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "2.0 units of lecture and lab courses listed below."
         },
@@ -60183,7 +60275,15 @@
           "label": "1.0 unit of additional Science or approved courses.",
           "requiredUnits": 1,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "biol",
+              "chem",
+              "earth",
+              "phys",
+              "sci",
+              "scbus"
+            ]
           },
           "sourceText": "1.0 unit of additional Science or approved courses."
         },
@@ -60448,7 +60548,10 @@
           "label": "1.0 unit of additional BIOL or CHEM or approved courses (see below).",
           "requiredUnits": 1,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "biol"
+            ]
           },
           "sourceText": "1.0 unit of additional BIOL or CHEM or approved courses (see below)."
         },
@@ -61401,7 +61504,7 @@
           "label": "Complete a total of 9.0 units of lecture courses (see below), plus associated laboratory courses, where indicated.",
           "requiredUnits": 9,
           "scope": {
-            "kind": "open"
+            "kind": "required"
           },
           "sourceText": "Complete a total of 9.0 units of lecture courses (see below), plus associated laboratory courses, where indicated."
         }
@@ -63110,7 +63213,10 @@
           "label": "Complete a total of 8.0 units of THPERF and approved courses.",
           "requiredUnits": 8,
           "scope": {
-            "kind": "open"
+            "kind": "subject",
+            "subjects": [
+              "thperf"
+            ]
           },
           "sourceText": "Complete a total of 8.0 units of THPERF and approved courses."
         }
