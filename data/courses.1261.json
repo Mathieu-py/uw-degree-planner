@@ -1,6 +1,6 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-06-02T11:18:25.057Z",
+  "fetchedAt": "2026-06-03T11:56:41.951Z",
   "courseCount": 10729,
   "courses": [
     {
@@ -1258,12 +1258,12 @@
       },
       "sections": [
         {
-          "id": 608512,
+          "id": 608513,
           "enrollment_total": 106,
           "enrollment_capacity": 150
         },
         {
-          "id": 608513,
+          "id": 608512,
           "enrollment_total": 106,
           "enrollment_capacity": 150
         }
@@ -39275,8 +39275,8 @@
       "rating": {
         "easy": 0.8266129032258065,
         "useful": 0.9354838709677419,
-        "liked": 0.967391304347826,
-        "filled_count": 276
+        "liked": 0.9675090252707581,
+        "filled_count": 277
       },
       "sections": []
     },
@@ -39805,16 +39805,6 @@
       },
       "sections": [
         {
-          "id": 608649,
-          "enrollment_total": 42,
-          "enrollment_capacity": 60
-        },
-        {
-          "id": 608648,
-          "enrollment_total": 506,
-          "enrollment_capacity": 660
-        },
-        {
           "id": 608652,
           "enrollment_total": 53,
           "enrollment_capacity": 60
@@ -39828,6 +39818,16 @@
           "id": 608646,
           "enrollment_total": 50,
           "enrollment_capacity": 60
+        },
+        {
+          "id": 608649,
+          "enrollment_total": 42,
+          "enrollment_capacity": 60
+        },
+        {
+          "id": 608648,
+          "enrollment_total": 506,
+          "enrollment_capacity": 660
         },
         {
           "id": 608661,
@@ -40138,11 +40138,6 @@
       },
       "sections": [
         {
-          "id": 610011,
-          "enrollment_total": 56,
-          "enrollment_capacity": 65
-        },
-        {
           "id": 610013,
           "enrollment_total": 64,
           "enrollment_capacity": 65
@@ -40150,16 +40145,6 @@
         {
           "id": 610016,
           "enrollment_total": 36,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 610021,
-          "enrollment_total": 56,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 610012,
-          "enrollment_total": 65,
           "enrollment_capacity": 65
         },
         {
@@ -40175,6 +40160,21 @@
         {
           "id": 610018,
           "enrollment_total": 37,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 610021,
+          "enrollment_total": 56,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 610012,
+          "enrollment_total": 65,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 610011,
+          "enrollment_total": 56,
           "enrollment_capacity": 65
         },
         {
@@ -50959,11 +50959,6 @@
           "enrollment_capacity": 48
         },
         {
-          "id": 608807,
-          "enrollment_total": 43,
-          "enrollment_capacity": 48
-        },
-        {
           "id": 608806,
           "enrollment_total": 46,
           "enrollment_capacity": 50
@@ -50972,6 +50967,11 @@
           "id": 608815,
           "enrollment_total": 46,
           "enrollment_capacity": 50
+        },
+        {
+          "id": 608807,
+          "enrollment_total": 43,
+          "enrollment_capacity": 48
         },
         {
           "id": 608808,
@@ -62183,6 +62183,11 @@
           "enrollment_capacity": 25
         },
         {
+          "id": 609769,
+          "enrollment_total": 20,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 609742,
           "enrollment_total": 19,
           "enrollment_capacity": 25
@@ -62200,11 +62205,6 @@
         {
           "id": 609764,
           "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609769,
-          "enrollment_total": 20,
           "enrollment_capacity": 25
         },
         {
@@ -77605,8 +77605,8 @@
       "rating": {
         "easy": 0.8658536585365854,
         "useful": 0.22560975609756098,
-        "liked": 0.18226600985221675,
-        "filled_count": 203
+        "liked": 0.18316831683168316,
+        "filled_count": 202
       },
       "sections": []
     },
@@ -103637,6 +103637,11 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 609614,
+          "enrollment_total": 19,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 609615,
           "enrollment_total": 13,
           "enrollment_capacity": 20
@@ -103644,11 +103649,6 @@
         {
           "id": 609623,
           "enrollment_total": 17,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 609614,
-          "enrollment_total": 19,
           "enrollment_capacity": 20
         },
         {
@@ -108530,10 +108530,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5208333333333334,
-        "useful": 0.4583333333333333,
-        "liked": 0.6842105263157895,
-        "filled_count": 19
+        "easy": 0.5,
+        "useful": 0.4423076923076923,
+        "liked": 0.7,
+        "filled_count": 20
       },
       "sections": []
     },
@@ -110610,6 +110610,11 @@
           "enrollment_capacity": 150
         },
         {
+          "id": 607439,
+          "enrollment_total": 90,
+          "enrollment_capacity": 150
+        },
+        {
           "id": 607427,
           "enrollment_total": 108,
           "enrollment_capacity": 150
@@ -110617,11 +110622,6 @@
         {
           "id": 607425,
           "enrollment_total": 100,
-          "enrollment_capacity": 150
-        },
-        {
-          "id": 607439,
-          "enrollment_total": 90,
           "enrollment_capacity": 150
         },
         {
@@ -124339,13 +124339,13 @@
       },
       "sections": [
         {
-          "id": 609517,
-          "enrollment_total": 8,
+          "id": 609521,
+          "enrollment_total": 10,
           "enrollment_capacity": 10
         },
         {
-          "id": 609521,
-          "enrollment_total": 10,
+          "id": 609517,
+          "enrollment_total": 8,
           "enrollment_capacity": 10
         },
         {
@@ -148589,10 +148589,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7622950819672131,
-        "useful": 0.8305785123966942,
-        "liked": 0.8979591836734694,
-        "filled_count": 196
+        "easy": 0.7642276422764228,
+        "useful": 0.8278688524590164,
+        "liked": 0.8984771573604061,
+        "filled_count": 197
       },
       "sections": []
     },
@@ -164944,7 +164944,7 @@
       "sections": [
         {
           "id": 607182,
-          "enrollment_total": 52,
+          "enrollment_total": 51,
           "enrollment_capacity": 60
         }
       ]
@@ -168010,10 +168010,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7631578947368421,
-        "useful": 0.5442546583850931,
-        "liked": 0.6026490066225165,
-        "filled_count": 453
+        "easy": 0.7631172839506173,
+        "useful": 0.543343653250774,
+        "liked": 0.6035242290748899,
+        "filled_count": 454
       },
       "sections": [
         {
@@ -172020,7 +172020,7 @@
       "sections": [
         {
           "id": 608195,
-          "enrollment_total": 57,
+          "enrollment_total": 56,
           "enrollment_capacity": 60
         }
       ]
@@ -176249,10 +176249,10 @@
       "coreqs": null,
       "antireqs": "STAT321, STAT373",
       "rating": {
-        "easy": 0.5986842105263158,
-        "useful": 0.8589743589743589,
-        "liked": 0.6666666666666666,
-        "filled_count": 66
+        "easy": 0.5961538461538461,
+        "useful": 0.85625,
+        "liked": 0.6716417910447762,
+        "filled_count": 67
       },
       "sections": [
         {
@@ -179564,11 +179564,6 @@
       },
       "sections": [
         {
-          "id": 609789,
-          "enrollment_total": 27,
-          "enrollment_capacity": 26
-        },
-        {
           "id": 609791,
           "enrollment_total": 25,
           "enrollment_capacity": 26
@@ -179586,6 +179581,11 @@
         {
           "id": 609792,
           "enrollment_total": 26,
+          "enrollment_capacity": 26
+        },
+        {
+          "id": 609789,
+          "enrollment_total": 27,
           "enrollment_capacity": 26
         }
       ]
