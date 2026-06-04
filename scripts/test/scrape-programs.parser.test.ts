@@ -465,7 +465,7 @@ describe("subject-pool parsing — synthetic variants", () => {
       </li></ul></div></div>
     </section>`;
 
-  it("records exact units on a unit-stated pool (selectCount stays an approximation)", () => {
+  it("approximates a count for a unit-stated pool (selectCount = units ÷ 0.5)", () => {
     const r = parseProgramRequirements({
       requirements: wrapSection(
         "<div>Complete 5.25 units of Science courses from the following subjects: BIOL, CHEM</div>",
@@ -474,8 +474,7 @@ describe("subject-pool parsing — synthetic variants", () => {
     if (r.kind !== "flexible") throw new Error("expected flexible");
     const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
     if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
-    expect(pool.units).toBe(5.25); // exact, what the UI shows
-    expect(pool.selectCount).toBe(11); // 5.25 / 0.5 ≈ 11, count fallback only
+    expect(pool.selectCount).toBe(11); // 5.25 / 0.5 ≈ 11
     expect(pool.subjectCodes).toEqual(["BIOL", "CHEM"]);
   });
 
@@ -488,7 +487,6 @@ describe("subject-pool parsing — synthetic variants", () => {
     if (r.kind !== "flexible") throw new Error("expected flexible");
     const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
     if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
-    expect(pool.units).toBe(2.5);
     expect(pool.subjectCodes).toEqual(["ERS"]);
   });
 
@@ -501,7 +499,6 @@ describe("subject-pool parsing — synthetic variants", () => {
     if (r.kind !== "flexible") throw new Error("expected flexible");
     const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
     if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
-    expect(pool.units).toBe(1.0);
     expect(pool.subjectCodes).toEqual(["ENVS", "ERS"]);
   });
 
@@ -1153,48 +1150,20 @@ describe("buildSpecializationSlug", () => {
 });
 
 describe("parseUnitPlan", () => {
-  it("parses a total + required/subject/open buckets (biology)", () => {
+  it("parses the degree total + degree-level reference (biology)", () => {
     const { unitPlan, degreeRef } = parseUnitPlan(rawGradReqs("h-biology"));
     expect(unitPlan?.totalUnits).toBe(21.5);
     expect(degreeRef?.pid).toBe("BJod_8jW6");
-    const scopes = unitPlan?.buckets.map((b) => [
-      b.requiredUnits,
-      b.scope.kind,
-    ]);
-    expect(scopes).toEqual([
-      [9.0, "required"],
-      [7.0, "subject"],
-      [5.5, "open"],
-    ]);
-    const biol = unitPlan?.buckets.find((b) => b.scope.kind === "subject");
-    expect(biol?.scope.kind === "subject" && biol.scope.subjects).toEqual([
-      "biol",
-    ]);
   });
 
-  it("captures a level constraint (climate)", () => {
+  it("surfaces a level minimum as a verbatim constraint note (climate)", () => {
     const { unitPlan } = parseUnitPlan(
       rawGradReqs("climate-and-environmental-change"),
     );
     expect(unitPlan?.totalUnits).toBe(20.0);
-    expect(unitPlan?.constraints?.[0]).toMatchObject({
-      minUnits: 14.5,
-      minLevel: 200,
-    });
-  });
-
-  it("models math vs non-math as subject vs subjectExcept (pure math)", () => {
-    const { unitPlan } = parseUnitPlan(rawGradReqs("h-pure-mathematics"));
-    const kinds = unitPlan?.buckets.map((b) => b.scope.kind);
-    expect(kinds).toEqual(["subject", "subjectExcept"]);
-    expect(unitPlan?.buckets[0].requiredUnits).toBe(13.0);
-    expect(unitPlan?.buckets[1].requiredUnits).toBe(5.0);
-  });
-
-  it("retains verbatim sourceText on every bucket", () => {
-    const { unitPlan } = parseUnitPlan(rawGradReqs("h-kinesiology"));
-    for (const b of unitPlan?.buckets ?? [])
-      expect(b.sourceText?.length).toBeGreaterThan(0);
+    const note = unitPlan?.constraints?.[0];
+    expect(note?.label).toMatch(/200-level/);
+    expect(note?.sourceText?.length).toBeGreaterThan(0);
   });
 
   it('extracts a total qualified as "academic units" (engineering)', () => {
@@ -1207,22 +1176,7 @@ describe("parseUnitPlan", () => {
     expect(unitPlan?.totalUnits).toBe(21.25);
   });
 
-  it("scopes a multi-subject unit bucket to ALL listed subjects (not just the first)", () => {
-    // "8.0 units of CLAS, GRK, and LAT courses" must capture all three, else a
-    // student's GRK/LAT units leak to free electives (classics undercount).
-    const { unitPlan } = parseUnitPlan(
-      "<ul><li>Complete a total of 8.0 units:<ul>" +
-        "<li>8.0 units of CLAS, GRK, and LAT courses.</li></ul></li></ul>",
-    );
-    const b = unitPlan?.buckets.find((x) => x.scope.kind === "subject");
-    expect(b?.scope.kind === "subject" && b.scope.subjects).toEqual([
-      "clas",
-      "grk",
-      "lat",
-    ]);
-  });
-
-  it("captures subject + exclusion scope on a level constraint", () => {
+  it("captures level-minimum rules as notes (label + sourceText only)", () => {
     const { unitPlan } = parseUnitPlan(
       "<ul><li>Complete a total of 20.0 units:<ul>" +
         "<li>2.0 units must be PLAN courses at the 300-level or above.</li>" +
@@ -1230,33 +1184,27 @@ describe("parseUnitPlan", () => {
         "</ul></li></ul>",
     );
     const cs = unitPlan?.constraints ?? [];
-    const plan = cs.find((c) => /PLAN/.test(c.label));
-    expect(plan?.subjects).toEqual(["plan"]);
-    expect(plan?.excludeSubjects).toBeUndefined();
-    const sci = cs.find((c) => /excluding SCI/.test(c.label));
-    expect(sci?.excludeSubjects).toEqual(["sci"]);
-    expect(sci?.subjects).toBeUndefined(); // "lecture"/level words aren't subjects
+    expect(cs.some((c) => /PLAN/.test(c.label))).toBe(true);
+    expect(cs.some((c) => /excluding SCI/.test(c.label))).toBe(true);
+    for (const c of cs) expect(c.sourceText?.length).toBeGreaterThan(0);
   });
 });
 
 describe("parseDegreeRequirements", () => {
-  it("parses the BA breadth table into overlapping subject constraints", () => {
+  it("parses the BA breadth table into verbatim constraint notes", () => {
     const { degree, honoursTotal, generalTotal, fourYearTotal } =
       parseDegreeRequirements(rawJson("degree-arts"), "SyLzAe5R3");
     expect(honoursTotal).toBe(20.0);
     expect(generalTotal).toBe(15.0); // three-year general
     expect(fourYearTotal).toBe(20.0); // four-year general — distinct!
-    // Breadth is an overlapping distribution requirement, so it's modelled as
-    // constraints (not additive buckets that compete with the major for courses).
-    expect(degree.buckets ?? []).toEqual([]);
+    // Breadth is surfaced as verbatim notes (label + sourceText), not evaluated.
     const labels = degree.constraints?.map((c) => c.label) ?? [];
     expect(labels.some((l) => /Humanities/.test(l))).toBe(true);
     expect(labels.some((l) => /Social Sciences/.test(l))).toBe(true);
     const social = degree.constraints?.find((c) =>
       /Social Sciences/.test(c.label),
     );
-    expect(social?.minUnits).toBe(2.0);
-    expect(social?.subjects).toContain("anth");
+    expect(social?.sourceText).toMatch(/anth/i);
     // communication options recovered
     expect(degree.communication?.options).toContain("arts160");
   });
@@ -1266,7 +1214,7 @@ describe("parseDegreeRequirements", () => {
       rawJson("degree-science"),
       "BJod_8jW6",
     );
-    expect(degree.buckets ?? []).toHaveLength(0);
+    expect(degree.constraints ?? []).toHaveLength(0);
     expect(degree.communication?.options.sort()).toEqual([
       "commst193",
       "engl193",

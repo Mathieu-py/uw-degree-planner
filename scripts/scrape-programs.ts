@@ -25,7 +25,6 @@ import {
   type DegreeRequirements,
   type Program,
   type Specialization,
-  type UnitPlan,
   validatePrograms,
 } from "../lib/programs";
 import { applyRuleOverrides } from "./scrape-programs.overrides";
@@ -457,8 +456,8 @@ async function runPhaseDegrees(
         `${VIEW_BASE}/${encodeURIComponent(pid)}`,
       );
       byPid.set(pid, parsed);
-      const b = parsed.degree.buckets?.length ?? 0;
-      return `ok (${b} breadth bucket${b === 1 ? "" : "s"})`;
+      const b = parsed.degree.constraints?.length ?? 0;
+      return `ok (${b} breadth constraint${b === 1 ? "" : "s"})`;
     },
     onError: () => {},
   });
@@ -467,9 +466,8 @@ async function runPhaseDegrees(
 
 /**
  * Attach the shared degree-level requirements to each referencing program:
- * set `degreeRequirements`, propagate the honours total into an own-total-less
- * unit plan, and fold the degree-level communication into a unit bucket the
- * audit can track.
+ * set `degreeRequirements` and propagate the degree-page total into a program
+ * that doesn't state its own.
  */
 function attachDegreeRequirements(
   programs: Record<string, Program>,
@@ -493,15 +491,13 @@ function attachDegreeRequirements(
       : /^4g-/.test(slug)
         ? (parsed.fourYearTotal ?? parsed.generalTotal ?? parsed.honoursTotal)
         : parsed.honoursTotal;
-    if (degreeTotal != null) {
-      const plan: UnitPlan = program.unitPlan ?? { buckets: [] };
-      const bucketSum = plan.buckets.reduce((s, b) => s + b.requiredUnits, 0);
-      // The degree-level total is a faculty *minimum*; a program can require
-      // more. Only adopt it as the program's total when the program's own
-      // buckets don't already exceed it — otherwise we'd understate the degree.
-      if (plan.totalUnits == null && degreeTotal >= bucketSum - 0.01) {
-        program.unitPlan = { ...plan, totalUnits: degreeTotal };
-      }
+    // The degree-level total is a faculty minimum; adopt it as the program's
+    // total only when the program doesn't already state its own.
+    if (degreeTotal != null && program.unitPlan?.totalUnits == null) {
+      program.unitPlan = {
+        ...(program.unitPlan ?? {}),
+        totalUnits: degreeTotal,
+      };
     }
     attached++;
   }

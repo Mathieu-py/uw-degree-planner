@@ -5,12 +5,10 @@ import type {
   InformationalItem,
   RuleNode,
   TermLetter,
-  UnitBucket,
   UnitConstraint,
   UnitPlan,
-  UnitScope,
 } from "../lib/programs";
-import { isTermLetter, MATH_SUBJECTS, TERM_LETTERS } from "../lib/programs";
+import { isTermLetter, TERM_LETTERS } from "../lib/programs";
 
 export function normalizeCourseCode(raw: string): string | null {
   const cleaned = raw.replace(/\s+/g, "").toUpperCase();
@@ -502,13 +500,11 @@ function parseSubjectPool(fullText: string): RuleNode | null {
 
   // A unit-stated pool ("5.25 units of Science courses") has no per-course units
   // at parse time, so `selectCount` approximates the count assuming a 0.5-unit
-  // course. We also record the original `units` so the UI shows exact unit
-  // progress (re-weighted from the catalog) instead of the approximate count.
+  // course.
   const selectCount = isUnits ? Math.max(1, Math.round(amount / 0.5)) : amount;
   return {
     kind: "subjectPool",
     selectCount,
-    ...(isUnits ? { units: amount } : {}),
     subjectCodes,
     ...(minLevel !== undefined ? { minLevel } : {}),
     ...(maxLevel !== undefined ? { maxLevel } : {}),
@@ -737,114 +733,17 @@ function parseCourseListsSections(
 
 /* ----------------------- unit-accounting parser ------------------------- */
 
-// `MATH_SUBJECTS` (UW's documented Faculty-of-Mathematics subject set) is shared
-// from lib/programs so the audit's bucket titles use the same set.
-
-// Named subjects that appear spelled-out (no all-caps code) in unit prose, with
-// an unambiguous single subject code.
-const SUBJECT_NAME_MAP: Array<[RegExp, string[]]> = [
-  [/classical studies/i, ["clas"]],
-  [/social work/i, ["socwk"]],
-];
-
 // A degree total ("Complete a total of 20.0 units:"). Some programs qualify it
 // as "academic units" (e.g. engineering: "Complete a total of 21.25 academic
 // units (excluding COOP, PD, WKRPT)"), so the qualifier is optional. The
 // negative lookahead rejects "Complete a total of 8.0 units of HIST" — that's a
-// subject-bucket requirement, not the degree total (which lives on the degree
-// page).
+// subject requirement, not the degree total (which lives on the degree page).
 const TOTAL_UNITS_RE =
   /complete a total of\s+(\d+(?:\.\d+)?)\s*(?:academic\s+)?units\b(?!\s+of\b)/i;
-const ADDITIONAL_SUBJ_UNITS_RE =
-  /(\d+(?:\.\d+)?)\s+additional\s+([A-Z]{2,8})\s+units/;
 // "minimum of 14.5 units must be at the 200-level or above"
 const LEVEL_CONSTRAINT_RE =
   /(\d+(?:\.\d+)?)\s*units?\b[^.]*?\bat the\s+(\d)00-level\s+or above/i;
 const FAILED_UNITS_RE = /maximum of\s+(\d+(?:\.\d+)?)\s*(?:failed )?units/i;
-
-/**
- * Map a unit-bucket noun phrase ("required courses", "HIST and approved
- * courses", "non-math") to a scope, or `null` when we can't resolve it to a
- * concrete, verifiable scope (no guessing). Order matters: a named subject must
- * win over the generic "approved/elective courses" fallback, since UW phrases a
- * subject requirement as "N units of HIST and approved courses". A `null` scope
- * is surfaced verbatim as an informational requirement instead of being
- * allocated against a fabricated subject set.
- */
-function scopeFromNoun(noun: string): UnitScope | null {
-  const n = noun.trim();
-  // Faculty of Math group (documented subject set).
-  if (/non[\s-]?math/i.test(n))
-    return { kind: "subjectExcept", exclude: MATH_SUBJECTS };
-  if (/\bmath(?:ematics)? courses?\b/i.test(n) && !/\bscience\b/i.test(n))
-    return { kind: "subject", subjects: MATH_SUBJECTS };
-  // "Science courses/electives" — UW has no keyless authoritative Faculty-of-
-  // Science subject list, so we don't guess one; surfaced verbatim instead.
-  if (
-    /\bscience\b/i.test(n) &&
-    !/\b(?:required|social|computer|data|management)\b/i.test(n)
-  )
-    return null;
-  // Explicit subject codes — ALL of them, not just the first. "CLAS, GRK, and
-  // LAT courses" → [clas, grk, lat]; "BIOL or CHEM or approved" → [biol, chem].
-  // Connectors ("and"/"or") are lowercase so they don't match; "UCR" is the one
-  // non-subject all-caps token to guard. (Before the approved/elective fallback
-  // so "HIST and approved courses" still scopes to HIST.)
-  const codes = [...n.matchAll(/\b([A-Z]{2,7})\b/g)]
-    .map((mm) => mm[1])
-    .filter((c) => c !== "UCR")
-    .map((c) => c.toLowerCase());
-  if (codes.length > 0)
-    return { kind: "subject", subjects: [...new Set(codes)] };
-  // A spelled-out named subject ("Classical Studies", "Social Work").
-  for (const [re, subjects] of SUBJECT_NAME_MAP)
-    if (re.test(n)) return { kind: "subject", subjects };
-  // "required … courses" or "lecture/lab courses listed/see below" → the
-  // program's own required set (the "below" list is the required-course table).
-  if (
-    (/\brequired\b/i.test(n) && /\bcourses?\b/i.test(n)) ||
-    (/\blecture\b/i.test(n) && /\b(?:listed|see) below\b/i.test(n))
-  )
-    return { kind: "required" };
-  // Genuine free electives ("electives", "approved courses", "courses, any level").
-  if (/\b(?:electives?|approved)\b/i.test(n) || /any level/i.test(n))
-    return { kind: "open" };
-  // Anything else (e.g. "Arts and Business courses", "breadth courses") — we
-  // can't verify the exact scope, so don't fabricate one.
-  return null;
-}
-
-/**
- * Extract the subject scope embedded in a unit-constraint sentence so the audit
- * can check it (not just the level). "2.0 units of PLAN courses at the 300-level"
- * → `subjects:["plan"]`; "…at the 300-level (excluding SCI courses)" →
- * `excludeSubjects:["sci"]`; "…BIOL or EARTH…" → `subjects:["biol","earth"]`.
- * Codes inside an "excluding/exclusive of …" clause are the exclusion set; all
- * other all-caps codes are the inclusion set (a pure-level rule yields neither).
- */
-function constraintScope(text: string): {
-  subjects?: string[];
-  excludeSubjects?: string[];
-} {
-  let rest = text;
-  let excludeSubjects: string[] = [];
-  const exc = text.match(/(?:excluding|exclusive of)\s+([^).]*)/i);
-  if (exc) {
-    excludeSubjects = [...exc[1].matchAll(/\b([A-Z]{2,7})\b/g)].map((m) =>
-      m[1].toLowerCase(),
-    );
-    rest = text.replace(exc[0], " ");
-  }
-  const subjects = [...rest.matchAll(/\b([A-Z]{2,7})\b/g)]
-    .map((m) => m[1].toLowerCase())
-    .filter((c) => c !== "ucr");
-  return {
-    ...(subjects.length ? { subjects: [...new Set(subjects)] } : {}),
-    ...(excludeSubjects.length
-      ? { excludeSubjects: [...new Set(excludeSubjects)] }
-      : {}),
-  };
-}
 
 export interface UnitPlanResult {
   unitPlan: UnitPlan | null;
@@ -855,18 +754,18 @@ export interface UnitPlanResult {
 }
 
 /**
- * Parse the `graduationRequirements` prose into a unit plan: a total, the unit
- * buckets ("9.0 units of required courses", "7.0 additional BIOL units",
- * "5.5 units of elective courses"), level constraints, plus informational notes
- * (failed-unit caps, communication prose) and the degree-level reference.
+ * Parse the `graduationRequirements` prose into the surviving unit data: the
+ * degree total (gauge denominator) and level-minimum constraints surfaced as
+ * verbatim notes, plus informational notes (failed-unit caps, communication
+ * prose) and the degree-level reference. Subject/elective unit *buckets* are no
+ * longer extracted — the count audit and the soft units gauge cover the degree.
  */
 export function parseUnitPlan(
   html: string,
-  programLabel = "(unknown)",
+  _programLabel = "(unknown)",
 ): UnitPlanResult {
   const $ = cheerio.load(html);
   const warnings: string[] = [];
-  const buckets: UnitBucket[] = [];
   const constraints: UnitConstraint[] = [];
   const informational: InformationalItem[] = [];
 
@@ -882,71 +781,25 @@ export function parseUnitPlan(
   });
 
   // The "Complete a total of N units:" line is usually a parent <li> wrapping
-  // the bucket sub-list, so read the total from the whole document text.
+  // a sub-list, so read the total from the whole document text.
   const totalMatch = $.root().text().match(TOTAL_UNITS_RE);
   const totalUnits = totalMatch ? Number(totalMatch[1]) : undefined;
-  let bucketIdx = 0;
 
-  // Walk every leaf <li>; classify by phrasing.
+  // Walk every leaf <li>; surface level-minimum rules as notes, failed-unit
+  // caps as informational. Other unit prose ("N units of <subject>") is ignored.
   $("li")
     .filter((_, li) => $(li).find("ul, ol").length === 0)
     .each((_, li) => {
       const text = $(li).text().replace(/\s+/g, " ").trim();
       if (!text) return;
 
-      const level = text.match(LEVEL_CONSTRAINT_RE);
-      if (level) {
-        constraints.push({
-          label: text,
-          minUnits: Number(level[1]),
-          minLevel: Number(level[2]) * 100,
-          ...constraintScope(text),
-          sourceText: text,
-        });
+      if (LEVEL_CONSTRAINT_RE.test(text)) {
+        constraints.push({ label: text, sourceText: text });
         return;
       }
 
-      const failed = text.match(FAILED_UNITS_RE);
-      if (failed) {
+      if (FAILED_UNITS_RE.test(text)) {
         informational.push({ label: "Failed units", text });
-        return;
-      }
-
-      // "7.0 additional BIOL units"
-      const addl = text.match(ADDITIONAL_SUBJ_UNITS_RE);
-      if (addl) {
-        buckets.push({
-          id: `u${bucketIdx++}`,
-          label: text,
-          requiredUnits: Number(addl[1]),
-          scope: { kind: "subject", subjects: [addl[2].toLowerCase()] },
-          sourceText: text,
-        });
-        return;
-      }
-
-      // "N units of <noun>". A bare "Complete a total of N units:" header has no
-      // "of <noun>" so it won't match; a combined "total of N units of HIST…"
-      // (no sub-list) legitimately yields one bucket.
-      const unitsOf = text.match(UNITS_OF_RE);
-      if (unitsOf) {
-        // No verifiable scope → an `unscoped` bucket: it still carries its real
-        // unit weight (so the degree total adds up) and shows verbatim, but is
-        // never auto-allocated. We don't fabricate a scope.
-        const scope: UnitScope = scopeFromNoun(unitsOf[2]) ?? {
-          kind: "unscoped",
-        };
-        if (scope.kind === "unscoped")
-          warnings.push(
-            `${programLabel}: unscoped unit requirement: "${unitsOf[2]}"`,
-          );
-        buckets.push({
-          id: `u${bucketIdx++}`,
-          label: text,
-          requiredUnits: Number(unitsOf[1]),
-          scope,
-          sourceText: text,
-        });
       }
     });
 
@@ -961,25 +814,10 @@ export function parseUnitPlan(
     informational.push({ label: "Communication requirement", text: commText });
   }
 
-  // Sanity guard: if the buckets we parsed require more units than the total we
-  // parsed, the "total" we grabbed is a sub-statement, not the degree total
-  // (prose ambiguity). Drop it rather than report a total we can't trust.
-  const bucketSum = buckets.reduce((s, b) => s + b.requiredUnits, 0);
-  const resolvedTotal =
-    totalUnits !== undefined && bucketSum > totalUnits + 0.01
-      ? undefined
-      : totalUnits;
-  if (resolvedTotal === undefined && totalUnits !== undefined) {
-    warnings.push(
-      `${programLabel}: dropped inconsistent total ${totalUnits} (buckets sum to ${bucketSum})`,
-    );
-  }
-
   const unitPlan: UnitPlan | null =
-    buckets.length > 0 || constraints.length > 0 || resolvedTotal !== undefined
+    constraints.length > 0 || totalUnits !== undefined
       ? {
-          ...(resolvedTotal !== undefined ? { totalUnits: resolvedTotal } : {}),
-          buckets,
+          ...(totalUnits !== undefined ? { totalUnits } : {}),
           ...(constraints.length > 0 ? { constraints } : {}),
         }
       : null;
@@ -988,14 +826,10 @@ export function parseUnitPlan(
 }
 
 /**
- * Reconcile the unit plan (from grad-req prose) with the elective lists (from
- * courseListsNew) so a requirement isn't counted twice:
- *  - A pure unit bucket already in the plan ("5.5 units of elective courses",
- *    no course list) is dropped from `electives` — the plan owns it.
- *  - An approved list whose unit count matches an open plan bucket links into
- *    that bucket as a concrete `list` scope (and is dropped from `electives`).
- *  - Finite count-based lists ("Technical Electives List: complete 6 of …")
- *    with no matching unit bucket stay as electives.
+ * Drop elective entries that have nothing trackable to render: a "pure unit
+ * bucket" ("5.5 units of elective courses" — a unit amount with no approved-course
+ * list and no finite count) can't be shown as a count-based section, so it's
+ * filtered out. Everything else (approved lists, finite count-based lists) stays.
  */
 export function reconcileUnitsAndElectives(
   unitPlan: UnitPlan | null,
@@ -1003,41 +837,16 @@ export function reconcileUnitsAndElectives(
 ): {
   unitPlan: UnitPlan | null;
   electives: ElectiveCategory[];
-  linked: number;
 } {
   const isPureUnitBucket = (e: ElectiveCategory) =>
     e.unitRequirement != null &&
     !(e.approvedCourses && e.approvedCourses.length > 0) &&
     e.requiredCount == null;
 
-  if (!unitPlan) {
-    return {
-      unitPlan,
-      electives: electives.filter((e) => !isPureUnitBucket(e)),
-      linked: 0,
-    };
-  }
-
-  const buckets = unitPlan.buckets.map((b) => ({ ...b }));
-  const kept: ElectiveCategory[] = [];
-  let linked = 0;
-  for (const e of electives) {
-    if (isPureUnitBucket(e)) continue; // plan owns it
-    if (e.unitRequirement != null && e.approvedCourses?.length) {
-      const target = buckets.find(
-        (b) => b.scope.kind === "open" && b.requiredUnits === e.unitRequirement,
-      );
-      if (target) {
-        target.scope = { kind: "list", courses: e.approvedCourses };
-        if (e.sourceText && !target.sourceText)
-          target.sourceText = e.sourceText;
-        linked++;
-        continue;
-      }
-    }
-    kept.push(e);
-  }
-  return { unitPlan: { ...unitPlan, buckets }, electives: kept, linked };
+  return {
+    unitPlan,
+    electives: electives.filter((e) => !isPureUnitBucket(e)),
+  };
 }
 
 /* --------------------- degree-level requirements ------------------------ */
@@ -1090,8 +899,8 @@ function stripHtml(html: string | undefined): string {
 
 /**
  * Parse a faculty "Bachelor of X degree-level requirements" page: the breadth
- * table (each row → a subject-scoped unit bucket), the communication course
- * options, unit minimums/total, and informational notes (averages, co-op).
+ * table (each row → a verbatim constraint note), the communication course
+ * options, unit total, and informational notes (averages, co-op).
  */
 export function parseDegreeRequirements(
   detail: DegreeDetailFields,
@@ -1123,14 +932,10 @@ export function parseDegreeRequirements(
         s.toLowerCase(),
       );
       if (!um || subjects.length === 0) return;
-      // Breadth is an OVERLAPPING distribution requirement, not extra units: a
-      // major course in the subject list (a HIST major's HIST units → Humanities)
-      // satisfies it. So it's a subject-scoped constraint checked over all placed
-      // courses, NOT an additive bucket that competes with the major for courses.
+      // Breadth is a real degree requirement, surfaced verbatim as a note for the
+      // student to verify (we no longer evaluate its subject scope structurally).
       constraints.push({
         label: `Breadth — ${label}`,
-        minUnits: Number(um[1]),
-        subjects,
         sourceText: `${label} — ${unitsTxt}: ${codesTxt}`,
       });
     });

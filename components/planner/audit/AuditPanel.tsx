@@ -3,6 +3,11 @@
 import { memo, type ReactNode, useMemo } from "react";
 import { Icon } from "@/components/ui/Icon";
 import {
+  type BreadthRequirement,
+  deriveBreadthRequirements,
+  nonBreadthConstraints,
+} from "@/lib/audit/breadth";
+import {
   type AuditNode,
   type AuditRoot,
   compileAudit,
@@ -93,16 +98,14 @@ type Section =
       unitBased: boolean;
     }
   | {
-      kind: "unitBucket";
+      kind: "breadth";
       key: string;
       title: string;
       caption: string;
-      appliedUnits: number;
-      requiredUnits: number;
-      status: "met" | "partial" | "unmet";
-      /** True when the bucket's scope can't be verified — the student checks it
-       * by hand, so it shows a manual-verification marker instead of a 0% ring. */
-      unscoped: boolean;
+      need: number;
+      placed: number;
+      subjects: string[];
+      satisfiers: string[];
     }
   | {
       kind: "info";
@@ -132,17 +135,11 @@ export const AuditPanel = memo(function AuditPanel({
   );
 
   const audit = useMemo(
-    () =>
-      compileAudit(
-        program,
-        plan,
-        plan.specializationId,
-        (code) => catalogByCode.get(code)?.units,
-      ),
-    [plan, program, catalogByCode],
+    () => compileAudit(program, plan, plan.specializationId),
+    [plan, program],
   );
 
-  const { groups, totals, unitTotals, untrackedCount, headerCaption } = useMemo(
+  const { groups, totals, untrackedCount, headerCaption } = useMemo(
     () => deriveSections(audit, program),
     [audit, program],
   );
@@ -162,33 +159,36 @@ export const AuditPanel = memo(function AuditPanel({
     );
   }
 
+  // Headline is the course-count audit — the reliable signal. The % covers
+  // requirements we can honestly track by count (required courses, finite
+  // electives, and faculty breadth). When count-less elective requirements
+  // remain (open/browse lists), never let it read 100% — the degree isn't done
+  // while electives are owed.
   const trackedPct =
     totals.needed > 0
       ? Math.min(Math.round((totals.satisfied / totals.needed) * 100), 100)
       : 0;
-  // The % only covers requirements we can honestly track (required courses +
-  // finite electives). When count-less elective requirements remain (open or
-  // unit-based lists the catalog can't measure), never let it read 100% — that
-  // would imply the degree is done when electives are still owed.
-  const pct = untrackedCount > 0 ? Math.min(trackedPct, 99) : trackedPct;
+  const headlinePct =
+    untrackedCount > 0 ? Math.min(trackedPct, 99) : trackedPct;
+  const headlineFraction = `${totals.satisfied}/${totals.needed}`;
 
-  // When the program has a unit plan, units are the authoritative metric (a
-  // 0.25 lab ≠ a 1.0 course), so the headline reports degree-unit progress.
-  const unitPct =
-    unitTotals && unitTotals.required > 0
-      ? Math.min(
-          Math.round((unitTotals.applied / unitTotals.required) * 100),
-          100,
-        )
+  // A soft "courses planned" gauge — placed course-equivalents (catalog units ÷
+  // 0.5) against the degree's total course count. A volume hint (how much you've
+  // mapped out), approximate (it assumes 0.5-unit courses, hence "≈"), NOT a
+  // completion claim — the tracked headline above is that. Shown in courses
+  // rather than units because that's the actionable unit ("N more to plan").
+  const degreeTotal = program.unitPlan?.totalUnits;
+  let plannedUnits = 0;
+  for (const code of audit.placement.keys())
+    plannedUnits += catalogByCode.get(code)?.units ?? 0;
+  const totalCourses =
+    degreeTotal != null ? Math.round(degreeTotal / 0.5) : null;
+  const coursesNote =
+    totalCourses != null
+      ? `≈ ${Math.round(plannedUnits / 0.5)} of ${totalCourses} courses planned`
       : null;
-  const headlinePct = unitPct ?? pct;
-  const headlineFraction = unitTotals
-    ? `${unitTotals.applied.toFixed(1)}/${unitTotals.required} units`
-    : `${totals.satisfied}/${totals.needed}`;
-  const headlineLabel = unitTotals ? "of degree units" : "requirements met";
 
-  // Default-open only the first incomplete section, to avoid a wall of open
-  // rows. Browse/unit sections (no honest count) never auto-open.
+  // Default-open only the first incomplete section, to avoid a wall of open rows.
   const firstOpenKey = groups
     .flatMap((g) => g.sections)
     .find((s) => isIncomplete(s))?.key;
@@ -207,18 +207,19 @@ export const AuditPanel = memo(function AuditPanel({
             <span className="text-[30px] font-bold tracking-tight leading-none">
               {headlinePct}%
             </span>
-            <span className="u-small">{headlineLabel}</span>
+            <span className="u-small">requirements met</span>
           </div>
           <div className="mp-bar mt-2">
             <span style={{ width: `${headlinePct}%` }} />
           </div>
+          {coursesNote ? <div className="av-note">{coursesNote}</div> : null}
           {headerCaption ? (
             <div className="av-note">{headerCaption}</div>
           ) : null}
         </div>
         <div className="pw-audit-list lg:flex-1 lg:min-h-0 [scrollbar-width:thin]">
-          {groups.map((group) => (
-            <div key={group.heading ?? "main"}>
+          {groups.map((group, gi) => (
+            <div key={group.heading ?? `group-${gi}`}>
               {group.heading ? (
                 <div className="av-grouphead">{group.heading}</div>
               ) : null}
@@ -246,6 +247,7 @@ function isIncomplete(section: Section): boolean {
   if (section.kind === "node")
     return section.summary.satisfied < section.summary.needed;
   if (section.kind === "electiveFinite") return section.placed < section.need;
+  if (section.kind === "breadth") return section.placed < section.need;
   return false;
 }
 
@@ -268,43 +270,6 @@ function SectionRow({
   onDrill?: (codes: string[]) => void;
   drag?: DragWiring;
 }) {
-  if (section.kind === "unitBucket") {
-    const pct =
-      section.requiredUnits > 0
-        ? Math.min(
-            Math.round((section.appliedUnits / section.requiredUnits) * 100),
-            100,
-          )
-        : 100;
-    return (
-      <div className="av-row">
-        <div className="av-row-head">
-          {section.unscoped ? (
-            // No verifiable scope, so a progress ring would be a permanent,
-            // misleading "0%". Show a manual-verification marker instead.
-            <span
-              className="av-unit-ring shrink-0"
-              title="We can't verify this requirement's scope automatically — check it by hand."
-            >
-              <Icon name="shield" size="sm" aria-hidden="true" />
-            </span>
-          ) : (
-            <span className="av-ring-wrap">
-              <Ring pct={pct} />
-              <span className="av-ring-num">
-                {section.appliedUnits.toFixed(1)}
-              </span>
-            </span>
-          )}
-          <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
-            <span className="av-sec-label truncate">{section.title}</span>
-            <span className="u-small">{section.caption}</span>
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   if (section.kind === "info") {
     return (
       <div className="av-row">
@@ -322,45 +287,6 @@ function SectionRow({
   }
 
   if (section.kind === "node") {
-    // A unit-stated subject pool ("5.25 units of Science courses") tracks exact
-    // units, not the approximate course count `selectCount`. Weight the placed
-    // satisfiers by their catalog units. Falls through to the count display when
-    // no catalog is available (read-only views).
-    const rn = section.node.ruleNode;
-    if (
-      rn.kind === "subjectPool" &&
-      rn.units != null &&
-      catalogByCode.size > 0
-    ) {
-      const need = rn.units;
-      const applied =
-        Math.round(
-          section.node.satisfiers.reduce(
-            (s, p) => s + (catalogByCode.get(p.code)?.units ?? 0),
-            0,
-          ) * 100,
-        ) / 100;
-      const capped = Math.min(applied, need);
-      const pct = Math.min(Math.round((applied / need) * 100), 100);
-      return (
-        <SectionShell
-          title={section.title}
-          caption={`${capped.toFixed(1)} of ${need} units`}
-          ring={{ pct, num: capped }}
-          excludedViolationCount={section.summary.excludedViolationCount}
-          open={open}
-        >
-          <NodeBody
-            node={section.node}
-            placedCodes={placedCodes}
-            catalog={catalog}
-            catalogByCode={catalogByCode}
-            onDrill={onDrill}
-            drag={drag}
-          />
-        </SectionShell>
-      );
-    }
     // An optional group ("Choose any of the following", needed === 0) has no
     // target, so the ring reflects what's actually *chosen*: grey 0 with
     // nothing placed, and a green count once the student picks from the list
@@ -429,6 +355,23 @@ function SectionRow({
             />
           ))}
         </div>
+      </SectionShell>
+    );
+  }
+
+  if (section.kind === "breadth") {
+    const pct =
+      section.need > 0
+        ? Math.min(Math.round((section.placed / section.need) * 100), 100)
+        : 100;
+    return (
+      <SectionShell
+        title={section.title}
+        caption={section.caption}
+        ring={{ pct, num: Math.min(section.placed, section.need) }}
+        open={open}
+      >
+        <BreadthBody section={section} catalog={catalog} onDrill={onDrill} />
       </SectionShell>
     );
   }
@@ -942,11 +885,71 @@ function SubjectPoolBody({
         ))}
       </div>
       <p className="av-hint">
-        {node.units != null
-          ? `Any ${node.units} units from these subjects`
-          : `Any ${node.selectCount} from these subjects`}{" "}
-        — there's no fixed list to drag, so pick from the catalog.
+        Any {node.selectCount} from these subjects — there's no fixed list to
+        drag, so pick from the catalog.
       </p>
+      {onDrill && eligible.length > 0 ? (
+        <button
+          type="button"
+          className="av-browse"
+          onClick={() => onDrill(eligible)}
+        >
+          <Icon name="search" size="xs" aria-hidden="true" /> Browse eligible
+          courses <Icon name="arrow" size="xs" aria-hidden="true" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * A breadth/distribution requirement ("complete 2 courses from {CLAS, ENGL, …}").
+ * Like a subject pool there's no fixed list to drag, so it shows the eligible
+ * subjects + Browse; any courses already placed in those subjects show as met.
+ */
+function BreadthBody({
+  section,
+  catalog,
+  onDrill,
+}: {
+  section: Extract<Section, { kind: "breadth" }>;
+  catalog?: Course[];
+  onDrill?: (codes: string[]) => void;
+}) {
+  const eligible = useMemo(() => {
+    if (!catalog) return [];
+    const subjects = new Set(section.subjects);
+    return catalog
+      .filter((c) => subjects.has(c.prefix.toUpperCase()))
+      .map((c) => c.code);
+  }, [catalog, section.subjects]);
+  return (
+    <div className="av-pool">
+      <div className="av-pool-subj">
+        {section.subjects.map((s) => (
+          <span key={s} className="av-subj">
+            {s}
+          </span>
+        ))}
+      </div>
+      <p className="av-hint">
+        Any {section.need} course{section.need === 1 ? "" : "s"} from these
+        subjects — there's no fixed list to drag, so pick from the catalog.
+      </p>
+      {section.satisfiers.length > 0 ? (
+        <div className="av-chips mt-1.5">
+          {section.satisfiers.map((code) => (
+            <span
+              key={code}
+              className="av-chip met"
+              title={formatCourseCode(code)}
+            >
+              <Icon name="check" size="xs" aria-hidden="true" />
+              {formatCourseCode(code)}
+            </span>
+          ))}
+        </div>
+      ) : null}
       {onDrill && eligible.length > 0 ? (
         <button
           type="button"
@@ -1053,8 +1056,6 @@ function deriveSections(
 ): {
   groups: SectionGroup[];
   totals: { needed: number; satisfied: number };
-  /** Degree-wide unit progress, when the program has a unit plan with a total. */
-  unitTotals: { applied: number; required: number } | null;
   /** Count-less elective requirements (open/unit lists) that the % can't cover. */
   untrackedCount: number;
   headerCaption: string | null;
@@ -1124,117 +1125,87 @@ function deriveSections(
       groups.push({ heading: "Specialization", sections });
   }
 
-  // Degree units (full unit accounting) ----------------------------------
-  // A program is unit-based whenever it has a compiled unit audit. The headline
-  // denominator is the stated degree total, or — when UW doesn't state one
-  // (joint-honours half-plans) — the sum of the stated bucket requirements. No
-  // total is fabricated; a course-count program has no unit audit at all.
-  const ua = audit.unitAudit;
-  const unitTotals = (() => {
-    if (!ua) return null;
-    const stated =
-      ua.totalRequired ??
-      Math.round(
-        ua.buckets.reduce((s, b) => s + b.bucket.requiredUnits, 0) * 100,
-      ) / 100;
-    // Headline = "% of verifiable units". Units we can't verify (`unscoped`
-    // buckets whose scope the rule tree couldn't recover) are excluded from BOTH
-    // the numerator and denominator and flagged in the header caption — so the
-    // % reflects only what's actually checkable, neither over- nor understating.
-    const required = Math.round((stated - ua.unscopedUnits) * 100) / 100;
-    // With *specific* (non-open) buckets, the numerator is allocated units, not
-    // raw placed units: a course that landed in no bucket (overflow once every
-    // eligible bucket is full) doesn't count, keeping the % consistent with the
-    // per-bucket rings. When the plan has no specific buckets — a bare-total
-    // program (engineering), or one whose only bucket is a small "open electives"
-    // one while the real degree lives in the rule tree (double degrees) — there's
-    // nothing meaningful to allocate into, so every placed unit counts toward the
-    // total (else a complete plan would cap at the tiny open bucket's size).
-    const hasSpecific = ua.buckets.some((b) => b.bucket.scope.kind !== "open");
-    const applied = hasSpecific ? ua.allocatedUnits : ua.totalApplied;
-    return required > 0 ? { applied, required } : null;
-  })();
-  // The bucket breakdown only renders when there are real buckets: an
-  // engineering degree carries a unit total but no distribution buckets, so it
-  // shows the unit headline alone.
-  if (ua && (ua.buckets.length > 0 || ua.constraints.length > 0)) {
-    const unitSections: Section[] = ua.buckets.map((b, i) => ({
-      kind: "unitBucket",
-      key: `unit-${b.bucket.id}-${i}`,
-      title: b.title,
-      // Unscoped buckets carry real units toward the total but can't be
-      // auto-tracked (we won't guess their scope), so say so rather than
-      // showing a misleading "0 of N".
-      caption:
-        b.bucket.scope.kind === "unscoped"
-          ? `${b.bucket.requiredUnits} units · counts toward the total — verify manually`
-          : `${b.appliedUnits.toFixed(1)} of ${b.bucket.requiredUnits} units`,
-      appliedUnits: b.appliedUnits,
-      requiredUnits: b.bucket.requiredUnits,
-      status: b.status,
-      unscoped: b.bucket.scope.kind === "unscoped",
-    }));
-    // Distribution constraints — overlapping checks over all placed courses:
-    // faculty breadth ("1.0 unit of Humanities"), level minimums, "N units of
-    // PLAN at 300+". The audit now honors each constraint's subject scope,
-    // exclusions, and level, so the ✓ is trustworthy. (A residual "lecture/lab"
-    // qualifier, which we can't verify, is the only soft edge.)
-    ua.constraints.forEach((c, i) => {
-      const min = c.constraint.minUnits;
-      const caption =
-        min != null
-          ? `${c.satisfied ? "✓ " : ""}${c.appliedUnits.toFixed(1)} of ${min} units`
-          : c.constraint.label;
-      unitSections.push({
-        kind: "info",
-        key: `constraint-${i}`,
-        title: c.constraint.label,
-        caption,
-      });
-    });
-    groups.push({ heading: "Degree units", sections: unitSections });
-  }
-
-  // Degree requirements (communication + informational) ------------------
+  // Degree-level requirements — faculty breadth, communication, and any
+  // level/subject minimums + informational notes.
+  //
+  // Breadth ("1.0 unit of Humanities: CLAS, ENGL…") converts losslessly to a
+  // course count ("complete 2 courses from {CLAS, ENGL, …}") and is TRACKED as
+  // an independent subject filter that counts toward the headline — so a
+  // breadth-light plan can't read 100%. This is safe where the old unit engine
+  // wasn't: there's no allocation and no reconciliation against a unit total, so
+  // it can't reproduce the count-vs-units contradiction. Any constraint that
+  // isn't subject-list breadth (a level-only minimum) stays a verbatim note.
   if (program) {
-    const infoSections: Section[] = [];
+    const sections: Section[] = [];
+    for (const [i, b] of deriveBreadthRequirements(
+      program,
+      placedCodes,
+    ).entries()) {
+      addToTotals(b.need, Math.min(b.placed, b.need));
+      sections.push(breadthSection(b, i));
+    }
+
     const deg = program.degreeRequirements;
     if (deg?.communication && deg.communication.options.length > 0) {
       const met = deg.communication.options.some((c) => placedCodes.has(c));
-      infoSections.push({
+      sections.push({
         kind: "info",
         key: "deg-comm",
         title: "Communication requirement",
         caption: `${met ? "✓ " : ""}${deg.communication.options.map(formatCourseCode).join(" or ")}`,
       });
     }
+    nonBreadthConstraints(program).forEach((c, i) => {
+      sections.push({
+        kind: "info",
+        key: `constraint-${i}`,
+        title: c.label,
+        caption:
+          c.sourceText && c.sourceText !== c.label
+            ? c.sourceText
+            : "Verify with your advisor.",
+      });
+    });
     const items = [
       ...(program.informational ?? []),
       ...(deg?.informational ?? []),
     ];
     items.forEach((it, i) => {
-      infoSections.push({
+      sections.push({
         kind: "info",
         key: `info-${i}`,
         title: it.label,
         caption: it.text,
       });
     });
-    if (infoSections.length > 0)
-      groups.push({ heading: "Degree requirements", sections: infoSections });
+
+    // Free electives — the degree's remaining open course volume (degree total −
+    // all named requirements above, breadth included). Placed FIRST in this group
+    // so the course count reconciles on screen (named + free = degree total).
+    // SOFT: a note, NOT counted in the headline % (which measures named
+    // requirements). Approximate (assumes 0.5-unit courses) and conservative
+    // where breadth overlaps the major, so only shown when positive.
+    const degreeTotalUnits = program.unitPlan?.totalUnits;
+    if (degreeTotalUnits != null) {
+      const free = Math.round(degreeTotalUnits / 0.5) - totalNeeded;
+      if (free > 0)
+        sections.unshift({
+          kind: "info",
+          key: "free-electives",
+          title: "Free electives",
+          caption: `≈ ${free} course${free === 1 ? "" : "s"}, any subject — fills out the degree beyond the named requirements above.`,
+        });
+    }
+
+    if (sections.length > 0)
+      groups.push({ heading: "Degree requirements", sections });
   }
 
   return {
     groups,
     totals: { needed: totalNeeded, satisfied: totalSatisfied },
-    unitTotals,
     untrackedCount,
-    headerCaption: buildHeaderCaption(
-      program,
-      untrackedCount,
-      ua?.unscopedUnits ?? 0,
-      unitTotals != null,
-    ),
+    headerCaption: buildHeaderCaption(program, untrackedCount),
   };
 }
 
@@ -1300,6 +1271,21 @@ function toElectiveSection(
   };
 }
 
+/** A tracked breadth requirement → renderable section. */
+function breadthSection(b: BreadthRequirement, index: number): Section {
+  const done = Math.min(b.placed, b.need);
+  return {
+    kind: "breadth",
+    key: `breadth-${index}`,
+    title: b.title,
+    caption: `${done} of ${b.need} course${b.need === 1 ? "" : "s"} · ${b.subjects.length} subjects`,
+    need: b.need,
+    placed: b.placed,
+    subjects: b.subjects,
+    satisfiers: b.satisfiers,
+  };
+}
+
 /** "{done} of {need} done · {hint}", where the hint counts required vs choice. */
 function nodeCaption(node: AuditNode, summary: SectionSummary): string {
   let required = 0;
@@ -1324,26 +1310,12 @@ function nodeCaption(node: AuditNode, summary: SectionSummary): string {
 function buildHeaderCaption(
   program: Program | null,
   untrackedCount: number,
-  unscopedUnits: number,
-  unitBased: boolean,
 ): string | null {
   if (!program) return null;
-  // The honest, actionable lines: what the headline % can't measure. These are
-  // real degree requirements, not optional extras.
-  const parts: string[] = [];
-  // Browse electives only sit *outside* the headline in a course-count program.
-  // When the headline is units, a placed elective's units already count toward
-  // it, so "not counted above" would be false — skip the line (the electives
-  // still appear in their own section to plan from).
-  if (!unitBased && untrackedCount > 0)
-    parts.push(
-      `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan`,
-    );
-  // Unscoped buckets carry real units toward the total but we won't guess their
-  // scope, so they're excluded from the headline — say how many to verify.
-  if (unscopedUnits > 0)
-    parts.push(`${unscopedUnits} units to verify manually`);
-  if (parts.length > 0) return `${parts.join(" · ")} — not counted above.`;
+  // The honest, actionable line: how many elective requirements the headline %
+  // can't measure (open/browse lists). These are real requirements, not extras.
+  if (untrackedCount > 0)
+    return `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan — not counted above.`;
   if (program.kind === "engineering")
     return `${TERM_LETTERS.length} academic terms`;
   return null;

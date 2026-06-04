@@ -40,13 +40,11 @@ const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
     z.object({
       kind: z.literal("subjectPool"),
       description: z.string().optional(),
-      selectCount: z.number(),
       /**
-       * Set when the source stated the pool in UNITS ("5.25 units of Science
-       * courses"), not a course count. `selectCount` is then an approximation
-       * (units ÷ 0.5); the UI shows progress in these exact units instead.
+       * Course count to pick. When the source stated the pool in units
+       * ("5.25 units of Science courses"), this is an approximation (units ÷ 0.5).
        */
-      units: z.number().optional(),
+      selectCount: z.number(),
       subjectCodes: z.array(z.string()),
       minLevel: z.number().optional(),
       maxLevel: z.number().optional(),
@@ -77,7 +75,6 @@ export type RuleNode =
       kind: "subjectPool";
       description?: string;
       selectCount: number;
-      units?: number;
       subjectCodes: string[];
       minLevel?: number;
       maxLevel?: number;
@@ -114,111 +111,21 @@ export type ElectiveCategory = z.infer<typeof ElectiveCategorySchema>;
 
 /* --------------------------- unit accounting ---------------------------- */
 /*
- * UW degrees are measured in units (credits), not course counts: "21.5 units
- * total = 9.0 required + 7.0 BIOL + 5.5 elective, min 14.5 at the 200-level".
- * A `UnitPlan` captures that bucketed total so the audit can allocate every
- * placed course's catalog units across buckets (most-specific first) and report
- * exact unit progress. Buckets also carry the faculty degree-level requirements
- * (breadth) via `degreeRequirements`.
+ * UW degrees are measured in units (credits). We no longer audit a bucketed
+ * unit plan; what survives is the degree's `totalUnits` (denominator of the soft
+ * "courses planned" gauge) and a list of `constraints`. Subject-list breadth
+ * constraints are re-derived into trackable course counts by `lib/audit/breadth`
+ * ("1.0 unit of Humanities" → "2 courses from CLAS, ENGL, …"); any constraint
+ * without a subject list (a level-only minimum) is surfaced verbatim as a note.
  */
 
-// UW "math courses" (Faculty of Mathematics) — the subject set that satisfies
-// "N units of math courses"; "non-math" is the complement. Shared by the
-// scraper (scope resolution) and the audit (bucket titles).
-//
-// UW defines math units as "courses offered by the Math Faculty … except COMM
-// and MTHEL, plus a set of math-intensive courses offered by other Faculties."
-// So this is every Faculty-of-Mathematics subject *except* MTHEL (explicitly
-// excluded by UW). The cross-faculty "math-intensive" exception can't be
-// expressed as a subject prefix and isn't captured here. The joint subjects SE
-// (Math+Engineering) and CFM (Math+Arts) are intentionally omitted — their
-// math/non-math classification is genuinely ambiguous and we don't guess.
-//
-// This list is ALSO the exclusion set for "non-math units" (`subjectExcept`)
-// buckets, so the omission cuts both ways: an SE/CFM course is counted as
-// non-math. Deliberate — UW's own classification of SE/CFM is ambiguous.
-export const MATH_SUBJECTS = [
-  "math",
-  "amath",
-  "pmath",
-  "co",
-  "cs",
-  "stat",
-  "actsc",
-  "cm", // Computational Mathematics
-  "matbus", // Mathematics/Business
-];
-
-// UW "science courses" (Faculty of Science) — the subject set that corroborates
-// a "N units of Science courses" requirement. Used only to *ground* the scope
-// recovered for an unscoped unit bucket: a recovered subject must both appear in
-// the program's own rule-tree pools AND be a science subject (when the bucket's
-// noun says "science"), so an off-topic pool (e.g. ENGL) can't leak in. Kept as
-// a documented set, like MATH_SUBJECTS; intersecting with the program's pools
-// keeps it conservative even if this list is incomplete.
-export const SCIENCE_SUBJECTS = [
-  "biol",
-  "chem",
-  "earth",
-  "mns", // Materials & Nanosciences
-  "phys",
-  "sci",
-];
-
-/** What counts toward a unit bucket. */
-const UnitScopeSchema = z.discriminatedUnion("kind", [
-  // The program's own required courses (their units, wherever placed).
-  z.object({ kind: z.literal("required") }),
-  // Any course in these subjects (optionally at/above a level), e.g. BIOL.
-  z.object({
-    kind: z.literal("subject"),
-    subjects: z.array(z.string()),
-    minLevel: z.number().optional(),
-  }),
-  // Any course NOT in these subjects, e.g. "non-math units" (Math faculty).
-  z.object({
-    kind: z.literal("subjectExcept"),
-    exclude: z.array(z.string()),
-    minLevel: z.number().optional(),
-  }),
-  // A fixed approved-course list.
-  z.object({ kind: z.literal("list"), courses: z.array(z.string()) }),
-  // Free electives: any units left after the specific buckets are filled.
-  z.object({ kind: z.literal("open") }),
-  // A real unit requirement whose scope we can't verify (e.g. "Science
-  // courses" with no authoritative subject list). Counted toward the degree
-  // total and shown verbatim, but never auto-allocated — the student verifies.
-  z.object({ kind: z.literal("unscoped") }),
-]);
-
-export type UnitScope = z.infer<typeof UnitScopeSchema>;
-
-const UnitBucketSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  requiredUnits: z.number(),
-  scope: UnitScopeSchema,
-  sourceText: z.string().optional(),
-});
-
-export type UnitBucket = z.infer<typeof UnitBucketSchema>;
-
 /**
- * A non-bucket degree rule evaluated as an OVERLAPPING distribution check over
- * all placed courses (not an additive bucket): "min 14.5 units at the 200-level
- * or above", "3.0 units of PLAN courses at the 300-level", faculty breadth
- * ("1.0 unit of Humanities: CLAS, ENGL, HIST, …"). A course counts toward a
- * constraint *and* still fills its allocation bucket — its units count once
- * toward the degree total, but constraints are checks, not extra units.
+ * A degree rule kept as display text (faculty breadth, "min 14.5 units at the
+ * 200-level or above"). The structured scope isn't stored; where the text is
+ * subject-list breadth, `lib/audit/breadth` re-derives a course count from it.
  */
 const UnitConstraintSchema = z.object({
   label: z.string(),
-  minUnits: z.number().optional(),
-  minLevel: z.number().optional(),
-  /** Subjects that satisfy the constraint (empty/absent = any subject). */
-  subjects: z.array(z.string()).optional(),
-  /** Subjects that do NOT count ("excluding SCI courses"). */
-  excludeSubjects: z.array(z.string()).optional(),
   sourceText: z.string().optional(),
 });
 
@@ -226,7 +133,6 @@ export type UnitConstraint = z.infer<typeof UnitConstraintSchema>;
 
 const UnitPlanSchema = z.object({
   totalUnits: z.number().optional(),
-  buckets: z.array(UnitBucketSchema),
   constraints: z.array(UnitConstraintSchema).optional(),
 });
 
@@ -242,14 +148,13 @@ export type InformationalItem = z.infer<typeof InformationalItemSchema>;
 
 /**
  * Faculty-wide "Bachelor of X degree-level requirements" shared by every major
- * in that faculty: breadth buckets, a communication requirement, unit minimums,
- * and informational items (residency, averages, co-op work terms).
+ * in that faculty: breadth/level constraints (verbatim notes), a communication
+ * requirement, and informational items (residency, averages, co-op work terms).
  */
 const DegreeRequirementsSchema = z.object({
   kualiId: z.string().optional(),
   name: z.string(),
   source: z.string().optional(),
-  buckets: z.array(UnitBucketSchema).optional(),
   communication: z
     .object({
       options: z.array(z.string()),
@@ -672,26 +577,6 @@ function collectReferenced(root: RuleNode, out: Set<string>): void {
       for (const c of n.courses) out.add(c.toLowerCase());
     }
   });
-}
-
-/**
- * Course codes named in the program's required-courses rule tree — the
- * all-required courses PLUS choice-group ("choose one of …") options. Lowercased.
- *
- * Broader than {@link getRequiredCourses} (which omits choices for the variant
- * picker), and narrower than {@link programReferencedCodes} (which also pulls in
- * elective pools / specializations). This is the eligible set for the "N units of
- * required courses" unit bucket, whose unit count includes the choice options —
- * scoping it to the all-only set leaves the bucket permanently unfillable.
- */
-export function requiredSectionCodes(program: Program): Set<string> {
-  const out = new Set<string>();
-  if (program.kind === "engineering") {
-    for (const t of TERM_LETTERS) collectReferenced(program.terms[t], out);
-  } else {
-    collectReferenced(program.rules, out);
-  }
-  return out;
 }
 
 /**

@@ -29,7 +29,6 @@ import {
 } from "@/lib/programs";
 import type { Placement, PlacementMap } from "./placement";
 import { buildPlacementMap } from "./placement";
-import { compileUnits, type UnitAudit, type UnitOf } from "./units";
 
 export type AuditStatus = "met" | "partial" | "unmet" | "overSatisfied";
 
@@ -59,9 +58,6 @@ export interface AuditRoot {
   flexibleRoot: AuditNode | null;
   /** Optional spec rules (own tree). */
   specializationRoot: AuditNode | null;
-  /** Unit-accounting audit (units allocated across buckets); null when the
-   *  program carries no unit plan or no catalog units were supplied. */
-  unitAudit: UnitAudit | null;
   /** Course-to-slot lookup used during compilation; reused by UI for navigation. */
   placement: PlacementMap;
 }
@@ -266,7 +262,6 @@ export function compileAudit(
   program: Program | null,
   plan: LocalPlan,
   specializationId: string | null = null,
-  unitOf: UnitOf = () => undefined,
 ): AuditRoot {
   const placement = buildPlacementMap(plan);
   const programId = plan.programId;
@@ -277,7 +272,6 @@ export function compileAudit(
       byTerm: null,
       flexibleRoot: null,
       specializationRoot: null,
-      unitAudit: null,
       placement,
     };
   }
@@ -308,7 +302,6 @@ export function compileAudit(
     byTerm,
     flexibleRoot,
     specializationRoot,
-    unitAudit: compileUnits(program, placement, unitOf),
     placement,
   };
 }

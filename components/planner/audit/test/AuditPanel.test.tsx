@@ -150,13 +150,12 @@ describe("AuditPanel", () => {
     expect(rowCodes).not.toContain("AMATH271");
   });
 
-  it("shows the overall percent-complete headline", () => {
+  it("shows a count-based percent-complete headline", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     render(<AuditPanel plan={mkPlan({ programId: engId })} />);
-    // Engineering states a degree total (no distribution buckets), so the
-    // headline reports unit progress rather than a requirement count.
-    expect(screen.getByText(/of degree units/i)).toBeTruthy();
+    // Headline is the reliable course-count audit ("requirements met"), not units.
+    expect(screen.getByText(/requirements met/i)).toBeTruthy();
   });
 
   it("makes an unplaced course row an 'add' drag source when drill is enabled", () => {
@@ -240,112 +239,102 @@ describe("AuditPanel", () => {
     expect(container.querySelector(".av-item.dim")).not.toBeNull();
   });
 
-  it("flags a genuinely unscopable unit bucket with a manual-verification marker", () => {
-    // arts-and-business carries a 7.0-unit "Arts and Business courses" bucket
-    // that's a meta-requirement ("complete a Faculty of Arts honours major") —
-    // its rule tree has no subject pools to recover a scope from, so it stays
-    // unscoped and must show a manual-verification marker + caption, not a
-    // permanently-empty ring that reads like a forgotten requirement.
-    if (!("arts-and-business" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programId: "arts-and-business" })} />,
-    );
-    expect(
-      container.querySelector('[title*="check it by hand"]'),
-      "expected an unscoped bucket's manual-verification marker",
-    ).not.toBeNull();
-    expect(screen.getAllByText(/verify manually/i).length).toBeGreaterThan(0);
-  });
-
-  it("recovers an unscoped bucket's scope from rule-tree pools (psychology, no marker)", () => {
-    // psychology-bsc's "Science and Mathematics" bucket IS recoverable from its
-    // rule-tree subject pools, so it becomes a tracked subject bucket — clean
-    // title, real ring, denominator = full 21 units, and NO verify-manually marker.
+  it("uses a count-based headline and no unit-allocation breakdown", () => {
+    // Option A: the reliable rule-tree count drives the headline; the leaky
+    // per-bucket unit layer (Degree units / Distribution rings / verify-manually
+    // markers) is gone, so nothing on screen can contradict the count.
     if (!("psychology-bsc" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel plan={mkPlan({ programId: "psychology-bsc" })} />,
     );
     const aside = container.querySelector("aside");
     if (!aside) throw new Error("no aside");
+    expect(within(aside).queryByText(/requirements met/i)).not.toBeNull();
+    expect(within(aside).queryByText(/of degree units/i)).toBeNull();
+    expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
+    expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
     expect(container.querySelector('[title*="check it by hand"]')).toBeNull();
-    expect(within(aside).queryByText(/verify manually/i)).toBeNull();
-    expect(
-      within(aside).queryByText(/Science and Mathematics courses/i),
-      "derived bucket keeps its verbatim noun title",
-    ).not.toBeNull();
-    expect(within(aside).queryByText(/0\.0\s*\/\s*21 units/)).not.toBeNull();
   });
 
-  it("counts placed units toward the total for an open-only program (not capped at the open bucket)", () => {
-    // computing-and-financial-management's only unit bucket is a 2.0-unit "open
-    // electives" one (its real degree is in the rule tree). A complete plan must
-    // count toward the full 20.25 total, not cap at the 2.0 bucket. Place 2.5u.
-    if (!("computing-and-financial-management" in PROGRAMS)) return;
-    const codes = ["zzz101", "zzz102", "zzz103", "zzz104", "zzz105"];
+  it("shows a soft 'courses planned' gauge from placed course units", () => {
+    // Two 0.5u courses = 2 course-equivalents; psychology-bsc is 21 units = 42
+    // courses → "≈ 2 of 42 courses planned" (a volume gauge, approximate — hence
+    // "≈" and "planned" — not a completion claim).
+    if (!("psychology-bsc" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel
-        plan={oneSlotPlan("computing-and-financial-management", codes)}
-        catalog={codes.map((c) => mkCourse(c, 0.5))}
+        plan={oneSlotPlan("psychology-bsc", ["aaa101", "aaa102"])}
+        catalog={[mkCourse("aaa101", 0.5), mkCourse("aaa102", 0.5)]}
       />,
     );
     const aside = container.querySelector("aside");
     if (!aside) throw new Error("no aside");
-    const frac = within(aside)
-      .getByText(/\/\s*20\.25 units/)
-      .textContent?.replace(/\s+/g, "");
-    const applied = Number(frac?.match(/([\d.]+)\/20\.25/)?.[1] ?? "0");
     expect(
-      applied,
-      `numerator ${applied} should exceed the 2.0 open bucket`,
-    ).toBeGreaterThan(2.0);
-    expect(applied).toBeCloseTo(2.5, 5);
+      within(aside).queryByText(/≈\s*2 of 42 courses planned/i),
+    ).not.toBeNull();
   });
 
-  it("renders unit-distribution constraints (previously computed but never shown)", () => {
-    // science-and-business carries "3.0 units at the 200-level or above." style
-    // constraints. They were audited but never rendered — surface them now.
-    if (!("science-and-business" in PROGRAMS)) return;
+  it("tracks faculty breadth as a course count, not a unit note", () => {
+    // h-history's "Humanities — 1.0 unit" breadth becomes a tracked "0 of 2
+    // courses" requirement under "Degree requirements", with its eligible
+    // subjects shown — not a verbatim unit note, and not a unit ring that
+    // contradicts the count headline.
+    if (!("h-history" in PROGRAMS)) return;
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programId: "science-and-business" })} />,
+      <AuditPanel plan={mkPlan({ programId: "h-history" })} />,
     );
     const aside = container.querySelector("aside");
     if (!aside) throw new Error("no aside");
-    expect(
-      within(aside).queryAllByText(/200-level or above/i).length,
-    ).toBeGreaterThan(0);
-  });
-
-  it("renders a subject-restricted constraint as an accurate 'X of Y units' check", () => {
-    // planning has "2.0 units must be PLAN courses at the 300-level or above."
-    // The audit now honors the PLAN subject + level, so it's a real check
-    // ("0.0 of 2.0 units" on an empty plan) — not the old can't-verify punt.
-    if (!("planning" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programId: "planning" })} />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    expect(
-      within(aside).queryAllByText(/0\.0 of 2(?:\.0)? units/i).length,
-    ).toBeGreaterThan(0);
-    expect(
-      within(aside).queryByText(/verify the subject requirement/i),
-    ).toBeNull();
-  });
-
-  it("shows a unit-stated subject pool in units, not the approximate course count", () => {
-    // psychology-bsc has "5.25 units of Science courses" (selectCount 11 ≈ 5.25/0.5).
-    // The rule-tree section must read in units, not the fabricated "11" count.
-    if (!("psychology-bsc" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programId: "psychology-bsc" })} />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    expect(within(aside).queryAllByText(/5\.25 units/i).length).toBeGreaterThan(
+    expect(within(aside).queryByText(/degree requirements/i)).not.toBeNull();
+    expect(within(aside).queryAllByText(/Humanities/i).length).toBeGreaterThan(
       0,
     );
-    expect(within(aside).queryByText(/Any 11\b/)).toBeNull();
+    // 1.0 unit → 2 courses, tracked (multiple 2-course breadths share this text).
+    expect(
+      within(aside).queryAllByText(/0 of 2 courses/i).length,
+    ).toBeGreaterThan(0);
+    // Eligible subjects surface as tags.
+    expect(within(aside).queryAllByText(/^CLAS$/).length).toBeGreaterThan(0);
+    expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
+    expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
+  });
+
+  it("counts placed breadth courses toward the requirement", () => {
+    // Two PHIL courses (a Humanities subject in h-history, outside the major
+    // picks) satisfy the 2-course Humanities breadth → shown as met, reading
+    // "2 of 2 courses".
+    if (!("h-history" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={oneSlotPlan("h-history", ["phil100", "phil101"])} />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    expect(within(aside).queryAllByText(/PHIL\s*100/i).length).toBeGreaterThan(
+      0,
+    );
+    expect(within(aside).queryAllByText(/PHIL\s*101/i).length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      within(aside).queryAllByText(/2 of 2 courses/i).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("represents the degree's open volume as an uncounted 'Free electives' note", () => {
+    // h-biology pins ~21 named requirements out of a 43-course (21.5u) degree;
+    // the remainder surfaces as a soft "Free electives" note so the course count
+    // reconciles (named + free = degree total) — without being counted in the
+    // "requirements met" headline.
+    if (!("h-biology" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "h-biology" })} />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    expect(within(aside).queryByText(/free electives/i)).not.toBeNull();
+    // A note, not a tracked requirement: the headline still measures named
+    // requirements ("requirements met"), not the whole degree.
+    expect(within(aside).queryByText(/requirements met/i)).not.toBeNull();
   });
 
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {
