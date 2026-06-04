@@ -41,6 +41,12 @@ const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
       kind: z.literal("subjectPool"),
       description: z.string().optional(),
       selectCount: z.number(),
+      /**
+       * Set when the source stated the pool in UNITS ("5.25 units of Science
+       * courses"), not a course count. `selectCount` is then an approximation
+       * (units ÷ 0.5); the UI shows progress in these exact units instead.
+       */
+      units: z.number().optional(),
       subjectCodes: z.array(z.string()),
       minLevel: z.number().optional(),
       maxLevel: z.number().optional(),
@@ -71,6 +77,7 @@ export type RuleNode =
       kind: "subjectPool";
       description?: string;
       selectCount: number;
+      units?: number;
       subjectCodes: string[];
       minLevel?: number;
       maxLevel?: number;
@@ -126,6 +133,10 @@ export type ElectiveCategory = z.infer<typeof ElectiveCategorySchema>;
 // expressed as a subject prefix and isn't captured here. The joint subjects SE
 // (Math+Engineering) and CFM (Math+Arts) are intentionally omitted — their
 // math/non-math classification is genuinely ambiguous and we don't guess.
+//
+// This list is ALSO the exclusion set for "non-math units" (`subjectExcept`)
+// buckets, so the omission cuts both ways: an SE/CFM course is counted as
+// non-math. Deliberate — UW's own classification of SE/CFM is ambiguous.
 export const MATH_SUBJECTS = [
   "math",
   "amath",
@@ -136,6 +147,22 @@ export const MATH_SUBJECTS = [
   "actsc",
   "cm", // Computational Mathematics
   "matbus", // Mathematics/Business
+];
+
+// UW "science courses" (Faculty of Science) — the subject set that corroborates
+// a "N units of Science courses" requirement. Used only to *ground* the scope
+// recovered for an unscoped unit bucket: a recovered subject must both appear in
+// the program's own rule-tree pools AND be a science subject (when the bucket's
+// noun says "science"), so an off-topic pool (e.g. ENGL) can't leak in. Kept as
+// a documented set, like MATH_SUBJECTS; intersecting with the program's pools
+// keeps it conservative even if this list is incomplete.
+export const SCIENCE_SUBJECTS = [
+  "biol",
+  "chem",
+  "earth",
+  "mns", // Materials & Nanosciences
+  "phys",
+  "sci",
 ];
 
 /** What counts toward a unit bucket. */
@@ -176,11 +203,22 @@ const UnitBucketSchema = z.object({
 
 export type UnitBucket = z.infer<typeof UnitBucketSchema>;
 
-/** A non-bucket degree rule, e.g. "min 14.5 units at the 200-level or above". */
+/**
+ * A non-bucket degree rule evaluated as an OVERLAPPING distribution check over
+ * all placed courses (not an additive bucket): "min 14.5 units at the 200-level
+ * or above", "3.0 units of PLAN courses at the 300-level", faculty breadth
+ * ("1.0 unit of Humanities: CLAS, ENGL, HIST, …"). A course counts toward a
+ * constraint *and* still fills its allocation bucket — its units count once
+ * toward the degree total, but constraints are checks, not extra units.
+ */
 const UnitConstraintSchema = z.object({
   label: z.string(),
   minUnits: z.number().optional(),
   minLevel: z.number().optional(),
+  /** Subjects that satisfy the constraint (empty/absent = any subject). */
+  subjects: z.array(z.string()).optional(),
+  /** Subjects that do NOT count ("excluding SCI courses"). */
+  excludeSubjects: z.array(z.string()).optional(),
   sourceText: z.string().optional(),
 });
 
@@ -634,6 +672,26 @@ function collectReferenced(root: RuleNode, out: Set<string>): void {
       for (const c of n.courses) out.add(c.toLowerCase());
     }
   });
+}
+
+/**
+ * Course codes named in the program's required-courses rule tree — the
+ * all-required courses PLUS choice-group ("choose one of …") options. Lowercased.
+ *
+ * Broader than {@link getRequiredCourses} (which omits choices for the variant
+ * picker), and narrower than {@link programReferencedCodes} (which also pulls in
+ * elective pools / specializations). This is the eligible set for the "N units of
+ * required courses" unit bucket, whose unit count includes the choice options —
+ * scoping it to the all-only set leaves the bucket permanently unfillable.
+ */
+export function requiredSectionCodes(program: Program): Set<string> {
+  const out = new Set<string>();
+  if (program.kind === "engineering") {
+    for (const t of TERM_LETTERS) collectReferenced(program.terms[t], out);
+  } else {
+    collectReferenced(program.rules, out);
+  }
+  return out;
 }
 
 /**

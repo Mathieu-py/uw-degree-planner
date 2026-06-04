@@ -55,7 +55,6 @@ const COMPLETE_NO_MORE_THAN_RE =
   /^Complete no more than (\d+) from (the )?following/i;
 const COMPLETE_N_FROM_CHOICES_RE =
   /^Complete (\d+) courses? from the following choices/i;
-const SUBJECT_POOL_PREFIX_RE = /^Complete (\d+) additional\b/i;
 const EXCLUDED_RE =
   /^The following cannot be used towards (?:this )?(?:academic )?plan/i;
 // Catch-all for prose that doesn't fit any recognized rule shape. After #43
@@ -403,28 +402,66 @@ function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
 }
 
 /**
- * Parse a "Complete N additional …" rule into a `subjectPool` node. Returns
- * null if the prose doesn't match any known variant. Handles:
+ * Parse a "Complete N …" subject-pool rule into a `subjectPool` node. Returns
+ * null if the prose doesn't name an enumerable subject set. Handles:
  *   - "Complete 2 additional STAT courses at the 300-level"
  *   - "Complete 3 additional PMATH courses at the 400-level"
  *   - "Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, CS, …"
- *   - "Complete 2 additional math courses at the 400-level from the following subject codes: ACTSC, AMATH, …"
  *   - "Complete 3 additional courses from: ACTSC, AMATH, CO, …"
- *   - Optional trailing exclusion clause separated by `;`.
+ *   - "Complete 2 math courses from the following subject codes: ACTSC, AMATH, … (excluding CS100, MATH103)"
+ *   - "Complete 0.5 unit of BIOL courses at the 100- or 200-level (exclusive of BIOL225 …)"
+ *   - "Complete 5.25 units of Science courses from the following subjects: BIOL, CHEM, …"
+ *
+ * A unit amount ("N units of …") is converted to an approximate course count
+ * (units / 0.5) so the count-based audit has a threshold; the unit audit
+ * re-weights satisfiers by their real catalog units, so the approximation only
+ * affects the count-based fallback. Exclusion clauses (parenthetical or `;`-led)
+ * are kept verbatim for display; they don't gate matching.
  */
 function parseSubjectPool(fullText: string): RuleNode | null {
-  const head = SUBJECT_POOL_PREFIX_RE.exec(fullText);
+  const head = fullText.match(
+    /^Complete\s+(\d+(?:\.\d+)?)\s+(additional\s+|units?\s+of\s+)?/i,
+  );
   if (!head) return null;
-  const selectCount = Number(head[1]);
+  const amount = Number(head[1]);
+  const isUnits = /units?\s+of/i.test(head[2] ?? "");
   let rest = fullText.slice(head[0].length).trim();
 
-  // Optional single-subject prefix ("STAT courses", "PMATH courses", "math courses").
+  // Pull parenthetical clauses out first ("(excluding CS100, MATH103)",
+  // "(exclusive of BIOL225 …)", "(see Additional Constraints)") so they don't
+  // confuse level/from parsing; keep them as verbatim exclusion notes.
+  const exclusions: string[] = [];
+  rest = rest
+    .replace(/\(([^)]*)\)/g, (_m, inner: string) => {
+      const t = inner.trim();
+      if (t) exclusions.push(t);
+      return " ";
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // "N units of additional ERS courses" → drop the stray "additional" so the
+  // subject code that follows it is found (it sits after "units of", not before).
+  rest = rest.replace(/^additional\s+/i, "");
+
+  // Subject descriptor: "STAT courses" (one code) | "ENVS and/or ERS courses"
+  // (several codes in the noun) | "math/Science courses" (a noun whose subjects
+  // come from a later "from …" clause) | bare "courses".
   let subjectCodes: string[] = [];
-  const subjMatch = rest.match(/^([A-Za-z]+)\s+courses?\b/);
-  if (subjMatch) {
-    const word = subjMatch[1];
-    if (/^[A-Z]{2,8}$/.test(word)) subjectCodes = [word.toUpperCase()];
-    rest = rest.slice(subjMatch[0].length).trim();
+  // All-caps codes, optionally joined by "and/or", "and", "or", ",". Matched
+  // case-sensitively so prose words ("Science", "additional") aren't mistaken
+  // for codes (those fall through to the "from:" clause).
+  const codesMatch = rest.match(
+    /^([A-Z]{2,8}(?:\s*(?:,|and\/or|and|or)\s*[A-Z]{2,8})*)\s+courses?\b/,
+  );
+  if (codesMatch) {
+    subjectCodes = (codesMatch[1].match(/[A-Z]{2,8}/g) ?? []).map((s) =>
+      s.toUpperCase(),
+    );
+    rest = rest.slice(codesMatch[0].length).trim();
+  } else if (/^[A-Za-z]+\s+courses?\b/.test(rest)) {
+    // A non-code noun ("Science courses") — subjects must come from "from: …".
+    rest = rest.replace(/^[A-Za-z]+\s+courses?\b/, "").trim();
   } else if (/^courses?\b/i.test(rest)) {
     rest = rest.replace(/^courses?\b/i, "").trim();
   } else {
@@ -443,10 +480,9 @@ function parseSubjectPool(fullText: string): RuleNode | null {
     rest = rest.slice(levelMatch[0].length).trim();
   }
 
-  // Optional "from [the following subject codes]: <list>[; <exclusion>]".
-  let exclusions: string[] | undefined;
+  // Optional "from [the following subject codes|the following subjects][:] <list>[; <exclusion>]".
   const fromMatch = rest.match(
-    /^from(?:\s+the\s+following\s+subject\s+codes)?:\s*(.+)$/i,
+    /^from(?:\s+the\s+following\s+subject\s+codes|\s+the\s+following\s+subjects)?:?\s*(.+)$/i,
   );
   if (fromMatch) {
     const parts = fromMatch[1].split(";").map((p) => p.trim());
@@ -455,20 +491,28 @@ function parseSubjectPool(fullText: string): RuleNode | null {
       .map((s) => s.trim())
       .filter((s) => /^[A-Z]{2,8}$/.test(s));
     if (fromSubjects.length > 0) subjectCodes = fromSubjects;
-    if (parts.length > 1) {
-      exclusions = parts.slice(1).filter((p) => p.length > 0);
-    }
+    for (const p of parts.slice(1)) if (p.length > 0) exclusions.push(p);
   }
 
+  // No enumerable subject codes (a spelled-out noun like "Science courses at the
+  // 300-level" with no `from: <CODES>` list) → we won't fabricate a subject set,
+  // so the requirement is dropped from the rule tree rather than mis-scoped.
+  // Conservative-but-lossy: such a rule is then untracked (no count ring).
   if (subjectCodes.length === 0) return null;
 
+  // A unit-stated pool ("5.25 units of Science courses") has no per-course units
+  // at parse time, so `selectCount` approximates the count assuming a 0.5-unit
+  // course. We also record the original `units` so the UI shows exact unit
+  // progress (re-weighted from the catalog) instead of the approximate count.
+  const selectCount = isUnits ? Math.max(1, Math.round(amount / 0.5)) : amount;
   return {
     kind: "subjectPool",
     selectCount,
+    ...(isUnits ? { units: amount } : {}),
     subjectCodes,
     ...(minLevel !== undefined ? { minLevel } : {}),
     ...(maxLevel !== undefined ? { maxLevel } : {}),
-    ...(exclusions !== undefined ? { exclusions } : {}),
+    ...(exclusions.length > 0 ? { exclusions } : {}),
   };
 }
 
@@ -741,11 +785,17 @@ function scopeFromNoun(noun: string): UnitScope | null {
     !/\b(?:required|social|computer|data|management)\b/i.test(n)
   )
     return null;
-  // An explicit subject code (HIST, GSJ, …) — before the approved/elective
-  // fallback so "HIST and approved courses" scopes to HIST.
-  const m = n.match(/\b([A-Z]{2,7})\b/);
-  if (m && m[1] !== "UCR")
-    return { kind: "subject", subjects: [m[1].toLowerCase()] };
+  // Explicit subject codes — ALL of them, not just the first. "CLAS, GRK, and
+  // LAT courses" → [clas, grk, lat]; "BIOL or CHEM or approved" → [biol, chem].
+  // Connectors ("and"/"or") are lowercase so they don't match; "UCR" is the one
+  // non-subject all-caps token to guard. (Before the approved/elective fallback
+  // so "HIST and approved courses" still scopes to HIST.)
+  const codes = [...n.matchAll(/\b([A-Z]{2,7})\b/g)]
+    .map((mm) => mm[1])
+    .filter((c) => c !== "UCR")
+    .map((c) => c.toLowerCase());
+  if (codes.length > 0)
+    return { kind: "subject", subjects: [...new Set(codes)] };
   // A spelled-out named subject ("Classical Studies", "Social Work").
   for (const [re, subjects] of SUBJECT_NAME_MAP)
     if (re.test(n)) return { kind: "subject", subjects };
@@ -762,6 +812,38 @@ function scopeFromNoun(noun: string): UnitScope | null {
   // Anything else (e.g. "Arts and Business courses", "breadth courses") — we
   // can't verify the exact scope, so don't fabricate one.
   return null;
+}
+
+/**
+ * Extract the subject scope embedded in a unit-constraint sentence so the audit
+ * can check it (not just the level). "2.0 units of PLAN courses at the 300-level"
+ * → `subjects:["plan"]`; "…at the 300-level (excluding SCI courses)" →
+ * `excludeSubjects:["sci"]`; "…BIOL or EARTH…" → `subjects:["biol","earth"]`.
+ * Codes inside an "excluding/exclusive of …" clause are the exclusion set; all
+ * other all-caps codes are the inclusion set (a pure-level rule yields neither).
+ */
+function constraintScope(text: string): {
+  subjects?: string[];
+  excludeSubjects?: string[];
+} {
+  let rest = text;
+  let excludeSubjects: string[] = [];
+  const exc = text.match(/(?:excluding|exclusive of)\s+([^).]*)/i);
+  if (exc) {
+    excludeSubjects = [...exc[1].matchAll(/\b([A-Z]{2,7})\b/g)].map((m) =>
+      m[1].toLowerCase(),
+    );
+    rest = text.replace(exc[0], " ");
+  }
+  const subjects = [...rest.matchAll(/\b([A-Z]{2,7})\b/g)]
+    .map((m) => m[1].toLowerCase())
+    .filter((c) => c !== "ucr");
+  return {
+    ...(subjects.length ? { subjects: [...new Set(subjects)] } : {}),
+    ...(excludeSubjects.length
+      ? { excludeSubjects: [...new Set(excludeSubjects)] }
+      : {}),
+  };
 }
 
 export interface UnitPlanResult {
@@ -818,6 +900,7 @@ export function parseUnitPlan(
           label: text,
           minUnits: Number(level[1]),
           minLevel: Number(level[2]) * 100,
+          ...constraintScope(text),
           sourceText: text,
         });
         return;
@@ -1017,7 +1100,6 @@ export function parseDegreeRequirements(
 ): DegreeParseResult {
   const $ = cheerio.load(detail.degreeRequirements ?? "");
   const warnings: string[] = [];
-  const buckets: UnitBucket[] = [];
   const constraints: UnitConstraint[] = [];
   const informational: InformationalItem[] = [];
 
@@ -1041,11 +1123,14 @@ export function parseDegreeRequirements(
         s.toLowerCase(),
       );
       if (!um || subjects.length === 0) return;
-      buckets.push({
-        id: `breadth-${buckets.length}`,
+      // Breadth is an OVERLAPPING distribution requirement, not extra units: a
+      // major course in the subject list (a HIST major's HIST units → Humanities)
+      // satisfies it. So it's a subject-scoped constraint checked over all placed
+      // courses, NOT an additive bucket that competes with the major for courses.
+      constraints.push({
         label: `Breadth — ${label}`,
-        requiredUnits: Number(um[1]),
-        scope: { kind: "subject", subjects },
+        minUnits: Number(um[1]),
+        subjects,
         sourceText: `${label} — ${unitsTxt}: ${codesTxt}`,
       });
     });
@@ -1102,7 +1187,6 @@ export function parseDegreeRequirements(
     kualiId: pid,
     name: detail.title ?? "Degree-level requirements",
     ...(source ? { source } : {}),
-    ...(buckets.length > 0 ? { buckets } : {}),
     ...(communication ? { communication } : {}),
     ...(constraints.length > 0 ? { constraints } : {}),
     ...(informational.length > 0 ? { informational } : {}),

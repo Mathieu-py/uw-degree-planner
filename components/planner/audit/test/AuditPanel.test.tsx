@@ -7,6 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import type { Course } from "@/lib/courses/types";
 import { COURSE_DRAG_MIME } from "@/lib/plan/dnd";
 import { fakeDataTransfer } from "@/lib/plan/test/fakeDataTransfer";
 import type { LocalPlan } from "@/lib/plan/types";
@@ -26,6 +27,38 @@ function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
     updatedAt: "2026-05-23T12:00:00.000Z",
     ...overrides,
   };
+}
+
+function mkCourse(code: string, units = 0.5): Course {
+  return {
+    id: 0,
+    code,
+    name: code.toUpperCase(),
+    prereqs: null,
+    coreqs: null,
+    antireqs: null,
+    rating: null,
+    sections: [],
+    units,
+    prefix: code.replace(/\d.*$/, ""),
+    level: Number(code.match(/\d+/)?.[0] ?? 0),
+    hasSeats: true,
+  };
+}
+
+function oneSlotPlan(programId: string, codes: string[]): LocalPlan {
+  return mkPlan({
+    programId,
+    slots: [
+      {
+        id: "s1",
+        termId: 1239,
+        position: "1A",
+        isCoop: false,
+        courses: codes.map((code) => ({ code })),
+      },
+    ],
+  });
 }
 
 // An engineering program with an empty plan leaves every required course
@@ -207,20 +240,112 @@ describe("AuditPanel", () => {
     expect(container.querySelector(".av-item.dim")).not.toBeNull();
   });
 
-  it("flags an unscoped unit bucket with a manual-verification marker, not a 0% ring", () => {
-    // psychology-bsc carries a 9.5-unit "Science and Mathematics" bucket whose
-    // scope we can't verify. It must show a manual-verification marker (with a
-    // "check it by hand" affordance) and say so in the caption, instead of a
-    // permanently-empty progress ring that reads like a forgotten requirement.
-    if (!("psychology-bsc" in PROGRAMS)) return;
+  it("flags a genuinely unscopable unit bucket with a manual-verification marker", () => {
+    // arts-and-business carries a 7.0-unit "Arts and Business courses" bucket
+    // that's a meta-requirement ("complete a Faculty of Arts honours major") —
+    // its rule tree has no subject pools to recover a scope from, so it stays
+    // unscoped and must show a manual-verification marker + caption, not a
+    // permanently-empty ring that reads like a forgotten requirement.
+    if (!("arts-and-business" in PROGRAMS)) return;
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programId: "psychology-bsc" })} />,
+      <AuditPanel plan={mkPlan({ programId: "arts-and-business" })} />,
     );
     expect(
       container.querySelector('[title*="check it by hand"]'),
       "expected an unscoped bucket's manual-verification marker",
     ).not.toBeNull();
     expect(screen.getAllByText(/verify manually/i).length).toBeGreaterThan(0);
+  });
+
+  it("recovers an unscoped bucket's scope from rule-tree pools (psychology, no marker)", () => {
+    // psychology-bsc's "Science and Mathematics" bucket IS recoverable from its
+    // rule-tree subject pools, so it becomes a tracked subject bucket — clean
+    // title, real ring, denominator = full 21 units, and NO verify-manually marker.
+    if (!("psychology-bsc" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "psychology-bsc" })} />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    expect(container.querySelector('[title*="check it by hand"]')).toBeNull();
+    expect(within(aside).queryByText(/verify manually/i)).toBeNull();
+    expect(
+      within(aside).queryByText(/Science and Mathematics courses/i),
+      "derived bucket keeps its verbatim noun title",
+    ).not.toBeNull();
+    expect(within(aside).queryByText(/0\.0\s*\/\s*21 units/)).not.toBeNull();
+  });
+
+  it("counts placed units toward the total for an open-only program (not capped at the open bucket)", () => {
+    // computing-and-financial-management's only unit bucket is a 2.0-unit "open
+    // electives" one (its real degree is in the rule tree). A complete plan must
+    // count toward the full 20.25 total, not cap at the 2.0 bucket. Place 2.5u.
+    if (!("computing-and-financial-management" in PROGRAMS)) return;
+    const codes = ["zzz101", "zzz102", "zzz103", "zzz104", "zzz105"];
+    const { container } = render(
+      <AuditPanel
+        plan={oneSlotPlan("computing-and-financial-management", codes)}
+        catalog={codes.map((c) => mkCourse(c, 0.5))}
+      />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    const frac = within(aside)
+      .getByText(/\/\s*20\.25 units/)
+      .textContent?.replace(/\s+/g, "");
+    const applied = Number(frac?.match(/([\d.]+)\/20\.25/)?.[1] ?? "0");
+    expect(
+      applied,
+      `numerator ${applied} should exceed the 2.0 open bucket`,
+    ).toBeGreaterThan(2.0);
+    expect(applied).toBeCloseTo(2.5, 5);
+  });
+
+  it("renders unit-distribution constraints (previously computed but never shown)", () => {
+    // science-and-business carries "3.0 units at the 200-level or above." style
+    // constraints. They were audited but never rendered — surface them now.
+    if (!("science-and-business" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "science-and-business" })} />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    expect(
+      within(aside).queryAllByText(/200-level or above/i).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("renders a subject-restricted constraint as an accurate 'X of Y units' check", () => {
+    // planning has "2.0 units must be PLAN courses at the 300-level or above."
+    // The audit now honors the PLAN subject + level, so it's a real check
+    // ("0.0 of 2.0 units" on an empty plan) — not the old can't-verify punt.
+    if (!("planning" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "planning" })} />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    expect(
+      within(aside).queryAllByText(/0\.0 of 2(?:\.0)? units/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(aside).queryByText(/verify the subject requirement/i),
+    ).toBeNull();
+  });
+
+  it("shows a unit-stated subject pool in units, not the approximate course count", () => {
+    // psychology-bsc has "5.25 units of Science courses" (selectCount 11 ≈ 5.25/0.5).
+    // The rule-tree section must read in units, not the fabricated "11" count.
+    if (!("psychology-bsc" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "psychology-bsc" })} />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    expect(within(aside).queryAllByText(/5\.25 units/i).length).toBeGreaterThan(
+      0,
+    );
+    expect(within(aside).queryByText(/Any 11\b/)).toBeNull();
   });
 
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {

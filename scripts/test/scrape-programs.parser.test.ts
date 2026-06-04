@@ -465,6 +465,46 @@ describe("subject-pool parsing — synthetic variants", () => {
       </li></ul></div></div>
     </section>`;
 
+  it("records exact units on a unit-stated pool (selectCount stays an approximation)", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 5.25 units of Science courses from the following subjects: BIOL, CHEM</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.units).toBe(5.25); // exact, what the UI shows
+    expect(pool.selectCount).toBe(11); // 5.25 / 0.5 ≈ 11, count fallback only
+    expect(pool.subjectCodes).toEqual(["BIOL", "CHEM"]);
+  });
+
+  it("handles 'N units of additional SUBJ courses' (additional after 'units of')", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2.5 units of additional ERS courses, of which at least 0.5 unit must be at the 300-level or above</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.units).toBe(2.5);
+    expect(pool.subjectCodes).toEqual(["ERS"]);
+  });
+
+  it("handles a multi-subject noun: 'additional ENVS and/or ERS courses'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 1.0 unit of additional ENVS and/or ERS courses</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.units).toBe(1.0);
+    expect(pool.subjectCodes).toEqual(["ENVS", "ERS"]);
+  });
+
   it("single-subject with level: 'Complete 2 additional STAT courses at the 300-level'", () => {
     const r = parseProgramRequirements({
       requirements: wrapSection(
@@ -531,6 +571,82 @@ describe("subject-pool parsing — synthetic variants", () => {
     });
     expect(r.kind).toBe("empty");
     expect(r.warnings).toEqual([]);
+  });
+
+  // The shapes below were previously DROPPED (they lack "additional"), leaving
+  // psychology-bsc's 9.5-unit "Science and Mathematics" requirement uncaptured.
+  it("count-based, no 'additional': 'Complete 2 math courses from the following subject codes: … (excluding …)'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2 math courses from the following subject codes: ACTSC, AMATH, CO, CS, MATH, PMATH (excluding CS100 and MATH103)</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(2);
+    expect(pool.subjectCodes).toEqual([
+      "ACTSC",
+      "AMATH",
+      "CO",
+      "CS",
+      "MATH",
+      "PMATH",
+    ]);
+    expect(pool.exclusions?.some((e) => /CS100/.test(e))).toBe(true);
+  });
+
+  it("unit-based single subject with level range + parenthetical exclusion", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 0.5 unit of BIOL courses at the 100- or 200-level (exclusive of BIOL225 and BIOL280)</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["BIOL"]);
+    expect(pool.minLevel).toBe(100);
+    expect(pool.maxLevel).toBe(200);
+    expect(pool.selectCount).toBe(1); // 0.5 units / 0.5 ≈ 1 course
+    expect(pool.exclusions?.some((e) => /BIOL225/.test(e))).toBe(true);
+  });
+
+  it("unit-based multi-subject: 'Complete 5.25 units of Science courses from the following subjects: …'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 5.25 units of Science courses from the following subjects: BIOL, CHEM, EARTH, MNS, PHYS, SCI (see Additional Constraints)</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual([
+      "BIOL",
+      "CHEM",
+      "EARTH",
+      "MNS",
+      "PHYS",
+      "SCI",
+    ]);
+    expect(pool.selectCount).toBe(11); // 5.25 units / 0.5 ≈ 11 courses
+    expect(pool.minLevel).toBeUndefined();
+  });
+
+  it("does not capture unit electives without a subject ('Complete 2.0 units of elective courses')", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2.0 units of elective courses</div>",
+      ),
+    });
+    // No enumerable subject set → no subjectPool (handled as electives elsewhere).
+    if (r.kind === "flexible") {
+      expect(
+        findNode(r.rules, (n) => n.kind === "subjectPool"),
+      ).toBeUndefined();
+    } else {
+      expect(r.kind).toBe("empty");
+    }
   });
 });
 
@@ -1090,23 +1206,57 @@ describe("parseUnitPlan", () => {
     );
     expect(unitPlan?.totalUnits).toBe(21.25);
   });
+
+  it("scopes a multi-subject unit bucket to ALL listed subjects (not just the first)", () => {
+    // "8.0 units of CLAS, GRK, and LAT courses" must capture all three, else a
+    // student's GRK/LAT units leak to free electives (classics undercount).
+    const { unitPlan } = parseUnitPlan(
+      "<ul><li>Complete a total of 8.0 units:<ul>" +
+        "<li>8.0 units of CLAS, GRK, and LAT courses.</li></ul></li></ul>",
+    );
+    const b = unitPlan?.buckets.find((x) => x.scope.kind === "subject");
+    expect(b?.scope.kind === "subject" && b.scope.subjects).toEqual([
+      "clas",
+      "grk",
+      "lat",
+    ]);
+  });
+
+  it("captures subject + exclusion scope on a level constraint", () => {
+    const { unitPlan } = parseUnitPlan(
+      "<ul><li>Complete a total of 20.0 units:<ul>" +
+        "<li>2.0 units must be PLAN courses at the 300-level or above.</li>" +
+        "<li>3.0 units must be at the 300-level or above (excluding SCI courses).</li>" +
+        "</ul></li></ul>",
+    );
+    const cs = unitPlan?.constraints ?? [];
+    const plan = cs.find((c) => /PLAN/.test(c.label));
+    expect(plan?.subjects).toEqual(["plan"]);
+    expect(plan?.excludeSubjects).toBeUndefined();
+    const sci = cs.find((c) => /excluding SCI/.test(c.label));
+    expect(sci?.excludeSubjects).toEqual(["sci"]);
+    expect(sci?.subjects).toBeUndefined(); // "lecture"/level words aren't subjects
+  });
 });
 
 describe("parseDegreeRequirements", () => {
-  it("parses the BA breadth table into subject-scoped buckets", () => {
+  it("parses the BA breadth table into overlapping subject constraints", () => {
     const { degree, honoursTotal, generalTotal, fourYearTotal } =
       parseDegreeRequirements(rawJson("degree-arts"), "SyLzAe5R3");
     expect(honoursTotal).toBe(20.0);
     expect(generalTotal).toBe(15.0); // three-year general
     expect(fourYearTotal).toBe(20.0); // four-year general — distinct!
-    const labels = degree.buckets?.map((b) => b.label) ?? [];
+    // Breadth is an overlapping distribution requirement, so it's modelled as
+    // constraints (not additive buckets that compete with the major for courses).
+    expect(degree.buckets ?? []).toEqual([]);
+    const labels = degree.constraints?.map((c) => c.label) ?? [];
     expect(labels.some((l) => /Humanities/.test(l))).toBe(true);
     expect(labels.some((l) => /Social Sciences/.test(l))).toBe(true);
-    const social = degree.buckets?.find((b) => /Social Sciences/.test(b.label));
-    expect(social?.requiredUnits).toBe(2.0);
-    expect(social?.scope.kind === "subject" && social.scope.subjects).toContain(
-      "anth",
+    const social = degree.constraints?.find((c) =>
+      /Social Sciences/.test(c.label),
     );
+    expect(social?.minUnits).toBe(2.0);
+    expect(social?.subjects).toContain("anth");
     // communication options recovered
     expect(degree.communication?.options).toContain("arts160");
   });

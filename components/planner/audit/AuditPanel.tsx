@@ -322,6 +322,45 @@ function SectionRow({
   }
 
   if (section.kind === "node") {
+    // A unit-stated subject pool ("5.25 units of Science courses") tracks exact
+    // units, not the approximate course count `selectCount`. Weight the placed
+    // satisfiers by their catalog units. Falls through to the count display when
+    // no catalog is available (read-only views).
+    const rn = section.node.ruleNode;
+    if (
+      rn.kind === "subjectPool" &&
+      rn.units != null &&
+      catalogByCode.size > 0
+    ) {
+      const need = rn.units;
+      const applied =
+        Math.round(
+          section.node.satisfiers.reduce(
+            (s, p) => s + (catalogByCode.get(p.code)?.units ?? 0),
+            0,
+          ) * 100,
+        ) / 100;
+      const capped = Math.min(applied, need);
+      const pct = Math.min(Math.round((applied / need) * 100), 100);
+      return (
+        <SectionShell
+          title={section.title}
+          caption={`${capped.toFixed(1)} of ${need} units`}
+          ring={{ pct, num: capped }}
+          excludedViolationCount={section.summary.excludedViolationCount}
+          open={open}
+        >
+          <NodeBody
+            node={section.node}
+            placedCodes={placedCodes}
+            catalog={catalog}
+            catalogByCode={catalogByCode}
+            onDrill={onDrill}
+            drag={drag}
+          />
+        </SectionShell>
+      );
+    }
     // An optional group ("Choose any of the following", needed === 0) has no
     // target, so the ring reflects what's actually *chosen*: grey 0 with
     // nothing placed, and a green count once the student picks from the list
@@ -903,8 +942,10 @@ function SubjectPoolBody({
         ))}
       </div>
       <p className="av-hint">
-        Any {node.selectCount} from these subjects — there's no fixed list to
-        drag, so pick from the catalog.
+        {node.units != null
+          ? `Any ${node.units} units from these subjects`
+          : `Any ${node.selectCount} from these subjects`}{" "}
+        — there's no fixed list to drag, so pick from the catalog.
       </p>
       {onDrill && eligible.length > 0 ? (
         <button
@@ -1091,25 +1132,32 @@ function deriveSections(
   const ua = audit.unitAudit;
   const unitTotals = (() => {
     if (!ua) return null;
-    const required =
+    const stated =
       ua.totalRequired ??
       Math.round(
         ua.buckets.reduce((s, b) => s + b.bucket.requiredUnits, 0) * 100,
       ) / 100;
-    // With buckets, the numerator is allocated units, not raw placed units: a
-    // course that landed in no bucket (an unscoped requirement we won't
-    // auto-fill, or overflow once every eligible bucket is full) doesn't count
-    // toward the %, so the headline can't read 100% while an unscoped bucket
-    // says "verify manually", and it stays consistent with the per-bucket rings.
-    // A bare-total program (engineering: a total, no distribution buckets) has
-    // nothing to allocate into, so every placed unit counts toward the total.
-    const applied = ua.buckets.length > 0 ? ua.allocatedUnits : ua.totalApplied;
+    // Headline = "% of verifiable units". Units we can't verify (`unscoped`
+    // buckets whose scope the rule tree couldn't recover) are excluded from BOTH
+    // the numerator and denominator and flagged in the header caption — so the
+    // % reflects only what's actually checkable, neither over- nor understating.
+    const required = Math.round((stated - ua.unscopedUnits) * 100) / 100;
+    // With *specific* (non-open) buckets, the numerator is allocated units, not
+    // raw placed units: a course that landed in no bucket (overflow once every
+    // eligible bucket is full) doesn't count, keeping the % consistent with the
+    // per-bucket rings. When the plan has no specific buckets — a bare-total
+    // program (engineering), or one whose only bucket is a small "open electives"
+    // one while the real degree lives in the rule tree (double degrees) — there's
+    // nothing meaningful to allocate into, so every placed unit counts toward the
+    // total (else a complete plan would cap at the tiny open bucket's size).
+    const hasSpecific = ua.buckets.some((b) => b.bucket.scope.kind !== "open");
+    const applied = hasSpecific ? ua.allocatedUnits : ua.totalApplied;
     return required > 0 ? { applied, required } : null;
   })();
   // The bucket breakdown only renders when there are real buckets: an
   // engineering degree carries a unit total but no distribution buckets, so it
   // shows the unit headline alone.
-  if (ua && ua.buckets.length > 0) {
+  if (ua && (ua.buckets.length > 0 || ua.constraints.length > 0)) {
     const unitSections: Section[] = ua.buckets.map((b, i) => ({
       kind: "unitBucket",
       key: `unit-${b.bucket.id}-${i}`,
@@ -1126,6 +1174,24 @@ function deriveSections(
       status: b.status,
       unscoped: b.bucket.scope.kind === "unscoped",
     }));
+    // Distribution constraints — overlapping checks over all placed courses:
+    // faculty breadth ("1.0 unit of Humanities"), level minimums, "N units of
+    // PLAN at 300+". The audit now honors each constraint's subject scope,
+    // exclusions, and level, so the ✓ is trustworthy. (A residual "lecture/lab"
+    // qualifier, which we can't verify, is the only soft edge.)
+    ua.constraints.forEach((c, i) => {
+      const min = c.constraint.minUnits;
+      const caption =
+        min != null
+          ? `${c.satisfied ? "✓ " : ""}${c.appliedUnits.toFixed(1)} of ${min} units`
+          : c.constraint.label;
+      unitSections.push({
+        kind: "info",
+        key: `constraint-${i}`,
+        title: c.constraint.label,
+        caption,
+      });
+    });
     groups.push({ heading: "Degree units", sections: unitSections });
   }
 

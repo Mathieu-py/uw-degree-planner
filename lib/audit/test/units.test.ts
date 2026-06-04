@@ -33,6 +33,11 @@ const UNITS: Record<string, number> = {
   bio305: 0.5,
   engl101: 0.5,
   math237: 0.5,
+  // phys is a real Faculty-of-Science prefix (in SCIENCE_SUBJECTS); used by the
+  // scope-recovery tests, where the toy "bio" prefix wouldn't match.
+  phys201: 0.5,
+  phys305: 0.5,
+  pd1: 0.5, // Professional Development — carries a weight but is non-academic.
 };
 const unitOf: UnitOf = (c) => UNITS[c];
 
@@ -210,6 +215,72 @@ describe("compileUnits — allocation", () => {
   });
 });
 
+describe("compileUnits — required bucket includes choice-group options", () => {
+  // The "required courses" bucket's unit count includes choose-one courses, so
+  // its eligible set must too — else the bucket is permanently unfillable.
+  const withChoice: Program = {
+    kind: "flexible",
+    name: "Toy Required+Choice",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        { kind: "courses", courses: ["bio101"] },
+        // "Choose one of bio201/bio305" — a required-section choice (0.5u).
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [{ kind: "courses", courses: ["bio201", "bio305"] }],
+        },
+      ],
+    },
+    unitPlan: {
+      totalUnits: 1.5,
+      buckets: [
+        {
+          id: "req",
+          label: "1.0 unit of required courses",
+          requiredUnits: 1.0, // bio101 (0.5) + the chosen option (0.5)
+          scope: { kind: "required" },
+        },
+        {
+          id: "open",
+          label: "Electives",
+          requiredUnits: 0.5,
+          scope: { kind: "open" },
+        },
+      ],
+    },
+  };
+
+  it("fills the required bucket from a placed choice option (not just all-only)", () => {
+    const audit = compileUnits(
+      withChoice,
+      buildPlacementMap(plan(["bio101", "bio201", "engl101"])),
+      unitOf,
+    );
+    if (!audit) throw new Error("expected a unit audit");
+    const req = audit.buckets.find((b) => b.bucket.id === "req");
+    expect(req?.appliedUnits).toBe(1.0); // bio101 + bio201 (the chosen option)
+    expect(req?.status).toBe("met"); // was 0.5/1.0 partial before the fix
+    expect(audit.allocatedUnits).toBe(1.5); // req 1.0 + open 0.5 → 100% reachable
+  });
+
+  it("excludes non-academic PD/co-op courses from unit totals", () => {
+    const audit = compileUnits(
+      withChoice,
+      buildPlacementMap(plan(["bio101", "pd1"])),
+      unitOf,
+    );
+    if (!audit) throw new Error("expected a unit audit");
+    expect(audit.totalApplied).toBe(0.5); // pd1 dropped, only bio101 counts
+    expect(audit.unknownUnitCourses.map((p) => p.code)).not.toContain("pd1");
+    const req = audit.buckets.find((b) => b.bucket.id === "req");
+    expect(req?.satisfiers.map((s) => s.code)).not.toContain("pd1");
+  });
+});
+
 describe("compileUnits — unscoped buckets", () => {
   // 3.0-unit degree: 1.0 required + a 1.5-unit unscoped "Science" requirement we
   // can't verify + 0.5 free electives. The unscoped 1.5 is real (in the total)
@@ -266,5 +337,180 @@ describe("compileUnits — unscoped buckets", () => {
     expect(audit.unscopedUnits).toBe(1.5);
     expect(audit.allocatedUnits).toBeLessThan(audit.totalRequired ?? 0);
     expect(audit.allocatedUnits).toBeLessThanOrEqual(1.5); // 3.0 total − 1.5 unscoped
+  });
+});
+
+describe("compileUnits — unscoped scope recovered from rule-tree pools", () => {
+  // The rule tree enumerates subject pools for the unscoped requirement
+  // (psychology's case). The bucket is recovered as a subject bucket — but only
+  // for subjects the bucket's NOUN corroborates (science/math), so an off-topic
+  // pool subject can't leak in.
+  const withPool: Program = {
+    kind: "flexible",
+    name: "Toy Science (pooled)",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        { kind: "courses", courses: ["bio101", "bio102"] },
+        // A genuine Science pool (phys) sitting next to an off-topic ENGL pool.
+        { kind: "subjectPool", selectCount: 2, subjectCodes: ["phys"] },
+        { kind: "subjectPool", selectCount: 2, subjectCodes: ["engl"] },
+      ],
+    },
+    unitPlan: {
+      totalUnits: 3.0,
+      buckets: [
+        {
+          id: "req",
+          label: "Required courses",
+          requiredUnits: 1.0,
+          scope: { kind: "required" },
+        },
+        {
+          id: "sci",
+          label: "1.5 units of Science courses.",
+          requiredUnits: 1.5,
+          scope: { kind: "unscoped" },
+        },
+      ],
+    },
+  };
+
+  function runP(codes: string[]) {
+    const audit = compileUnits(
+      withPool,
+      buildPlacementMap(plan(codes)),
+      unitOf,
+    );
+    if (!audit) throw new Error("expected a unit audit");
+    return audit;
+  }
+
+  it("recovers only noun-corroborated subjects — no off-topic leak (ENGL ∉ Science)", () => {
+    const sci = runP([]).buckets.find((b) => b.bucket.id === "sci");
+    expect(sci?.bucket.scope).toEqual({ kind: "subject", subjects: ["phys"] });
+  });
+
+  it("fills the recovered bucket from on-topic courses and ignores off-topic ones", () => {
+    // phys201/phys305 (science) fill it; engl101 must NOT (it flows to electives).
+    const audit = runP(["bio101", "bio102", "phys201", "phys305", "engl101"]);
+    const sci = audit.buckets.find((b) => b.bucket.id === "sci");
+    expect(sci?.appliedUnits).toBe(1.0); // phys201 + phys305 only, NOT engl101
+    expect(sci?.satisfiers.map((s) => s.code).sort()).toEqual([
+      "phys201",
+      "phys305",
+    ]);
+    expect(audit.unscopedUnits).toBe(0); // recovered → no manual remainder
+  });
+
+  it("titles the recovered bucket from its label, not the subject list", () => {
+    const sci = runP([]).buckets.find((b) => b.bucket.id === "sci");
+    expect(sci?.title).toBe("Science courses");
+  });
+
+  it("scopes multiple unscoped buckets independently from their own nouns", () => {
+    const twoUnscoped: Program = {
+      kind: "flexible",
+      name: "Toy two-unscoped",
+      asOf: "2026",
+      rules: {
+        kind: "all",
+        children: [
+          { kind: "subjectPool", selectCount: 1, subjectCodes: ["phys"] },
+          { kind: "subjectPool", selectCount: 1, subjectCodes: ["math"] },
+        ],
+      },
+      unitPlan: {
+        totalUnits: 4.0,
+        buckets: [
+          {
+            id: "s",
+            label: "2.0 units of Science courses.",
+            requiredUnits: 2.0,
+            scope: { kind: "unscoped" },
+          },
+          {
+            id: "m",
+            label: "2.0 units of Mathematics courses.",
+            requiredUnits: 2.0,
+            scope: { kind: "unscoped" },
+          },
+        ],
+      },
+    };
+    const audit = compileUnits(
+      twoUnscoped,
+      buildPlacementMap(plan([])),
+      unitOf,
+    );
+    const byId = Object.fromEntries(
+      (audit?.buckets ?? []).map((b) => [b.bucket.id, b]),
+    );
+    // Each bucket gets ONLY its own concept's subjects — no shared union.
+    expect(byId.s.bucket.scope).toEqual({
+      kind: "subject",
+      subjects: ["phys"],
+    });
+    expect(byId.m.bucket.scope).toEqual({
+      kind: "subject",
+      subjects: ["math"],
+    });
+  });
+
+  it("leaves a no-concept noun unscoped (e.g. 'breadth courses')", () => {
+    const breadth: Program = {
+      kind: "flexible",
+      name: "Toy breadth",
+      asOf: "2026",
+      rules: { kind: "subjectPool", selectCount: 1, subjectCodes: ["phys"] },
+      unitPlan: {
+        totalUnits: 2.0,
+        buckets: [
+          {
+            id: "b",
+            label: "2.0 units of breadth courses.",
+            requiredUnits: 2.0,
+            scope: { kind: "unscoped" },
+          },
+        ],
+      },
+    };
+    const audit = compileUnits(breadth, buildPlacementMap(plan([])), unitOf);
+    const b = audit?.buckets.find((x) => x.bucket.id === "b");
+    expect(b?.bucket.scope.kind).toBe("unscoped"); // no science/math concept
+    expect(audit?.unscopedUnits).toBe(2.0);
+  });
+
+  it("does NOT recover subjects already owned by an explicit subject bucket", () => {
+    // The only science pool subject (bio) is already claimed by a subject bucket,
+    // so nothing concept-corroborated is left → the unscoped bucket stays unscoped.
+    const claimed: Program = {
+      kind: "flexible",
+      name: "Toy claimed",
+      asOf: "2026",
+      rules: { kind: "subjectPool", selectCount: 1, subjectCodes: ["phys"] },
+      unitPlan: {
+        totalUnits: 2.0,
+        buckets: [
+          {
+            id: "phys",
+            label: "PHYS",
+            requiredUnits: 1.0,
+            scope: { kind: "subject", subjects: ["phys"] },
+          },
+          {
+            id: "u",
+            label: "1.0 unit of Science courses.",
+            requiredUnits: 1.0,
+            scope: { kind: "unscoped" },
+          },
+        ],
+      },
+    };
+    const audit = compileUnits(claimed, buildPlacementMap(plan([])), unitOf);
+    const u = audit?.buckets.find((b) => b.bucket.id === "u");
+    expect(u?.bucket.scope.kind).toBe("unscoped");
+    expect(audit?.unscopedUnits).toBe(1.0);
   });
 });
