@@ -3,6 +3,11 @@
 import { memo, type ReactNode, useMemo } from "react";
 import { Icon } from "@/components/ui/Icon";
 import {
+  type Averages,
+  computeAverages,
+  MIN_GRADED_FOR_AVERAGE,
+} from "@/lib/audit/averages";
+import {
   type BreadthRequirement,
   deriveBreadthRequirements,
   nonBreadthConstraints,
@@ -11,6 +16,7 @@ import {
   type AuditNode,
   type AuditRoot,
   compileAudit,
+  legalityKeySet,
   summarize,
 } from "@/lib/audit/compile";
 import {
@@ -22,6 +28,7 @@ import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { courseDragProps } from "@/lib/plan/dnd";
 import type { LocalPlan } from "@/lib/plan/types";
+import { validatePlan } from "@/lib/plan/validate";
 import {
   describeRule,
   PROGRAMS,
@@ -134,15 +141,32 @@ export const AuditPanel = memo(function AuditPanel({
     [catalog],
   );
 
+  // Legality overlay: a satisfier placed before its prereqs (or in antireq
+  // conflict) still counts toward its requirement, but is flagged. Needs the
+  // catalog to read requisite strings; without it (read-only view) the overlay
+  // is simply empty. `blockingIssueCount` is the plan-wide rollup for the header.
+  const { legality, blockingIssueCount } = useMemo(() => {
+    if (catalogByCode.size === 0)
+      return { legality: new Set<string>(), blockingIssueCount: 0 };
+    const issues = validatePlan(plan, catalogByCode);
+    const keys = legalityKeySet(issues);
+    return { legality: keys, blockingIssueCount: keys.size };
+  }, [plan, catalogByCode]);
+
   const audit = useMemo(
-    () => compileAudit(program, plan, plan.specializationId),
-    [plan, program],
+    () => compileAudit(program, plan, plan.specializationId, legality),
+    [plan, program, legality],
   );
 
-  const { groups, totals, untrackedCount, headerCaption } = useMemo(
-    () => deriveSections(audit, program),
-    [audit, program],
+  // Unit-weighted percentage averages (Waterloo reports percent, not GPA).
+  // Needs the catalog for unit weights; without it the values stay null.
+  const averages = useMemo(
+    () => computeAverages(plan, catalogByCode, audit),
+    [plan, catalogByCode, audit],
   );
+
+  const { groups, totals, untrackedCount, unverifiedCount, headerCaption } =
+    useMemo(() => deriveSections(audit, program), [audit, program]);
 
   if (!plan.programId) {
     return (
@@ -168,8 +192,13 @@ export const AuditPanel = memo(function AuditPanel({
     totals.needed > 0
       ? Math.min(Math.round((totals.satisfied / totals.needed) * 100), 100)
       : 0;
+  // Never let the headline read 100% while requirements remain that the % can't
+  // measure — count-less electives (untracked) OR requirements we couldn't even
+  // parse (unverified). The degree isn't provably done while either is owed.
   const headlinePct =
-    untrackedCount > 0 ? Math.min(trackedPct, 99) : trackedPct;
+    untrackedCount > 0 || unverifiedCount > 0
+      ? Math.min(trackedPct, 99)
+      : trackedPct;
   const headlineFraction = `${totals.satisfied}/${totals.needed}`;
 
   // A soft "courses planned" gauge — placed course-equivalents (catalog units ÷
@@ -216,6 +245,20 @@ export const AuditPanel = memo(function AuditPanel({
           {headerCaption ? (
             <div className="av-note">{headerCaption}</div>
           ) : null}
+          {unverifiedCount > 0 ? (
+            <div className="av-note">
+              {unverifiedCount} requirement{unverifiedCount === 1 ? "" : "s"}{" "}
+              couldn't be auto-verified — check with your advisor.
+            </div>
+          ) : null}
+          {blockingIssueCount > 0 ? (
+            <div className="av-note text-partial">
+              ⚠ {blockingIssueCount} placement issue
+              {blockingIssueCount === 1 ? "" : "s"} (prereq/antireq) — some
+              progress rests on invalid placements.
+            </div>
+          ) : null}
+          <AveragesRow averages={averages} />
         </div>
         <div className="pw-audit-list lg:flex-1 lg:min-h-0 [scrollbar-width:thin]">
           {groups.map((group, gi) => (
@@ -242,6 +285,31 @@ export const AuditPanel = memo(function AuditPanel({
     </aside>
   );
 });
+
+/**
+ * Compact averages line in the audit header. Shows the unit-weighted
+ * cumulative and major percentages once computable; while there are graded
+ * courses but too few to be meaningful, it says so rather than showing a
+ * misleading number. Renders nothing when no grades exist yet.
+ */
+function AveragesRow({ averages }: { averages: Averages }) {
+  const { cumulative, major } = averages;
+  if (cumulative.value === null) {
+    if (cumulative.countedCourses === 0) return null;
+    return (
+      <div className="av-note">
+        Averages available after {MIN_GRADED_FOR_AVERAGE} graded courses (
+        {cumulative.countedCourses} so far).
+      </div>
+    );
+  }
+  return (
+    <div className="av-note u-mono">
+      Cumulative {cumulative.value}%
+      {major.value !== null ? <> · Major {major.value}%</> : null}
+    </div>
+  );
+}
 
 function isIncomplete(section: Section): boolean {
   if (section.kind === "node")
@@ -314,6 +382,7 @@ function SectionRow({
         caption={section.caption}
         ring={{ pct, num: chosen }}
         excludedViolationCount={section.summary.excludedViolationCount}
+        legalityIssueCount={section.node.illegalSatisfiers?.length ?? 0}
         open={open}
       >
         <NodeBody
@@ -426,6 +495,7 @@ function SectionShell({
   caption,
   ring,
   excludedViolationCount = 0,
+  legalityIssueCount = 0,
   open,
   children,
 }: {
@@ -434,6 +504,8 @@ function SectionShell({
   /** Present → progress ring; absent → neutral doc glyph (unit/browse rows). */
   ring?: { pct: number; num: number };
   excludedViolationCount?: number;
+  /** Satisfiers here that are placed illegally (met-but-flagged). */
+  legalityIssueCount?: number;
   open: boolean;
   children: ReactNode;
 }) {
@@ -461,6 +533,15 @@ function SectionShell({
           >
             <Icon name="warning" size="xs" aria-hidden="true" />
             {excludedViolationCount}
+          </span>
+        ) : null}
+        {legalityIssueCount > 0 ? (
+          <span
+            className="inline-flex items-center gap-0.5 rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
+            title={`${legalityIssueCount} course${legalityIssueCount === 1 ? "" : "s"} here ${legalityIssueCount === 1 ? "is" : "are"} placed before prereqs or in antireq conflict — counted, but verify the placement`}
+          >
+            <Icon name="warning" size="xs" aria-hidden="true" />
+            {legalityIssueCount}
           </span>
         ) : null}
         <span className="text-ink-3 inline-flex transition-transform group-open:rotate-90 shrink-0">
@@ -1058,6 +1139,8 @@ function deriveSections(
   totals: { needed: number; satisfied: number };
   /** Count-less elective requirements (open/unit lists) that the % can't cover. */
   untrackedCount: number;
+  /** Verbatim requirements the scraper couldn't structure (owed, unverifiable). */
+  unverifiedCount: number;
   headerCaption: string | null;
 } {
   const groups: SectionGroup[] = [];
@@ -1201,10 +1284,28 @@ function deriveSections(
       groups.push({ heading: "Degree requirements", sections });
   }
 
+  // Requirements the scraper couldn't structure into a rule (unscoped subject
+  // pools, unrecognized "Complete …" prose). They're real and owed but can't be
+  // progress-tracked, so they get their own group and keep the headline honest
+  // (it can't read 100% while these are outstanding — see headlinePct).
+  const unverified = program?.unverifiedRequirements ?? [];
+  if (unverified.length > 0) {
+    groups.push({
+      heading: "Needs verification",
+      sections: unverified.map((text, i) => ({
+        kind: "info",
+        key: `unverified-${i}`,
+        title: "Couldn't auto-verify",
+        caption: text,
+      })),
+    });
+  }
+
   return {
     groups,
     totals: { needed: totalNeeded, satisfied: totalSatisfied },
     untrackedCount,
+    unverifiedCount: unverified.length,
     headerCaption: buildHeaderCaption(program, untrackedCount),
   };
 }

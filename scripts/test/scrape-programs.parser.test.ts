@@ -215,7 +215,7 @@ describe("parseProgramRequirements — engineering 'Complete N of' → pick node
     expect(r.warnings).toEqual([]);
   });
 
-  it("silently skips 'Complete N approved electives' (no warning, no code)", () => {
+  it("surfaces 'Complete N approved electives' as unverified, not a rule (no warning, no code)", () => {
     const html = `
       <section>
         <header><h2 data-testid="grouping-label"><span>4A Term</span></h2></header>
@@ -231,6 +231,9 @@ describe("parseProgramRequirements — engineering 'Complete N of' → pick node
     expect(requiredCoursesIn(r.terms["4A"])).toEqual([]);
     expect(leafPickGroups(r.terms["4A"])).toEqual([]);
     expect(r.warnings).toEqual([]);
+    // It's a real owed requirement we can't structure → kept as unverified so
+    // the student still sees it, rather than silently vanishing.
+    expect(r.unverified).toEqual(["Complete 3 approved electives"]);
   });
 });
 
@@ -453,6 +456,55 @@ describe("'Complete no more than N' with N > 1", () => {
     expect(group?.description).toBe(
       "Complete no more than 3 from the following",
     );
+  });
+});
+
+describe("unverified requirements — owed prose we can't structure", () => {
+  const wrapLeaf = (ruleText: string) => `
+    <section>
+      <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+      <div><div><ul>
+        <li data-test="ruleView-A"><div data-test="ruleView-A-result">${ruleText}</div></li>
+      </ul></div></div>
+    </section>`;
+
+  it("captures an unscoped subject pool (no subject list) as unverified", () => {
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Complete 5.0 units of Science courses at the 300-level",
+        ),
+      },
+      "test",
+    );
+    // No enumerable subjects → dropped from the rule tree, but surfaced verbatim.
+    expect(r.unverified).toEqual([
+      "Complete 5.0 units of Science courses at the 300-level",
+    ]);
+    // It's owed-but-unstructured, not a parser bug, so no developer warning.
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("captures unrecognized 'Complete …' prose as unverified AND warns", () => {
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Complete the residency requirement at Waterloo",
+        ),
+      },
+      "test",
+    );
+    expect(r.unverified).toEqual([
+      "Complete the residency requirement at Waterloo",
+    ]);
+  });
+
+  it("does not capture non-action preamble prose (Note/If)", () => {
+    const r = parseProgramRequirements(
+      { requirements: wrapLeaf("Note: consult your advisor before enrolling") },
+      "test",
+    );
+    expect(r.unverified).toEqual([]);
   });
 });
 

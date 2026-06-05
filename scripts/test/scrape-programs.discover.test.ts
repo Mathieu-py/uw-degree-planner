@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { discoverCatalogId } from "../scrape-programs";
+import { discoverCatalog, discoverCatalogId } from "../scrape-programs";
 
 const FALLBACK = "67e557ed6ed2fe2bd3a38956";
 
@@ -144,5 +144,30 @@ describe("discoverCatalogId", () => {
       ]),
     );
     expect(await discoverCatalogId(NOW)).toBe(FALLBACK);
+  });
+});
+
+describe("discoverCatalog — provenance", () => {
+  it("returns id, title, and the academic-year span from start/end dates", async () => {
+    mockFetch(() =>
+      jsonResponse([
+        {
+          _id: "current-ug",
+          title: "2026-2027 Undergraduate Studies Academic Calendar",
+          startDate: "2026-04-01",
+          endDate: "2027-04-01",
+        },
+      ]),
+    );
+    expect(await discoverCatalog(NOW)).toEqual({
+      id: "current-ug",
+      title: "2026-2027 Undergraduate Studies Academic Calendar",
+      year: "2026-2027",
+    });
+  });
+
+  it("returns only the id (no title/year) on fallback", async () => {
+    mockFetch(() => new Response("not found", { status: 404 }));
+    expect(await discoverCatalog(NOW)).toEqual({ id: FALLBACK });
   });
 });

@@ -21,9 +21,16 @@ export type ParseResult =
       kind: "engineering";
       terms: Record<TermLetter, RuleNode>;
       warnings: string[];
+      /** Verbatim owed-requirement statements we couldn't structure into a rule. */
+      unverified: string[];
     }
-  | { kind: "flexible"; rules: RuleNode; warnings: string[] }
-  | { kind: "empty"; warnings: string[] };
+  | {
+      kind: "flexible";
+      rules: RuleNode;
+      warnings: string[];
+      unverified: string[];
+    }
+  | { kind: "empty"; warnings: string[]; unverified: string[] };
 
 interface ProgramDetailFields {
   requiredCoursesTermByTerm?: string;
@@ -90,12 +97,13 @@ export function parseProgramRequirements(
   const noUnitsHtml = detail.courseRequirementsNoUnits?.trim();
   if (noUnitsHtml) return parseFlexible(noUnitsHtml, programLabel);
 
-  return { kind: "empty", warnings: [] };
+  return { kind: "empty", warnings: [], unverified: [] };
 }
 
 function parseEngineering(html: string, programLabel: string): ParseResult {
   const terms = emptyTermsTree();
   const warnings: string[] = [];
+  const unverified: string[] = [];
   const $ = cheerio.load(html);
 
   $("section").each((_, section) => {
@@ -112,37 +120,46 @@ function parseEngineering(html: string, programLabel: string): ParseResult {
       $section,
       `${programLabel} ${termLetter}`,
       warnings,
+      unverified,
     );
     if (root.children.length > 0 || root.kind !== "all") {
       terms[termLetter] = root;
     }
   });
 
-  return { kind: "engineering", terms, warnings };
+  return { kind: "engineering", terms, warnings, unverified };
 }
 
 function parseFlexible(html: string, programLabel: string): ParseResult {
   const allChildren: RuleNode[] = [];
   const warnings: string[] = [];
+  const unverified: string[] = [];
   const $ = cheerio.load(html);
 
   // Flexible programs may have one or more sections; merge them all under
   // one root `all` node. In practice it's a single "Required Courses"
   // section, but we don't depend on that.
   $("section").each((_, section) => {
-    const root = parseSectionTree($, $(section), programLabel, warnings);
+    const root = parseSectionTree(
+      $,
+      $(section),
+      programLabel,
+      warnings,
+      unverified,
+    );
     if (root.kind === "all") allChildren.push(...root.children);
     else allChildren.push(root);
   });
 
   if (allChildren.length === 0) {
-    return { kind: "empty", warnings };
+    return { kind: "empty", warnings, unverified };
   }
 
   return {
     kind: "flexible",
     rules: { kind: "all", children: allChildren },
     warnings,
+    unverified,
   };
 }
 
@@ -160,6 +177,7 @@ function parseSectionTree(
   $section: ReturnType<cheerio.CheerioAPI>,
   contextLabel: string,
   warnings: string[],
+  unverified: string[],
 ): RuleNode & { kind: "all" } {
   const topUl = $section
     .children()
@@ -167,7 +185,7 @@ function parseSectionTree(
     .filter((_, ul) => $(ul).children("li").length > 0)
     .first();
   if (topUl.length === 0) return { kind: "all", children: [] };
-  const children = walkUl($, topUl, contextLabel, warnings);
+  const children = walkUl($, topUl, contextLabel, warnings, unverified);
   return { kind: "all", children };
 }
 
@@ -180,11 +198,12 @@ function walkUl(
   $ul: ReturnType<cheerio.CheerioAPI>,
   contextLabel: string,
   warnings: string[],
+  unverified: string[],
 ): RuleNode[] {
   const items = collectLiSiblings($, $ul);
   const out: RuleNode[] = [];
   for (let i = 0; i < items.length; i++) {
-    const parsed = parseLi($, items[i], contextLabel, warnings);
+    const parsed = parseLi($, items[i], contextLabel, warnings, unverified);
     if (parsed === null) continue;
     if (parsed.kind === "metaParent") {
       // Consume subsequent siblings as children until end of ul or another
@@ -193,7 +212,7 @@ function walkUl(
       const children: RuleNode[] = [];
       let j = i + 1;
       while (j < items.length) {
-        const next = parseLi($, items[j], contextLabel, warnings);
+        const next = parseLi($, items[j], contextLabel, warnings, unverified);
         if (next !== null) {
           if (next.kind === "metaParent") break;
           children.push(next.node);
@@ -254,6 +273,7 @@ function parseLi(
   $li: ReturnType<cheerio.CheerioAPI>,
   contextLabel: string,
   warnings: string[],
+  unverified: string[],
 ): ParsedLi | null {
   // DOM-nested wrapper: <li>(no data-test) with a <span> + nested <ul>.
   const dataTest = $li.attr("data-test");
@@ -263,7 +283,7 @@ function parseLi(
     const $childUl = $directChildren.filter("ul").first();
     if ($childUl.length === 0) return null;
     const wrapperText = $span.text().replace(/\s+/g, " ").trim();
-    const children = walkUl($, $childUl, contextLabel, warnings);
+    const children = walkUl($, $childUl, contextLabel, warnings, unverified);
     if (children.length === 0) return null;
     const wrapper = wrapWithProse(wrapperText, children);
     return { kind: "node", node: wrapper };
@@ -343,6 +363,20 @@ function parseLi(
   // Subject-pool prose. Try against the full text (the rule may have colons).
   const subjectPool = parseSubjectPool(fullText);
   if (subjectPool) return { kind: "node", node: subjectPool };
+
+  // We couldn't structure this <li> into a rule. If it states an owed action
+  // ("Complete …" — an unscoped subject pool that `parseSubjectPool` rejected
+  // for lack of a subject list, or otherwise unrecognized "Complete" prose),
+  // surface it verbatim as an UNVERIFIED requirement so the audit doesn't read
+  // complete when a real requirement was silently dropped. Non-action prose
+  // (Note/If/preambles caught by DEFERRED_PROSE_RE) is genuine noise and stays
+  // dropped. A truly unrecognized rule still emits a developer warning.
+  if (/^Complete\b/i.test(prefix)) {
+    unverified.push(fullText);
+    if (!DEFERRED_PROSE_RE.test(prefix))
+      warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
+    return null;
+  }
 
   if (DEFERRED_PROSE_RE.test(prefix)) return null;
 

@@ -147,6 +147,20 @@ const InformationalItemSchema = z.object({
 export type InformationalItem = z.infer<typeof InformationalItemSchema>;
 
 /**
+ * Which Undergraduate Calendar (Kuali catalog) a program's requirements were
+ * scraped from. Stamped per program so a Program is self-describing about its
+ * provenance; `year` is the catalog's academic span (e.g. "2025-2026"),
+ * derived from its start/end dates.
+ */
+const CatalogProvenanceSchema = z.object({
+  id: z.string(),
+  title: z.string().optional(),
+  year: z.string().optional(),
+});
+
+export type CatalogProvenance = z.infer<typeof CatalogProvenanceSchema>;
+
+/**
  * Faculty-wide "Bachelor of X degree-level requirements" shared by every major
  * in that faculty: breadth/level constraints (verbatim notes), a communication
  * requirement, and informational items (residency, averages, co-op work terms).
@@ -201,6 +215,8 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     degreeRequirements: DegreeRequirementsSchema.optional(),
     informational: z.array(InformationalItemSchema).optional(),
     specializations: z.array(SpecializationSchema).optional(),
+    unverifiedRequirements: z.array(z.string()).optional(),
+    catalog: CatalogProvenanceSchema.optional(),
   }),
   z.object({
     kind: z.literal("flexible"),
@@ -213,6 +229,8 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     degreeRequirements: DegreeRequirementsSchema.optional(),
     informational: z.array(InformationalItemSchema).optional(),
     specializations: z.array(SpecializationSchema).optional(),
+    unverifiedRequirements: z.array(z.string()).optional(),
+    catalog: CatalogProvenanceSchema.optional(),
   }),
 ]);
 

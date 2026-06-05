@@ -46,6 +46,13 @@ export interface AuditNode {
   selectMax?: number;
   /** Excluded-courses violations: codes the student has placed that the rule says cannot count. */
   excludedViolations?: Placement[];
+  /**
+   * Satisfiers that ARE placed but NOT legally (an unmet prereq or an antireq
+   * conflict in their slot). They still count toward the requirement
+   * ("met-but-flagged"), but the UI surfaces a warning so the student knows the
+   * progress rests on an invalid placement. Coreqs are advisory and excluded.
+   */
+  illegalSatisfiers?: Placement[];
   children: AuditNode[];
 }
 
@@ -86,7 +93,30 @@ function statusFromPickCount(
   return count > 0 || anyPartial ? "partial" : "unmet";
 }
 
-function compile(node: RuleNode, placement: PlacementMap): AuditNode {
+/** Stable key for a placement, matching a slot-scoped legality issue. */
+function placementLegalityKey(p: Placement): string {
+  return `${p.slotId}::${p.code}`;
+}
+
+/** The subset of `satisfiers` whose placement has a blocking legality issue. */
+function illegalAmong(
+  satisfiers: readonly Placement[],
+  legality: ReadonlySet<string>,
+): Placement[] {
+  if (legality.size === 0) return [];
+  return satisfiers.filter((p) => legality.has(placementLegalityKey(p)));
+}
+
+/** Attach `illegalSatisfiers` to a node only when there are any (keeps nodes lean). */
+function withIllegal(node: AuditNode, illegal: Placement[]): AuditNode {
+  return illegal.length > 0 ? { ...node, illegalSatisfiers: illegal } : node;
+}
+
+function compile(
+  node: RuleNode,
+  placement: PlacementMap,
+  legality: ReadonlySet<string>,
+): AuditNode {
   switch (node.kind) {
     case "courses": {
       // Top-level / under all: treat as all-required.
@@ -103,29 +133,37 @@ function compile(node: RuleNode, placement: PlacementMap): AuditNode {
           : satisfiers.length > 0
             ? "partial"
             : "unmet";
-      return {
-        ruleNode: node,
-        status,
-        satisfiers,
-        missingCodes: missing,
-        children: [],
-      };
+      return withIllegal(
+        {
+          ruleNode: node,
+          status,
+          satisfiers,
+          missingCodes: missing,
+          children: [],
+        },
+        illegalAmong(satisfiers, legality),
+      );
     }
     case "all": {
-      const children = node.children.map((c) => compile(c, placement));
-      return {
-        ruleNode: node,
-        status: statusFromAllChildren(children),
-        description: describeRule(node),
-        satisfiers: children.flatMap((c) => c.satisfiers),
-        missingCodes: children.flatMap((c) => c.missingCodes),
-        children,
-      };
+      const children = node.children.map((c) =>
+        compile(c, placement, legality),
+      );
+      return withIllegal(
+        {
+          ruleNode: node,
+          status: statusFromAllChildren(children),
+          description: describeRule(node),
+          satisfiers: children.flatMap((c) => c.satisfiers),
+          missingCodes: children.flatMap((c) => c.missingCodes),
+          children,
+        },
+        children.flatMap((c) => c.illegalSatisfiers ?? []),
+      );
     }
     case "pick":
-      return compilePick(node, placement);
+      return compilePick(node, placement, legality);
     case "subjectPool":
-      return compileSubjectPool(node, placement);
+      return compileSubjectPool(node, placement, legality);
     case "excluded": {
       const violations: Placement[] = [];
       for (const code of node.courses) {
@@ -154,6 +192,7 @@ function compile(node: RuleNode, placement: PlacementMap): AuditNode {
 function compilePick(
   node: Extract<RuleNode, { kind: "pick" }>,
   placement: PlacementMap,
+  legality: ReadonlySet<string>,
 ): AuditNode {
   const allCoursesLeaves =
     node.children.length > 0 &&
@@ -171,25 +210,28 @@ function compilePick(
       if (p) satisfiers.push(p);
       else missing.push(code);
     }
-    return {
-      ruleNode: node,
-      status: statusFromPickCount(
-        satisfiers.length,
-        node.selectMin,
-        node.selectMax,
-        false,
-      ),
-      description: describeRule(node),
-      satisfiers,
-      missingCodes: missing,
-      satisfiedCount: satisfiers.length,
-      selectMin: node.selectMin,
-      selectMax: node.selectMax,
-      children: [],
-    };
+    return withIllegal(
+      {
+        ruleNode: node,
+        status: statusFromPickCount(
+          satisfiers.length,
+          node.selectMin,
+          node.selectMax,
+          false,
+        ),
+        description: describeRule(node),
+        satisfiers,
+        missingCodes: missing,
+        satisfiedCount: satisfiers.length,
+        selectMin: node.selectMin,
+        selectMax: node.selectMax,
+        children: [],
+      },
+      illegalAmong(satisfiers, legality),
+    );
   }
   // Mixed/nested children: each must be independently met to count as 1.
-  const children = node.children.map((c) => compile(c, placement));
+  const children = node.children.map((c) => compile(c, placement, legality));
   // A child only counts toward the parent's threshold when placements actually
   // satisfy it. An *optional* child (e.g. "Choose any of the following", with
   // selectMin 0/undefined) is vacuously "met" with nothing placed; counting it
@@ -201,25 +243,28 @@ function compilePick(
       c.satisfiers.length > 0,
   ).length;
   const anyPartial = children.some((c) => c.status === "partial");
-  return {
-    ruleNode: node,
-    status: statusFromPickCount(
-      count,
-      node.selectMin,
-      node.selectMax,
-      anyPartial,
-    ),
-    description: describeRule(node),
-    satisfiers: children.flatMap((c) => c.satisfiers),
-    // No definite missing set: a compound pick needs only `selectMin` of its
-    // children, so there's no single list of codes that "would complete it".
-    // The panel surfaces the per-child state by recursing into `children`.
-    missingCodes: [],
-    satisfiedCount: count,
-    selectMin: node.selectMin,
-    selectMax: node.selectMax,
-    children,
-  };
+  return withIllegal(
+    {
+      ruleNode: node,
+      status: statusFromPickCount(
+        count,
+        node.selectMin,
+        node.selectMax,
+        anyPartial,
+      ),
+      description: describeRule(node),
+      satisfiers: children.flatMap((c) => c.satisfiers),
+      // No definite missing set: a compound pick needs only `selectMin` of its
+      // children, so there's no single list of codes that "would complete it".
+      // The panel surfaces the per-child state by recursing into `children`.
+      missingCodes: [],
+      satisfiedCount: count,
+      selectMin: node.selectMin,
+      selectMax: node.selectMax,
+      children,
+    },
+    children.flatMap((c) => c.illegalSatisfiers ?? []),
+  );
 }
 
 /**
@@ -230,6 +275,7 @@ function compilePick(
 function compileSubjectPool(
   node: Extract<RuleNode, { kind: "subjectPool" }>,
   placement: PlacementMap,
+  legality: ReadonlySet<string>,
 ): AuditNode {
   const subjects = new Set(node.subjectCodes.map((s) => s.toLowerCase()));
   const satisfiers: Placement[] = [];
@@ -240,28 +286,55 @@ function compileSubjectPool(
     if (node.maxLevel !== undefined && lvl > node.maxLevel) continue;
     satisfiers.push(p);
   }
-  return {
-    ruleNode: node,
-    status: statusFromPickCount(
-      satisfiers.length,
-      node.selectCount,
-      node.selectCount,
-      false,
-    ),
-    description: describeRule(node),
-    satisfiers,
-    missingCodes: [],
-    satisfiedCount: satisfiers.length,
-    selectMin: node.selectCount,
-    selectMax: node.selectCount,
-    children: [],
-  };
+  return withIllegal(
+    {
+      ruleNode: node,
+      status: statusFromPickCount(
+        satisfiers.length,
+        node.selectCount,
+        node.selectCount,
+        false,
+      ),
+      description: describeRule(node),
+      satisfiers,
+      missingCodes: [],
+      satisfiedCount: satisfiers.length,
+      selectMin: node.selectCount,
+      selectMax: node.selectCount,
+      children: [],
+    },
+    illegalAmong(satisfiers, legality),
+  );
+}
+
+/**
+ * Build the slot-scoped key set of placements that are placed but NOT legally
+ * — an unmet prereq or an antireq conflict. Coreqs are advisory (never block),
+ * so they're excluded. Keyed `slotId::code` so the same course in two slots is
+ * judged per-placement. {@link compileAudit} consumes this to flag satisfiers.
+ */
+export function legalityKeySet(
+  issues: readonly { slotId: string; courseCode: string; kind: string }[],
+): Set<string> {
+  const out = new Set<string>();
+  for (const i of issues) {
+    if (i.courseCode === "") continue; // slot-level (overload) — not a placement
+    if (i.kind === "prereq" || i.kind === "antireq")
+      out.add(`${i.slotId}::${i.courseCode}`);
+  }
+  return out;
 }
 
 export function compileAudit(
   program: Program | null,
   plan: LocalPlan,
   specializationId: string | null = null,
+  /**
+   * Slot-scoped keys (`slotId::code`) of illegally-placed courses, from
+   * {@link legalityKeySet}. Satisfiers matching a key are flagged on their node
+   * (met-but-flagged). Empty/omitted → no legality overlay.
+   */
+  legality: ReadonlySet<string> = new Set(),
 ): AuditRoot {
   const placement = buildPlacementMap(plan);
   const programId = plan.programId;
@@ -279,10 +352,13 @@ export function compileAudit(
   let flexibleRoot: AuditNode | null = null;
   if (program.kind === "engineering") {
     byTerm = Object.fromEntries(
-      TERM_LETTERS.map((t) => [t, compile(program.terms[t], placement)]),
+      TERM_LETTERS.map((t) => [
+        t,
+        compile(program.terms[t], placement, legality),
+      ]),
     ) as Record<TermLetter, AuditNode>;
   } else {
-    flexibleRoot = compile(program.rules, placement);
+    flexibleRoot = compile(program.rules, placement, legality);
   }
   let specializationRoot: AuditNode | null = null;
   if (specializationId) {
@@ -293,7 +369,7 @@ export function compileAudit(
       localSpec ??
       (programId ? getSpecialization(programId, specializationId) : null);
     if (spec?.rules) {
-      specializationRoot = compile(spec.rules, placement);
+      specializationRoot = compile(spec.rules, placement, legality);
     }
   }
   return {

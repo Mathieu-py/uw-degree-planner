@@ -22,6 +22,7 @@ import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
+  type CatalogProvenance,
   type DegreeRequirements,
   type Program,
   type Specialization,
@@ -259,17 +260,32 @@ export function attachSpecsToParents(
 }
 
 /**
- * Auto-discovers the catalog id by fetching the public catalogs list,
- * filtering to undergraduate calendars that are currently active
- * (startDate <= today < endDate), and picking the most recent. Falls back
- * to FALLBACK_CATALOG_ID on any failure.
+ * The discovered catalog's id plus provenance (title + academic-year span),
+ * stamped onto every program so the data is self-describing about which
+ * Undergraduate Calendar it came from.
+ */
+export type CatalogInfo = CatalogProvenance;
+
+/** Academic-year span from a catalog's start/end dates, e.g. "2025-2026". */
+function catalogYear(entry: CatalogEntry): string | undefined {
+  const start = entry.startDate?.slice(0, 4);
+  const end = entry.endDate?.slice(0, 4);
+  if (start && end) return `${start}-${end}`;
+  return start ?? undefined;
+}
+
+/**
+ * Auto-discovers the catalog by fetching the public catalogs list, filtering
+ * to undergraduate calendars that are currently active (startDate <= today <
+ * endDate), and picking the most recent. Returns its id + provenance. Falls
+ * back to FALLBACK_CATALOG_ID on any failure.
  *
  * Tolerates both bare-array and `{catalogs: [...]}` payload shapes, and
  * accepts `id` or `_id` field names.
  */
-export async function discoverCatalogId(
+export async function discoverCatalog(
   now: Date = new Date(),
-): Promise<string> {
+): Promise<CatalogInfo> {
   try {
     const payload = await fetchJson<unknown>(`${API_BASE}/public/catalogs/`);
     const raw = Array.isArray(payload)
@@ -299,14 +315,28 @@ export async function discoverCatalogId(
           `hardcoded fallback was ${FALLBACK_CATALOG_ID}`,
       );
     }
-    return id;
+    return {
+      id,
+      ...(picked?.title ? { title: picked.title } : {}),
+      ...(picked ? { year: catalogYear(picked) } : {}),
+    };
   } catch (err) {
     console.warn(
       `Catalog auto-discovery failed (${(err as Error).message}); ` +
         `using hardcoded ${FALLBACK_CATALOG_ID}`,
     );
-    return FALLBACK_CATALOG_ID;
+    return { id: FALLBACK_CATALOG_ID };
   }
+}
+
+/**
+ * Back-compat wrapper returning only the catalog id. Retained for the
+ * discovery tests and any caller that doesn't need provenance.
+ */
+export async function discoverCatalogId(
+  now: Date = new Date(),
+): Promise<string> {
+  return (await discoverCatalog(now)).id;
 }
 
 interface PhaseAResult {
@@ -330,6 +360,7 @@ async function runPhaseA(
   majors: readonly ProgramListEntry[],
   conflictCounts: ReadonlyMap<string, number>,
   today: string,
+  catalog: CatalogProvenance,
 ): Promise<PhaseAResult> {
   const programs: Record<string, Program> = {};
   const specRefsByParent = new Map<string, SpecializationRef[]>();
@@ -381,10 +412,17 @@ async function runPhaseA(
         planResult.informational.length > 0
           ? { informational: planResult.informational }
           : {};
+      // Verbatim owed requirements we couldn't structure (unscoped subject
+      // pools, unrecognized "Complete …" prose). Surfaced to the student so the
+      // audit can't read complete while real requirements were dropped.
+      const unverified = [...new Set(result.unverified)];
+      const unverifiedField =
+        unverified.length > 0 ? { unverifiedRequirements: unverified } : {};
       const base = {
         name: p.title,
         asOf: today,
         source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
+        catalog,
       };
       programs[slug] =
         result.kind === "engineering"
@@ -395,6 +433,7 @@ async function runPhaseA(
               ...electivesField,
               ...unitPlanField,
               ...informationalField,
+              ...unverifiedField,
             }
           : {
               kind: "flexible",
@@ -403,6 +442,7 @@ async function runPhaseA(
               ...electivesField,
               ...unitPlanField,
               ...informationalField,
+              ...unverifiedField,
             };
       const specRefs = parseSpecializationsList(detail.specializationsList);
       if (specRefs.length > 0) specRefsByParent.set(slug, specRefs);
@@ -576,7 +616,11 @@ async function writeOutput(programs: Record<string, Program>): Promise<string> {
 
 async function main() {
   const today = new Date().toISOString().slice(0, 10);
-  const catalogId = await discoverCatalogId();
+  const catalog = await discoverCatalog();
+  const catalogId = catalog.id;
+  console.log(
+    `Catalog ${catalogId}${catalog.year ? ` (${catalog.year})` : ""}${catalog.title ? ` — ${catalog.title}` : ""}`,
+  );
 
   process.stdout.write("Fetching program list... ");
   const list = await fetchJson<ProgramListEntry[]>(
@@ -589,7 +633,13 @@ async function main() {
 
   const conflictCounts = buildConflictCounts(majors.map((p) => p.code));
 
-  const phaseA = await runPhaseA(catalogId, majors, conflictCounts, today);
+  const phaseA = await runPhaseA(
+    catalogId,
+    majors,
+    conflictCounts,
+    today,
+    catalog,
+  );
   const phaseB = await runPhaseB(catalogId, phaseA.specRefsByParent);
   const { parentsAttached, specsAttached } = attachSpecsToParents(
     phaseA.programs,

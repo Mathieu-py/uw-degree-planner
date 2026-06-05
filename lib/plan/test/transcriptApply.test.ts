@@ -34,6 +34,45 @@ function mkParse(
   };
 }
 
+describe("applyTranscriptToPlan — grade carry-through", () => {
+  it("carries a graded course's grade onto its SlotCourse; future enrollments stay grade-less", () => {
+    const parse = mkParse([
+      {
+        code: "cs115",
+        name: "cs115",
+        termLabel: "Fall 2023",
+        status: "passed",
+        rawGrade: "92",
+      },
+      {
+        code: "math137",
+        name: "math137",
+        termLabel: "Transfer Credit",
+        status: "transfer",
+        rawGrade: "TR",
+      },
+      {
+        code: "cs136",
+        name: "cs136",
+        termLabel: "Winter 2024",
+        status: "inProgress",
+        rawGrade: "",
+      },
+    ]);
+    const { plan } = applyTranscriptToPlan(parse, {
+      stream: "regular",
+      includedUnrecognized: new Set(),
+      mintId: makeMint(),
+    });
+    const find = (code: string) =>
+      plan.slots.flatMap((s) => s.courses).find((c) => c.code === code);
+    expect(find("cs115")?.grade).toBe("92");
+    expect(find("math137")?.grade).toBe("TR");
+    // Future enrollment: empty rawGrade → no grade field at all.
+    expect(find("cs136")).toEqual({ code: "cs136" });
+  });
+});
+
 describe("applyTranscriptToPlan — stream8 start Fall 2023", () => {
   it("places passed courses into the matching academic term and builds the cadence forward", () => {
     const parse = mkParse([

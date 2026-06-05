@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import type { Program, RuleNode } from "../../programs";
-import { compileAudit, summarize } from "../compile";
+import { compileAudit, legalityKeySet, summarize } from "../compile";
 import { buildPlacementMap } from "../placement";
 
 function makePlan(slots: LocalPlan["slots"]): LocalPlan {
@@ -456,5 +456,53 @@ describe("summarize", () => {
       excludedViolationCount: 2,
     });
     expect(audit.flexibleRoot.status).toBe("met");
+  });
+});
+
+describe("legalityKeySet", () => {
+  it("keeps only blocking (prereq/antireq) placement issues, keyed slotId::code", () => {
+    const keys = legalityKeySet([
+      { slotId: "s1", courseCode: "cs350", kind: "prereq" },
+      { slotId: "s2", courseCode: "math115", kind: "antireq" },
+      { slotId: "s3", courseCode: "se212", kind: "coreq" }, // advisory — excluded
+      { slotId: "s4", courseCode: "", kind: "overload" }, // slot-level — excluded
+    ]);
+    expect([...keys].sort()).toEqual(["s1::cs350", "s2::math115"]);
+  });
+});
+
+describe("compileAudit — legality overlay (met-but-flagged)", () => {
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [{ kind: "courses", courses: ["cs115", "cs350"] }],
+    },
+  };
+
+  it("flags an illegally-placed satisfier without changing met status", () => {
+    // Both required courses are placed → the requirement is met. But cs350 in
+    // s2 has an unmet prereq (passed in via the legality set), so it's flagged.
+    const plan = makePlan([
+      slot("s1", 1239, ["cs115"]),
+      slot("s2", 1241, ["cs350"]),
+    ]);
+    const legality = new Set(["s2::cs350"]);
+    const audit = compileAudit(program, plan, null, legality);
+    if (!audit.flexibleRoot) throw new Error("expected flexibleRoot");
+    // Still met — legality is met-but-flagged, not status-changing.
+    expect(audit.flexibleRoot.status).toBe("met");
+    // The illegal satisfier is tagged and rolls up to the root `all` node.
+    expect(audit.flexibleRoot.illegalSatisfiers?.map((p) => p.code)).toEqual([
+      "cs350",
+    ]);
+  });
+
+  it("adds no overlay when the legality set is empty", () => {
+    const plan = makePlan([slot("s1", 1239, ["cs115", "cs350"])]);
+    const audit = compileAudit(program, plan, null, new Set());
+    expect(audit.flexibleRoot?.illegalSatisfiers).toBeUndefined();
   });
 });

@@ -17,7 +17,10 @@
  */
 
 import { type TermId, termLabelToTermId } from "@/lib/terms";
-import type { TranscriptParseResult } from "@/lib/transcript/types";
+import type {
+  ParsedCourse,
+  TranscriptParseResult,
+} from "@/lib/transcript/types";
 import { sequenceTerms } from "./sequence";
 import {
   type LocalPlan,
@@ -42,6 +45,16 @@ export interface TranscriptToPlanResult {
   unsortedCodes: string[];
   /** Codes the parser produced that fell off the cadence entirely. */
   unplacedTerms: string[];
+}
+
+/**
+ * Build a `SlotCourse` from a parsed transcript row, carrying the grade through
+ * so averages and grade-conditioned checks can use it. A future enrollment has
+ * an empty `rawGrade` and stays grade-less (in-progress).
+ */
+function toSlotCourse(c: ParsedCourse): SlotCourse {
+  const code = c.code.toLowerCase();
+  return c.rawGrade ? { code, grade: c.rawGrade } : { code };
 }
 
 export function applyTranscriptToPlan(
@@ -104,7 +117,7 @@ export function applyTranscriptToPlan(
     const lc = c.code.toLowerCase();
     if (c.status === "transfer") {
       if (!preSlot.courses.some((x) => x.code === lc)) {
-        preSlot.courses.push({ code: lc });
+        preSlot.courses.push(toSlotCourse(c));
       }
       continue;
     }
@@ -125,7 +138,7 @@ export function applyTranscriptToPlan(
       continue;
     }
     if (!target.courses.some((x) => x.code === lc)) {
-      target.courses.push({ code: lc });
+      target.courses.push(toSlotCourse(c));
     }
   }
 
