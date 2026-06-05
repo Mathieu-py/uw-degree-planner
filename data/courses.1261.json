@@ -1,6 +1,6 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-06-04T10:38:43.037Z",
+  "fetchedAt": "2026-06-05T10:47:03.269Z",
   "courseCount": 10729,
   "courses": [
     {
@@ -2859,17 +2859,17 @@
       },
       "sections": [
         {
-          "id": 609566,
-          "enrollment_total": 91,
-          "enrollment_capacity": 100
-        },
-        {
           "id": 609568,
           "enrollment_total": 91,
           "enrollment_capacity": 100
         },
         {
           "id": 609567,
+          "enrollment_total": 91,
+          "enrollment_capacity": 100
+        },
+        {
+          "id": 609566,
           "enrollment_total": 91,
           "enrollment_capacity": 100
         }
@@ -5154,13 +5154,13 @@
       },
       "sections": [
         {
-          "id": 610243,
-          "enrollment_total": 29,
+          "id": 610242,
+          "enrollment_total": 30,
           "enrollment_capacity": 30
         },
         {
-          "id": 610242,
-          "enrollment_total": 30,
+          "id": 610243,
+          "enrollment_total": 29,
           "enrollment_capacity": 30
         }
       ]
@@ -15751,8 +15751,8 @@
       "rating": {
         "easy": 0.6648351648351648,
         "useful": 0.65,
-        "liked": 0.5142857142857142,
-        "filled_count": 140
+        "liked": 0.5177304964539007,
+        "filled_count": 141
       },
       "sections": [
         {
@@ -16327,16 +16327,6 @@
       },
       "sections": [
         {
-          "id": 609413,
-          "enrollment_total": 118,
-          "enrollment_capacity": 128
-        },
-        {
-          "id": 609412,
-          "enrollment_total": 30,
-          "enrollment_capacity": 32
-        },
-        {
           "id": 609416,
           "enrollment_total": 29,
           "enrollment_capacity": 32
@@ -16349,6 +16339,16 @@
         {
           "id": 609415,
           "enrollment_total": 29,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 609413,
+          "enrollment_total": 118,
+          "enrollment_capacity": 128
+        },
+        {
+          "id": 609412,
+          "enrollment_total": 30,
           "enrollment_capacity": 32
         }
       ]
@@ -16841,10 +16841,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.42857142857142855,
-        "useful": 0.9358407079646017,
-        "liked": 0.8265895953757225,
-        "filled_count": 173
+        "easy": 0.4314159292035398,
+        "useful": 0.9364035087719298,
+        "liked": 0.8285714285714286,
+        "filled_count": 175
       },
       "sections": [
         {
@@ -16869,8 +16869,8 @@
       "rating": {
         "easy": 0.7867647058823529,
         "useful": 0.6323529411764706,
-        "liked": 0.5818181818181818,
-        "filled_count": 55
+        "liked": 0.5892857142857143,
+        "filled_count": 56
       },
       "sections": [
         {
@@ -28022,7 +28022,7 @@
       "sections": [
         {
           "id": 606584,
-          "enrollment_total": 210,
+          "enrollment_total": 209,
           "enrollment_capacity": 250
         }
       ]
@@ -28752,8 +28752,8 @@
       "rating": {
         "easy": 0.3199152542372881,
         "useful": 0.7521367521367521,
-        "liked": 0.5121951219512195,
-        "filled_count": 164
+        "liked": 0.509090909090909,
+        "filled_count": 165
       },
       "sections": [
         {
@@ -28793,8 +28793,8 @@
       "rating": {
         "easy": 0.571969696969697,
         "useful": 0.7613636363636364,
-        "liked": 0.6407766990291263,
-        "filled_count": 103
+        "liked": 0.6346153846153846,
+        "filled_count": 104
       },
       "sections": [
         {
@@ -29039,7 +29039,7 @@
       "rating": {
         "easy": 0.22936893203883496,
         "useful": 0.8044554455445545,
-        "liked": 0.53156146179402,
+        "liked": 0.5282392026578073,
         "filled_count": 301
       },
       "sections": [
@@ -29060,7 +29060,7 @@
       "rating": {
         "easy": 0.7224264705882353,
         "useful": 0.8521897810218978,
-        "liked": 0.7453703703703703,
+        "liked": 0.7407407407407407,
         "filled_count": 216
       },
       "sections": []
@@ -31145,11 +31145,6 @@
       },
       "sections": [
         {
-          "id": 609718,
-          "enrollment_total": 0,
-          "enrollment_capacity": 60
-        },
-        {
           "id": 610778,
           "enrollment_total": 55,
           "enrollment_capacity": 60
@@ -31163,6 +31158,11 @@
           "id": 610810,
           "enrollment_total": 25,
           "enrollment_capacity": 30
+        },
+        {
+          "id": 609718,
+          "enrollment_total": 0,
+          "enrollment_capacity": 60
         }
       ]
     },
@@ -32175,6 +32175,16 @@
       },
       "sections": [
         {
+          "id": 609386,
+          "enrollment_total": 23,
+          "enrollment_capacity": 31
+        },
+        {
+          "id": 609385,
+          "enrollment_total": 23,
+          "enrollment_capacity": 31
+        },
+        {
           "id": 609384,
           "enrollment_total": 101,
           "enrollment_capacity": 125
@@ -32222,16 +32232,6 @@
         {
           "id": 609387,
           "enrollment_total": 28,
-          "enrollment_capacity": 31
-        },
-        {
-          "id": 609386,
-          "enrollment_total": 23,
-          "enrollment_capacity": 31
-        },
-        {
-          "id": 609385,
-          "enrollment_total": 23,
           "enrollment_capacity": 31
         }
       ]
@@ -34125,8 +34125,8 @@
       "rating": {
         "easy": 0.9259530791788856,
         "useful": 0.27245508982035926,
-        "liked": 0.8828250401284109,
-        "filled_count": 623
+        "liked": 0.8816,
+        "filled_count": 625
       },
       "sections": [
         {
@@ -38055,8 +38055,8 @@
       "rating": {
         "easy": 0.8,
         "useful": 0.5,
-        "liked": 0.6,
-        "filled_count": 20
+        "liked": 0.5714285714285714,
+        "filled_count": 21
       },
       "sections": []
     },
@@ -39995,10 +39995,10 @@
       "coreqs": "CS136L.",
       "antireqs": "CS137, CS138, CS146, PHYS239",
       "rating": {
-        "easy": 0.569364161849711,
-        "useful": 0.9191871455576559,
-        "liked": 0.8009205983889528,
-        "filled_count": 869
+        "easy": 0.56875,
+        "useful": 0.9193396226415095,
+        "liked": 0.8,
+        "filled_count": 870
       },
       "sections": [
         {
@@ -44841,13 +44841,13 @@
       },
       "sections": [
         {
-          "id": 609641,
-          "enrollment_total": 0,
+          "id": 609640,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         },
         {
-          "id": 609640,
-          "enrollment_total": 24,
+          "id": 609641,
+          "enrollment_total": 0,
           "enrollment_capacity": 25
         }
       ]
@@ -51206,14 +51206,14 @@
       },
       "sections": [
         {
-          "id": 607907,
-          "enrollment_total": 131,
-          "enrollment_capacity": 150
-        },
-        {
           "id": 607908,
           "enrollment_total": 130,
           "enrollment_capacity": 148
+        },
+        {
+          "id": 607907,
+          "enrollment_total": 131,
+          "enrollment_capacity": 150
         }
       ]
     },
@@ -52719,13 +52719,13 @@
       },
       "sections": [
         {
-          "id": 608012,
-          "enrollment_total": 0,
+          "id": 608013,
+          "enrollment_total": 133,
           "enrollment_capacity": 148
         },
         {
-          "id": 608013,
-          "enrollment_total": 133,
+          "id": 608012,
+          "enrollment_total": 0,
           "enrollment_capacity": 148
         },
         {
@@ -60499,11 +60499,6 @@
       },
       "sections": [
         {
-          "id": 608718,
-          "enrollment_total": 12,
-          "enrollment_capacity": 22
-        },
-        {
           "id": 608714,
           "enrollment_total": 84,
           "enrollment_capacity": 108
@@ -60527,6 +60522,11 @@
           "id": 608717,
           "enrollment_total": 20,
           "enrollment_capacity": 20
+        },
+        {
+          "id": 608718,
+          "enrollment_total": 12,
+          "enrollment_capacity": 22
         }
       ]
     },
@@ -62173,38 +62173,8 @@
       },
       "sections": [
         {
-          "id": 609756,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609770,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 609769,
           "enrollment_total": 20,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609742,
-          "enrollment_total": 19,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609747,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609765,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 609764,
-          "enrollment_total": 23,
           "enrollment_capacity": 25
         },
         {
@@ -62340,6 +62310,36 @@
         {
           "id": 609738,
           "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609756,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609770,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609742,
+          "enrollment_total": 19,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609747,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609765,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 609764,
+          "enrollment_total": 23,
           "enrollment_capacity": 25
         }
       ]
@@ -66338,8 +66338,8 @@
       "rating": {
         "easy": 0.76,
         "useful": 0.9903846153846154,
-        "liked": 0.8541666666666666,
-        "filled_count": 48
+        "liked": 0.8571428571428571,
+        "filled_count": 49
       },
       "sections": []
     },
@@ -66368,8 +66368,8 @@
       "rating": {
         "easy": 0.35,
         "useful": 0.55,
-        "liked": 0.36363636363636365,
-        "filled_count": 22
+        "liked": 0.391304347826087,
+        "filled_count": 23
       },
       "sections": []
     },
@@ -67299,13 +67299,13 @@
       },
       "sections": [
         {
-          "id": 610817,
-          "enrollment_total": 0,
+          "id": 610816,
+          "enrollment_total": 9,
           "enrollment_capacity": 15
         },
         {
-          "id": 610816,
-          "enrollment_total": 9,
+          "id": 610817,
+          "enrollment_total": 0,
           "enrollment_capacity": 15
         }
       ]
@@ -77042,7 +77042,7 @@
       "id": 10617,
       "code": "gds187",
       "name": "Geospatial Data Science",
-      "prereqs": "Geomatics or Geospatial Data Science students only.",
+      "prereqs": "Geospatial Data Science or Geomatics students only.",
       "coreqs": null,
       "antireqs": "GEOG187",
       "rating": {
@@ -77605,8 +77605,8 @@
       "rating": {
         "easy": 0.8658536585365854,
         "useful": 0.22560975609756098,
-        "liked": 0.18316831683168316,
-        "filled_count": 202
+        "liked": 0.18226600985221675,
+        "filled_count": 203
       },
       "sections": []
     },
@@ -106616,11 +106616,6 @@
       },
       "sections": [
         {
-          "id": 610904,
-          "enrollment_total": 12,
-          "enrollment_capacity": 14
-        },
-        {
           "id": 613676,
           "enrollment_total": 1,
           "enrollment_capacity": 1
@@ -106634,6 +106629,11 @@
           "id": 610086,
           "enrollment_total": 5,
           "enrollment_capacity": 5
+        },
+        {
+          "id": 610904,
+          "enrollment_total": 12,
+          "enrollment_capacity": 14
         }
       ]
     },
@@ -110099,8 +110099,8 @@
       "rating": {
         "easy": 0.8093922651933702,
         "useful": 0.9072802197802198,
-        "liked": 0.8748114630467572,
-        "filled_count": 663
+        "liked": 0.8734939759036144,
+        "filled_count": 664
       },
       "sections": []
     },
@@ -111107,11 +111107,6 @@
       },
       "sections": [
         {
-          "id": 610762,
-          "enrollment_total": 0,
-          "enrollment_capacity": 999
-        },
-        {
           "id": 610763,
           "enrollment_total": 110,
           "enrollment_capacity": 160
@@ -111120,6 +111115,11 @@
           "id": 610764,
           "enrollment_total": 110,
           "enrollment_capacity": 160
+        },
+        {
+          "id": 610762,
+          "enrollment_total": 0,
+          "enrollment_capacity": 999
         }
       ]
     },
@@ -119845,10 +119845,10 @@
       "coreqs": null,
       "antireqs": "BME182, SYDE182",
       "rating": {
-        "easy": 0.1875,
-        "useful": 0.7946428571428571,
-        "liked": 0.7352941176470589,
-        "filled_count": 34
+        "easy": 0.1810344827586207,
+        "useful": 0.7931034482758621,
+        "liked": 0.7142857142857143,
+        "filled_count": 35
       },
       "sections": [
         {
@@ -119907,10 +119907,10 @@
       "coreqs": null,
       "antireqs": "CIVE224, ECON221, KIN222, MSCI252, ME202, PSCI314, PSYCH291, PSYCH292, REC371, SOC280/LS280, STAT202, STAT206, STAT211, STAT220, STAT221, STAT231, STAT241, SYDE212",
       "rating": {
-        "easy": 0.7708333333333334,
-        "useful": 0.7336065573770492,
-        "liked": 0.58,
-        "filled_count": 100
+        "easy": 0.7704918032786885,
+        "useful": 0.7258064516129032,
+        "liked": 0.5742574257425742,
+        "filled_count": 101
       },
       "sections": [
         {
@@ -119953,10 +119953,10 @@
       "coreqs": null,
       "antireqs": "ME203",
       "rating": {
-        "easy": 0.49642857142857144,
-        "useful": 0.9142857142857143,
-        "liked": 0.7181818181818181,
-        "filled_count": 110
+        "easy": 0.49295774647887325,
+        "useful": 0.9119718309859155,
+        "liked": 0.7117117117117117,
+        "filled_count": 111
       },
       "sections": [
         {
@@ -120009,10 +120009,10 @@
       "coreqs": null,
       "antireqs": "CIVE204, ME219, SYDE286",
       "rating": {
-        "easy": 0.4955357142857143,
-        "useful": 0.8545454545454545,
-        "liked": 0.7450980392156863,
-        "filled_count": 102
+        "easy": 0.4912280701754386,
+        "useful": 0.8526785714285714,
+        "liked": 0.7378640776699029,
+        "filled_count": 103
       },
       "sections": [
         {
@@ -120080,10 +120080,10 @@
       "coreqs": null,
       "antireqs": "ECE222, ME262",
       "rating": {
-        "easy": 0.7850877192982456,
-        "useful": 0.9051724137931034,
-        "liked": 0.8979591836734694,
-        "filled_count": 98
+        "easy": 0.7801724137931034,
+        "useful": 0.902542372881356,
+        "liked": 0.898989898989899,
+        "filled_count": 99
       },
       "sections": [
         {
@@ -120996,8 +120996,8 @@
       "rating": {
         "easy": 0.8922222222222222,
         "useful": 0.45666666666666667,
-        "liked": 0.4542124542124542,
-        "filled_count": 819
+        "liked": 0.45365853658536587,
+        "filled_count": 820
       },
       "sections": []
     },
@@ -128315,8 +128315,8 @@
       "coreqs": null,
       "antireqs": "PD2",
       "rating": {
-        "easy": 0.4605263157894737,
-        "useful": 0.12134502923976608,
+        "easy": 0.45930232558139533,
+        "useful": 0.12063953488372094,
         "liked": 0.04576659038901602,
         "filled_count": 437
       },
@@ -129048,11 +129048,6 @@
       },
       "sections": [
         {
-          "id": 608781,
-          "enrollment_total": 125,
-          "enrollment_capacity": 127
-        },
-        {
           "id": 608783,
           "enrollment_total": 40,
           "enrollment_capacity": 43
@@ -129066,6 +129061,11 @@
           "id": 608780,
           "enrollment_total": 43,
           "enrollment_capacity": 42
+        },
+        {
+          "id": 608781,
+          "enrollment_total": 125,
+          "enrollment_capacity": 127
         }
       ]
     },
@@ -135482,6 +135482,16 @@
       },
       "sections": [
         {
+          "id": 607610,
+          "enrollment_total": 43,
+          "enrollment_capacity": 53
+        },
+        {
+          "id": 607607,
+          "enrollment_total": 42,
+          "enrollment_capacity": 53
+        },
+        {
           "id": 607606,
           "enrollment_total": 40,
           "enrollment_capacity": 45
@@ -135500,16 +135510,6 @@
           "id": 607608,
           "enrollment_total": 163,
           "enrollment_capacity": 196
-        },
-        {
-          "id": 607610,
-          "enrollment_total": 43,
-          "enrollment_capacity": 53
-        },
-        {
-          "id": 607607,
-          "enrollment_total": 42,
-          "enrollment_capacity": 53
         },
         {
           "id": 607612,
@@ -148163,7 +148163,7 @@
       "sections": [
         {
           "id": 607703,
-          "enrollment_total": 256,
+          "enrollment_total": 255,
           "enrollment_capacity": 446
         },
         {
@@ -175303,8 +175303,8 @@
       "rating": {
         "easy": 0.7596685082872928,
         "useful": 0.7348901098901099,
-        "liked": 0.6293436293436293,
-        "filled_count": 259
+        "liked": 0.6269230769230769,
+        "filled_count": 260
       },
       "sections": [
         {
@@ -179564,6 +179564,11 @@
       },
       "sections": [
         {
+          "id": 609792,
+          "enrollment_total": 26,
+          "enrollment_capacity": 26
+        },
+        {
           "id": 609791,
           "enrollment_total": 25,
           "enrollment_capacity": 26
@@ -179574,19 +179579,14 @@
           "enrollment_capacity": 26
         },
         {
-          "id": 609793,
-          "enrollment_total": 104,
-          "enrollment_capacity": 103
-        },
-        {
-          "id": 609792,
-          "enrollment_total": 26,
-          "enrollment_capacity": 26
-        },
-        {
           "id": 609789,
           "enrollment_total": 27,
           "enrollment_capacity": 26
+        },
+        {
+          "id": 609793,
+          "enrollment_total": 104,
+          "enrollment_capacity": 103
         }
       ]
     },
