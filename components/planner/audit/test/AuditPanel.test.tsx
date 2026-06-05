@@ -337,6 +337,52 @@ describe("AuditPanel", () => {
     expect(within(aside).queryByText(/requirements met/i)).not.toBeNull();
   });
 
+  it("renders a compound 'choose one option' as delineated option cards", () => {
+    // data-science-bcs has a pick whose options are multi-course `all` bundles.
+    // It must render as A/B/C option cards with "or" dividers and a "Choose 1 of
+    // 3 options" header — not undifferentiated stacked blocks — and the redundant
+    // "Complete all of the following" heading is dropped inside each card.
+    if (!("data-science-bcs" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: "data-science-bcs" })}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+    const cards = container.querySelectorAll(".av-opt-card");
+    expect(cards.length).toBeGreaterThanOrEqual(3);
+    expect(container.querySelector(".av-opt-or")).not.toBeNull();
+    expect(
+      within(container).queryAllByText(/choose 1 of 3 options/i).length,
+    ).toBeGreaterThan(0);
+    for (const card of cards) {
+      expect(card.textContent ?? "").not.toMatch(
+        /complete all of the following/i,
+      );
+    }
+  });
+
+  it("collapses a satisfied compound pick to a summary, expandable to the cards", () => {
+    // cs480 + cs448 satisfies Option A of the data-science-bcs pick → it collapses
+    // to a summary of the completed path; the full cards hide behind a toggle.
+    if (!("data-science-bcs" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={oneSlotPlan("data-science-bcs", ["cs480", "cs448"])}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+    expect(
+      within(container).queryAllByText(/completed.*option a/i).length,
+    ).toBeGreaterThan(0);
+    expect(container.querySelector(".av-opt-summary")).not.toBeNull();
+    // Collapsed: the option cards are not in the DOM until the toggle is clicked.
+    expect(container.querySelector(".av-opt-card")).toBeNull();
+    const toggle = within(container).getByText(/show 2 other options/i);
+    fireEvent.click(toggle);
+    expect(container.querySelector(".av-opt-card")).not.toBeNull();
+  });
+
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {
     const engId = engineeringProgramId();
     if (!engId) return;

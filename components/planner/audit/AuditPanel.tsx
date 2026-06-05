@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, type ReactNode, useMemo } from "react";
+import { Fragment, memo, type ReactNode, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import {
   type Averages,
@@ -635,32 +635,20 @@ function NodeBody({
         />
       );
     }
-    // Genuinely compound pick (an option requires several courses, an open
-    // pool, etc.): render the alternatives under a concise "Choose N …" framing,
-    // indented so they read as alternatives, not independent requirements. A
-    // top-level one (rare) already has the framing as its section title.
-    const children = node.children.map((child, i) => (
-      <NodeBody
-        // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
-        key={i}
-        node={child}
+    // Genuinely compound pick (each option requires several courses, an open
+    // pool, etc.): render the alternatives as clearly-delineated option cards
+    // so they read as mutually-exclusive choices, not independent requirements
+    // — and collapse to a summary once the choice is satisfied.
+    return (
+      <CompoundPickBody
+        node={node}
         placedCodes={placedCodes}
         catalog={catalog}
         catalogByCode={catalogByCode}
         onDrill={onDrill}
         drag={drag}
-        depth={depth + 1}
+        depth={depth}
       />
-    ));
-    if (depth === 0)
-      return <div className="flex flex-col gap-1.5">{children}</div>;
-    return (
-      <div className="flex flex-col gap-1.5">
-        <span className="u-small font-medium text-ink-2">{pickFraming(r)}</span>
-        <div className="flex flex-col gap-1.5 pl-3 border-l border-line">
-          {children}
-        </div>
-      </div>
     );
   }
 
@@ -696,6 +684,200 @@ function NodeBody({
 
   // excluded: violations surface as the section pill, no body.
   return null;
+}
+
+/* --------------------- compound pick (option cards) --------------------- */
+
+/** When true, a satisfied compound pick collapses to a summary + "show others". */
+const COLLAPSE_WHEN_DECIDED = true;
+
+/** Props every option-card piece needs to render (and recurse via NodeBody). */
+interface OptionRenderProps {
+  placedCodes: ReadonlySet<string>;
+  catalog?: Course[];
+  catalogByCode: Map<string, Course>;
+  onDrill?: (codes: string[]) => void;
+  drag?: DragWiring;
+}
+
+/** Does this option's placement actually satisfy it (vs. a vacuous "met")? */
+function optionMet(opt: AuditNode): boolean {
+  return (
+    (opt.status === "met" || opt.status === "overSatisfied") &&
+    opt.satisfiers.length > 0
+  );
+}
+
+/** A→Z badge for an option's position in the choice. */
+function optionBadge(index: number): string {
+  return String.fromCharCode(65 + index);
+}
+
+/**
+ * A compound `pick` whose options are multi-course bundles. Renders each
+ * alternative as a delineated option card so they read as mutually-exclusive
+ * choices; once enough options are satisfied it collapses to a compact summary
+ * of the completed path with a "show other options" toggle.
+ */
+function CompoundPickBody({
+  node,
+  depth,
+  ...rest
+}: {
+  node: AuditNode;
+  depth: number;
+} & OptionRenderProps) {
+  const r = node.ruleNode;
+  const [showAll, setShowAll] = useState(false);
+  if (r.kind !== "pick") return null;
+
+  const options = node.children;
+  const selectMin = r.selectMin ?? 1;
+  const metOptions = options
+    .map((opt, index) => ({ opt, index }))
+    .filter(({ opt }) => optionMet(opt));
+  const decided = metOptions.length >= selectMin;
+
+  if (COLLAPSE_WHEN_DECIDED && decided && !showAll) {
+    return (
+      <CompoundPickSummary
+        metOptions={metOptions}
+        total={options.length}
+        onShowAll={() => setShowAll(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {/* A top-level compound pick (rare; none in current data) already has the
+          framing as its section title, so only nested ones add the header. */}
+      {depth > 0 ? (
+        <span className="av-opt-head">{pickFraming(r, options.length)}</span>
+      ) : null}
+      <OptionCardList options={options} {...rest} />
+      {decided ? (
+        <button
+          type="button"
+          className="av-opt-toggle"
+          onClick={() => setShowAll(false)}
+        >
+          Hide other options
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/** The option cards with an "or" divider between alternatives. */
+function OptionCardList({
+  options,
+  ...rest
+}: { options: AuditNode[] } & OptionRenderProps) {
+  return (
+    <div className="flex flex-col">
+      {options.map((opt, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
+        <Fragment key={i}>
+          {i > 0 ? <div className="av-opt-or">or</div> : null}
+          <OptionCard option={opt} index={i} {...rest} />
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+/** One alternative: A/B/C badge, per-option status, and its requirement body. */
+function OptionCard({
+  option,
+  index,
+  ...rest
+}: { option: AuditNode; index: number } & OptionRenderProps) {
+  const met = optionMet(option);
+  const partial = option.status === "partial";
+  return (
+    <div className={`av-opt-card${met ? " is-met" : ""}`}>
+      <div className="av-opt-card-head">
+        <span className="av-opt-badge">{optionBadge(index)}</span>
+        <span className="av-opt-status">
+          {met ? (
+            <Icon name="check" size="sm" aria-hidden="true" />
+          ) : partial ? (
+            <span className="av-opt-dot" aria-hidden="true" />
+          ) : null}
+        </span>
+      </div>
+      <OptionBody node={option} {...rest} />
+    </div>
+  );
+}
+
+/**
+ * The body of an option card. An option is usually an `all` bundle — render its
+ * children directly so the card boundary stands in for "Complete all of the
+ * following". A non-`all` option (a bare multi-code courses leaf, or a single
+ * nested pick) renders as-is.
+ */
+function OptionBody({
+  node,
+  ...rest
+}: { node: AuditNode } & OptionRenderProps) {
+  if (node.ruleNode.kind === "all") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {node.children.map((child, i) => (
+          <NodeBody
+            // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
+            key={i}
+            node={child}
+            depth={1}
+            {...rest}
+          />
+        ))}
+      </div>
+    );
+  }
+  return <NodeBody node={node} depth={1} {...rest} />;
+}
+
+/** Collapsed view of a satisfied compound pick: the completed path(s) + toggle. */
+function CompoundPickSummary({
+  metOptions,
+  total,
+  onShowAll,
+}: {
+  metOptions: { opt: AuditNode; index: number }[];
+  total: number;
+  onShowAll: () => void;
+}) {
+  const others = total - metOptions.length;
+  return (
+    <div className="flex flex-col gap-1.5">
+      {metOptions.map(({ opt, index }) => (
+        <div key={index} className="av-opt-summary">
+          <span className="av-opt-summary-mark">
+            <Icon name="check" size="sm" aria-hidden="true" />
+          </span>
+          <span className="av-opt-summary-body">
+            <span className="av-opt-summary-label">
+              Completed — Option {optionBadge(index)}
+            </span>
+            <span className="av-opt-summary-codes">
+              {[...new Set(opt.satisfiers.map((s) => s.code))]
+                .map(formatCourseCode)
+                .join(" + ")}
+            </span>
+          </span>
+        </div>
+      ))}
+      {others > 0 ? (
+        <button type="button" className="av-opt-toggle" onClick={onShowAll}>
+          <Icon name="chevronRight" size="xs" aria-hidden="true" /> show{" "}
+          {others} other option{others === 1 ? "" : "s"}
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -777,9 +959,14 @@ function CourseRow({
 /** A concise "Choose N …" framing for a nested mixed pick's alternatives. */
 function pickFraming(
   r: Extract<AuditNode["ruleNode"], { kind: "pick" }>,
+  optionCount?: number,
 ): string {
   const min = r.selectMin;
   const max = r.selectMax;
+  // With a known option count and an exact N-of-M choice, name the total:
+  // "Choose 1 of 3 options" reads better than "Choose 1 of these options:".
+  if (optionCount != null && min != null && max != null && min === max)
+    return `Choose ${min} of ${optionCount} options`;
   if (min != null && max != null)
     return min === max
       ? `Choose ${min} of these options:`

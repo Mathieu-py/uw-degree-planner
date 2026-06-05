@@ -1269,3 +1269,124 @@ body {
   margin-top: 9px;
   line-height: 1.45;
 }
+
+/* Compound pick — mutually-exclusive option cards ("choose one of these") */
+.av-opt-head {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 2px;
+}
+.av-opt-or {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.av-opt-or::before,
+.av-opt-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.av-opt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 8px 9px;
+}
+.av-opt-card.is-met {
+  border-color: transparent;
+  background: var(--met-soft);
+}
+.av-opt-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.av-opt-badge {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+.av-opt-card.is-met .av-opt-badge {
+  color: var(--met);
+  background: transparent;
+  border-color: transparent;
+}
+.av-opt-status {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--met);
+}
+.av-opt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--partial);
+}
+.av-opt-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: var(--met-soft);
+}
+.av-opt-summary-mark {
+  flex: none;
+  margin-top: 1px;
+  color: var(--met);
+  display: inline-flex;
+}
+.av-opt-summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.av-opt-summary-label {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.av-opt-summary-codes {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.av-opt-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.av-opt-toggle:hover {
+  text-decoration: underline;
+}
