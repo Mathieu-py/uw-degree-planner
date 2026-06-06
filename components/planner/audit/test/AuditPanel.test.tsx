@@ -287,8 +287,9 @@ describe("AuditPanel", () => {
     expect(within(aside).queryAllByText(/0 of 1 unit/i).length).toBeGreaterThan(
       0,
     );
-    // Eligible subjects surface as tags.
-    expect(within(aside).queryAllByText(/^CLAS$/).length).toBeGreaterThan(0);
+    // Eligible subjects surface in the pool card's criteria summary.
+    const poolSub = aside.querySelector(".av-poolbtn-sub");
+    expect(poolSub?.textContent ?? "").not.toBe("");
     expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
     expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
   });

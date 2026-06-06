@@ -1262,6 +1262,52 @@ body {
   filter: none;
   text-decoration: underline;
 }
+
+/* Subject-pool / breadth "search the catalog" card (replaces the tag pile). */
+.av-poolbtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.av-poolbtn:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.av-poolbtn.is-static {
+  cursor: default;
+}
+.av-poolbtn-ico {
+  flex: none;
+  display: inline-flex;
+  color: var(--accent);
+}
+.av-poolbtn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.av-poolbtn-lead {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.av-poolbtn-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .av-note {
   font-size: 11px;
   color: var(--ink-3);
@@ -1478,6 +1524,3 @@ body {
   gap: 5px;
   padding-top: 2px;
 }
-
-
-

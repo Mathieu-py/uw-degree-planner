@@ -13,13 +13,14 @@ import {
   type EligibilityRow,
 } from "@/lib/courses/eligibility";
 import { applyFilters } from "@/lib/courses/filters";
-import type { Course } from "@/lib/courses/types";
+import type { Course, FilterPreset } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
 
 export interface PickerFilters {
   query: string;
   levels: number[];
   excludePrefixes: string[];
+  includePrefixes: string[];
   minUseful: number | null;
   minEasy: number | null;
   hasSeatsOnly: boolean;
@@ -30,6 +31,7 @@ const DEFAULT_FILTERS: PickerFilters = {
   query: "",
   levels: [],
   excludePrefixes: [],
+  includePrefixes: [],
   minUseful: null,
   minEasy: null,
   hasSeatsOnly: false,
@@ -51,6 +53,8 @@ export interface UseFilteredCoursesArgs {
   /** Codes already in the target slot (lets coreqs resolve same-term). */
   sameTerm?: ReadonlySet<string>;
   focusCodes?: string[];
+  /** Filter values to seed on mount (e.g. a subject-pool Browse's subjects). */
+  initialFilters?: FilterPreset;
 }
 
 export interface UseFilteredCoursesResult {
@@ -83,8 +87,15 @@ export function useFilteredCourses({
   programReferenced,
   sameTerm,
   focusCodes,
+  initialFilters,
 }: UseFilteredCoursesArgs): UseFilteredCoursesResult {
-  const [filters, setFilters] = useState<PickerFilters>(DEFAULT_FILTERS);
+  // Seed once on mount; the picker remounts per open, so a drill-in's preset
+  // (e.g. a subject pool's subjects) lands as the starting filter state and the
+  // sidebar reflects it — the student can widen/narrow from there.
+  const [filters, setFilters] = useState<PickerFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    ...initialFilters,
+  }));
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT_KEY);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT_DIR);
   const [limit, setLimit] = useState(PAGE);
@@ -108,6 +119,7 @@ export function useFilteredCourses({
     () =>
       applyFilters(candidates, {
         excludePrefixes: filters.excludePrefixes,
+        includePrefixes: filters.includePrefixes,
         levels: filters.levels,
         hasSeatsAvailable: filters.hasSeatsOnly,
         hideUnmetPrereqs: false, // prereq filtering happens in attachEligibility

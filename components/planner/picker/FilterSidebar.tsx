@@ -81,9 +81,19 @@ export function FilterSidebar({
         </div>
       </div>
 
-      <PrefixExclude
+      <PrefixFilter
+        title="Include prefixes"
+        tone="include"
         knownPrefixes={knownPrefixes}
-        excluded={filters.excludePrefixes}
+        selected={filters.includePrefixes}
+        onChange={(includePrefixes) => onPatch({ includePrefixes })}
+      />
+
+      <PrefixFilter
+        title="Exclude prefixes"
+        tone="exclude"
+        knownPrefixes={knownPrefixes}
+        selected={filters.excludePrefixes}
         onChange={(excludePrefixes) => onPatch({ excludePrefixes })}
       />
 
@@ -122,17 +132,27 @@ export function FilterSidebar({
   );
 }
 
-function PrefixExclude({
+/**
+ * A subject-prefix allow/deny picker: tap a known prefix to add it, tap its
+ * chip to remove. `tone` only changes the chip colour — gold for the include
+ * (allow-list), red for the exclude (deny-list). When both lists name the same
+ * prefix, the filter chain lets exclude win.
+ */
+function PrefixFilter({
+  title,
+  tone,
   knownPrefixes,
-  excluded,
+  selected,
   onChange,
 }: {
+  title: string;
+  tone: "include" | "exclude";
   knownPrefixes: string[];
-  excluded: string[];
+  selected: string[];
   onChange: (next: string[]) => void;
 }) {
   const [query, setQuery] = useState("");
-  const excludedSet = new Set(excluded);
+  const selectedSet = new Set(selected);
   const filtered = useMemo(() => {
     const q = query.trim().toUpperCase();
     if (!q) return knownPrefixes;
@@ -141,24 +161,30 @@ function PrefixExclude({
 
   function toggle(p: string) {
     onChange(
-      excludedSet.has(p) ? excluded.filter((x) => x !== p) : [...excluded, p],
+      selectedSet.has(p) ? selected.filter((x) => x !== p) : [...selected, p],
     );
   }
+
+  const chipClass =
+    "rounded-full px-2 py-0.5 text-[10px] font-medium " +
+    (tone === "include"
+      ? "bg-accent-soft text-accent"
+      : "bg-danger-soft text-danger");
 
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-[10px] uppercase tracking-wider text-ink-3">
-        Exclude prefixes
+        {title}
       </span>
-      {excluded.length > 0 ? (
+      {selected.length > 0 ? (
         <div className="flex flex-wrap gap-1">
-          {excluded.map((p) => (
+          {selected.map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => toggle(p)}
-              className="rounded-full bg-danger-soft text-danger px-2 py-0.5 text-[10px] font-medium"
-              title={`Remove ${p} from excludes`}
+              className={chipClass}
+              title={`Remove ${p}`}
             >
               {p} ×
             </button>
@@ -178,10 +204,10 @@ function PrefixExclude({
             key={p}
             type="button"
             onClick={() => toggle(p)}
-            disabled={excludedSet.has(p)}
+            disabled={selectedSet.has(p)}
             className={
               "rounded border px-1.5 py-0.5 text-[10px] font-medium " +
-              (excludedSet.has(p)
+              (selectedSet.has(p)
                 ? "border-line text-ink-3 cursor-default"
                 : "border-line-2 text-ink-2 hover:text-ink")
             }

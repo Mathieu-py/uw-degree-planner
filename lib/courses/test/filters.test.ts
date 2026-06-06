@@ -7,6 +7,7 @@ import {
   passesMinEasyFilter,
   passesMinUsefulFilter,
   passesPrefixExclusion,
+  passesPrefixInclusion,
   passesSeatsFilter,
   seatsAvailable,
 } from "../filters";
@@ -78,6 +79,20 @@ describe("passesPrefixExclusion", () => {
   });
   it("empty exclusion list passes everything", () => {
     expect(passesPrefixExclusion(makeCourse({ code: "fr101" }), [])).toBe(true);
+  });
+});
+
+describe("passesPrefixInclusion", () => {
+  it("empty allow-list passes everything (rule disabled)", () => {
+    expect(passesPrefixInclusion(makeCourse({ code: "fr101" }), [])).toBe(true);
+  });
+  it("passes a prefix that is in the allow-list", () => {
+    const c = makeCourse({ code: "cs486" });
+    expect(passesPrefixInclusion(c, ["CS", "MATH"])).toBe(true);
+  });
+  it("rejects a prefix that is not in the allow-list", () => {
+    const c = makeCourse({ code: "fr101" });
+    expect(passesPrefixInclusion(c, ["CS", "MATH"])).toBe(false);
   });
 });
 
@@ -240,5 +255,22 @@ describe("applyFilters", () => {
       excludePrefixes: ["MATH", "PHIL", "CS"],
     });
     expect(result).toEqual([]);
+  });
+
+  it("restricts to the include allow-list (only those prefixes survive)", () => {
+    const result = applyFilters(all, {
+      ...DEFAULT_PURE_FILTERS,
+      includePrefixes: ["MATH", "CS"],
+    });
+    expect(result.map((c) => c.code)).toEqual(["math116", "cs486"]);
+  });
+
+  it("exclude wins when a prefix is in both include and exclude lists", () => {
+    const result = applyFilters(all, {
+      ...DEFAULT_PURE_FILTERS,
+      includePrefixes: ["MATH", "CS"],
+      excludePrefixes: ["CS"],
+    });
+    expect(result.map((c) => c.code)).toEqual(["math116"]);
   });
 });

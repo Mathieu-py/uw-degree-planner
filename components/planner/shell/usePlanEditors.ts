@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 import { NEW_PLAN_NAME } from "@/lib/constants";
+import type { FilterPreset } from "@/lib/courses/types";
 import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
 import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { rebuildSlotsForStream } from "@/lib/plan/sequence";
@@ -171,13 +172,14 @@ export function usePlanEditors({
   );
 
   // Audit drill-in. A single named course (an "Add") only needs a term, so open
-  // the term picker for it. A multi-code "Browse" (an open pool / elective with
-  // no fixed course to drag) opens the slot picker pre-filtered to the eligible
-  // codes, targeting the first academic term.
+  // the term picker for it. A multi-code "Browse" (a finite list) opens the slot
+  // picker focused on those codes; a `preset` (a subject pool / breadth, no
+  // fixed list) instead opens the picker with its subject + level filters
+  // pre-applied. Both target the first academic term.
   const handleDrillToRequirement = useCallback(
-    (codes: string[]) => {
-      if (codes.length === 0) return;
-      if (codes.length === 1) {
+    (codes: string[], preset?: FilterPreset) => {
+      if (codes.length === 0 && !preset) return;
+      if (!preset && codes.length === 1) {
         setTermChoiceCode(codes[0]);
         return;
       }
@@ -186,7 +188,11 @@ export function usePlanEditors({
         current?.slots.find((s) => !s.isCoop && s.position !== "pre") ??
         current?.slots[0];
       if (!target) return;
-      setPicker({ slotId: target.id, focusCodes: codes });
+      setPicker({
+        slotId: target.id,
+        focusCodes: codes.length > 0 ? codes : undefined,
+        initialFilters: preset,
+      });
     },
     [setPicker],
   );

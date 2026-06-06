@@ -26,8 +26,7 @@ import {
 } from "@/lib/audit/electives";
 import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
 import { computeDegreeProgress } from "@/lib/audit/progress";
-import { levelBucket } from "@/lib/courses/code";
-import type { Course } from "@/lib/courses/types";
+import type { Course, FilterPreset } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { courseDragProps } from "@/lib/plan/dnd";
 import type { LocalPlan } from "@/lib/plan/types";
@@ -51,6 +50,14 @@ interface DragWiring {
   onEnd: () => void;
 }
 
+/**
+ * Opens the slot picker for a requirement. `codes` focuses specific courses (a
+ * finite list / a single "Add"); `preset` instead seeds the picker's filters —
+ * a subject pool passes its subjects (as an `includePrefixes` allow-list) and
+ * level range, so the catalog narrows live and the sidebar shows the filter.
+ */
+export type DrillFn = (codes: string[], preset?: FilterPreset) => void;
+
 interface Props {
   plan: LocalPlan;
   /**
@@ -64,7 +71,7 @@ interface Props {
    * (open pool / elective) opens the slot picker pre-filtered to those codes.
    * Optional — the read-only shared view passes nothing, leaving rows inert.
    */
-  onDrillToRequirement?: (codes: string[]) => void;
+  onDrillToRequirement?: DrillFn;
   /** Drag lifecycle for course rows; omitted alongside the read-only view. */
   drag?: DragWiring;
 }
@@ -517,7 +524,7 @@ function SectionRow({
   placedCodes: ReadonlySet<string>;
   catalog?: Course[];
   catalogByCode: Map<string, Course>;
-  onDrill?: (codes: string[]) => void;
+  onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
   if (section.kind === "info") {
@@ -628,7 +635,7 @@ function SectionRow({
         ring={{ pct, num: section.satisfiers.length }}
         open={open}
       >
-        <BreadthBody section={section} catalog={catalog} onDrill={onDrill} />
+        <BreadthBody section={section} onDrill={onDrill} />
       </SectionShell>
     );
   }
@@ -798,7 +805,7 @@ function NodeBody({
   placedCodes: ReadonlySet<string>;
   catalog?: Course[];
   catalogByCode: Map<string, Course>;
-  onDrill?: (codes: string[]) => void;
+  onDrill?: DrillFn;
   drag?: DragWiring;
   depth?: number;
 }) {
@@ -878,7 +885,7 @@ function NodeBody({
   }
 
   if (r.kind === "subjectPool") {
-    return <SubjectPoolBody node={r} catalog={catalog} onDrill={onDrill} />;
+    return <SubjectPoolBody node={r} onDrill={onDrill} />;
   }
 
   if (r.kind === "all") {
@@ -921,7 +928,7 @@ interface OptionRenderProps {
   placedCodes: ReadonlySet<string>;
   catalog?: Course[];
   catalogByCode: Map<string, Course>;
-  onDrill?: (codes: string[]) => void;
+  onDrill?: DrillFn;
   drag?: DragWiring;
 }
 
@@ -1119,7 +1126,7 @@ function CourseRow({
   code: string;
   placed: boolean;
   catalogByCode: Map<string, Course>;
-  onDrill?: (codes: string[]) => void;
+  onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
   const label = formatCourseCode(code);
@@ -1245,7 +1252,7 @@ function ChooseOneRow({
   node: AuditNode;
   options: string[];
   catalogByCode: Map<string, Course>;
-  onDrill?: (codes: string[]) => void;
+  onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
   const r = node.ruleNode;
@@ -1310,7 +1317,7 @@ function OptionChip({
   code: string;
   placed: boolean;
   catalogByCode: Map<string, Course>;
-  onDrill?: (codes: string[]) => void;
+  onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
   const label = formatCourseCode(code);
@@ -1354,85 +1361,60 @@ function OptionChip({
   );
 }
 
-/** An open subject pool: subject tags + a hint + Browse (no drag rows). */
-function SubjectPoolBody({
-  node,
-  catalog,
-  onDrill,
-}: {
-  node: SubjectPoolNode;
-  catalog?: Course[];
-  onDrill?: (codes: string[]) => void;
-}) {
-  const eligible = useMemo(
-    () => (catalog ? subjectPoolEligible(node, catalog) : []),
-    [node, catalog],
+/** Level buckets within a pool's [min,max] range (bucketed values). [] = all. */
+function poolLevels(min?: number, max?: number): number[] {
+  const all = [100, 200, 300, 400];
+  const sub = all.filter(
+    (b) => (min == null || b >= min) && (max == null || b <= max),
   );
-  return (
-    <div className="av-pool">
-      <div className="av-pool-subj">
-        {node.subjectCodes.map((s) => (
-          <span key={s} className="av-subj">
-            {s}
-          </span>
-        ))}
-      </div>
-      <p className="av-hint">
-        Any {node.selectCount} from these subjects — there's no fixed list to
-        drag, so pick from the catalog.
-      </p>
-      {onDrill && eligible.length > 0 ? (
-        <button
-          type="button"
-          className="av-browse"
-          onClick={() => onDrill(eligible)}
-        >
-          <Icon name="search" size="xs" aria-hidden="true" /> Browse eligible
-          courses <Icon name="arrow" size="xs" aria-hidden="true" />
-        </button>
-      ) : null}
-    </div>
-  );
+  return sub.length === all.length ? [] : sub;
+}
+
+/** Human level-range note, e.g. "300–400 level". Null when unbounded. */
+function poolLevelText(min?: number, max?: number): string | null {
+  if (min == null && max == null) return null;
+  if (min != null && max != null)
+    return min === max ? `${min} level` : `${min}–${max} level`;
+  if (min != null) return `${min}+ level`;
+  return `up to ${max} level`;
 }
 
 /**
- * A breadth/distribution requirement ("complete 2 courses from {CLAS, ENGL, …}").
- * Like a subject pool there's no fixed list to drag, so it shows the eligible
- * subjects + Browse; any courses already placed in those subjects show as met.
+ * A criteria-based requirement (subject pool / faculty breadth) — defined by a
+ * subject + level filter, not a fixed course list. Renders as one "search the
+ * catalog" card summarizing the criteria; clicking it opens the picker
+ * pre-filtered to those subjects/levels (so the sidebar shows the filter).
+ * Placed courses that count show as met chips above.
  */
-function BreadthBody({
-  section,
-  catalog,
-  onDrill,
+function PoolCard({
+  lead,
+  subjects,
+  levelText,
+  satisfiers,
+  onBrowse,
 }: {
-  section: Extract<Section, { kind: "breadth" }>;
-  catalog?: Course[];
-  onDrill?: (codes: string[]) => void;
+  lead: string;
+  subjects: string[];
+  levelText: string | null;
+  satisfiers: string[];
+  onBrowse: (() => void) | null;
 }) {
-  const eligible = useMemo(() => {
-    if (!catalog) return [];
-    const subjects = new Set(section.subjects);
-    return catalog
-      .filter((c) => subjects.has(c.prefix.toUpperCase()))
-      .map((c) => c.code);
-  }, [catalog, section.subjects]);
+  const shown = subjects.slice(0, 3);
+  const extra = subjects.length - shown.length;
+  const sub = [shown.join(" · ") + (extra > 0 ? ` +${extra}` : ""), levelText]
+    .filter(Boolean)
+    .join("  ·  ");
+  const inner = (
+    <span className="av-poolbtn-text">
+      <span className="av-poolbtn-lead">{lead}</span>
+      {sub ? <span className="av-poolbtn-sub">{sub}</span> : null}
+    </span>
+  );
   return (
     <div className="av-pool">
-      <div className="av-pool-subj">
-        {section.subjects.map((s) => (
-          <span key={s} className="av-subj">
-            {s}
-          </span>
-        ))}
-      </div>
-      <p className="av-hint">
-        {fmtUnits(section.needUnits)} unit
-        {section.needUnits === 1 ? "" : "s"} from these subjects — there's no
-        fixed list to drag, so pick from the catalog.
-      </p>
-      {section.satisfiers.length > 0 ? (
-        <div className="av-chips mt-1.5">
-          {section.satisfiers.map((code) => (
+      {satisfiers.length > 0 ? (
+        <div className="av-chips">
+          {satisfiers.map((code) => (
             <span
               key={code}
               className="av-chip met"
@@ -1444,17 +1426,77 @@ function BreadthBody({
           ))}
         </div>
       ) : null}
-      {onDrill && eligible.length > 0 ? (
-        <button
-          type="button"
-          className="av-browse"
-          onClick={() => onDrill(eligible)}
-        >
-          <Icon name="search" size="xs" aria-hidden="true" /> Browse eligible
-          courses <Icon name="arrow" size="xs" aria-hidden="true" />
+      {onBrowse ? (
+        <button type="button" className="av-poolbtn" onClick={onBrowse}>
+          <span className="av-poolbtn-ico">
+            <Icon name="search" size="sm" aria-hidden="true" />
+          </span>
+          {inner}
+          <Icon name="arrow" size="xs" aria-hidden="true" />
         </button>
-      ) : null}
+      ) : (
+        <div className="av-poolbtn is-static">
+          <span className="av-poolbtn-ico">
+            <Icon name="search" size="sm" aria-hidden="true" />
+          </span>
+          {inner}
+        </div>
+      )}
     </div>
+  );
+}
+
+/** An open subject pool: "choose N courses in these subjects/levels". */
+function SubjectPoolBody({
+  node,
+  onDrill,
+}: {
+  node: SubjectPoolNode;
+  onDrill?: DrillFn;
+}) {
+  const subjects = node.subjectCodes.map((s) => s.toUpperCase());
+  return (
+    <PoolCard
+      lead={`Choose ${node.selectCount} course${node.selectCount === 1 ? "" : "s"}`}
+      subjects={subjects}
+      levelText={poolLevelText(node.minLevel, node.maxLevel)}
+      satisfiers={[]}
+      onBrowse={
+        onDrill
+          ? () =>
+              onDrill([], {
+                includePrefixes: subjects,
+                levels: poolLevels(node.minLevel, node.maxLevel),
+              })
+          : null
+      }
+    />
+  );
+}
+
+/**
+ * A breadth/distribution requirement ("1.0 unit of Humanities: CLAS, ENGL, …").
+ * Criteria-based like a subject pool; placed courses in those subjects show met.
+ */
+function BreadthBody({
+  section,
+  onDrill,
+}: {
+  section: Extract<Section, { kind: "breadth" }>;
+  onDrill?: DrillFn;
+}) {
+  return (
+    <PoolCard
+      lead={`${fmtUnits(section.needUnits)} unit${section.needUnits === 1 ? "" : "s"}`}
+      subjects={section.subjects}
+      levelText={null}
+      satisfiers={section.satisfiers}
+      onBrowse={
+        onDrill
+          ? () => onDrill([], { includePrefixes: section.subjects })
+          : null
+      }
+    />
   );
 }
 
@@ -1916,28 +1958,4 @@ function breadthSection(b: BreadthRequirement, index: number): Section {
     subjects: b.subjects,
     satisfiers: b.satisfiers,
   };
-}
-
-/** Catalog codes matching a subject pool's prefixes + level bounds. */
-function subjectPoolEligible(
-  node: SubjectPoolNode,
-  catalog: Course[],
-): string[] {
-  const subjects = new Set(node.subjectCodes.map((s) => s.toUpperCase()));
-  const excluded = new Set((node.exclusions ?? []).map((c) => c.toLowerCase()));
-  // Bucket the level the same way the compiler does (`levelBucket`), so the
-  // Browse list offers exactly the courses the audit would credit. Comparing
-  // the raw level against bucketed bounds (e.g. 486 vs maxLevel 400) wrongly
-  // dropped upper-range courses the compiler still counts.
-  return catalog
-    .filter((c) => {
-      const lvl = levelBucket(c.level);
-      return (
-        subjects.has(c.prefix.toUpperCase()) &&
-        (node.minLevel == null || lvl >= node.minLevel) &&
-        (node.maxLevel == null || lvl <= node.maxLevel) &&
-        !excluded.has(c.code)
-      );
-    })
-    .map((c) => c.code);
 }

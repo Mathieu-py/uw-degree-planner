@@ -1,8 +1,11 @@
 import { useCallback, useState } from "react";
+import type { FilterPreset } from "@/lib/courses/types";
 
 export interface PickerContext {
   slotId: string;
   focusCodes?: string[];
+  /** Filters to pre-apply when the picker opens (e.g. a subject-pool Browse). */
+  initialFilters?: FilterPreset;
 }
 
 /**

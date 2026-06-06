@@ -64,10 +64,28 @@ export type CourseDetail = Course & { description: string | null };
  * a presentation toggle — an empty completed-courses list makes it a no-op.
  */
 export interface PureFilters {
+  /** Subject prefixes to hide (deny-list). Empty = disabled. */
   excludePrefixes: string[];
+  /**
+   * Subject prefixes to restrict results to (allow-list). Empty = disabled;
+   * non-empty shows ONLY these prefixes. `excludePrefixes` still applies, so a
+   * prefix in both lists is hidden (exclude wins).
+   */
+  includePrefixes: string[];
   levels: number[];
   hasSeatsAvailable: boolean;
   hideUnmetPrereqs: boolean;
   minUseful: number | null;
   minEasy: number | null;
+}
+
+/**
+ * A seed of filter values to pre-apply when the slot picker opens — e.g. an
+ * audit subject-pool "Browse" pre-filters the catalog to its subjects (as an
+ * `includePrefixes` allow-list) and level range, so the sidebar reflects the
+ * requirement and the student can widen/narrow from there.
+ */
+export interface FilterPreset {
+  includePrefixes?: string[];
+  levels?: number[];
 }

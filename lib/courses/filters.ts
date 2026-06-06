@@ -10,6 +10,7 @@ const PREFIX_RE = /^[A-Z]+/;
  */
 export const DEFAULT_PURE_FILTERS: PureFilters = {
   excludePrefixes: [],
+  includePrefixes: [],
   levels: [],
   hasSeatsAvailable: false,
   hideUnmetPrereqs: false,
@@ -46,6 +47,20 @@ export function passesPrefixExclusion(
   excludePrefixes: ReadonlyArray<string>,
 ): boolean {
   return !excludePrefixes.includes(course.prefix);
+}
+
+/**
+ * Allow-list gate: passes everything when the list is empty (rule disabled),
+ * otherwise only courses whose prefix is in the list. Paired with
+ * {@link passesPrefixExclusion} in the AND-chain, so a prefix that is BOTH
+ * included and excluded is hidden — exclude wins, with no special-casing.
+ */
+export function passesPrefixInclusion(
+  course: Course,
+  includePrefixes: ReadonlyArray<string>,
+): boolean {
+  if (includePrefixes.length === 0) return true;
+  return includePrefixes.includes(course.prefix);
 }
 
 export function passesMinUsefulFilter(
@@ -93,6 +108,7 @@ export function applyFilters(
   return courses.filter(
     (c) =>
       passesPrefixExclusion(c, s.excludePrefixes) &&
+      passesPrefixInclusion(c, s.includePrefixes) &&
       passesLevelFilter(c, s.levels) &&
       passesSeatsFilter(c, s.hasSeatsAvailable) &&
       passesMinUsefulFilter(c, s.minUseful) &&

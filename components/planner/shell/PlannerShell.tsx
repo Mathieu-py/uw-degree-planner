@@ -372,6 +372,7 @@ function PlannerShellInner({
               programReferenced={programReferenced}
               sameTerm={pickerMeta.sameTerm}
               focusCodes={picker.focusCodes}
+              initialFilters={picker.initialFilters}
               onPick={handlePickCode}
               onClose={closePicker}
             />

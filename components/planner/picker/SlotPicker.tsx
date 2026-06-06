@@ -11,7 +11,7 @@ import type { SortDir, SortKey } from "@/lib/courses/courseSort";
 import type { EligibilityRow } from "@/lib/courses/eligibility";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
-import type { Course } from "@/lib/courses/types";
+import type { Course, FilterPreset } from "@/lib/courses/types";
 import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { ProgramIdentity } from "@/lib/programs";
@@ -35,6 +35,8 @@ interface Props {
   sameTerm?: ReadonlySet<string>;
   /** Optional restriction to specific codes (e.g. audit drill-in). */
   focusCodes?: string[];
+  /** Filters to pre-apply on open (e.g. a subject-pool Browse → its subjects). */
+  initialFilters?: FilterPreset;
   onPick: (code: string) => void;
   onClose: () => void;
 }
@@ -54,6 +56,7 @@ export function SlotPicker({
   programReferenced,
   sameTerm,
   focusCodes,
+  initialFilters,
   onPick,
   onClose,
 }: Props) {
@@ -79,6 +82,7 @@ export function SlotPicker({
     programReferenced,
     sameTerm,
     focusCodes,
+    initialFilters,
   });
 
   // Row clicks forward the picked code AFTER the exit animation. animateOut
