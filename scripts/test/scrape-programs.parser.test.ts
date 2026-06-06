@@ -702,6 +702,88 @@ describe("subject-pool parsing — synthetic variants", () => {
     expect(pool.subjectCodes).toContain("PMATH");
   });
 
+  it("'lecture'/'lab' descriptor between subject and 'courses' + ', any level'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2.5 units of BIOL lecture courses, any level</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["BIOL"]);
+    expect(pool.minLevel).toBeUndefined();
+    expect(pool.selectCount).toBe(5); // 2.5 / 0.5
+  });
+
+  it("Oxford-comma multi-subject: 'AVIA, ENVS, GDS, or GEOG courses at the 400-level'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 1.5 units of AVIA, ENVS, GDS, or GEOG courses at the 400-level</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["AVIA", "ENVS", "GDS", "GEOG"]);
+    expect(pool.minLevel).toBe(400);
+  });
+
+  it("multi-level enumeration: 'at the 200-, 300-, or 400-level' → min..max", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 7 additional courses at the 200-, 300-, or 400-level from: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.minLevel).toBe(200);
+    expect(pool.maxLevel).toBe(400);
+    expect(pool.selectCount).toBe(7);
+    expect(pool.subjectCodes).toContain("MATBUS");
+  });
+
+  it("'elective' descriptor + range level: 'BUS or ENTR elective courses at the 300- or 400-level'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 7 additional BUS or ENTR elective courses at the 300- or 400-level, taken in third, fourth, or fifth year</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["BUS", "ENTR"]);
+    expect(pool.minLevel).toBe(300);
+    expect(pool.maxLevel).toBe(400);
+  });
+
+  it("article count + spaced unit size: 'Complete a 0.5 unit math course from …'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete a 0.5 unit math course from the following subject codes: ACTSC, AMATH, CO, CS, MATH, PMATH, STAT</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(1);
+    expect(pool.subjectCodes).toContain("ACTSC");
+  });
+
+  it("'unit in additional SUBJ courses' (in, not of)", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 0.5 unit in additional CHEM courses</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["CHEM"]);
+    expect(pool.selectCount).toBe(1); // 0.5 / 0.5
+  });
+
   it("multi-subject with level range: 'Complete 2 additional courses at the 300- or 400-level from: …; excluding …'", () => {
     const r = parseProgramRequirements({
       requirements: wrapSection(

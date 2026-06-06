@@ -6245,14 +6245,36 @@
       "kind": "all",
       "children": [
         {
-          "kind": "courses",
-          "courses": [
-            "vcult100",
-            "vcult101",
-            "vcult200",
-            "vcult209",
-            "vcult300",
-            "vcult319"
+          "kind": "all",
+          "children": [
+            {
+              "kind": "courses",
+              "courses": [
+                "vcult100",
+                "vcult101",
+                "vcult200",
+                "vcult209",
+                "vcult300",
+                "vcult319"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "VCULT"
+              ],
+              "minLevel": 200
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "VCULT"
+              ],
+              "minLevel": 200,
+              "maxLevel": 300
+            }
           ]
         }
       ]
@@ -6307,10 +6329,6 @@
     "unitPlan": {
       "totalUnits": 6
     },
-    "unverifiedRequirements": [
-      "Complete 1.5 additional units of VCULT approved courses at the 200-level",
-      "Complete 1.5 additional units of VCULT approved courses at the 200- or 300-level"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -15125,25 +15143,40 @@
               ]
             },
             {
-              "kind": "courses",
-              "courses": [
-                "bus111w",
-                "bus121w",
-                "bus127w",
-                "bus231w",
-                "bus247w",
-                "bus252w",
-                "bus283w",
-                "bus288w",
-                "bus354w",
-                "bus362w",
-                "bus375w",
-                "bus381w",
-                "bus393w",
-                "bus398w",
-                "bus491w",
-                "econ120w",
-                "econ140w"
+              "kind": "all",
+              "children": [
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "bus111w",
+                    "bus121w",
+                    "bus127w",
+                    "bus231w",
+                    "bus247w",
+                    "bus252w",
+                    "bus283w",
+                    "bus288w",
+                    "bus354w",
+                    "bus362w",
+                    "bus375w",
+                    "bus381w",
+                    "bus393w",
+                    "bus398w",
+                    "bus491w",
+                    "econ120w",
+                    "econ140w"
+                  ]
+                },
+                {
+                  "kind": "subjectPool",
+                  "selectCount": 7,
+                  "subjectCodes": [
+                    "BUS",
+                    "ENTR"
+                  ],
+                  "minLevel": 300,
+                  "maxLevel": 400
+                }
               ]
             }
           ]
@@ -15153,9 +15186,6 @@
     "unitPlan": {
       "totalUnits": 26
     },
-    "unverifiedRequirements": [
-      "Complete 7 additional BUS or ENTR elective courses at the 300- or 400-level, taken in third, fourth, or fifth year"
-    ],
     "specializations": [
       {
         "slug": "cs-artificial-intelligence",
@@ -15856,29 +15886,60 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "kind": "subjectPool",
+                  "selectCount": 7,
+                  "subjectCodes": [
+                    "ACTSC",
+                    "AMATH",
+                    "CO",
+                    "CS",
+                    "MATBUS",
+                    "MATH",
+                    "PMATH",
+                    "STAT"
+                  ],
+                  "minLevel": 200,
+                  "maxLevel": 400
                 }
               ]
             },
             {
-              "kind": "courses",
-              "courses": [
-                "bus111w",
-                "bus121w",
-                "bus127w",
-                "bus231w",
-                "bus247w",
-                "bus252w",
-                "bus283w",
-                "bus288w",
-                "bus354w",
-                "bus362w",
-                "bus375w",
-                "bus381w",
-                "bus393w",
-                "bus398w",
-                "bus491w",
-                "econ120w",
-                "econ140w"
+              "kind": "all",
+              "children": [
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "bus111w",
+                    "bus121w",
+                    "bus127w",
+                    "bus231w",
+                    "bus247w",
+                    "bus252w",
+                    "bus283w",
+                    "bus288w",
+                    "bus354w",
+                    "bus362w",
+                    "bus375w",
+                    "bus381w",
+                    "bus393w",
+                    "bus398w",
+                    "bus491w",
+                    "econ120w",
+                    "econ140w"
+                  ]
+                },
+                {
+                  "kind": "subjectPool",
+                  "selectCount": 7,
+                  "subjectCodes": [
+                    "BUS",
+                    "ENTR"
+                  ],
+                  "minLevel": 300,
+                  "maxLevel": 400
+                }
               ]
             }
           ]
@@ -15888,10 +15949,6 @@
     "unitPlan": {
       "totalUnits": 26
     },
-    "unverifiedRequirements": [
-      "Complete 7 additional courses at the 200-, 300-, or 400-level from: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
-      "Complete 7 additional BUS or ENTR elective courses at the 300- or 400-level, taken in third, fourth, or fifth year"
-    ],
     "degreeRequirements": {
       "kualiId": "rJj6aXDk6",
       "name": "Bachelor of Mathematics Degree Requirements",
@@ -18105,6 +18162,13 @@
                       ]
                     },
                     {
+                      "kind": "subjectPool",
+                      "selectCount": 1,
+                      "subjectCodes": [
+                        "CHEM"
+                      ]
+                    },
+                    {
                       "kind": "pick",
                       "children": [
                         {
@@ -18167,8 +18231,7 @@
       "totalUnits": 20
     },
     "unverifiedRequirements": [
-      "Complete 0.75 units from the following list of courses.",
-      "Complete 0.5 unit in additional CHEM courses"
+      "Complete 0.75 units from the following list of courses."
     ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",
@@ -37449,6 +37512,18 @@
               "subjectCodes": [
                 "PHYS"
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "PHYS"
+              ],
+              "minLevel": 400,
+              "exclusions": [
+                "1.5 units",
+                "exclusive of PHYS437A and PHYS437B"
+              ]
             }
           ]
         }
@@ -37458,8 +37533,7 @@
       "totalUnits": 21
     },
     "unverifiedRequirements": [
-      "Complete 1.25 units of courses from the following list",
-      "Complete 3 additional PHYS lecture courses (1.5 units) at the 400-level (exclusive of PHYS437A and PHYS437B)"
+      "Complete 1.25 units of courses from the following list"
     ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",
@@ -39769,15 +39843,44 @@
       "kind": "all",
       "children": [
         {
-          "kind": "courses",
-          "courses": [
-            "vcult100",
-            "vcult101",
-            "vcult200",
-            "vcult209",
-            "vcult300",
-            "vcult319",
-            "vcult400"
+          "kind": "all",
+          "children": [
+            {
+              "kind": "courses",
+              "courses": [
+                "vcult100",
+                "vcult101",
+                "vcult200",
+                "vcult209",
+                "vcult300",
+                "vcult319",
+                "vcult400"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 4,
+              "subjectCodes": [
+                "VCULT"
+              ],
+              "minLevel": 200
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "VCULT"
+              ],
+              "minLevel": 300
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 4,
+              "subjectCodes": [
+                "VCULT"
+              ],
+              "minLevel": 200
+            }
           ]
         }
       ]
@@ -39835,11 +39938,6 @@
     "unitPlan": {
       "totalUnits": 8
     },
-    "unverifiedRequirements": [
-      "Complete 2.0 additional units of VCULT approved courses at the 200-level",
-      "Complete 0.5 additional unit of VCULT approved courses at the 300-level",
-      "Complete 2.0 additional units of VCULT approved courses at the 200-level or above"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -40987,6 +41085,21 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 5,
+              "subjectCodes": [
+                "BIOL"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 8,
+              "subjectCodes": [
+                "BIOL"
+              ],
+              "minLevel": 300
             }
           ]
         }
@@ -40994,11 +41107,7 @@
     },
     "unitPlan": {
       "totalUnits": 8
-    },
-    "unverifiedRequirements": [
-      "Complete 2.5 units of BIOL lecture courses, any level",
-      "Complete 4.0 units of BIOL lecture courses at the 300-level or above"
-    ]
+    }
   },
   "jh-chemistry": {
     "kind": "flexible",
@@ -41920,6 +42029,28 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "AVIA",
+                "ENVS",
+                "GDS",
+                "GEOG"
+              ],
+              "minLevel": 400
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "AVIA",
+                "ENVS",
+                "GDS",
+                "GEOG"
+              ],
+              "minLevel": 300
             }
           ]
         }
@@ -41928,10 +42059,6 @@
     "unitPlan": {
       "totalUnits": 8.5
     },
-    "unverifiedRequirements": [
-      "Complete 1.5 units of AVIA, ENVS, GDS, or GEOG courses at the 400-level",
-      "Complete 1.5 additional units of AVIA, ENVS, GDS, or GEOG courses at the 300-level or higher"
-    ],
     "specializations": [
       {
         "slug": "gem-aviation",
@@ -49488,6 +49615,18 @@
               "subjectCodes": [
                 "PHYS"
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "PHYS"
+              ],
+              "minLevel": 400,
+              "exclusions": [
+                "0.5 unit",
+                "exclusive of PHYS437A and PHYS437B"
+              ]
             }
           ]
         }
@@ -49497,8 +49636,7 @@
       "totalUnits": 21
     },
     "unverifiedRequirements": [
-      "Complete 1.25 units of courses from the following list",
-      "Complete 1 additional PHYS lecture course (0.5 unit) at the 400-level (exclusive of PHYS437A and PHYS437B)"
+      "Complete 1.25 units of courses from the following list"
     ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",
@@ -50963,6 +51101,19 @@
               ]
             },
             {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "ACTSC",
+                "AMATH",
+                "CO",
+                "CS",
+                "MATH",
+                "PMATH",
+                "STAT"
+              ]
+            },
+            {
               "kind": "excluded",
               "courses": [
                 "cs100",
@@ -50987,8 +51138,7 @@
       ]
     },
     "unverifiedRequirements": [
-      "Complete one additional BIOL 0.5 unit, any level",
-      "Complete a 0.5 unit math course from the following subject codes: ACTSC, AMATH, CO, CS, MATH, PMATH, STAT"
+      "Complete one additional BIOL 0.5 unit, any level"
     ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",

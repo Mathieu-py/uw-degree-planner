@@ -540,11 +540,18 @@ function parseSubjectPool(fullText: string): RuleNode | null {
   // courses") — so match "unit(s)" on its own and swallow a following "of"
   // separately. Matching only "units of" left "unit at …"/"units SUBJ" phrasings
   // in `rest`, failing subject extraction and silently dropping the requirement.
+  // Count may be a digit ("3"), a word ("two"), or the article "a"/"an"
+  // ("a 0.5 unit math course"). The unit keyword may be followed by "of" OR "in"
+  // ("0.5 unit IN additional CHEM courses").
   const head = fullText.match(
-    /^Complete\s+(?:at\s+least\s+|at\s+most\s+|a\s+(?:minimum|maximum)\s+of\s+)?(\d+(?:\.\d+)?)\s+(?:additional\s+)?(units?\b\s*)?(?:of\s+)?/i,
+    /^Complete\s+(?:at\s+least\s+|at\s+most\s+|a\s+(?:minimum|maximum)\s+of\s+)?(\d+(?:\.\d+)?|an?|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:additional\s+)?(units?\b\s*)?(?:of\s+|in\s+)?/i,
   );
   if (!head) return null;
-  const amount = Number(head[1]);
+  const WORD_AMOUNT: Record<string, number> = {
+    a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5,
+    six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  };
+  const amount = WORD_AMOUNT[head[1].toLowerCase()] ?? Number(head[1]);
   const isUnits = head[2] != null;
   let rest = fullText.slice(head[0].length).trim();
 
@@ -565,19 +572,22 @@ function parseSubjectPool(fullText: string): RuleNode | null {
   // subject code that follows it is found (it sits after "units of", not before).
   rest = rest.replace(/^additional\s+/i, "");
 
-  // "N additional 0.5-unit course(s) from …" → drop the per-course unit size
-  // qualifier; it's a count requirement (N courses), not a unit total.
-  rest = rest.replace(/^[\d.]+-unit\s+/i, "");
+  // "N additional 0.5-unit course(s) from …" / "a 0.5 unit math course …" → drop
+  // the per-course unit size qualifier (hyphenated or spaced); it's a count
+  // requirement (N courses), not a unit total.
+  rest = rest.replace(/^[\d.]+[\s-]unit\s+/i, "");
 
   // Subject descriptor: "STAT courses" (one code) | "ENVS and/or ERS courses"
   // (several codes in the noun) | "math/Science courses" (a noun whose subjects
   // come from a later "from …" clause) | bare "courses".
   let subjectCodes: string[] = [];
-  // All-caps codes, optionally joined by "and/or", "and", "or", ",". Matched
-  // case-sensitively so prose words ("Science", "additional") aren't mistaken
-  // for codes (those fall through to the "from:" clause).
+  // All-caps codes, optionally joined by "and/or", "and", "or", ",", or an
+  // Oxford ", or" / ", and". Matched case-sensitively so prose words ("Science",
+  // "additional") aren't mistaken for codes (those fall through to "from:"). A
+  // descriptor adjective ("lecture", "lab", "elective", "approved") may sit
+  // between the codes and "courses" ("BIOL lecture courses").
   const codesMatch = rest.match(
-    /^([A-Z]{2,8}(?:\s*(?:,|and\/or|and|or)\s*[A-Z]{2,8})*)\s+courses?\b/,
+    /^([A-Z]{2,8}(?:\s*(?:,\s*(?:or|and)|and\/or|,|and|or)\s*[A-Z]{2,8})*)\s+(?:(?:lecture|laboratory|lab|elective|approved)\s+)*courses?\b/,
   );
   if (codesMatch) {
     subjectCodes = (codesMatch[1].match(/[A-Z]{2,8}/g) ?? []).map((s) =>
@@ -594,19 +604,28 @@ function parseSubjectPool(fullText: string): RuleNode | null {
   // subject codes: …") — don't bail; the subject set comes from the "from:"
   // clause below. We only give up if NO subjects are found after level + from.
 
-  // "at any level" carries no bound — strip it so it doesn't block the "from:"
-  // clause that follows.
-  rest = rest.replace(/^at any level\s*/i, "");
+  // "any level" / ", any level" carries no bound — strip it so it doesn't block
+  // the "from:" clause that follows.
+  rest = rest.replace(/^,?\s*(?:at\s+)?any\s+level\s*/i, "");
 
-  // Optional "at the X-level" / "at the X- or Y-level" / "at the X-level or above".
+  // Optional level constraint after "at the": a single level ("300-level" →
+  // floor), an explicit range ("300- or 400-level"), a longer enumeration
+  // ("200-, 300-, or 400-level" → min..max), or a single level "or above/higher"
+  // (floor). Pull every number before "level"; one number is a floor, several
+  // span min..max.
   let minLevel: number | undefined;
   let maxLevel: number | undefined;
   const levelMatch = rest.match(
-    /^at the\s+(\d+)(?:\s*-?\s*or\s+(\d+))?\s*-?\s*level(?:\s+or\s+(?:above|higher))?\b/i,
+    /^at the\s+([\d\s,\-or]+?)\s*-?\s*level(?:\s+or\s+(?:above|higher))?\b/i,
   );
   if (levelMatch) {
-    minLevel = Number(levelMatch[1]);
-    if (levelMatch[2]) maxLevel = Number(levelMatch[2]);
+    const nums = (levelMatch[1].match(/\d+/g) ?? []).map(Number);
+    if (nums.length > 0) {
+      minLevel = Math.min(...nums);
+      // Multiple bounded levels span a range; a single level (with or without
+      // "or above") is a floor, so leave maxLevel open.
+      if (nums.length > 1) maxLevel = Math.max(...nums);
+    }
     rest = rest.slice(levelMatch[0].length).trim();
   }
 
