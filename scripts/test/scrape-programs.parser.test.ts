@@ -506,6 +506,40 @@ describe("unverified requirements — owed prose we can't structure", () => {
     );
     expect(r.unverified).toEqual([]);
   });
+
+  it("extracts a plain-text (non-hyperlinked) required course code", () => {
+    // Cross-institution / unlinked courses (e.g. BUS127W) sit in the rule text
+    // with no <a> to link, so the <a>-only collector missed them and the whole
+    // requirement was dropped. The text fallback now structures it.
+    const r = parseProgramRequirements(
+      { requirements: wrapLeaf("Complete all the following: BUS127W") },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses node");
+    expect(node.courses).toEqual(["bus127w"]);
+    expect(r.unverified).toEqual([]);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("does NOT scrape a course-number range as literal codes (stays unverified)", () => {
+    // "CS440-CS498" is a SET of courses, not a 2-course list — pulling its
+    // endpoints would be wrong, so the rule is left unstructured (unverified).
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Choose any course from the following: CS440-CS498",
+        ),
+      },
+      "test",
+    );
+    if (r.kind === "flexible")
+      expect(findNode(r.rules, (n) => n.kind === "courses")).toBeUndefined();
+    expect(r.unverified).toEqual([
+      "Choose any course from the following: CS440-CS498",
+    ]);
+  });
 });
 
 describe("subject-pool parsing — synthetic variants", () => {

@@ -442,6 +442,14 @@ function parseLi(
   return null;
 }
 
+// A course-code token in free text ("BUS127W", "INDEV 387"), allowing one space
+// between subject and number.
+const TEXT_CODE_RE = /[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?/g;
+// A course-number RANGE ("CS340-CS398", "CS 440-489", "600- or 700-level"): a
+// set of courses, NOT a fixed list — must not be scraped as two literal codes.
+const CODE_RANGE_RE =
+  /[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?\s*[-–—]\s*(?:[A-Za-z]{2,8}\s?)?\d{3,4}/;
+
 function collectCourseCodes(
   $: cheerio.CheerioAPI,
   $result: ReturnType<cheerio.CheerioAPI>,
@@ -451,6 +459,23 @@ function collectCourseCodes(
     const code = normalizeCourseCode($(a).text());
     if (code) codes.add(code);
   });
+  // Fallback for required courses Kuali renders as PLAIN TEXT (no <a> to link)
+  // because they're absent from UW's own course DB — cross-institution "…W"
+  // codes (e.g. BUS127W) or just-unlinked ones (INDEV387). Only when NOTHING was
+  // hyperlinked, scan the course-list portion after the rule's colon. Bail on a
+  // range expression ("CS340-CS398"): that's a course set, not a fixed list, so
+  // pulling its endpoints as two literal courses would be wrong — leave such a
+  // rule unextracted (it surfaces as unverified) rather than mis-structured.
+  if (codes.size === 0) {
+    const text = $result.text();
+    const colon = text.indexOf(":");
+    const list = colon >= 0 ? text.slice(colon + 1) : "";
+    if (list && !CODE_RANGE_RE.test(list))
+      for (const tok of list.match(TEXT_CODE_RE) ?? []) {
+        const code = normalizeCourseCode(tok);
+        if (code) codes.add(code);
+      }
+  }
   return [...codes].sort();
 }
 

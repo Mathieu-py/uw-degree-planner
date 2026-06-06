@@ -80,9 +80,11 @@ export type ElectiveSection =
   | SubjectPoolElectiveSection;
 
 /** "… N units of <subjects> courses …" — a unit-based subject filter. */
-const SUBJECT_POOL_RE = /(\d+(?:\.\d+)?)\s*units?\s+of\s+([a-z][a-z,/&\s]*?)\s+courses?/i;
+const SUBJECT_POOL_RE =
+  /(\d+(?:\.\d+)?)\s*units?\s+of\s+([a-z][a-z,/&\s]*?)\s+courses?/i;
 /** "… at the 200-level or above / below" — an optional level bound. */
-const LEVEL_BOUND_RE = /(\d{3})-level\s+(?:or|and)\s+(above|higher|below|lower)/i;
+const LEVEL_BOUND_RE =
+  /(\d{3})-level\s+(?:or|and)\s+(above|higher|below|lower)/i;
 
 /**
  * Parse a unit-based subject-pool rule into a trackable section, or null when
@@ -107,7 +109,9 @@ function parseSubjectPoolElective(
     kind: "subjectPool",
     title: `${units} unit${units === 1 ? "" : "s"} of ${subjects
       .map((s) => s.toUpperCase())
-      .join("/")}${lvl ? ` (${lvl[1]}${/below|lower/i.test(lvl[2]) ? "-" : "+"})` : ""}`,
+      .join(
+        "/",
+      )}${lvl ? ` (${lvl[1]}${/below|lower/i.test(lvl[2]) ? "-" : "+"})` : ""}`,
     subjects,
     need: Math.max(1, Math.round(units / 0.5)),
     needUnits: units,
@@ -204,10 +208,10 @@ export function consolidateElectives(
       (o) =>
         o !== agg &&
         !subsumed.has(o) &&
-        o.approvedCourses!.every((c) => aggSet.has(c)),
+        o.approvedCourses?.every((c) => aggSet.has(c)),
     );
     if (parts.length < 2) continue;
-    const union = new Set(parts.flatMap((o) => o.approvedCourses!));
+    const union = new Set(parts.flatMap((o) => o.approvedCourses ?? []));
     // The aggregate must be EXACTLY the union of its parts (no extra codes, no
     // gaps) — otherwise it's a distinct list that merely overlaps, not a parent.
     if (union.size !== aggSet.size) continue;

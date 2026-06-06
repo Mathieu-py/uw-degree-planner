@@ -40354,6 +40354,12 @@
               ]
             },
             {
+              "kind": "courses",
+              "courses": [
+                "indev387"
+              ]
+            },
+            {
               "kind": "pick",
               "selectMin": 1,
               "selectMax": 1,
@@ -40378,9 +40384,6 @@
     "unitPlan": {
       "totalUnits": 20
     },
-    "unverifiedRequirements": [
-      "Complete all the following: INDEV387"
-    ],
     "specializations": [
       {
         "slug": "indev-practice",
@@ -45193,6 +45196,12 @@
                   "courses": [
                     "afm101"
                   ]
+                },
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "bus127w"
+                  ]
                 }
               ]
             },
@@ -45205,6 +45214,12 @@
                   "kind": "courses",
                   "courses": [
                     "afm102"
+                  ]
+                },
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "bus247w"
                   ]
                 }
               ]
@@ -45226,6 +45241,12 @@
                         "arbus101"
                       ]
                     }
+                  ]
+                },
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "bus111w"
                   ]
                 }
               ]
@@ -45303,6 +45324,12 @@
                   "courses": [
                     "econ101"
                   ]
+                },
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "econ120w"
+                  ]
                 }
               ]
             },
@@ -45316,6 +45343,12 @@
                   "courses": [
                     "econ102"
                   ]
+                },
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "econ140w"
+                  ]
                 }
               ]
             },
@@ -45328,6 +45361,12 @@
                   "kind": "courses",
                   "courses": [
                     "econ201"
+                  ]
+                },
+                {
+                  "kind": "courses",
+                  "courses": [
+                    "econ260w"
                   ]
                 }
               ]
@@ -45356,14 +45395,6 @@
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete all the following: BUS127W",
-      "Complete all the following: BUS247W",
-      "Complete all the following: BUS111W",
-      "Complete all the following: ECON120W",
-      "Complete all the following: ECON140W",
-      "Complete all the following: ECON260W"
-    ],
     "degreeRequirements": {
       "kualiId": "rJj6aXDk6",
       "name": "Bachelor of Mathematics Degree Requirements",
