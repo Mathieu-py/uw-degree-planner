@@ -1045,10 +1045,9 @@ body {
 .av-sec-label {
   font-size: 13px;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   letter-spacing: -0.005em;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .av-row-body {
   padding: 2px 10px 10px;

@@ -154,8 +154,8 @@ describe("AuditPanel", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     render(<AuditPanel plan={mkPlan({ programId: engId })} />);
-    // Headline is the reliable course-count audit ("requirements met"), not units.
-    expect(screen.getByText(/requirements met/i)).toBeTruthy();
+    // One unified course-count headline ("X/Y · N% of degree planned"), not units.
+    expect(screen.getByText(/of degree planned/i)).toBeTruthy();
   });
 
   it("makes an unplaced course row an 'add' drag source when drill is enabled", () => {
@@ -249,17 +249,16 @@ describe("AuditPanel", () => {
     );
     const aside = container.querySelector("aside");
     if (!aside) throw new Error("no aside");
-    expect(within(aside).queryByText(/requirements met/i)).not.toBeNull();
+    expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
     expect(within(aside).queryByText(/of degree units/i)).toBeNull();
     expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
     expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
     expect(container.querySelector('[title*="check it by hand"]')).toBeNull();
   });
 
-  it("shows a soft 'courses planned' gauge from placed course units", () => {
-    // Two 0.5u courses = 2 course-equivalents; psychology-bsc is 21 units = 42
-    // courses → "≈ 2 of 42 courses planned" (a volume gauge, approximate — hence
-    // "≈" and "planned" — not a completion claim).
+  it("drives the unified headline fraction (units) from placed courses", () => {
+    // The headline IS the units bar now (no separate "courses planned" gauge):
+    // two placed 0.5-unit free electives read as "1/<total> units" of progress.
     if (!("psychology-bsc" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel
@@ -269,9 +268,9 @@ describe("AuditPanel", () => {
     );
     const aside = container.querySelector("aside");
     if (!aside) throw new Error("no aside");
-    expect(
-      within(aside).queryByText(/≈\s*2 of 42 courses planned/i),
-    ).not.toBeNull();
+    // Units fraction "1/NN units", and the old "courses planned" gauge is gone.
+    expect(within(aside).queryByText(/^1\/\d+(\.\d+)? units$/)).not.toBeNull();
+    expect(within(aside).queryByText(/courses planned/i)).toBeNull();
   });
 
   it("tracks faculty breadth as a course count, not a unit note", () => {
@@ -320,11 +319,11 @@ describe("AuditPanel", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("represents the degree's open volume as an uncounted 'Free electives' note", () => {
-    // h-biology pins ~21 named requirements out of a 43-course (21.5u) degree;
-    // the remainder surfaces as a soft "Free electives" note so the course count
-    // reconciles (named + free = degree total) — without being counted in the
-    // "requirements met" headline.
+  it("represents the degree's open volume as a 'Free electives' row", () => {
+    // h-biology pins its named requirements out of a larger degree; the
+    // remainder surfaces as a "Free electives" row. It now COUNTS toward the
+    // unified headline (named + free = degree total), so the bar reflects the
+    // whole degree, not just named requirements.
     if (!("h-biology" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel plan={mkPlan({ programId: "h-biology" })} />,
@@ -332,9 +331,7 @@ describe("AuditPanel", () => {
     const aside = container.querySelector("aside");
     if (!aside) throw new Error("no aside");
     expect(within(aside).queryByText(/free electives/i)).not.toBeNull();
-    // A note, not a tracked requirement: the headline still measures named
-    // requirements ("requirements met"), not the whole degree.
-    expect(within(aside).queryByText(/requirements met/i)).not.toBeNull();
+    expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
   });
 
   it("renders a compound 'choose one option' as delineated option cards", () => {

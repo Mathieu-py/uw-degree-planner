@@ -23,6 +23,7 @@ import {
   deriveElectiveSections,
   type ElectiveSection,
 } from "@/lib/audit/electives";
+import { computeDegreeProgress } from "@/lib/audit/progress";
 import { levelBucket } from "@/lib/courses/code";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
@@ -128,6 +129,11 @@ interface SectionGroup {
   sections: Section[];
 }
 
+/** Units as a compact string: trims trailing zeros (20.0→"20", 13.5→"13.5"). */
+function fmtUnits(n: number): string {
+  return String(Math.round(n * 100) / 100);
+}
+
 export const AuditPanel = memo(function AuditPanel({
   plan,
   catalog,
@@ -165,8 +171,20 @@ export const AuditPanel = memo(function AuditPanel({
     [plan, catalogByCode, audit],
   );
 
-  const { groups, totals, untrackedCount, unverifiedCount, headerCaption } =
-    useMemo(() => deriveSections(audit, program), [audit, program]);
+  const progress = useMemo(
+    () =>
+      computeDegreeProgress(
+        audit,
+        program,
+        (code) => catalogByCode.get(code)?.units ?? 0.5,
+      ),
+    [audit, program, catalogByCode],
+  );
+
+  const { groups, unverifiedCount } = useMemo(
+    () => deriveSections(audit, program, progress.freeUnits),
+    [audit, program, progress.freeUnits],
+  );
 
   if (!plan.programId) {
     return (
@@ -183,39 +201,13 @@ export const AuditPanel = memo(function AuditPanel({
     );
   }
 
-  // Headline is the course-count audit — the reliable signal. The % covers
-  // requirements we can honestly track by count (required courses, finite
-  // electives, and faculty breadth). When count-less elective requirements
-  // remain (open/browse lists), never let it read 100% — the degree isn't done
-  // while electives are owed.
-  const trackedPct =
-    totals.needed > 0
-      ? Math.min(Math.round((totals.satisfied / totals.needed) * 100), 100)
-      : 0;
-  // Never let the headline read 100% while requirements remain that the % can't
-  // measure — count-less electives (untracked) OR requirements we couldn't even
-  // parse (unverified). The degree isn't provably done while either is owed.
-  const headlinePct =
-    untrackedCount > 0 || unverifiedCount > 0
-      ? Math.min(trackedPct, 99)
-      : trackedPct;
-  const headlineFraction = `${totals.satisfied}/${totals.needed}`;
-
-  // A soft "courses planned" gauge — placed course-equivalents (catalog units ÷
-  // 0.5) against the degree's total course count. A volume hint (how much you've
-  // mapped out), approximate (it assumes 0.5-unit courses, hence "≈"), NOT a
-  // completion claim — the tracked headline above is that. Shown in courses
-  // rather than units because that's the actionable unit ("N more to plan").
-  const degreeTotal = program.unitPlan?.totalUnits;
-  let plannedUnits = 0;
-  for (const code of audit.placement.keys())
-    plannedUnits += catalogByCode.get(code)?.units ?? 0;
-  const totalCourses =
-    degreeTotal != null ? Math.round(degreeTotal / 0.5) : null;
-  const coursesNote =
-    totalCourses != null
-      ? `≈ ${Math.round(plannedUnits / 0.5)} of ${totalCourses} courses planned`
-      : null;
+  // One honest headline: how much of the whole degree (every course it takes,
+  // not a sum of overlapping requirement slots) the plan accounts for. The
+  // denominator is the degree's authoritative size (totalUnits ÷ 0.5); the
+  // numerator credits each placed course to at most one requirement, capped at
+  // that size, and is held below 100% until every requirement is genuinely met.
+  const headlinePct = progress.pct;
+  const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${fmtUnits(progress.denom)} units`;
 
   // Default-open only the first incomplete section, to avoid a wall of open rows.
   const firstOpenKey = groups
@@ -236,15 +228,11 @@ export const AuditPanel = memo(function AuditPanel({
             <span className="text-[30px] font-bold tracking-tight leading-none">
               {headlinePct}%
             </span>
-            <span className="u-small">requirements met</span>
+            <span className="u-small">of degree planned</span>
           </div>
           <div className="mp-bar mt-2">
             <span style={{ width: `${headlinePct}%` }} />
           </div>
-          {coursesNote ? <div className="av-note">{coursesNote}</div> : null}
-          {headerCaption ? (
-            <div className="av-note">{headerCaption}</div>
-          ) : null}
           {unverifiedCount > 0 ? (
             <div className="av-note">
               {unverifiedCount} requirement{unverifiedCount === 1 ? "" : "s"}{" "}
@@ -1321,6 +1309,8 @@ function Grip({ s = 12 }: { s?: number }) {
 function deriveSections(
   audit: AuditRoot,
   program: Program | null,
+  /** Free-elective units from the unified headline model. */
+  freeElectiveUnits: number,
 ): {
   groups: SectionGroup[];
   totals: { needed: number; satisfied: number };
@@ -1449,22 +1439,19 @@ function deriveSections(
       });
     });
 
-    // Free electives — the degree's remaining open course volume (degree total −
-    // all named requirements above, breadth included). Placed FIRST in this group
-    // so the course count reconciles on screen (named + free = degree total).
-    // SOFT: a note, NOT counted in the headline % (which measures named
-    // requirements). Approximate (assumes 0.5-unit courses) and conservative
-    // where breadth overlaps the major, so only shown when positive.
-    const degreeTotalUnits = program.unitPlan?.totalUnits;
-    if (degreeTotalUnits != null) {
-      const free = Math.round(degreeTotalUnits / 0.5) - totalNeeded;
-      if (free > 0)
-        sections.unshift({
-          kind: "info",
-          key: "free-electives",
-          title: "Free electives",
-          caption: `≈ ${free} course${free === 1 ? "" : "s"}, any subject — fills out the degree beyond the named requirements above.`,
-        });
+    // Free electives — the degree's remaining open units (degree total − all
+    // named requirements above). Placed FIRST in this group so the units
+    // reconcile on screen (named + free = degree total). These DO count toward
+    // the headline (any course fills them), so this is the actionable "still to
+    // plan" volume — see computeDegreeProgress. Shown only when positive.
+    if (freeElectiveUnits > 0) {
+      const u = Math.round(freeElectiveUnits * 100) / 100;
+      sections.unshift({
+        kind: "info",
+        key: "free-electives",
+        title: "Free electives",
+        caption: `≈ ${u} unit${u === 1 ? "" : "s"}, any subject — fills out the degree beyond the named requirements above.`,
+      });
     }
 
     if (sections.length > 0)

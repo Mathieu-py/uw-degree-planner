@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyElective,
+  consolidateElectives,
   deriveElectiveSections,
 } from "@/lib/audit/electives";
 import { type ElectiveCategory, PROGRAMS, type Program } from "@/lib/programs";
@@ -112,6 +113,53 @@ describe("deriveElectiveSections", () => {
       rules: { kind: "all", children: [] },
     } as unknown as Program;
     expect(deriveElectiveSections(program)).toEqual([]);
+  });
+});
+
+describe("consolidateElectives", () => {
+  it("drops sub-lists subsumed by an aggregate that unions them (BME shape)", () => {
+    const cats: ElectiveCategory[] = [
+      { description: "Complete 1 of the following: A", approvedCourses: ["c1", "c2"] },
+      { description: "Complete 1 of the following: B", approvedCourses: ["c3"] },
+      {
+        description: "Technical Electives List",
+        requiredCount: 3,
+        approvedCourses: ["c1", "c2", "c3"],
+      },
+    ];
+    const out = consolidateElectives(cats);
+    expect(out).toHaveLength(1);
+    expect(out[0].description).toBe("Technical Electives List");
+  });
+
+  it("keeps lists that merely overlap but aren't an exact union", () => {
+    const cats: ElectiveCategory[] = [
+      { description: "List A", approvedCourses: ["c1", "c2"] },
+      { description: "List B", approvedCourses: ["c3"] },
+      // aggregate has an extra code (c4) → not exactly A ∪ B, so keep all three
+      { description: "Aggregate", approvedCourses: ["c1", "c2", "c3", "c4"] },
+    ];
+    expect(consolidateElectives(cats)).toHaveLength(3);
+  });
+
+  it("leaves distinct sibling lists untouched", () => {
+    const cats: ElectiveCategory[] = [
+      { description: "Complete 1 of the following: A", approvedCourses: ["a"] },
+      { description: "Complete 1 of the following: B", approvedCourses: ["b"] },
+      { description: "Complete 1 of the following: C", approvedCourses: ["c"] },
+    ];
+    expect(consolidateElectives(cats)).toHaveLength(3);
+  });
+
+  it("collapses Biomedical Engineering to a single technical-electives row", () => {
+    const titles = deriveElectiveSections(
+      PROGRAMS["biomedical-engineering"],
+    ).map((s) => s.title);
+    // No more "(2)"/"(3)" duplicates of "Complete 1 of the following".
+    expect(titles.filter((t) => /^Complete 1 of the following/.test(t))).toEqual(
+      [],
+    );
+    expect(titles).toContain("Technical Electives List");
   });
 });
 

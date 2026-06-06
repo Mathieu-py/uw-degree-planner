@@ -59,7 +59,7 @@ function electiveTitle(e: ElectiveCategory): string {
   const head = desc.split(":")[0].trim();
   return head.length > 0 && head.length < desc.length
     ? head
-    : truncate(desc, 90);
+    : truncate(desc, 140);
 }
 
 export function classifyElective(e: ElectiveCategory): ElectiveSection {
@@ -89,12 +89,48 @@ export function classifyElective(e: ElectiveCategory): ElectiveSection {
 }
 
 /**
+ * Collapse overlapping elective lists. The UW scrape sometimes emits a pool
+ * both as its sub-lists AND as the aggregate that unions them — e.g. Biomedical
+ * has "Complete 1 of {List 1}", "Complete 1 of {List 2}", "Complete 1 of {List
+ * 3}" (37 + 2 + 16 codes) plus a "Technical Electives List" whose 55 approved
+ * codes are EXACTLY List 1 ∪ 2 ∪ 3. Counted naively that's the same ~7 courses
+ * required twice. When one list's `approvedCourses` equals the union of ≥2
+ * others', drop the subsumed sub-lists and keep only the aggregate — one honest
+ * requirement, one row. (The sub-lists' "≥1 from each" wording is dropped from
+ * tracking; the aggregate's own `sourceText` still shows the verbatim rule.)
+ */
+export function consolidateElectives(
+  cats: readonly ElectiveCategory[],
+): ElectiveCategory[] {
+  const withList = cats.filter(
+    (e) => e.approvedCourses && e.approvedCourses.length > 0,
+  );
+  const subsumed = new Set<ElectiveCategory>();
+  for (const agg of withList) {
+    const aggSet = new Set(agg.approvedCourses);
+    const parts = withList.filter(
+      (o) =>
+        o !== agg &&
+        !subsumed.has(o) &&
+        o.approvedCourses!.every((c) => aggSet.has(c)),
+    );
+    if (parts.length < 2) continue;
+    const union = new Set(parts.flatMap((o) => o.approvedCourses!));
+    // The aggregate must be EXACTLY the union of its parts (no extra codes, no
+    // gaps) — otherwise it's a distinct list that merely overlaps, not a parent.
+    if (union.size !== aggSet.size) continue;
+    for (const p of parts) subsumed.add(p);
+  }
+  return cats.filter((e) => !subsumed.has(e));
+}
+
+/**
  * Classify every elective rule for a program, disambiguating repeated titles
  * (e.g. Biomedical has three "Complete 1 of the following" rules) with a
  * trailing index so each renders as a distinct section.
  */
 export function deriveElectiveSections(program: Program): ElectiveSection[] {
-  const cats = program.electives ?? [];
+  const cats = consolidateElectives(program.electives ?? []);
   const seen = new Map<string, number>();
   return cats.map((e) => {
     const section = classifyElective(e);
