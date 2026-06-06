@@ -217,6 +217,36 @@ describe("computeDegreeProgress — unit-based subject pool", () => {
   });
 });
 
+describe("computeDegreeProgress — level floors gate completion", () => {
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+    unitPlan: {
+      totalUnits: 1.0, // m1 (0.5) + 0.5 free
+      constraints: [
+        { label: "Upper level", sourceText: "0.5 unit must be at the 200-level or above." },
+      ],
+    },
+  };
+
+  it("holds below 100% while a level floor is unmet, even with full volume", () => {
+    const p = progressOf(program, ["m1", "engl101"]); // both 100-level
+    expect(p.creditedUnits).toBe(1.0); // degree volume is full
+    expect(p.levelFloors[0].placedUnits).toBe(0);
+    expect(p.allComplete).toBe(false);
+    expect(p.pct).toBe(99); // would be 100, held by the unmet floor
+  });
+
+  it("reaches 100% once the floor is satisfied", () => {
+    const p = progressOf(program, ["m1", "bio250"]); // bio250 is 200-level
+    expect(p.levelFloors[0].placedUnits).toBe(0.5);
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
+  });
+});
+
 describe("computeDegreeProgress — Biomedical Engineering (real data)", () => {
   const bme = PROGRAMS["biomedical-engineering"];
 

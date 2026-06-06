@@ -4,6 +4,7 @@ import { deriveBreadthRequirements } from "./breadth";
 import { deriveCommunicationRequirement } from "./communication";
 import type { AuditNode, AuditRoot } from "./compile";
 import { deriveElectiveSections, subjectPoolEligible } from "./electives";
+import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
 
 /**
  * The degree audit headline as a SINGLE progress bar in UNITS:
@@ -31,10 +32,12 @@ export interface DegreeProgress {
   creditedUnits: number;
   /** Headline 0–100, held below 100 until every requirement is met. */
   pct: number;
-  /** Every volume bucket filled, all breadth met, nothing left unverified. */
+  /** Every volume bucket filled, all breadth + level floors met, nothing unverified. */
   allComplete: boolean;
   /** Free-elective room in the degree (units, ≥ 0). */
   freeUnits: number;
+  /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
+  levelFloors: LevelFloor[];
 }
 
 /** A requirement that consumes real degree slots. */
@@ -217,7 +220,16 @@ export function computeDegreeProgress(
     : true;
   const unverifiedOwed = (program?.unverifiedRequirements?.length ?? 0) > 0;
 
-  const allComplete = allBucketsFilled && allBreadthMet && !unverifiedOwed;
+  // Level floors ("X units at the 200-level or above") gate completion the same
+  // way breadth does — an overlapping filter, so they never inflate the
+  // denominator, but the headline can't read 100% while one is unmet.
+  const levelFloors = program
+    ? deriveLevelFloors(program, placedList, unitsOf)
+    : [];
+  const allFloorsMet = levelFloors.every((f) => f.placedUnits >= f.need - 1e-9);
+
+  const allComplete =
+    allBucketsFilled && allBreadthMet && allFloorsMet && !unverifiedOwed;
   const raw = denom > 0 ? Math.round((creditedUnits / denom) * 100) : 0;
   const pct = allComplete ? Math.min(raw, 100) : Math.min(raw, 99);
 
@@ -228,5 +240,6 @@ export function computeDegreeProgress(
     pct,
     allComplete,
     freeUnits,
+    levelFloors,
   };
 }

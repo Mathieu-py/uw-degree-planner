@@ -13,6 +13,7 @@ import {
   nonBreadthConstraints,
 } from "@/lib/audit/breadth";
 import { deriveCommunicationRequirement } from "@/lib/audit/communication";
+import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
 import {
   type AuditNode,
   type AuditRoot,
@@ -184,8 +185,8 @@ export const AuditPanel = memo(function AuditPanel({
   );
 
   const { groups, unverifiedCount } = useMemo(
-    () => deriveSections(audit, program, progress.freeUnits),
-    [audit, program, progress.freeUnits],
+    () => deriveSections(audit, program, progress.freeUnits, progress.levelFloors),
+    [audit, program, progress.freeUnits, progress.levelFloors],
   );
 
   if (!plan.programId) {
@@ -1313,6 +1314,8 @@ function deriveSections(
   program: Program | null,
   /** Free-elective units from the unified headline model. */
   freeElectiveUnits: number,
+  /** Scored level-floor requirements from the unified headline model. */
+  levelFloors: LevelFloor[],
 ): {
   groups: SectionGroup[];
   totals: { needed: number; satisfied: number };
@@ -1424,17 +1427,34 @@ function deriveSections(
         options: comm.options,
       });
     }
-    nonBreadthConstraints(program).forEach((c, i) => {
+    // Level floors ("X units at the 200-level or above") — tracked + gated, in
+    // units (an overlapping filter, so not in the denominator). Shown with live
+    // progress instead of a verbatim note.
+    levelFloors.forEach((f, i) => {
+      const done = Math.min(f.placedUnits, f.need);
+      const met = f.placedUnits >= f.need - 1e-9;
       sections.push({
         kind: "info",
-        key: `constraint-${i}`,
-        title: c.label,
-        caption:
-          c.sourceText && c.sourceText !== c.label
-            ? c.sourceText
-            : "Verify with your advisor.",
+        key: `floor-${i}`,
+        title: f.title,
+        caption: `${met ? "✓ " : ""}${fmtUnits(done)} of ${fmtUnits(f.need)} units${met ? " — met" : ` — ${fmtUnits(f.need - done)} to go`}`,
       });
     });
+    // Remaining constraints that aren't subject breadth OR a level floor stay
+    // as verbatim notes.
+    nonBreadthConstraints(program)
+      .filter((c) => !isLevelFloor(c))
+      .forEach((c, i) => {
+        sections.push({
+          kind: "info",
+          key: `constraint-${i}`,
+          title: c.label,
+          caption:
+            c.sourceText && c.sourceText !== c.label
+              ? c.sourceText
+              : "Verify with your advisor.",
+        });
+      });
     const items = [
       ...(program.informational ?? []),
       ...(deg?.informational ?? []),
