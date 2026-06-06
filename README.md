@@ -53,7 +53,7 @@ The planner UI lives in [components/planner/](components/planner/), rooted at `P
 
 If the calendar is republished with a new catalog id, the scraper will return 404s; find the new id by opening the calendar in a browser with devtools open, watching the request to `/api/v1/catalog/programs/{id}`, and updating `CATALOG_ID` in [scripts/scrape-programs.ts](scripts/scrape-programs.ts).
 
-Only programs whose calendar entry defines a per-term required-course list are emitted to `data/programs.json` (currently 16 — most Engineering majors plus Architectural Studies and Medical Sciences). Programs with a flexible / sub-plan curriculum (most of Math, Arts, Science, AHS, Environment) are dropped — the current parser can't extract their required courses. Until that lands, those students use the transcript-import flow.
+All 194 undergraduate programs are emitted to `data/programs.json`: the 16 Engineering majors keep a per-term schedule (`kind: "engineering"`), and the rest (Math, Arts, Science, AHS, Environment) carry a flat requirement tree (`kind: "flexible"`). Requirements the parser recognizes but can't structure into a rule (e.g. faculty-scoped unit pools with no enumerable subject list) are surfaced verbatim in each program's `unverifiedRequirements`, which holds the degree-audit headline below 100% until they're checked manually — the audit never reads complete while a real requirement was dropped. Re-run `pnpm tsx scripts/diagnostic/check-dropped.ts` after a scrape to spot-check that the saved sample programs lose nothing silently.
 
 ## Transcript import
 

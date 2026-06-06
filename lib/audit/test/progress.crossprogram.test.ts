@@ -12,8 +12,9 @@ import { computeDegreeProgress } from "../progress";
  * percentages, that an empty plan reads 0%, and that a maximal plan completes.
  */
 
-const catalog = (coursesData as { courses: Array<{ code: string; units?: number }> })
-  .courses;
+const catalog = (
+  coursesData as { courses: Array<{ code: string; units?: number }> }
+).courses;
 const unitsByCode = new Map(catalog.map((c) => [c.code, c.units]));
 const unitsOf = (code: string) => unitsByCode.get(code) ?? 0.5;
 const ALL_CODES = catalog.map((c) => c.code);
@@ -61,23 +62,34 @@ describe("computeDegreeProgress — every program (empty plan)", () => {
 describe("computeDegreeProgress — every program (maximal plan)", () => {
   // Placing the entire catalog must keep the bar in range and let it complete:
   // every satisfiable bucket fills, the cap holds the credited total at N.
-  it("stays within [0,100], never NaN, and reaches 100% where the data allows", () => {
-    const shortfalls: Array<{ id: string; pct: number }> = [];
+  it("stays in [0,100], never NaN; structured programs complete, unverified cap below 100", () => {
+    const structuredShortfalls: Array<{ id: string; pct: number }> = [];
     for (const id of programIds) {
       const p = scoreOf(id, ALL_CODES);
       expect(p.pct, `${id}: pct lower bound`).toBeGreaterThanOrEqual(0);
       expect(p.pct, `${id}: pct upper bound`).toBeLessThanOrEqual(100);
       expect(Number.isNaN(p.creditedUnits), `${id}: credited NaN`).toBe(false);
-      if (p.pct < 100) shortfalls.push({ id, pct: p.pct });
+
+      // A program with owed requirements the scraper couldn't structure
+      // (`unverifiedRequirements`) MUST hold the headline below 100 until they're
+      // checked manually — this asserts the safety net actually engages, so the
+      // audit can never silently read complete while a real requirement was
+      // dropped (the bug this guards against).
+      const hasUnverified =
+        (PROGRAMS[id].unverifiedRequirements?.length ?? 0) > 0;
+      if (hasUnverified) {
+        expect(p.pct, `${id}: unverified must cap below 100`).toBeLessThan(100);
+      } else if (p.pct < 100) {
+        structuredShortfalls.push({ id, pct: p.pct });
+      }
     }
-    // A handful of programs reference subjects/levels absent from this term's
-    // catalog snapshot, so a bucket can't fill even from the whole catalog.
-    // Surface them, but the overwhelming majority must complete.
-    if (shortfalls.length > 0)
+    // A fully-structured program should complete on a maximal plan; a few may
+    // reference subjects/levels absent from this term's catalog snapshot.
+    if (structuredShortfalls.length > 0)
       console.warn(
-        "programs that can't reach 100% even fully loaded:",
-        shortfalls.map((s) => `${s.id}=${s.pct}%`).join(", "),
+        "structured programs that can't reach 100% even fully loaded:",
+        structuredShortfalls.map((s) => `${s.id}=${s.pct}%`).join(", "),
       );
-    expect(shortfalls.length).toBeLessThanOrEqual(15);
+    expect(structuredShortfalls.length).toBeLessThanOrEqual(15);
   });
 });

@@ -570,6 +570,25 @@ describe("subject-pool parsing — synthetic variants", () => {
     expect(pool.maxLevel).toBeUndefined();
   });
 
+  it("'additional' AND 'units of' together: 'Complete 1.5 additional units of HIST courses at the 200-level'", () => {
+    // Regression: the head must consume both qualifiers. Previously only
+    // "additional" was consumed, leaving "units of …" in `rest` so subject
+    // extraction failed and the whole owed requirement was silently dropped
+    // (the real cause of History reading complete with HIST electives missing).
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 1.5 additional units of HIST courses at the 200-level</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["HIST"]);
+    expect(pool.minLevel).toBe(200);
+    expect(pool.selectCount).toBe(3); // 1.5 units / 0.5 ≈ 3 courses
+    expect(r.unverified).toEqual([]); // structured, not dropped to unverified
+  });
+
   it("multi-subject with level range: 'Complete 2 additional courses at the 300- or 400-level from: …; excluding …'", () => {
     const r = parseProgramRequirements({
       requirements: wrapSection(

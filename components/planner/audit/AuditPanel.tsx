@@ -278,7 +278,12 @@ export const AuditPanel = memo(function AuditPanel({
   // numerator credits each placed course to at most one requirement, capped at
   // that size, and is held below 100% until every requirement is genuinely met.
   const headlinePct = progress.pct;
-  const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${fmtUnits(progress.denom)} units`;
+  // When the calendar states no degree total (e.g. Joint Honours, which split
+  // units across two plans) the denominator falls back to the sum of structured
+  // requirements — an estimate, not the authoritative size. Mark it so the
+  // number isn't read as exact.
+  const estimatedDenom = progress.totalUnits == null;
+  const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${estimatedDenom ? "~" : ""}${fmtUnits(progress.denom)} units`;
 
   const placedCodes = new Set(audit.placement.keys());
   // Codes whose placement is illegal (placed before prereqs / antireq conflict).
@@ -310,6 +315,12 @@ export const AuditPanel = memo(function AuditPanel({
             Whole degree, measured in units. The rings below track each
             requirement on its own.
           </div>
+          {estimatedDenom ? (
+            <div className="av-note">
+              This program's calendar entry states no total unit count, so the
+              denominator is estimated from its listed requirements.
+            </div>
+          ) : null}
           {unverifiedCount > 0 ? (
             <div className="av-note">
               {unverifiedCount} requirement{unverifiedCount === 1 ? "" : "s"}{" "}

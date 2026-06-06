@@ -126,6 +126,13 @@ function collect(
   }
 }
 
+/** Codes barred by an `excluded` rule ("cannot be used towards this plan"). */
+function collectExcluded(node: AuditNode, out: Set<string>): void {
+  if (node.ruleNode.kind === "excluded")
+    for (const c of node.ruleNode.courses) out.add(c);
+  for (const c of node.children) collectExcluded(c, out);
+}
+
 /**
  * Compute the unified degree-progress headline.
  *
@@ -142,6 +149,12 @@ export function computeDegreeProgress(
   unitsOf: (code: string) => number,
   legality: ReadonlySet<string> = new Set(),
 ): DegreeProgress {
+  const roots: (AuditNode | null)[] = [
+    audit.flexibleRoot,
+    audit.specializationRoot,
+    ...(audit.byTerm ? Object.values(audit.byTerm) : []),
+  ];
+
   // Drop illegally-placed courses before any crediting: a course placed before
   // its prereqs (or in antireq conflict) can't honestly count toward the degree.
   const illegalCodes = new Set<string>();
@@ -149,19 +162,22 @@ export function computeDegreeProgress(
     for (const [code, p] of audit.placement)
       if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
 
+  // Drop courses an `excluded` rule bars ("cannot be used towards this plan"):
+  // such a course must never credit the headline — not as a named satisfier and
+  // not as a free elective. It still surfaces as an excludedViolation on its
+  // requirement row (compiled separately), so the student sees why it doesn't
+  // count; this only stops it from silently inflating the number.
+  const excludedCodes = new Set<string>();
+  for (const root of roots) if (root) collectExcluded(root, excludedCodes);
+
   const placedList = [...audit.placement.keys()].filter(
-    (c) => !illegalCodes.has(c),
+    (c) => !illegalCodes.has(c) && !excludedCodes.has(c),
   );
   const placed = new Set(placedList);
 
   const buckets: Bucket[] = [];
   const required = new Set<string>();
 
-  const roots: (AuditNode | null)[] = [
-    audit.flexibleRoot,
-    audit.specializationRoot,
-    ...(audit.byTerm ? Object.values(audit.byTerm) : []),
-  ];
   for (const root of roots) if (root) collect(root, placed, buckets, required);
 
   // Finite electives (consolidated upstream so overlapping pools count once) and

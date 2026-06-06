@@ -268,6 +268,28 @@ type ParsedLi =
       selectMax?: number;
     };
 
+/**
+ * A rule whose prefix we DID recognize ("Complete all/N of/any/no more than …")
+ * but whose course codes we failed to extract is a SILENT LOSS: a bare
+ * `return null` would drop a real owed requirement with no trace, letting the
+ * audit read 100% while a requirement was never tracked. Record the verbatim
+ * statement as UNVERIFIED (this gates the headline below 100% and surfaces it to
+ * the student) and emit a developer warning so the parser miss is visible.
+ */
+function recordUnextracted(
+  fullText: string,
+  prefix: string,
+  contextLabel: string,
+  warnings: string[],
+  unverified: string[],
+): null {
+  unverified.push(fullText);
+  warnings.push(
+    `${contextLabel}: recognized rule but extracted no course codes — "${prefix}"`,
+  );
+  return null;
+}
+
 function parseLi(
   $: cheerio.CheerioAPI,
   $li: ReturnType<cheerio.CheerioAPI>,
@@ -303,13 +325,27 @@ function parseLi(
   const codes = collectCourseCodes($, $result);
 
   if (COMPLETE_ALL_RE.test(prefix)) {
-    if (codes.length === 0) return null;
+    if (codes.length === 0)
+      return recordUnextracted(
+        fullText,
+        prefix,
+        contextLabel,
+        warnings,
+        unverified,
+      );
     return { kind: "node", node: { kind: "courses", courses: codes } };
   }
 
   const nOf = COMPLETE_N_OF_RE.exec(prefix);
   if (nOf) {
-    if (codes.length === 0) return null;
+    if (codes.length === 0)
+      return recordUnextracted(
+        fullText,
+        prefix,
+        contextLabel,
+        warnings,
+        unverified,
+      );
     const n = Number(nOf[1]);
     return {
       kind: "node",
@@ -323,7 +359,14 @@ function parseLi(
   }
 
   if (CHOOSE_ANY_RE.test(prefix)) {
-    if (codes.length === 0) return null;
+    if (codes.length === 0)
+      return recordUnextracted(
+        fullText,
+        prefix,
+        contextLabel,
+        warnings,
+        unverified,
+      );
     return {
       kind: "node",
       node: {
@@ -335,7 +378,14 @@ function parseLi(
 
   const noMoreThan = COMPLETE_NO_MORE_THAN_RE.exec(prefix);
   if (noMoreThan) {
-    if (codes.length === 0) return null;
+    if (codes.length === 0)
+      return recordUnextracted(
+        fullText,
+        prefix,
+        contextLabel,
+        warnings,
+        unverified,
+      );
     return {
       kind: "node",
       node: {
@@ -353,7 +403,15 @@ function parseLi(
   }
 
   if (EXCLUDED_RE.test(prefix)) {
-    if (codes.length === 0) return null;
+    // An exclusion with no extractable codes excludes nothing, so it's not an
+    // owed requirement (don't gate the audit on it) — but warn, since a parse
+    // miss here means a course that SHOULD be barred might still be credited.
+    if (codes.length === 0) {
+      warnings.push(
+        `${contextLabel}: exclusion rule but extracted no course codes — "${prefix}"`,
+      );
+      return null;
+    }
     return {
       kind: "node",
       node: { kind: "excluded", courses: codes },
@@ -451,8 +509,13 @@ function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
  * are kept verbatim for display; they don't gate matching.
  */
 function parseSubjectPool(fullText: string): RuleNode | null {
+  // "additional" and "units of" can BOTH precede the subject ("Complete 1.5
+  // additional units of HIST courses …"), so consume an optional "additional"
+  // and then an optional "units of" rather than one-or-the-other — otherwise the
+  // "units of" is left in `rest` and subject extraction fails, silently dropping
+  // a real owed requirement.
   const head = fullText.match(
-    /^Complete\s+(\d+(?:\.\d+)?)\s+(additional\s+|units?\s+of\s+)?/i,
+    /^Complete\s+(\d+(?:\.\d+)?)\s+(?:additional\s+)?(units?\s+of\s+)?/i,
   );
   if (!head) return null;
   const amount = Number(head[1]);

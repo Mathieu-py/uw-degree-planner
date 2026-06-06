@@ -103,6 +103,34 @@ describe("computeDegreeProgress — required courses", () => {
   });
 });
 
+describe("computeDegreeProgress — excluded courses", () => {
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy w/ exclusion",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        { kind: "courses", courses: ["cs115"] },
+        { kind: "excluded", courses: ["phys999"] },
+      ],
+    },
+    unitPlan: { totalUnits: 1.0 }, // cs115 (0.5) + 0.5 free-elective room
+  };
+
+  it("never credits a course barred by an `excluded` rule", () => {
+    // phys999 is placed but the program bars it from counting — it must not
+    // fill the free-elective room (which would falsely read 100%).
+    const barred = progressOf(program, ["cs115", "phys999"]);
+    expect(barred.creditedUnits).toBe(0.5); // only cs115
+    expect(barred.pct).toBe(50);
+    // A legitimate free elective DOES fill that same room.
+    const ok = progressOf(program, ["cs115", "free200"]);
+    expect(ok.creditedUnits).toBe(1.0);
+    expect(ok.pct).toBe(100);
+  });
+});
+
 describe("computeDegreeProgress — overlapping elective pools (BME shape)", () => {
   // Three sub-lists whose union is exactly the aggregate "Technical Electives
   // List". Naive counting needs 1+1+3 = 5 courses; the real requirement is 3.
