@@ -1082,6 +1082,10 @@ body {
   background: var(--met-soft);
   border-color: transparent;
 }
+.av-item.flagged {
+  background: var(--partial-soft);
+  border-color: transparent;
+}
 .av-item-grip {
   color: var(--accent);
   display: inline-flex;
@@ -1089,6 +1093,9 @@ body {
 }
 .av-item-grip.met {
   color: var(--met);
+}
+.av-item-grip.flagged {
+  color: var(--partial);
 }
 .av-item-code {
   font-size: 12px;
@@ -1315,80 +1322,137 @@ body {
   line-height: 1.45;
 }
 
-/* Compound pick — mutually-exclusive option cards ("choose one of these") */
-.av-opt-head {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-2);
-  margin-bottom: 2px;
-}
-.av-opt-or {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.av-opt-or::before,
-.av-opt-or::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-.av-opt-card {
+/* Compound pick — a "choose one" group of mutually-exclusive options. The
+   group itself is the only card boundary; options inside are borderless rows
+   that expand on selection, so the structure reads as one decision rather than
+   a stack of competing cards. */
+.av-choice {
   display: flex;
   flex-direction: column;
   gap: 6px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg);
-  padding: 8px 9px;
+  padding: 9px;
 }
-.av-opt-card.is-met {
-  border-color: transparent;
+.av-choice-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 1px 3px 0;
+}
+.av-choice-opts {
+  display: flex;
+  flex-direction: column;
+}
+.av-choice-or {
+  align-self: center;
+  padding: 3px 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.av-choice-opt {
+  border-radius: 9px;
+}
+.av-choice-opt.is-open {
+  background: var(--accent-soft);
+}
+.av-choice-opt.is-met {
   background: var(--met-soft);
 }
-.av-opt-card-head {
+.av-choice-sel {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 9px;
+  border-radius: 9px;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
 }
-.av-opt-badge {
+.av-choice-opt:not(.is-open):not(.is-met) .av-choice-sel:hover {
+  background: var(--bg-2);
+}
+.av-choice-radio {
   flex: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 1.5px solid var(--line-strong);
+  background: var(--bg);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   color: var(--ink-2);
-  background: var(--bg-2);
-  border: 1px solid var(--line);
 }
-.av-opt-card.is-met .av-opt-badge {
-  color: var(--met);
+.av-choice-opt.is-open .av-choice-radio {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+}
+.av-choice-opt.is-met .av-choice-radio {
+  border-color: var(--met);
   background: transparent;
-  border-color: transparent;
-}
-.av-opt-status {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
   color: var(--met);
 }
-.av-opt-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--partial);
+.av-choice-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-choice-open-label {
+  flex: 1 1 auto;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.av-choice-chev {
+  flex: none;
+  display: inline-flex;
+  color: var(--ink-3);
+}
+.av-choice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 9px 9px 40px;
+}
+/* Collapsed option: body stays in the DOM (codes reachable) but hidden. The
+   attribute selector beats the `.av-choice-body { display: flex }` rule above. */
+.av-choice-body[hidden] {
+  display: none;
+}
+/* Flatten the requirement rows inside an option — the group already frames
+   them, so drop their borders/fills to kill the nested-card bulk. */
+.av-choice-body .av-item {
+  border: 0;
+  background: transparent;
+  padding: 5px 3px;
+}
+.av-choice-body .av-item.drag:hover {
+  background: var(--bg-2);
+  box-shadow: none;
+}
+.av-choice-body .av-item.met {
+  background: transparent;
+}
+.av-choice-body .av-pool {
+  padding: 0;
 }
 .av-opt-summary {
   display: flex;

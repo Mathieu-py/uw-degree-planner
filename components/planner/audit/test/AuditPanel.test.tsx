@@ -329,11 +329,11 @@ describe("AuditPanel", () => {
     expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
   });
 
-  it("renders a compound 'choose one option' as delineated option cards", () => {
+  it("renders a compound 'choose one option' as a selectable option group", () => {
     // data-science-bcs has a pick whose options are multi-course `all` bundles.
-    // It must render as A/B/C option cards with "or" dividers and a "Choose 1 of
-    // 3 options" header — not undifferentiated stacked blocks — and the redundant
-    // "Complete all of the following" heading is dropped inside each card.
+    // It must render as A/B/C selectable options with "or" separators and a
+    // "Choose 1 of 3 options" header — not undifferentiated stacked blocks — and
+    // the redundant "Complete all of the following" heading is dropped inside.
     if (!("data-science-bcs" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel
@@ -341,14 +341,14 @@ describe("AuditPanel", () => {
         onDrillToRequirement={() => {}}
       />,
     );
-    const cards = container.querySelectorAll(".av-opt-card");
-    expect(cards.length).toBeGreaterThanOrEqual(3);
-    expect(container.querySelector(".av-opt-or")).not.toBeNull();
+    const opts = container.querySelectorAll(".av-choice-opt");
+    expect(opts.length).toBeGreaterThanOrEqual(3);
+    expect(container.querySelector(".av-choice-or")).not.toBeNull();
     expect(
       within(container).queryAllByText(/choose 1 of 3 options/i).length,
     ).toBeGreaterThan(0);
-    for (const card of cards) {
-      expect(card.textContent ?? "").not.toMatch(
+    for (const opt of opts) {
+      expect(opt.textContent ?? "").not.toMatch(
         /complete all of the following/i,
       );
     }
@@ -368,11 +368,11 @@ describe("AuditPanel", () => {
       within(container).queryAllByText(/completed.*option a/i).length,
     ).toBeGreaterThan(0);
     expect(container.querySelector(".av-opt-summary")).not.toBeNull();
-    // Collapsed: the option cards are not in the DOM until the toggle is clicked.
-    expect(container.querySelector(".av-opt-card")).toBeNull();
+    // Collapsed: the option group is not in the DOM until the toggle is clicked.
+    expect(container.querySelector(".av-choice-opt")).toBeNull();
     const toggle = within(container).getByText(/show 2 other options/i);
     fireEvent.click(toggle);
-    expect(container.querySelector(".av-opt-card")).not.toBeNull();
+    expect(container.querySelector(".av-choice-opt")).not.toBeNull();
   });
 
   it("organizes the audit into Degree / Electives / Co-op macro-sections", () => {

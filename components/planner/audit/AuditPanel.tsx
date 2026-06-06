@@ -17,6 +17,7 @@ import {
   type AuditRoot,
   compileAudit,
   legalityKeySet,
+  placementLegalityKey,
   summarize,
 } from "@/lib/audit/compile";
 import {
@@ -280,6 +281,13 @@ export const AuditPanel = memo(function AuditPanel({
   const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${fmtUnits(progress.denom)} units`;
 
   const placedCodes = new Set(audit.placement.keys());
+  // Codes whose placement is illegal (placed before prereqs / antireq conflict).
+  // They're in `placedCodes` (so the course still shows on its row) but flagged,
+  // and excluded from the ring counts + the headline — see nodeProgress / the
+  // header warning. Empty in the read-only view (no catalog → no legality).
+  const illegalCodes = new Set<string>();
+  for (const [code, p] of audit.placement)
+    if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
 
   return (
     <aside className="w-full lg:w-80 shrink-0 lg:h-full lg:flex lg:flex-col">
@@ -323,6 +331,7 @@ export const AuditPanel = memo(function AuditPanel({
               key={macro.key}
               macro={macro}
               placedCodes={placedCodes}
+              illegalCodes={illegalCodes}
               catalog={catalog}
               catalogByCode={catalogByCode}
               onDrill={onDrillToRequirement}
@@ -409,6 +418,7 @@ function ringFor(node: AuditNode): {
 function MacroSection({
   macro,
   placedCodes,
+  illegalCodes,
   catalog,
   catalogByCode,
   onDrill,
@@ -434,6 +444,7 @@ function MacroSection({
               <NodeBody
                 node={block.content.node}
                 placedCodes={placedCodes}
+                illegalCodes={illegalCodes}
                 catalog={catalog}
                 catalogByCode={catalogByCode}
                 onDrill={onDrill}
@@ -446,6 +457,7 @@ function MacroSection({
                   section={s}
                   open={isIncomplete(s)}
                   placedCodes={placedCodes}
+                  illegalCodes={illegalCodes}
                   catalog={catalog}
                   catalogByCode={catalogByCode}
                   onDrill={onDrill}
@@ -514,6 +526,7 @@ function SectionRow({
   section,
   open,
   placedCodes,
+  illegalCodes,
   catalog,
   catalogByCode,
   onDrill,
@@ -522,6 +535,7 @@ function SectionRow({
   section: Section;
   open: boolean;
   placedCodes: ReadonlySet<string>;
+  illegalCodes: ReadonlySet<string>;
   catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
@@ -578,6 +592,7 @@ function SectionRow({
         <NodeBody
           node={section.node}
           placedCodes={placedCodes}
+          illegalCodes={illegalCodes}
           catalog={catalog}
           catalogByCode={catalogByCode}
           onDrill={onDrill}
@@ -795,6 +810,7 @@ function SectionShell({
 function NodeBody({
   node,
   placedCodes,
+  illegalCodes,
   catalog,
   catalogByCode,
   onDrill,
@@ -803,6 +819,7 @@ function NodeBody({
 }: {
   node: AuditNode;
   placedCodes: ReadonlySet<string>;
+  illegalCodes: ReadonlySet<string>;
   catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
@@ -819,6 +836,7 @@ function NodeBody({
             key={code}
             code={code}
             placed={placedCodes.has(code)}
+            illegal={illegalCodes.has(code)}
             catalogByCode={catalogByCode}
             onDrill={onDrill}
             drag={drag}
@@ -875,6 +893,7 @@ function NodeBody({
       <CompoundPickBody
         node={node}
         placedCodes={placedCodes}
+        illegalCodes={illegalCodes}
         catalog={catalog}
         catalogByCode={catalogByCode}
         onDrill={onDrill}
@@ -903,6 +922,7 @@ function NodeBody({
             key={i}
             node={child}
             placedCodes={placedCodes}
+            illegalCodes={illegalCodes}
             catalog={catalog}
             catalogByCode={catalogByCode}
             onDrill={onDrill}
@@ -926,6 +946,8 @@ const COLLAPSE_WHEN_DECIDED = true;
 /** Props every option-card piece needs to render (and recurse via NodeBody). */
 interface OptionRenderProps {
   placedCodes: ReadonlySet<string>;
+  /** Placed codes whose placement is illegal (prereq/antireq) — flagged, uncounted. */
+  illegalCodes: ReadonlySet<string>;
   catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
@@ -961,9 +983,13 @@ function CompoundPickBody({
 } & OptionRenderProps) {
   const r = node.ruleNode;
   const [showAll, setShowAll] = useState(false);
+  // Local "which option am I considering" focus — it only drives which card is
+  // expanded; placement alone decides what's actually satisfied, so it needs no
+  // persistence. Default to the option already in progress, else the first.
+  const options = r.kind === "pick" ? node.children : [];
+  const [focused, setFocused] = useState(() => initialFocus(options));
   if (r.kind !== "pick") return null;
 
-  const options = node.children;
   const selectMin = r.selectMin ?? 1;
   const metOptions = options
     .map((opt, index) => ({ opt, index }))
@@ -981,13 +1007,27 @@ function CompoundPickBody({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="av-choice">
       {/* A top-level compound pick (rare; none in current data) already has the
           framing as its section title, so only nested ones add the header. */}
       {depth > 0 ? (
-        <span className="av-opt-head">{pickFraming(r, options.length)}</span>
+        <div className="av-choice-head">{pickFraming(r, options.length)}</div>
       ) : null}
-      <OptionCardList options={options} {...rest} />
+      <div className="av-choice-opts">
+        {options.map((opt, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
+          <Fragment key={i}>
+            {i > 0 ? <div className="av-choice-or">or</div> : null}
+            <ChoiceOption
+              option={opt}
+              index={i}
+              expanded={i === focused}
+              onSelect={() => setFocused(i)}
+              {...rest}
+            />
+          </Fragment>
+        ))}
+      </div>
       {decided ? (
         <button
           type="button"
@@ -1001,45 +1041,88 @@ function CompoundPickBody({
   );
 }
 
-/** The option cards with an "or" divider between alternatives. */
-function OptionCardList({
-  options,
-  ...rest
-}: { options: AuditNode[] } & OptionRenderProps) {
-  return (
-    <div className="flex flex-col">
-      {options.map((opt, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
-        <Fragment key={i}>
-          {i > 0 ? <div className="av-opt-or">or</div> : null}
-          <OptionCard option={opt} index={i} {...rest} />
-        </Fragment>
-      ))}
-    </div>
-  );
+/** Pick the option to expand first: one in progress, else a met one, else A. */
+function initialFocus(options: AuditNode[]): number {
+  const partial = options.findIndex((o) => o.status === "partial");
+  if (partial >= 0) return partial;
+  const met = options.findIndex(optionMet);
+  return met >= 0 ? met : 0;
 }
 
-/** One alternative: A/B/C badge, per-option status, and its requirement body. */
-function OptionCard({
+/** A one-line glance at a collapsed option: its course codes (+ pool/extra). */
+function optionPreviewText(opt: AuditNode): string {
+  const codes: string[] = [];
+  let pools = 0;
+  const walk = (n: AuditNode) => {
+    const r = n.ruleNode;
+    if (r.kind === "courses") codes.push(...r.courses);
+    else if (r.kind === "subjectPool") pools += r.selectCount ?? 1;
+    else n.children.forEach(walk);
+  };
+  walk(opt);
+  const uniq = [...new Set(codes)];
+  const parts = uniq.slice(0, 3).map(formatCourseCode);
+  const extra = uniq.length - parts.length;
+  if (extra > 0) parts.push(`+${extra}`);
+  if (pools > 0) parts.push(`+${pools} course${pools === 1 ? "" : "s"}`);
+  return parts.join("  ·  ") || "—";
+}
+
+/**
+ * One alternative in a compound pick. Collapsed, it's a single selectable row
+ * (radio badge + a preview of its courses); selecting it expands the full
+ * requirement body and collapses the siblings, so the group reads as an active
+ * "pick one of these" rather than a stack of competing cards.
+ */
+function ChoiceOption({
   option,
   index,
+  expanded,
+  onSelect,
   ...rest
-}: { option: AuditNode; index: number } & OptionRenderProps) {
+}: {
+  option: AuditNode;
+  index: number;
+  expanded: boolean;
+  onSelect: () => void;
+} & OptionRenderProps) {
   const met = optionMet(option);
-  const partial = option.status === "partial";
+  const cls = `av-choice-opt${expanded ? " is-open" : ""}${met ? " is-met" : ""}`;
   return (
-    <div className={`av-opt-card${met ? " is-met" : ""}`}>
-      <div className="av-opt-card-head">
-        <span className="av-opt-badge">{optionBadge(index)}</span>
-        <span className="av-opt-status">
+    <div className={cls}>
+      <button
+        type="button"
+        className="av-choice-sel"
+        onClick={onSelect}
+        aria-expanded={expanded}
+      >
+        <span className="av-choice-radio">
           {met ? (
             <Icon name="check" size="sm" aria-hidden="true" />
-          ) : partial ? (
-            <span className="av-opt-dot" aria-hidden="true" />
-          ) : null}
+          ) : (
+            optionBadge(index)
+          )}
         </span>
+        {expanded ? (
+          <span className="av-choice-open-label">
+            Option {optionBadge(index)}
+          </span>
+        ) : (
+          <span className="av-choice-preview">{optionPreviewText(option)}</span>
+        )}
+        {expanded ? null : (
+          <span className="av-choice-chev">
+            <Icon name="chevronRight" size="xs" aria-hidden="true" />
+          </span>
+        )}
+      </button>
+      {/* The body is ALWAYS in the DOM — every option's courses stay present
+          (data integrity + reachable), just hidden when this option isn't the
+          expanded one. Conditional-rendering it would silently drop those codes
+          from the rendered audit. */}
+      <div className="av-choice-body" hidden={!expanded}>
+        <OptionBody node={option} {...rest} />
       </div>
-      <OptionBody node={option} {...rest} />
     </div>
   );
 }
@@ -1119,12 +1202,15 @@ function CompoundPickSummary({
 function CourseRow({
   code,
   placed,
+  illegal,
   catalogByCode,
   onDrill,
   drag,
 }: {
   code: string;
   placed: boolean;
+  /** Placed, but illegally (unmet prereq / antireq conflict) — flag, don't credit. */
+  illegal?: boolean;
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;
@@ -1133,10 +1219,24 @@ function CourseRow({
   const title = catalogByCode.get(code)?.name ?? "";
 
   if (placed) {
+    // Placed-but-illegal: keep the row (it IS in the plan) but flag it amber and
+    // explain — our ring/headline counts exclude it, so a plain green check would
+    // read as "done" when it isn't credited yet.
     return (
-      <div className="av-item met">
-        <span className="av-item-grip met">
-          <Icon name="check" size="sm" aria-hidden="true" />
+      <div
+        className={`av-item ${illegal ? "flagged" : "met"}`}
+        title={
+          illegal
+            ? `${label} is placed before its prereqs or in an antireq conflict — it shows on your timeline, but doesn't credit the degree until the placement is valid.`
+            : undefined
+        }
+      >
+        <span className={`av-item-grip ${illegal ? "flagged" : "met"}`}>
+          <Icon
+            name={illegal ? "warning" : "check"}
+            size="sm"
+            aria-hidden="true"
+          />
         </span>
         <span className="flex flex-col gap-px min-w-0 flex-1">
           <span className="u-mono av-item-code">{label}</span>
