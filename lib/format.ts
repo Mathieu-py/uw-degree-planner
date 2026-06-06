@@ -8,6 +8,11 @@ export function formatCourseCode(code: string): string {
   return m ? `${m[1]} ${m[2]}` : code.toUpperCase();
 }
 
+/** Units as a compact string: trims trailing zeros (20.0→"20", 13.5→"13.5"). */
+export function fmtUnits(n: number): string {
+  return String(Math.round(n * 100) / 100);
+}
+
 export function truncate(text: string | null | undefined, max = 140): string {
   if (!text) return "";
   if (text.length <= max) return text;
