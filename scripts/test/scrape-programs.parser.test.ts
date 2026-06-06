@@ -623,6 +623,85 @@ describe("subject-pool parsing — synthetic variants", () => {
     expect(r.unverified).toEqual([]); // structured, not dropped to unverified
   });
 
+  it("'unit at the X-level or above … from the following subject codes': no 'courses' noun", () => {
+    // Classical Studies shape — units + level-floor + an enumerable subject list,
+    // but no "courses" noun and "unit" not followed by "of". Was dropped.
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 1.0 unit at the 300-level or above from the following subject codes: CLAS, GRK, LAT</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["CLAS", "GRK", "LAT"]);
+    expect(pool.minLevel).toBe(300); // "or above" → floor, no max
+    expect(pool.maxLevel).toBeUndefined();
+    expect(pool.selectCount).toBe(2); // 1.0 unit / 0.5
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("'additional units at any level from the following subject codes': no level bound", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 4.0 additional units at any level from the following subject codes: CLAS, GRK, LAT</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["CLAS", "GRK", "LAT"]);
+    expect(pool.minLevel).toBeUndefined();
+    expect(pool.selectCount).toBe(8); // 4.0 units / 0.5
+  });
+
+  it("'additional units SUBJ courses': subject inline after 'units' (no 'of')", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 1.5 additional units PSYCH courses</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["PSYCH"]);
+    expect(pool.selectCount).toBe(3); // 1.5 units / 0.5
+  });
+
+  it("'Complete at least N course from: …' (at-least qualifier)", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete at least 1 course from: BIOL, CHEM, EARTH, MNS, PHYS, SCI</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(1);
+    expect(pool.subjectCodes).toEqual([
+      "BIOL",
+      "CHEM",
+      "EARTH",
+      "MNS",
+      "PHYS",
+      "SCI",
+    ]);
+  });
+
+  it("'Complete N additional 0.5-unit course from the following subject codes: …'", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 3 additional 0.5-unit math courses from the following subject codes: ACTSC, AMATH, CO, CS, MATH, PMATH, STAT</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.selectCount).toBe(3); // count, not units
+    expect(pool.subjectCodes).toContain("ACTSC");
+    expect(pool.subjectCodes).toContain("PMATH");
+  });
+
   it("multi-subject with level range: 'Complete 2 additional courses at the 300- or 400-level from: …; excluding …'", () => {
     const r = parseProgramRequirements({
       requirements: wrapSection(

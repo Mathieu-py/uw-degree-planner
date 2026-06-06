@@ -534,17 +534,18 @@ function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
  * are kept verbatim for display; they don't gate matching.
  */
 function parseSubjectPool(fullText: string): RuleNode | null {
-  // "additional" and "units of" can BOTH precede the subject ("Complete 1.5
-  // additional units of HIST courses …"), so consume an optional "additional"
-  // and then an optional "units of" rather than one-or-the-other — otherwise the
-  // "units of" is left in `rest` and subject extraction fails, silently dropping
-  // a real owed requirement.
+  // Consume an optional "additional" then an optional "unit(s)" keyword. The
+  // unit keyword may be followed by "of" ("units OF HIST courses"), by a level
+  // ("1.0 unit AT the 300-level …"), or directly by the subject ("units PSYCH
+  // courses") — so match "unit(s)" on its own and swallow a following "of"
+  // separately. Matching only "units of" left "unit at …"/"units SUBJ" phrasings
+  // in `rest`, failing subject extraction and silently dropping the requirement.
   const head = fullText.match(
-    /^Complete\s+(\d+(?:\.\d+)?)\s+(?:additional\s+)?(units?\s+of\s+)?/i,
+    /^Complete\s+(?:at\s+least\s+|at\s+most\s+|a\s+(?:minimum|maximum)\s+of\s+)?(\d+(?:\.\d+)?)\s+(?:additional\s+)?(units?\b\s*)?(?:of\s+)?/i,
   );
   if (!head) return null;
   const amount = Number(head[1]);
-  const isUnits = /units?\s+of/i.test(head[2] ?? "");
+  const isUnits = head[2] != null;
   let rest = fullText.slice(head[0].length).trim();
 
   // Pull parenthetical clauses out first ("(excluding CS100, MATH103)",
@@ -563,6 +564,10 @@ function parseSubjectPool(fullText: string): RuleNode | null {
   // "N units of additional ERS courses" → drop the stray "additional" so the
   // subject code that follows it is found (it sits after "units of", not before).
   rest = rest.replace(/^additional\s+/i, "");
+
+  // "N additional 0.5-unit course(s) from …" → drop the per-course unit size
+  // qualifier; it's a count requirement (N courses), not a unit total.
+  rest = rest.replace(/^[\d.]+-unit\s+/i, "");
 
   // Subject descriptor: "STAT courses" (one code) | "ENVS and/or ERS courses"
   // (several codes in the noun) | "math/Science courses" (a noun whose subjects
@@ -584,15 +589,20 @@ function parseSubjectPool(fullText: string): RuleNode | null {
     rest = rest.replace(/^[A-Za-z]+\s+courses?\b/, "").trim();
   } else if (/^courses?\b/i.test(rest)) {
     rest = rest.replace(/^courses?\b/i, "").trim();
-  } else {
-    return null;
   }
+  // No "courses" noun at all ("1.0 unit at the 300-level from the following
+  // subject codes: …") — don't bail; the subject set comes from the "from:"
+  // clause below. We only give up if NO subjects are found after level + from.
 
-  // Optional "at the X-level" / "at the X- or Y-level".
+  // "at any level" carries no bound — strip it so it doesn't block the "from:"
+  // clause that follows.
+  rest = rest.replace(/^at any level\s*/i, "");
+
+  // Optional "at the X-level" / "at the X- or Y-level" / "at the X-level or above".
   let minLevel: number | undefined;
   let maxLevel: number | undefined;
   const levelMatch = rest.match(
-    /^at the\s+(\d+)(?:\s*-?\s*or\s+(\d+))?\s*-?\s*level\b/i,
+    /^at the\s+(\d+)(?:\s*-?\s*or\s+(\d+))?\s*-?\s*level(?:\s+or\s+(?:above|higher))?\b/i,
   );
   if (levelMatch) {
     minLevel = Number(levelMatch[1]);

@@ -718,15 +718,30 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 2,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ],
+              "minLevel": 300
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 8,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ]
             }
           ]
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete 1.0 unit at the 300-level or above from the following subject codes: CLAS, GRK, LAT",
-      "Complete 4.0 additional units at any level from the following subject codes: CLAS, GRK, LAT"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -836,6 +851,23 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "COMMST",
+                "DAC"
+              ],
+              "minLevel": 400
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 5,
+              "subjectCodes": [
+                "COMMST",
+                "DAC"
+              ]
             }
           ]
         }
@@ -844,10 +876,6 @@
     "unitPlan": {
       "totalUnits": 6
     },
-    "unverifiedRequirements": [
-      "Complete 0.5 units at the 400-level from the following subject codes: COMMST, DAC",
-      "Complete 2.5 additional units at any level from the following subject codes: COMMST, DAC"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -5120,14 +5148,18 @@
                 "PSYCH"
               ],
               "minLevel": 300
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "PSYCH"
+              ]
             }
           ]
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete 1.5 additional units PSYCH courses"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -7046,14 +7078,31 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 2,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ],
+              "minLevel": 300
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 8,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ]
             }
           ]
         }
       ]
     },
     "unverifiedRequirements": [
-      "Complete 1.0 unit at the 300-level or above from the following subject codes: CLAS, GRK, LAT",
-      "Complete 4.0 additional units at any level from the following subject codes: CLAS, GRK, LAT",
       "Complete 2 senior CLAS seminars (see Additional Constraints)"
     ],
     "degreeRequirements": {
@@ -7166,6 +7215,23 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "COMMST",
+                "DAC"
+              ],
+              "minLevel": 400
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 6,
+              "subjectCodes": [
+                "COMMST",
+                "DAC"
+              ]
             }
           ]
         }
@@ -7174,10 +7240,6 @@
     "unitPlan": {
       "totalUnits": 8
     },
-    "unverifiedRequirements": [
-      "Complete 1.5 units at the 400-level from the following subject codes: COMMST, DAC",
-      "Complete 3.0 additional units at any level from the following subject codes: COMMST, DAC"
-    ],
     "specializations": [
       {
         "slug": "commst-media-studies",
@@ -10071,11 +10133,23 @@
       "kind": "all",
       "children": [
         {
-          "kind": "courses",
-          "courses": [
-            "gsj100",
-            "gsj222",
-            "gsj300"
+          "kind": "all",
+          "children": [
+            {
+              "kind": "courses",
+              "courses": [
+                "gsj100",
+                "gsj222",
+                "gsj300"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "GSJ"
+              ]
+            }
           ]
         },
         {
@@ -10170,9 +10244,6 @@
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete at least 1 courses from GSJ 400 - 499"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -18024,19 +18095,31 @@
                   ]
                 },
                 {
-                  "kind": "pick",
+                  "kind": "all",
                   "children": [
                     {
-                      "kind": "courses",
-                      "courses": [
-                        "chem200",
-                        "chem220l",
-                        "chem224l",
-                        "chem265l",
-                        "chem310l",
-                        "chem313l",
-                        "chem335l",
-                        "chem360l"
+                      "kind": "subjectPool",
+                      "selectCount": 1,
+                      "subjectCodes": [
+                        "CHEM"
+                      ]
+                    },
+                    {
+                      "kind": "pick",
+                      "children": [
+                        {
+                          "kind": "courses",
+                          "courses": [
+                            "chem200",
+                            "chem220l",
+                            "chem224l",
+                            "chem265l",
+                            "chem310l",
+                            "chem313l",
+                            "chem335l",
+                            "chem360l"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -18085,8 +18168,7 @@
     },
     "unverifiedRequirements": [
       "Complete 0.75 units from the following list of courses.",
-      "Complete 0.5 unit in additional CHEM courses",
-      "Complete 0.5 unit from the following list of CHEM courses"
+      "Complete 0.5 unit in additional CHEM courses"
     ],
     "degreeRequirements": {
       "kualiId": "BJod_8jW6",
@@ -18896,15 +18978,39 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "GRK",
+                "LAT"
+              ],
+              "minLevel": 300
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "GRK",
+                "LAT"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 2,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ],
+              "minLevel": 300
             }
           ]
         }
       ]
     },
     "unverifiedRequirements": [
-      "Complete 0.5 unit at the 300-level from the following subject codes: GRK, LAT",
-      "Complete 1.5 additional units at any level from the following subject codes: GRK, LAT",
-      "Complete 1.0 unit at the 300-level from the following subject codes: CLAS, GRK, LAT",
       "Complete 2 senior CLAS seminars (see Additional Constraints)"
     ],
     "degreeRequirements": {
@@ -20516,22 +20622,34 @@
               ]
             },
             {
-              "kind": "pick",
+              "kind": "all",
               "children": [
                 {
-                  "kind": "courses",
-                  "courses": [
-                    "afm291",
-                    "arbus202",
-                    "arbus302",
-                    "cfm401",
-                    "econ201",
-                    "econ206",
-                    "econ207",
-                    "econ231",
-                    "econ332",
-                    "mgmt244",
-                    "phil215"
+                  "kind": "subjectPool",
+                  "selectCount": 2,
+                  "subjectCodes": [
+                    "AFM"
+                  ]
+                },
+                {
+                  "kind": "pick",
+                  "children": [
+                    {
+                      "kind": "courses",
+                      "courses": [
+                        "afm291",
+                        "arbus202",
+                        "arbus302",
+                        "cfm401",
+                        "econ201",
+                        "econ206",
+                        "econ207",
+                        "econ231",
+                        "econ332",
+                        "mgmt244",
+                        "phil215"
+                      ]
+                    }
                   ]
                 }
               ]
@@ -20782,7 +20900,6 @@
       }
     ],
     "unverifiedRequirements": [
-      "Complete 2 from this list or any additional AFM course at the 300-level or above.",
       "Complete 1 additional course from: CS440-CS498.",
       "Complete 2 additional courses from: CO487, CS251 or CS251E, CS340-CS398, CS440-CS498."
     ]
@@ -25018,6 +25135,14 @@
                     "fine243",
                     "fine343"
                   ]
+                },
+                {
+                  "kind": "subjectPool",
+                  "selectCount": 1,
+                  "subjectCodes": [
+                    "FINE",
+                    "VCULT"
+                  ]
                 }
               ]
             },
@@ -25042,16 +25167,28 @@
                   ]
                 },
                 {
-                  "kind": "pick",
-                  "selectMin": 1,
-                  "selectMax": 1,
+                  "kind": "all",
                   "children": [
                     {
-                      "kind": "courses",
-                      "courses": [
-                        "fine309",
-                        "fine312",
-                        "fine315"
+                      "kind": "pick",
+                      "selectMin": 1,
+                      "selectMax": 1,
+                      "children": [
+                        {
+                          "kind": "courses",
+                          "courses": [
+                            "fine309",
+                            "fine312",
+                            "fine315"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "subjectPool",
+                      "selectCount": 1,
+                      "subjectCodes": [
+                        "FINE"
                       ]
                     }
                   ]
@@ -25062,10 +25199,6 @@
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete 0.5 unit from FINE or VCULT courses.",
-      "Complete 0.5 unit from FINE studio courses at the 300-level."
-    ],
     "specializations": [
       {
         "slug": "fine-digital-art",
@@ -25278,16 +25411,28 @@
                   ]
                 },
                 {
-                  "kind": "pick",
-                  "selectMin": 1,
-                  "selectMax": 1,
+                  "kind": "all",
                   "children": [
                     {
-                      "kind": "courses",
-                      "courses": [
-                        "fine309",
-                        "fine312",
-                        "fine315"
+                      "kind": "pick",
+                      "selectMin": 1,
+                      "selectMax": 1,
+                      "children": [
+                        {
+                          "kind": "courses",
+                          "courses": [
+                            "fine309",
+                            "fine312",
+                            "fine315"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "subjectPool",
+                      "selectCount": 1,
+                      "subjectCodes": [
+                        "FINE"
                       ]
                     }
                   ]
@@ -25298,9 +25443,6 @@
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete 0.5 unit from FINE studio courses at the 300-level."
-    ],
     "specializations": [
       {
         "slug": "fine-digital-art",
@@ -28436,14 +28578,31 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 2,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ],
+              "minLevel": 300
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 8,
+              "subjectCodes": [
+                "CLAS",
+                "GRK",
+                "LAT"
+              ]
             }
           ]
         }
       ]
     },
     "unverifiedRequirements": [
-      "Complete 1.0 unit at the 300-level or above from the following subject codes: CLAS, GRK, LAT",
-      "Complete 4.0 additional units at any level from the following subject codes: CLAS, GRK, LAT",
       "Complete 2 senior CLAS seminars (see Additional Constraints)"
     ],
     "degreeRequirements": {
@@ -28871,6 +29030,23 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "COMMST",
+                "DAC"
+              ],
+              "minLevel": 400
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 6,
+              "subjectCodes": [
+                "COMMST",
+                "DAC"
+              ]
             }
           ]
         }
@@ -28879,10 +29055,6 @@
     "unitPlan": {
       "totalUnits": 8
     },
-    "unverifiedRequirements": [
-      "Complete 1.5 units at the 400-level from the following subject codes: COMMST, DAC",
-      "Complete 3.0 additional units at any level from the following subject codes: COMMST, DAC"
-    ],
     "specializations": [
       {
         "slug": "commst-media-studies",
@@ -34015,11 +34187,23 @@
       "kind": "all",
       "children": [
         {
-          "kind": "courses",
-          "courses": [
-            "gsj100",
-            "gsj222",
-            "gsj300"
+          "kind": "all",
+          "children": [
+            {
+              "kind": "courses",
+              "courses": [
+                "gsj100",
+                "gsj222",
+                "gsj300"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "GSJ"
+              ]
+            }
           ]
         },
         {
@@ -34114,9 +34298,6 @@
         }
       ]
     },
-    "unverifiedRequirements": [
-      "Complete at least 1 courses from GSJ 400 - 499"
-    ],
     "degreeRequirements": {
       "kualiId": "SyLzAe5R3",
       "name": "Bachelor of Arts Degree Requirements (Arts)",
@@ -37261,6 +37442,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "PHYS"
+              ]
             }
           ]
         }
@@ -37271,7 +37459,6 @@
     },
     "unverifiedRequirements": [
       "Complete 1.25 units of courses from the following list",
-      "Complete 0.5 unit additional PHYS course, any level",
       "Complete 3 additional PHYS lecture courses (1.5 units) at the 400-level (exclusive of PHYS437A and PHYS437B)"
     ],
     "degreeRequirements": {
@@ -44798,6 +44985,19 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "kind": "subjectPool",
+                  "selectCount": 1,
+                  "subjectCodes": [
+                    "ACTSC",
+                    "AMATH",
+                    "CO",
+                    "CS",
+                    "MATH",
+                    "PMATH",
+                    "STAT"
+                  ]
                 }
               ]
             }
@@ -44807,8 +45007,7 @@
     },
     "unverifiedRequirements": [
       "Complete the following courses with a minimum cumulative Economics average of 70.0%",
-      "Complete the following courses with a minimum cumulative Mathematics average of 60.0%",
-      "Complete 0.5 additional unit from the following math subject codes: ACTSC, AMATH, CO, CS, MATH, PMATH, STAT"
+      "Complete the following courses with a minimum cumulative Mathematics average of 60.0%"
     ],
     "specializations": [
       {
@@ -46543,18 +46742,61 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "kind": "subjectPool",
+                  "selectCount": 1,
+                  "subjectCodes": [
+                    "AFM",
+                    "BUS",
+                    "COMM",
+                    "ECON",
+                    "HRM",
+                    "MSE",
+                    "PSCI",
+                    "STV"
+                  ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 3,
+              "subjectCodes": [
+                "ACTSC",
+                "AMATH",
+                "CO",
+                "CS",
+                "MATBUS",
+                "MATH",
+                "PMATH",
+                "STAT"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "COMM"
+              ],
+              "minLevel": 300,
+              "maxLevel": 400
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "BUS",
+                "COMM"
+              ],
+              "minLevel": 300,
+              "maxLevel": 400
             }
           ]
         }
       ]
     },
     "unverifiedRequirements": [
-      "Complete 1 additional 0.5-unit course from the following subject codes: AFM, BUS, COMM, ECON, HRM, MSE, PSCI, STV",
-      "Complete 3 additional 0.5-unit math courses from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
-      "Complete 1 additional 0.5-unit COMM course at the 300- or 400-level",
-      "Complete 1 additional 0.5-unit BUS or COMM course at the 300- or 400-level",
       "Complete 1.5 units of additional courses"
     ],
     "degreeRequirements": {
@@ -49239,6 +49481,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 2,
+              "subjectCodes": [
+                "PHYS"
+              ]
             }
           ]
         }
@@ -49249,7 +49498,6 @@
     },
     "unverifiedRequirements": [
       "Complete 1.25 units of courses from the following list",
-      "Complete 1.0 unit additional PHYS courses, any level",
       "Complete 1 additional PHYS lecture course (0.5 unit) at the 400-level (exclusive of PHYS437A and PHYS437B)"
     ],
     "degreeRequirements": {
@@ -50387,26 +50635,170 @@
               ]
             }
           ]
+        },
+        {
+          "kind": "pick",
+          "selectMin": 4,
+          "selectMax": 4,
+          "children": [
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "ACTSC",
+                "AMATH",
+                "CO",
+                "COMM",
+                "MATBUS",
+                "MATH",
+                "MTHEL",
+                "PMATH",
+                "STAT"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "ANTH",
+                "ECON",
+                "GSJ",
+                "LS",
+                "PACS",
+                "PSCI",
+                "SDS",
+                "SRF",
+                "SOCWK",
+                "STV"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "ARABIC",
+                "ASL",
+                "CHINA",
+                "CI",
+                "CROAT",
+                "DUTCH",
+                "EASIA",
+                "FR",
+                "GER",
+                "GRK",
+                "INDENT",
+                "INDG",
+                "ITAL",
+                "ITALST",
+                "JAPAN",
+                "JS",
+                "KOREA",
+                "LAT",
+                "MOHAWK",
+                "PORT",
+                "REES",
+                "RUSS",
+                "SI",
+                "SPAN"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "BIOL",
+                "CHEM",
+                "EARTH",
+                "MNS",
+                "PHYS",
+                "SCI"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "CLAS",
+                "COMMST",
+                "HIST",
+                "HUMSC",
+                "INDG",
+                "MEDVL",
+                "PHIL",
+                "RCS",
+                "VCULT"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "CS"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "ENBUS",
+                "ENVS",
+                "ERS",
+                "GEOG",
+                "INDEV",
+                "INTEG",
+                "PLAN"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "ENGL"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "FINE",
+                "MUSIC",
+                "THPERF"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "GERON",
+                "HEALTH",
+                "HLTH",
+                "KIN"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "PSYCH"
+              ],
+              "exclusions": [
+                "excluding PSYCH101/PSYCH101R"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 1,
+              "subjectCodes": [
+                "SOC"
+              ]
+            }
+          ]
         }
       ]
     },
     "unitPlan": {
       "totalUnits": 20
     },
-    "unverifiedRequirements": [
-      "Complete at least 1 course from: ACTSC, AMATH, CO, COMM, MATBUS, MATH, MTHEL, PMATH, STAT",
-      "Complete at least 1 course from: ANTH, ECON, GSJ, LS, PACS, PSCI, SDS, SRF, SOCWK, STV",
-      "Complete at least 1 course from: ARABIC, ASL, CHINA, CI, CROAT, DUTCH, EASIA, FR, GER, GRK, INDENT, INDG, ITAL, ITALST, JAPAN, JS, KOREA, LAT, MOHAWK, PORT, REES, RUSS, SI, SPAN",
-      "Complete at least 1 course from: BIOL, CHEM, EARTH, MNS, PHYS, SCI",
-      "Complete at least 1 course from: CLAS, COMMST, HIST, HUMSC, INDG, MEDVL, PHIL, RCS, VCULT",
-      "Complete at least 1 course from: CS",
-      "Complete at least 1 course from: ENBUS, ENVS, ERS, GEOG, INDEV, INTEG, PLAN",
-      "Complete at least 1 course from: ENGL",
-      "Complete at least 1 course from: FINE, MUSIC, THPERF",
-      "Complete at least 1 course from: GERON, HEALTH, HLTH, KIN",
-      "Complete at least 1 course from: PSYCH (excluding PSYCH101/PSYCH101R)",
-      "Complete at least 1 course from: SOC"
-    ],
     "degreeRequirements": {
       "kualiId": "ByFGuzIba",
       "name": "Bachelor of Arts Degree Requirements (Health)",
@@ -51818,6 +52210,34 @@
           "kind": "all",
           "children": [
             {
+              "kind": "subjectPool",
+              "selectCount": 2,
+              "subjectCodes": [
+                "ACTSC",
+                "AMATH",
+                "CO",
+                "CS",
+                "MATH",
+                "PMATH",
+                "STAT"
+              ]
+            },
+            {
+              "kind": "subjectPool",
+              "selectCount": 12,
+              "subjectCodes": [
+                "BIOL",
+                "CHEM",
+                "EARTH",
+                "MNS",
+                "PHYS",
+                "SCI"
+              ],
+              "exclusions": [
+                "see Additional Constraints"
+              ]
+            },
+            {
               "kind": "pick",
               "selectMin": 2,
               "selectMax": 2,
@@ -51889,8 +52309,6 @@
       ]
     },
     "unverifiedRequirements": [
-      "Complete 1.0 unit from the following subject codes: ACTSC, AMATH, CO, CS, MATH, PMATH, STAT",
-      "Complete 6.0 units from the following subject codes: BIOL, CHEM, EARTH, MNS, PHYS, SCI (see Additional Constraints)",
       "Complete associated laboratory courses for the BIOL courses above."
     ]
   },
