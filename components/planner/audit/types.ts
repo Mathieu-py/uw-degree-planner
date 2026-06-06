@@ -20,7 +20,7 @@ export interface DragWiring {
  */
 export type DrillFn = (codes: string[], preset?: FilterPreset) => void;
 
-export interface SectionSummary {
+interface SectionSummary {
   needed: number;
   satisfied: number;
   excludedViolationCount: number;
@@ -90,7 +90,7 @@ export type Section =
     };
 
 /** One of the top-level collapsible macro-sections. */
-export type MacroKey = "degree" | "specialization" | "electives" | "other";
+type MacroKey = "degree" | "specialization" | "electives" | "other";
 
 /**
  * A stratum within a macro: an optional light sub-heading over either a

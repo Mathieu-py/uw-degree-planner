@@ -16,7 +16,7 @@ import { evaluate } from "@/lib/prereqs/satisfied";
 import type { ProgramIdentity } from "@/lib/programs";
 import type { Course } from "./types";
 
-export type CourseEligibilityState = "eligible" | "check" | "ineligible";
+type CourseEligibilityState = "eligible" | "check" | "ineligible";
 
 export interface CourseEligibilityContext {
   /** Codes completed strictly before the target term (drives prereqs). */

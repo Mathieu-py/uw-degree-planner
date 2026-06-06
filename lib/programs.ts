@@ -14,7 +14,6 @@ import { requiredCoursesIn, walkRule } from "./requirements/walk";
 export {
   describeRule,
   type RuleNode,
-  RuleNodeSchema,
   requiredCoursesIn,
   type SubjectPoolNode,
   walkRule,

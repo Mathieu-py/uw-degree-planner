@@ -3,7 +3,7 @@ import type { DrillFn } from "../types";
 import { PoolCard } from "./PoolCard";
 
 /** Level buckets within a pool's [min,max] range (bucketed values). [] = all. */
-export function poolLevels(min?: number, max?: number): number[] {
+function poolLevels(min?: number, max?: number): number[] {
   const all = [100, 200, 300, 400];
   const sub = all.filter(
     (b) => (min == null || b >= min) && (max == null || b <= max),
@@ -12,7 +12,7 @@ export function poolLevels(min?: number, max?: number): number[] {
 }
 
 /** Human level-range note, e.g. "300–400 level". Null when unbounded. */
-export function poolLevelText(min?: number, max?: number): string | null {
+function poolLevelText(min?: number, max?: number): string | null {
   if (min == null && max == null) return null;
   if (min != null && max != null)
     return min === max ? `${min} level` : `${min}–${max} level`;

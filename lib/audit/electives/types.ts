@@ -16,7 +16,7 @@
  *   There's no fixed list to drag, so the panel renders a Browse action.
  */
 
-export interface FiniteElectiveSection {
+interface FiniteElectiveSection {
   kind: "finite";
   title: string;
   /** Count to satisfy, parsed from the description. */
@@ -27,7 +27,7 @@ export interface FiniteElectiveSection {
   sourceText?: string;
 }
 
-export interface BrowseElectiveSection {
+interface BrowseElectiveSection {
   kind: "browse";
   title: string;
   /** Eligible codes to pre-filter the picker with (may be empty). */

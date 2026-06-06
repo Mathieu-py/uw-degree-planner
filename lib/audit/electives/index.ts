@@ -4,9 +4,4 @@ export {
   deriveElectiveSections,
   subjectPoolEligible,
 } from "./parse";
-export type {
-  BrowseElectiveSection,
-  ElectiveSection,
-  FiniteElectiveSection,
-  SubjectPoolElectiveSection,
-} from "./types";
+export type { ElectiveSection } from "./types";

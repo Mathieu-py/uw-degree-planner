@@ -24,7 +24,7 @@ import type { AuditNode, AuditRoot } from "./compile";
 const DEFAULT_UNITS = 0.5;
 export const MIN_GRADED_FOR_AVERAGE = 3;
 
-export interface Average {
+interface Average {
   /** Unit-weighted mean percentage, or null when not yet computable. */
   value: number | null;
   /** How many numerically-graded courses contributed. */
@@ -89,7 +89,7 @@ function collectSatisfierCodes(node: AuditNode, into: Set<string>): void {
 }
 
 /** Codes credited by the program's OWN rules (engineering terms / flexible root). */
-export function majorCourseCodes(audit: AuditRoot): Set<string> {
+function majorCourseCodes(audit: AuditRoot): Set<string> {
   const set = new Set<string>();
   if (audit.byTerm)
     for (const t of Object.values(audit.byTerm)) collectSatisfierCodes(t, set);

@@ -54,7 +54,7 @@ export function numericPercent(
 }
 
 /** Waterloo's general pass floor — a numeric grade below this earns no credit. */
-export const PASS_THRESHOLD = 50;
+const PASS_THRESHOLD = 50;
 
 /**
  * Does a placed course earn credit toward a requirement / the degree headline?

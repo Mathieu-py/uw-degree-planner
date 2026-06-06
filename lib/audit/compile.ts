@@ -30,7 +30,7 @@ import {
 import type { Placement, PlacementMap } from "./placement";
 import { buildPlacementMap } from "./placement";
 
-export type AuditStatus = "met" | "partial" | "unmet" | "overSatisfied";
+type AuditStatus = "met" | "partial" | "unmet" | "overSatisfied";
 
 export interface AuditNode {
   ruleNode: RuleNode;

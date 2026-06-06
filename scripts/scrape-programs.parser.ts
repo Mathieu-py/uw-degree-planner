@@ -8,15 +8,9 @@ export {
   type DegreeParseResult,
   parseDegreeRequirements,
 } from "./scrape/degree";
-export {
-  type ParseElectivesResult,
-  parseElectives,
-} from "./scrape/electives";
+export { parseElectives } from "./scrape/electives";
 export { normalizeCourseCode } from "./scrape/normalize";
-export {
-  type ParseResult,
-  parseProgramRequirements,
-} from "./scrape/requirements";
+export { parseProgramRequirements } from "./scrape/requirements";
 export {
   buildConflictCounts,
   buildProgramSlug,
@@ -26,5 +20,4 @@ export {
 export {
   parseUnitPlan,
   reconcileUnitsAndElectives,
-  type UnitPlanResult,
 } from "./scrape/unitPlan";
