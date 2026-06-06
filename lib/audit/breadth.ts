@@ -96,7 +96,10 @@ export function deriveBreadthRequirements(
     if (!parsed) continue;
     const set = new Set(parsed.subjects);
     const satisfiers = placed.filter((code) => set.has(subjectOf(code)));
-    const placedUnits = satisfiers.reduce((sum, code) => sum + unitsOf(code), 0);
+    const placedUnits = satisfiers.reduce(
+      (sum, code) => sum + unitsOf(code),
+      0,
+    );
     out.push({ ...parsed, placedUnits, satisfiers });
   }
   return out;

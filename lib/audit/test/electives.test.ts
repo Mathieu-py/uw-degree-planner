@@ -139,8 +139,14 @@ describe("deriveElectiveSections", () => {
 describe("consolidateElectives", () => {
   it("drops sub-lists subsumed by an aggregate that unions them (BME shape)", () => {
     const cats: ElectiveCategory[] = [
-      { description: "Complete 1 of the following: A", approvedCourses: ["c1", "c2"] },
-      { description: "Complete 1 of the following: B", approvedCourses: ["c3"] },
+      {
+        description: "Complete 1 of the following: A",
+        approvedCourses: ["c1", "c2"],
+      },
+      {
+        description: "Complete 1 of the following: B",
+        approvedCourses: ["c3"],
+      },
       {
         description: "Technical Electives List",
         requiredCount: 3,
@@ -176,9 +182,9 @@ describe("consolidateElectives", () => {
       PROGRAMS["biomedical-engineering"],
     ).map((s) => s.title);
     // No more "(2)"/"(3)" duplicates of "Complete 1 of the following".
-    expect(titles.filter((t) => /^Complete 1 of the following/.test(t))).toEqual(
-      [],
-    );
+    expect(
+      titles.filter((t) => /^Complete 1 of the following/.test(t)),
+    ).toEqual([]);
     expect(titles).toContain("Technical Electives List");
     // The courseless "Complete 3 additional courses from the above lists…"
     // connective orphan is gone too — it pointed at the now-collapsed sub-lists.
@@ -187,8 +193,14 @@ describe("consolidateElectives", () => {
 
   it("drops a courseless cross-list connective orphan when an aggregate is present", () => {
     const cats: ElectiveCategory[] = [
-      { description: "Complete 1 of the following: A", approvedCourses: ["c1", "c2"] },
-      { description: "Complete 1 of the following: B", approvedCourses: ["c3"] },
+      {
+        description: "Complete 1 of the following: A",
+        approvedCourses: ["c1", "c2"],
+      },
+      {
+        description: "Complete 1 of the following: B",
+        approvedCourses: ["c3"],
+      },
       {
         description: "Technical Electives List",
         requiredCount: 3,

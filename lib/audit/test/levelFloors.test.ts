@@ -6,11 +6,16 @@ import {
 } from "@/lib/audit/levelFloors";
 import { PROGRAMS, type Program, type UnitConstraint } from "@/lib/programs";
 
-const c = (sourceText: string): UnitConstraint => ({ label: "Floor", sourceText });
+const c = (sourceText: string): UnitConstraint => ({
+  label: "Floor",
+  sourceText,
+});
 
 describe("parseLevelFloor", () => {
   it("parses a plain units-at-level floor", () => {
-    const f = parseLevelFloor(c("A minimum of 14.5 units must be at the 200-level or above."));
+    const f = parseLevelFloor(
+      c("A minimum of 14.5 units must be at the 200-level or above."),
+    );
     expect(f?.need).toBe(14.5);
     expect(f?.minLevel).toBe(200);
     expect(f?.maxLevel).toBeUndefined();
@@ -19,7 +24,9 @@ describe("parseLevelFloor", () => {
 
   it("captures an exclusion list", () => {
     const f = parseLevelFloor(
-      c("3.0 units must be lecture courses at the 300-level or above (excluding SCI courses)."),
+      c(
+        "3.0 units must be lecture courses at the 300-level or above (excluding SCI courses).",
+      ),
     );
     expect(f?.need).toBe(3.0);
     expect(f?.minLevel).toBe(300);
@@ -28,7 +35,9 @@ describe("parseLevelFloor", () => {
 
   it("captures a subject include-list", () => {
     const f = parseLevelFloor(
-      c("0.5 unit of additional BIOL or EARTH courses, at the 300-level or above."),
+      c(
+        "0.5 unit of additional BIOL or EARTH courses, at the 300-level or above.",
+      ),
     );
     expect(f?.subjects).toEqual(["biol", "earth"]);
     expect(f?.minLevel).toBe(300);

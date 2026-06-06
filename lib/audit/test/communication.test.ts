@@ -45,17 +45,25 @@ describe("deriveCommunicationRequirement", () => {
 
   it("flags alreadyInTree when an option is a named course in the rules", () => {
     const program = flexible({
-      rules: { kind: "all", children: [{ kind: "courses", courses: ["commst193"] }] },
+      rules: {
+        kind: "all",
+        children: [{ kind: "courses", courses: ["commst193"] }],
+      },
       degreeRequirements: {
         name: "Science",
         communication: { options: ["commst193", "engl193"] },
       },
     });
-    expect(deriveCommunicationRequirement(program, [])?.alreadyInTree).toBe(true);
+    expect(deriveCommunicationRequirement(program, [])?.alreadyInTree).toBe(
+      true,
+    );
   });
 
   it("checks engineering term courses too", () => {
-    const term = { kind: "all", children: [{ kind: "courses", courses: ["commst223"] }] };
+    const term = {
+      kind: "all",
+      children: [{ kind: "courses", courses: ["commst223"] }],
+    };
     const program = {
       kind: "engineering",
       name: "Eng",
@@ -75,6 +83,8 @@ describe("deriveCommunicationRequirement", () => {
         communication: { options: ["commst223"] },
       },
     } as unknown as Program;
-    expect(deriveCommunicationRequirement(program, [])?.alreadyInTree).toBe(true);
+    expect(deriveCommunicationRequirement(program, [])?.alreadyInTree).toBe(
+      true,
+    );
   });
 });
