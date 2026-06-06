@@ -94,7 +94,7 @@ function statusFromPickCount(
 }
 
 /** Stable key for a placement, matching a slot-scoped legality issue. */
-function placementLegalityKey(p: Placement): string {
+export function placementLegalityKey(p: Placement): string {
   return `${p.slotId}::${p.code}`;
 }
 

@@ -66,8 +66,10 @@ export interface SubjectPoolElectiveSection {
   /** Inclusive level bounds (bucketed to the hundred), when stated. */
   minLevel?: number;
   maxLevel?: number;
-  /** Courses to complete = stated units ÷ 0.5. */
+  /** Courses to complete = stated units ÷ 0.5 (for the headline bucket). */
   need: number;
+  /** Units required, exactly as the calendar states it (for display). */
+  needUnits: number;
   /** Verbatim requirement statement, when the source provides one. */
   sourceText?: string;
 }
@@ -108,6 +110,7 @@ function parseSubjectPoolElective(
       .join("/")}${lvl ? ` (${lvl[1]}${/below|lower/i.test(lvl[2]) ? "-" : "+"})` : ""}`,
     subjects,
     need: Math.max(1, Math.round(units / 0.5)),
+    needUnits: units,
     ...(e.sourceText ? { sourceText: e.sourceText } : {}),
   };
   if (lvl) {

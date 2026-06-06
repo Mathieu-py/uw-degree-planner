@@ -3,30 +3,26 @@ import type { Program, UnitConstraint } from "@/lib/programs";
 /**
  * Faculty breadth / distribution requirements arrive as verbatim notes
  * (`program.unitPlan.constraints` / `program.degreeRequirements.constraints`),
- * e.g. "Humanities — 1.0 unit: CLAS, ENGL, HIST, MEDVL, PHIL". Every such note
- * in the catalog states a 0.5-unit-multiple amount and an explicit subject list,
- * so it converts losslessly to a *course count*: "complete 2 courses from {CLAS,
- * ENGL, HIST, MEDVL, PHIL}".
+ * e.g. "Humanities — 1.0 unit: CLAS, ENGL, HIST, MEDVL, PHIL". The calendar
+ * states them in UNITS, so we track them in units too — "how many units of
+ * placed courses are in these subjects?" — rather than fabricating a course
+ * count (the old "1.0 unit → 2 courses" assumed 0.5 units/course and
+ * under-credited a 1.0-unit course).
  *
- * That count is a reliable, trackable requirement precisely because it's an
- * INDEPENDENT subject filter over the plan — "how many placed courses are in
- * these subjects?" There's no allocation (a course can satisfy breadth AND the
- * major, as real audits allow) and no reconciliation against a unit total, so it
- * can't reproduce the count-vs-units contradictions the old unit engine did.
- *
- * The one assumption is 0.5 units per course; a rare 1.0-unit course in a
- * breadth subject counts as one toward the requirement (mild under-credit). The
- * requirement *statement* itself is exact.
+ * It's an INDEPENDENT subject filter over the plan: a course can satisfy breadth
+ * AND the major (as real audits allow), with no allocation and no reconciliation
+ * against the unit total — so it gates completion without inflating the
+ * denominator.
  */
 export interface BreadthRequirement {
   /** Display name, e.g. "Humanities". */
   title: string;
   /** Subject prefixes that satisfy it (uppercase), e.g. ["CLAS", "ENGL", …]. */
   subjects: string[];
-  /** Courses needed = stated units ÷ 0.5. */
-  need: number;
-  /** Distinct placed courses whose subject is in `subjects`. */
-  placed: number;
+  /** Units required, exactly as the calendar states (e.g. 1.0). */
+  needUnits: number;
+  /** Units of placed courses whose subject is in `subjects`. */
+  placedUnits: number;
   /** Those placed course codes (catalog form), for met chips / Browse. */
   satisfiers: string[];
   /** Verbatim requirement statement. */
@@ -49,13 +45,12 @@ export function subjectOf(code: string): string {
  */
 export function parseBreadthConstraint(
   c: UnitConstraint,
-): Omit<BreadthRequirement, "placed" | "satisfiers"> | null {
+): Omit<BreadthRequirement, "placedUnits" | "satisfiers"> | null {
   const src = c.sourceText ?? "";
   const um = src.match(UNIT_RE);
   if (!um) return null;
-  const units = Number(um[1]);
-  if (!Number.isFinite(units) || units <= 0) return null;
-  const need = Math.round(units / 0.5);
+  const needUnits = Number(um[1]);
+  if (!Number.isFinite(needUnits) || needUnits <= 0) return null;
 
   const colon = src.indexOf(":");
   if (colon === -1) return null;
@@ -73,7 +68,7 @@ export function parseBreadthConstraint(
     head && head.length > 0
       ? head
       : c.label.replace(/^breadth\s*[—–-]\s*/i, "").trim() || c.label;
-  return { title, subjects, need, sourceText: src };
+  return { title, subjects, needUnits, sourceText: src };
 }
 
 /** Every breadth/distribution constraint a program carries (both sources). */
@@ -92,6 +87,7 @@ function programConstraints(program: Program): UnitConstraint[] {
 export function deriveBreadthRequirements(
   program: Program,
   placedCodes: Iterable<string>,
+  unitsOf: (code: string) => number,
 ): BreadthRequirement[] {
   const placed = [...placedCodes];
   const out: BreadthRequirement[] = [];
@@ -100,7 +96,8 @@ export function deriveBreadthRequirements(
     if (!parsed) continue;
     const set = new Set(parsed.subjects);
     const satisfiers = placed.filter((code) => set.has(subjectOf(code)));
-    out.push({ ...parsed, placed: satisfiers.length, satisfiers });
+    const placedUnits = satisfiers.reduce((sum, code) => sum + unitsOf(code), 0);
+    out.push({ ...parsed, placedUnits, satisfiers });
   }
   return out;
 }

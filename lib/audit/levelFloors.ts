@@ -27,13 +27,16 @@ export interface LevelFloor {
   excludeSubjects?: string[];
   /** Placed units that satisfy the floor. */
   placedUnits: number;
+  /** Placed course codes that contribute to the floor (for met chips / Browse). */
+  satisfiers: string[];
   /** Verbatim requirement statement. */
   sourceText: string;
 }
 
 const UNIT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
 const LEVEL_RE = /(\d{3})-level\s+(?:or|and)\s+(above|higher|below|lower)/i;
-const SUBJECTS_OF_RE = /units?\s+of\s+(?:additional\s+)?([a-z][a-z,/&\s]*?)\s+(?:courses|lecture)/i;
+const SUBJECTS_OF_RE =
+  /units?\s+of\s+(?:additional\s+)?([a-z][a-z,/&\s]*?)\s+(?:courses|lecture)/i;
 const EXCLUDE_RE = /excluding\s+([a-z][a-z,/&\s]*?)\s+courses?/i;
 
 /** Subject tokens from a fragment like "BIOL or EARTH" → ["biol", "earth"]. */
@@ -50,7 +53,7 @@ function subjectList(fragment: string): string[] {
  */
 export function parseLevelFloor(
   c: UnitConstraint,
-): Omit<LevelFloor, "placedUnits"> | null {
+): Omit<LevelFloor, "placedUnits" | "satisfiers"> | null {
   const src = c.sourceText ?? c.label ?? "";
   const um = src.match(UNIT_RE);
   const lm = src.match(LEVEL_RE);
@@ -67,7 +70,9 @@ export function parseLevelFloor(
 
   const title =
     `${need} unit${need === 1 ? "" : "s"}` +
-    (subjects.length ? ` of ${subjects.map((s) => s.toUpperCase()).join("/")}` : "") +
+    (subjects.length
+      ? ` of ${subjects.map((s) => s.toUpperCase()).join("/")}`
+      : "") +
     ` at the ${level}-level or ${above ? "above" : "below"}` +
     (excludeSubjects.length
       ? ` (excl. ${excludeSubjects.map((s) => s.toUpperCase()).join("/")})`
@@ -84,7 +89,10 @@ export function parseLevelFloor(
 }
 
 /** Whether a placed course's prefix + level satisfy a floor's bounds. */
-function matches(code: string, f: Omit<LevelFloor, "placedUnits">): boolean {
+function matches(
+  code: string,
+  f: Omit<LevelFloor, "placedUnits" | "satisfiers">,
+): boolean {
   const prefix = coursePrefix(code);
   if (f.subjects && !f.subjects.includes(prefix)) return false;
   if (f.excludeSubjects?.includes(prefix)) return false;
@@ -121,8 +129,13 @@ export function deriveLevelFloors(
     const f = parseLevelFloor(c);
     if (!f) continue;
     let placedUnits = 0;
-    for (const code of placed) if (matches(code, f)) placedUnits += unitsOf(code);
-    out.push({ ...f, placedUnits });
+    const satisfiers: string[] = [];
+    for (const code of placed)
+      if (matches(code, f)) {
+        placedUnits += unitsOf(code);
+        satisfiers.push(code);
+      }
+    out.push({ ...f, placedUnits, satisfiers });
   }
   return out;
 }

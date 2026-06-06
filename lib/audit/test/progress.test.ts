@@ -29,10 +29,11 @@ function progressOf(
   program: Program,
   codes: string[],
   unitsOf: (code: string) => number = () => 0.5,
+  legality: ReadonlySet<string> = new Set(),
 ) {
   const plan = makePlan(codes);
-  const audit = compileAudit(program, plan, null, new Set());
-  return computeDegreeProgress(audit, program, unitsOf);
+  const audit = compileAudit(program, plan, null, legality);
+  return computeDegreeProgress(audit, program, unitsOf, legality);
 }
 
 describe("computeDegreeProgress — required courses", () => {
@@ -73,6 +74,23 @@ describe("computeDegreeProgress — required courses", () => {
     expect(p.allComplete).toBe(true);
   });
 
+  it("excludes an illegally-placed course from credit and from 100%", () => {
+    // All three placed, but cs136 sits before its prereqs (slot "s1"): it still
+    // shows met-but-flagged on its row, but must not credit the headline.
+    const legality = new Set(["s1::cs136"]);
+    const p = progressOf(
+      program,
+      ["cs115", "math115", "cs136"],
+      () => 0.5,
+      legality,
+    );
+    expect(p.creditedUnits).toBe(1.0); // cs136's 0.5 unit not counted
+    expect(p.pct).toBe(67);
+    expect(p.allComplete).toBe(false);
+    // Fixing the placement (no legality issue) restores full credit.
+    expect(progressOf(program, ["cs115", "math115", "cs136"]).pct).toBe(100);
+  });
+
   it("credits a sub-0.5-unit course by its real units (exact, no rounding)", () => {
     // cs136 is 0.25 unit, so the 3 named courses use only 1.25 of 1.5 units;
     // 0.25 unit of free-elective room remains, and the bar reads 1.25/1.5.
@@ -94,8 +112,14 @@ describe("computeDegreeProgress — overlapping elective pools (BME shape)", () 
     asOf: "2026",
     rules: { kind: "all", children: [] },
     electives: [
-      { description: "Complete 1 of the following: a", approvedCourses: ["c1", "c2"] },
-      { description: "Complete 1 of the following: b", approvedCourses: ["c3"] },
+      {
+        description: "Complete 1 of the following: a",
+        approvedCourses: ["c1", "c2"],
+      },
+      {
+        description: "Complete 1 of the following: b",
+        approvedCourses: ["c3"],
+      },
       {
         description: "Technical Electives List",
         requiredCount: 3,
@@ -217,6 +241,31 @@ describe("computeDegreeProgress — unit-based subject pool", () => {
   });
 });
 
+describe("computeDegreeProgress — unit fidelity for pool/elective slots (T1.3)", () => {
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: { kind: "all", children: [] },
+    electives: [
+      { description: "Complete 1 of the following: X", approvedCourses: ["big100"] },
+    ],
+    unitPlan: { totalUnits: 2.0 },
+  };
+  const unitsOf = (c: string) => (c === "big100" ? 1.0 : 0.5);
+
+  it("reserves a filled 1.0-unit elective as a full unit (not a flat 0.5)", () => {
+    const p = progressOf(program, ["big100"], unitsOf);
+    expect(p.creditedUnits).toBe(1.0);
+    expect(p.freeUnits).toBe(1.0); // 2.0 total − 1.0 real, not 1.5
+  });
+
+  it("estimates an unfilled elective slot at ~0.5 unit", () => {
+    const p = progressOf(program, [], unitsOf);
+    expect(p.freeUnits).toBe(1.5); // 2.0 − 0.5 estimate (option unknown until picked)
+  });
+});
+
 describe("computeDegreeProgress — level floors gate completion", () => {
   const program: Program = {
     kind: "flexible",
@@ -226,7 +275,10 @@ describe("computeDegreeProgress — level floors gate completion", () => {
     unitPlan: {
       totalUnits: 1.0, // m1 (0.5) + 0.5 free
       constraints: [
-        { label: "Upper level", sourceText: "0.5 unit must be at the 200-level or above." },
+        {
+          label: "Upper level",
+          sourceText: "0.5 unit must be at the 200-level or above.",
+        },
       ],
     },
   };

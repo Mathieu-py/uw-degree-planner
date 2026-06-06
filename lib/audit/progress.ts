@@ -1,8 +1,12 @@
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import type { Program, RuleNode } from "@/lib/programs";
-import { deriveBreadthRequirements } from "./breadth";
+import { type BreadthRequirement, deriveBreadthRequirements } from "./breadth";
 import { deriveCommunicationRequirement } from "./communication";
-import type { AuditNode, AuditRoot } from "./compile";
+import {
+  type AuditNode,
+  type AuditRoot,
+  placementLegalityKey,
+} from "./compile";
 import { deriveElectiveSections, subjectPoolEligible } from "./electives";
 import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
 
@@ -36,6 +40,8 @@ export interface DegreeProgress {
   allComplete: boolean;
   /** Free-elective room in the degree (units, ≥ 0). */
   freeUnits: number;
+  /** Faculty breadth requirements ("1.0 unit of Humanities"), scored in units. */
+  breadthRequirements: BreadthRequirement[];
   /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
   levelFloors: LevelFloor[];
 }
@@ -45,6 +51,12 @@ interface Bucket {
   need: number;
   /** Placed course codes that qualify for it. */
   eligible: string[];
+  /**
+   * Units to reserve for each UNFILLED slot (filled slots reserve their real
+   * units). A specific required course knows its exact units; a pool/pick/
+   * elective slot can't know which option you'll pick, so it estimates ~0.5.
+   */
+  estimateUnit?: number;
 }
 
 /** Every course code appearing in `courses` leaves under a node (pick pools). */
@@ -119,13 +131,27 @@ function collect(
  *
  * @param unitsOf units of a placed course (caller supplies, defaulting unknown
  *   codes to 0.5 so each unmapped course counts as one slot).
+ * @param legality slot-scoped keys (`slotId::code`) of illegally-placed courses
+ *   (unmet prereq / antireq conflict), from `legalityKeySet`. Such placements
+ *   are EXCLUDED from credit — they still show as met-but-flagged on their
+ *   requirement row, but invalid placements never inflate the headline number.
  */
 export function computeDegreeProgress(
   audit: AuditRoot,
   program: Program | null,
   unitsOf: (code: string) => number,
+  legality: ReadonlySet<string> = new Set(),
 ): DegreeProgress {
-  const placedList = [...audit.placement.keys()];
+  // Drop illegally-placed courses before any crediting: a course placed before
+  // its prereqs (or in antireq conflict) can't honestly count toward the degree.
+  const illegalCodes = new Set<string>();
+  if (legality.size > 0)
+    for (const [code, p] of audit.placement)
+      if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
+
+  const placedList = [...audit.placement.keys()].filter(
+    (c) => !illegalCodes.has(c),
+  );
   const placed = new Set(placedList);
 
   const buckets: Bucket[] = [];
@@ -165,13 +191,41 @@ export function computeDegreeProgress(
       });
   }
 
-  // Named requirements measured in UNITS — required courses owe their real
-  // catalog units; each chosen pool/elective course is ~0.5 unit.
-  const poolElectiveNeed = buckets.reduce((sum, b) => sum + b.need, 0);
-  let namedUnits = poolElectiveNeed * 0.5;
+  // Required courses → singleton buckets; each reserves its real catalog units.
   for (const code of required) {
-    namedUnits += unitsOf(code);
-    buckets.push({ need: 1, eligible: placed.has(code) ? [code] : [] });
+    buckets.push({
+      need: 1,
+      eligible: placed.has(code) ? [code] : [],
+      estimateUnit: unitsOf(code),
+    });
+  }
+
+  // Greedy unique assignment, most-constrained buckets first. Each placed course
+  // credits exactly one bucket (its real units) → overlapping pools can't
+  // double-count, and a course's full unit weight lands wherever it's credited.
+  // `namedUnits` reserves real units for FILLED slots and the per-slot estimate
+  // for unfilled ones — so a 1.0-unit pick costs the free-elective pool a full
+  // unit, not a flat 0.5 (no over-stated "free units").
+  const ordered = [...buckets].sort(
+    (a, b) => a.eligible.length - b.eligible.length,
+  );
+  const used = new Set<string>();
+  let namedCreditedUnits = 0;
+  let namedUnits = 0;
+  let allBucketsFilled = true;
+  for (const bk of ordered) {
+    let filled = 0;
+    let filledUnits = 0;
+    for (const code of bk.eligible) {
+      if (filled >= bk.need) break;
+      if (used.has(code)) continue;
+      used.add(code);
+      filled++;
+      filledUnits += unitsOf(code);
+    }
+    namedCreditedUnits += filledUnits;
+    namedUnits += filledUnits + (bk.need - filled) * (bk.estimateUnit ?? 0.5);
+    if (filled < bk.need) allBucketsFilled = false;
   }
 
   // The degree's total units IS the denominator (exact, authoritative) — no
@@ -179,26 +233,8 @@ export function computeDegreeProgress(
   // named + free = total by construction. Fall back to named units if unknown.
   const totalUnits = program?.unitPlan?.totalUnits ?? null;
   const denom = totalUnits ?? namedUnits;
-  const freeUnits = totalUnits != null ? Math.max(0, totalUnits - namedUnits) : 0;
-
-  // Greedy unique assignment, most-constrained buckets first. Each placed course
-  // credits exactly one bucket (its real units) → overlapping pools can't
-  // double-count, and a course's full unit weight lands wherever it's credited.
-  const ordered = [...buckets].sort((a, b) => a.eligible.length - b.eligible.length);
-  const used = new Set<string>();
-  let namedCreditedUnits = 0;
-  let allBucketsFilled = true;
-  for (const bk of ordered) {
-    let filled = 0;
-    for (const code of bk.eligible) {
-      if (filled >= bk.need) break;
-      if (used.has(code)) continue;
-      used.add(code);
-      filled++;
-      namedCreditedUnits += unitsOf(code);
-    }
-    if (filled < bk.need) allBucketsFilled = false;
-  }
+  const freeUnits =
+    totalUnits != null ? Math.max(0, totalUnits - namedUnits) : 0;
 
   // Leftover placed courses fill the genuine free-elective allotment only.
   let freeCreditedUnits = 0;
@@ -213,11 +249,13 @@ export function computeDegreeProgress(
 
   // Breadth is an independent filter (a course may satisfy breadth AND the
   // major), so it never inflates the denominator — but it does gate 100%.
-  const allBreadthMet = program
-    ? deriveBreadthRequirements(program, placedList).every(
-        (b) => b.placed >= b.need,
-      )
-    : true;
+  // Tracked in UNITS, exactly as the calendar states it ("1.0 unit of …").
+  const breadthRequirements = program
+    ? deriveBreadthRequirements(program, placedList, unitsOf)
+    : [];
+  const allBreadthMet = breadthRequirements.every(
+    (b) => b.placedUnits >= b.needUnits - 1e-9,
+  );
   const unverifiedOwed = (program?.unverifiedRequirements?.length ?? 0) > 0;
 
   // Level floors ("X units at the 200-level or above") gate completion the same
@@ -240,6 +278,7 @@ export function computeDegreeProgress(
     pct,
     allComplete,
     freeUnits,
+    breadthRequirements,
     levelFloors,
   };
 }

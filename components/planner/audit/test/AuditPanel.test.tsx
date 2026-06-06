@@ -274,10 +274,9 @@ describe("AuditPanel", () => {
   });
 
   it("tracks faculty breadth as a course count, not a unit note", () => {
-    // h-history's "Humanities — 1.0 unit" breadth becomes a tracked "0 of 2
-    // courses" requirement under "Degree requirements", with its eligible
-    // subjects shown — not a verbatim unit note, and not a unit ring that
-    // contradicts the count headline.
+    // h-history's "Humanities — 1.0 unit" breadth becomes a tracked "0 of 1
+    // unit" requirement (in units, as the calendar states it) under "Degree
+    // requirements", with its eligible subjects shown.
     if (!("h-history" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel plan={mkPlan({ programId: "h-history" })} />,
@@ -288,9 +287,9 @@ describe("AuditPanel", () => {
     expect(within(aside).queryAllByText(/Humanities/i).length).toBeGreaterThan(
       0,
     );
-    // 1.0 unit → 2 courses, tracked (multiple 2-course breadths share this text).
+    // Tracked in units (multiple 1.0-unit breadths share this text).
     expect(
-      within(aside).queryAllByText(/0 of 2 courses/i).length,
+      within(aside).queryAllByText(/0 of 1 unit/i).length,
     ).toBeGreaterThan(0);
     // Eligible subjects surface as tags.
     expect(within(aside).queryAllByText(/^CLAS$/).length).toBeGreaterThan(0);
@@ -298,10 +297,9 @@ describe("AuditPanel", () => {
     expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
   });
 
-  it("counts placed breadth courses toward the requirement", () => {
-    // Two PHIL courses (a Humanities subject in h-history, outside the major
-    // picks) satisfy the 2-course Humanities breadth → shown as met, reading
-    // "2 of 2 courses".
+  it("counts placed breadth units toward the requirement", () => {
+    // Two 0.5-unit PHIL courses (a Humanities subject in h-history, outside the
+    // major picks) make 1.0 unit → satisfies the 1.0-unit Humanities breadth.
     if (!("h-history" in PROGRAMS)) return;
     const { container } = render(
       <AuditPanel plan={oneSlotPlan("h-history", ["phil100", "phil101"])} />,
@@ -315,7 +313,7 @@ describe("AuditPanel", () => {
       0,
     );
     expect(
-      within(aside).queryAllByText(/2 of 2 courses/i).length,
+      within(aside).queryAllByText(/1 of 1 unit/i).length,
     ).toBeGreaterThan(0);
   });
 

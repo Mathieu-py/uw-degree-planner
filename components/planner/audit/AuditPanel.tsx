@@ -9,11 +9,9 @@ import {
 } from "@/lib/audit/averages";
 import {
   type BreadthRequirement,
-  deriveBreadthRequirements,
   nonBreadthConstraints,
 } from "@/lib/audit/breadth";
 import { deriveCommunicationRequirement } from "@/lib/audit/communication";
-import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
 import {
   type AuditNode,
   type AuditRoot,
@@ -26,6 +24,7 @@ import {
   type ElectiveSection,
   subjectPoolEligible as electivePoolEligible,
 } from "@/lib/audit/electives";
+import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
 import { computeDegreeProgress } from "@/lib/audit/progress";
 import { levelBucket } from "@/lib/courses/code";
 import type { Course } from "@/lib/courses/types";
@@ -113,10 +112,24 @@ type Section =
       key: string;
       title: string;
       caption: string;
-      need: number;
-      placed: number;
+      /** Units required / placed (the calendar states breadth in units). */
+      needUnits: number;
+      placedUnits: number;
       subjects: string[];
       satisfiers: string[];
+    }
+  | {
+      kind: "levelFloor";
+      key: string;
+      title: string;
+      caption: string;
+      /** Units required / placed (a unit-based minimum, not a course count). */
+      needUnits: number;
+      placedUnits: number;
+      /** Subject prefixes that scope it (uppercase); empty = any subject. */
+      subjects: string[];
+      satisfiers: string[];
+      sourceText: string;
     }
   | {
       kind: "info";
@@ -180,13 +193,34 @@ export const AuditPanel = memo(function AuditPanel({
         audit,
         program,
         (code) => catalogByCode.get(code)?.units ?? 0.5,
+        legality,
       ),
-    [audit, program, catalogByCode],
+    [audit, program, catalogByCode, legality],
+  );
+
+  const unitsOf = useMemo(
+    () => (code: string) => catalogByCode.get(code)?.units ?? 0.5,
+    [catalogByCode],
   );
 
   const { groups, unverifiedCount } = useMemo(
-    () => deriveSections(audit, program, progress.freeUnits, progress.levelFloors),
-    [audit, program, progress.freeUnits, progress.levelFloors],
+    () =>
+      deriveSections(
+        audit,
+        program,
+        progress.freeUnits,
+        progress.breadthRequirements,
+        progress.levelFloors,
+        unitsOf,
+      ),
+    [
+      audit,
+      program,
+      progress.freeUnits,
+      progress.breadthRequirements,
+      progress.levelFloors,
+      unitsOf,
+    ],
   );
 
   if (!plan.programId) {
@@ -236,6 +270,10 @@ export const AuditPanel = memo(function AuditPanel({
           <div className="mp-bar mt-2">
             <span style={{ width: `${headlinePct}%` }} />
           </div>
+          <div className="av-note">
+            Whole degree, measured in units. The rings below track each
+            requirement on its own.
+          </div>
           {unverifiedCount > 0 ? (
             <div className="av-note">
               {unverifiedCount} requirement{unverifiedCount === 1 ? "" : "s"}{" "}
@@ -245,8 +283,8 @@ export const AuditPanel = memo(function AuditPanel({
           {blockingIssueCount > 0 ? (
             <div className="av-note text-partial">
               ⚠ {blockingIssueCount} placement issue
-              {blockingIssueCount === 1 ? "" : "s"} (prereq/antireq) — some
-              progress rests on invalid placements.
+              {blockingIssueCount === 1 ? "" : "s"} (prereq/antireq) — those
+              courses are excluded from the bar until fixed.
             </div>
           ) : null}
           <AveragesRow averages={averages} />
@@ -306,7 +344,10 @@ function isIncomplete(section: Section): boolean {
   if (section.kind === "node")
     return section.summary.satisfied < section.summary.needed;
   if (section.kind === "electiveFinite") return section.placed < section.need;
-  if (section.kind === "breadth") return section.placed < section.need;
+  if (section.kind === "breadth")
+    return section.placedUnits < section.needUnits - 1e-9;
+  if (section.kind === "levelFloor")
+    return section.placedUnits < section.needUnits - 1e-9;
   return false;
 }
 
@@ -367,11 +408,12 @@ function SectionRow({
         );
     return (
       <SectionShell
-        // An optional group reaches a green 100% after a single pick, so tag it
-        // "(optional)" — a satisfied optional group isn't a completed required one.
+        // An optional group has no target, so a pick shouldn't read as a
+        // completed *required* group: tag it "(optional)" AND render its ring in
+        // a neutral tone (not the green that means "requirement met").
         title={optional ? `${section.title} (optional)` : section.title}
         caption={section.caption}
-        ring={{ pct, num: chosen }}
+        ring={{ pct, num: chosen, tone: optional ? "neutral" : undefined }}
         excludedViolationCount={section.summary.excludedViolationCount}
         legalityIssueCount={section.node.illegalSatisfiers?.length ?? 0}
         open={open}
@@ -420,18 +462,45 @@ function SectionRow({
   }
 
   if (section.kind === "breadth") {
+    // Breadth is unit-based ("1.0 unit of Humanities"); the ring fills on units,
+    // the number shows how many placed courses currently contribute.
     const pct =
-      section.need > 0
-        ? Math.min(Math.round((section.placed / section.need) * 100), 100)
+      section.needUnits > 0
+        ? Math.min(
+            Math.round((section.placedUnits / section.needUnits) * 100),
+            100,
+          )
         : 100;
     return (
       <SectionShell
         title={section.title}
         caption={section.caption}
-        ring={{ pct, num: Math.min(section.placed, section.need) }}
+        ring={{ pct, num: section.satisfiers.length }}
         open={open}
       >
         <BreadthBody section={section} catalog={catalog} onDrill={onDrill} />
+      </SectionShell>
+    );
+  }
+
+  if (section.kind === "levelFloor") {
+    // A unit-based minimum ("X units at the 200-level or above"). Ring fills on
+    // units; the number shows how many placed courses currently contribute.
+    const pct =
+      section.needUnits > 0
+        ? Math.min(
+            Math.round((section.placedUnits / section.needUnits) * 100),
+            100,
+          )
+        : 100;
+    return (
+      <SectionShell
+        title={section.title}
+        caption={section.caption}
+        ring={{ pct, num: section.satisfiers.length }}
+        open={open}
+      >
+        <LevelFloorBody section={section} catalog={catalog} onDrill={onDrill} />
       </SectionShell>
     );
   }
@@ -493,7 +562,7 @@ function SectionShell({
   title: string;
   caption: string;
   /** Present → progress ring; absent → neutral doc glyph (unit/browse rows). */
-  ring?: { pct: number; num: number };
+  ring?: { pct: number; num: number; tone?: "neutral" };
   excludedViolationCount?: number;
   /** Satisfiers here that are placed illegally (met-but-flagged). */
   legalityIssueCount?: number;
@@ -505,7 +574,7 @@ function SectionShell({
       <summary className="av-row-head list-none select-none [&::-webkit-details-marker]:hidden">
         {ring ? (
           <span className="av-ring-wrap">
-            <Ring pct={ring.pct} />
+            <Ring pct={ring.pct} tone={ring.tone} />
             <span className="av-ring-num">{ring.num}</span>
           </span>
         ) : (
@@ -517,19 +586,28 @@ function SectionShell({
           <span className="av-sec-label">{title}</span>
           <span className="u-small truncate">{caption}</span>
         </span>
+        {/* Two distinct flags, kept visually separate (a red "excluded" cross vs
+            an amber "flagged" triangle) so they don't read as contradictory: the
+            red pill is a course that can't count here at all; the amber one is a
+            course that does count on this row but is excluded from the top bar
+            until its prereq/antireq is resolved. */}
         {excludedViolationCount > 0 ? (
           <span
+            role="img"
             className="inline-flex items-center gap-0.5 rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
-            title={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} cannot count toward this section`}
+            aria-label={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} excluded — can't count toward this requirement`}
+            title={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} can't count toward this requirement (excluded by the rule)`}
           >
-            <Icon name="warning" size="xs" aria-hidden="true" />
+            <Icon name="close" size="xs" aria-hidden="true" />
             {excludedViolationCount}
           </span>
         ) : null}
         {legalityIssueCount > 0 ? (
           <span
+            role="img"
             className="inline-flex items-center gap-0.5 rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
-            title={`${legalityIssueCount} course${legalityIssueCount === 1 ? "" : "s"} here ${legalityIssueCount === 1 ? "is" : "are"} placed before prereqs or in antireq conflict — counted, but verify the placement`}
+            aria-label={`${legalityIssueCount} course${legalityIssueCount === 1 ? "" : "s"} flagged — placed before prereqs or in antireq conflict`}
+            title={`${legalityIssueCount} course${legalityIssueCount === 1 ? "" : "s"} here ${legalityIssueCount === 1 ? "is" : "are"} placed before prereqs or in antireq conflict — shown on this row, but excluded from the degree bar until fixed`}
           >
             <Icon name="warning" size="xs" aria-hidden="true" />
             {legalityIssueCount}
@@ -1192,8 +1270,9 @@ function BreadthBody({
         ))}
       </div>
       <p className="av-hint">
-        Any {section.need} course{section.need === 1 ? "" : "s"} from these
-        subjects — there's no fixed list to drag, so pick from the catalog.
+        {fmtUnits(section.needUnits)} unit
+        {section.needUnits === 1 ? "" : "s"} from these subjects — there's no
+        fixed list to drag, so pick from the catalog.
       </p>
       {section.satisfiers.length > 0 ? (
         <div className="av-chips mt-1.5">
@@ -1223,6 +1302,49 @@ function BreadthBody({
   );
 }
 
+/**
+ * A faculty level-floor ("X units at the 200-level or above"). Measured in
+ * units over an open filter, so — like breadth — there's no fixed list to drag:
+ * it shows the verbatim requirement, any subject scope, and the placed courses
+ * currently contributing. The ring + caption carry the live unit progress.
+ */
+function LevelFloorBody({
+  section,
+}: {
+  section: Extract<Section, { kind: "levelFloor" }>;
+  catalog?: Course[];
+  onDrill?: (codes: string[]) => void;
+}) {
+  return (
+    <div className="av-pool">
+      {section.subjects.length > 0 ? (
+        <div className="av-pool-subj">
+          {section.subjects.map((s) => (
+            <span key={s} className="av-subj">
+              {s}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <p className="av-hint">{section.sourceText}</p>
+      {section.satisfiers.length > 0 ? (
+        <div className="av-chips mt-1.5">
+          {section.satisfiers.map((code) => (
+            <span
+              key={code}
+              className="av-chip met"
+              title={formatCourseCode(code)}
+            >
+              <Icon name="check" size="xs" aria-hidden="true" />
+              {formatCourseCode(code)}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /* ------------------------------ primitives ------------------------------ */
 
 /** SVG donut progress ring. Geometry per the design handoff. */
@@ -1230,16 +1352,25 @@ function Ring({
   pct,
   size = 34,
   stroke = 3.5,
+  tone,
 }: {
   pct: number;
   size?: number;
   stroke?: number;
+  /** "neutral" → a muted (non-green) fill, for optional groups with no target. */
+  tone?: "neutral";
 }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - Math.min(pct, 100) / 100);
   const color =
-    pct >= 100 ? "var(--met)" : pct > 0 ? "var(--partial)" : "var(--missing)";
+    tone === "neutral"
+      ? "var(--ink-3)"
+      : pct >= 100
+        ? "var(--met)"
+        : pct > 0
+          ? "var(--partial)"
+          : "var(--missing)";
   return (
     <svg
       width={size}
@@ -1314,8 +1445,12 @@ function deriveSections(
   program: Program | null,
   /** Free-elective units from the unified headline model. */
   freeElectiveUnits: number,
+  /** Scored breadth requirements (units) from the unified headline model. */
+  breadthRequirements: BreadthRequirement[],
   /** Scored level-floor requirements from the unified headline model. */
   levelFloors: LevelFloor[],
+  /** Units of a placed course (catalog-backed; default 0.5). */
+  unitsOf: (code: string) => number,
 ): {
   groups: SectionGroup[];
   totals: { needed: number; satisfied: number };
@@ -1368,7 +1503,7 @@ function deriveSections(
   // Electives ------------------------------------------------------------
   if (program) {
     const electiveSections = deriveElectiveSections(program).map((e, i) =>
-      toElectiveSection(e, i, placedCodes),
+      toElectiveSection(e, i, placedCodes, unitsOf),
     );
     for (const s of electiveSections) {
       if (s.kind === "electiveFinite")
@@ -1402,11 +1537,7 @@ function deriveSections(
   // isn't subject-list breadth (a level-only minimum) stays a verbatim note.
   if (program) {
     const sections: Section[] = [];
-    for (const [i, b] of deriveBreadthRequirements(
-      program,
-      placedCodes,
-    ).entries()) {
-      addToTotals(b.need, Math.min(b.placed, b.need));
+    for (const [i, b] of breadthRequirements.entries()) {
       sections.push(breadthSection(b, i));
     }
 
@@ -1428,16 +1559,21 @@ function deriveSections(
       });
     }
     // Level floors ("X units at the 200-level or above") — tracked + gated, in
-    // units (an overlapping filter, so not in the denominator). Shown with live
-    // progress instead of a verbatim note.
+    // units (an overlapping filter, so not in the denominator). Rendered with a
+    // live progress ring like breadth, not a verbatim note.
     levelFloors.forEach((f, i) => {
       const done = Math.min(f.placedUnits, f.need);
-      const met = f.placedUnits >= f.need - 1e-9;
+      const subjects = (f.subjects ?? []).map((s) => s.toUpperCase());
       sections.push({
-        kind: "info",
+        kind: "levelFloor",
         key: `floor-${i}`,
         title: f.title,
-        caption: `${met ? "✓ " : ""}${fmtUnits(done)} of ${fmtUnits(f.need)} units${met ? " — met" : ` — ${fmtUnits(f.need - done)} to go`}`,
+        caption: `${fmtUnits(done)} of ${fmtUnits(f.need)} units${subjects.length ? ` · ${subjects.length} subjects` : ""}`,
+        needUnits: f.need,
+        placedUnits: f.placedUnits,
+        subjects,
+        satisfiers: f.satisfiers,
+        sourceText: f.sourceText,
       });
     });
     // Remaining constraints that aren't subject breadth OR a level floor stay
@@ -1548,6 +1684,7 @@ function toElectiveSection(
   e: ElectiveSection,
   index: number,
   placedCodes: ReadonlySet<string>,
+  unitsOf: (code: string) => number,
 ): Section {
   if (e.kind === "finite") {
     const placed = e.options.filter((c) => placedCodes.has(c)).length;
@@ -1563,15 +1700,20 @@ function toElectiveSection(
   }
   if (e.kind === "subjectPool") {
     // A trackable unit-based subject filter → render like breadth (ring + subject
-    // tags), counting any in-scope placed course.
-    const satisfiers = [...placedCodes].filter((c) => electivePoolEligible(c, e));
+    // tags) in units, counting any in-scope placed course.
+    const satisfiers = [...placedCodes].filter((c) =>
+      electivePoolEligible(c, e),
+    );
+    const placedUnits = satisfiers.reduce((sum, c) => sum + unitsOf(c), 0);
+    const done = Math.min(placedUnits, e.needUnits);
+    const met = placedUnits >= e.needUnits - 1e-9;
     return {
       kind: "breadth",
       key: `elec-${index}`,
       title: e.title,
-      caption: `${Math.min(satisfiers.length, e.need)} of ${e.need} course${e.need === 1 ? "" : "s"} · ${e.subjects.length} subjects`,
-      need: e.need,
-      placed: satisfiers.length,
+      caption: `${met ? "✓ " : ""}${fmtUnits(done)} of ${fmtUnits(e.needUnits)} unit${e.needUnits === 1 ? "" : "s"} · ${e.subjects.length} subjects`,
+      needUnits: e.needUnits,
+      placedUnits,
       subjects: e.subjects.map((s) => s.toUpperCase()),
       satisfiers,
     };
@@ -1590,16 +1732,17 @@ function toElectiveSection(
   };
 }
 
-/** A tracked breadth requirement → renderable section. */
+/** A tracked breadth requirement → renderable section (in units). */
 function breadthSection(b: BreadthRequirement, index: number): Section {
-  const done = Math.min(b.placed, b.need);
+  const done = Math.min(b.placedUnits, b.needUnits);
+  const met = b.placedUnits >= b.needUnits - 1e-9;
   return {
     kind: "breadth",
     key: `breadth-${index}`,
     title: b.title,
-    caption: `${done} of ${b.need} course${b.need === 1 ? "" : "s"} · ${b.subjects.length} subjects`,
-    need: b.need,
-    placed: b.placed,
+    caption: `${met ? "✓ " : ""}${fmtUnits(done)} of ${fmtUnits(b.needUnits)} unit${b.needUnits === 1 ? "" : "s"} · ${b.subjects.length} subjects`,
+    needUnits: b.needUnits,
+    placedUnits: b.placedUnits,
     subjects: b.subjects,
     satisfiers: b.satisfiers,
   };

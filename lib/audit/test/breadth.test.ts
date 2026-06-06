@@ -36,17 +36,17 @@ function prog(unit: UnitConstraint[], degree?: UnitConstraint[]): Program {
 }
 
 describe("parseBreadthConstraint", () => {
-  it("converts a 1.0-unit breadth note to a 2-course requirement", () => {
+  it("keeps a 1.0-unit breadth note in units (as the calendar states it)", () => {
     const p = parseBreadthConstraint(hum);
     expect(p).not.toBeNull();
     expect(p?.title).toBe("Humanities");
-    expect(p?.need).toBe(2);
+    expect(p?.needUnits).toBe(1.0);
     expect(p?.subjects).toEqual(["CLAS", "ENGL", "HIST", "MEDVL", "PHIL"]);
   });
 
-  it("maps 0.5 unit → 1 course and 2.0 units → 4 courses", () => {
-    expect(parseBreadthConstraint(fpca)?.need).toBe(1);
-    expect(parseBreadthConstraint(social)?.need).toBe(4);
+  it("preserves the stated units (0.5 and 2.0)", () => {
+    expect(parseBreadthConstraint(fpca)?.needUnits).toBe(0.5);
+    expect(parseBreadthConstraint(social)?.needUnits).toBe(2.0);
   });
 
   it("keeps the full group name as the title", () => {
@@ -69,26 +69,34 @@ describe("subjectOf", () => {
 });
 
 describe("deriveBreadthRequirements", () => {
-  it("counts distinct placed courses whose subject is in the list", () => {
-    const reqs = deriveBreadthRequirements(prog([hum, social]), [
-      "phil100",
-      "hist250",
-      "econ101",
-      "math135", // matches neither group
-    ]);
+  const half = () => 0.5;
+
+  it("sums placed units whose subject is in the list", () => {
+    const reqs = deriveBreadthRequirements(
+      prog([hum, social]),
+      ["phil100", "hist250", "econ101", "math135"], // last matches neither
+      half,
+    );
     const humReq = reqs.find((r) => r.title === "Humanities");
-    expect(humReq?.placed).toBe(2); // phil100 + hist250
+    expect(humReq?.placedUnits).toBe(1.0); // phil100 + hist250, 0.5 each
     expect([...(humReq?.satisfiers ?? [])].sort()).toEqual([
       "hist250",
       "phil100",
     ]);
     const socReq = reqs.find((r) => r.title === "Social Sciences");
-    expect(socReq?.placed).toBe(1); // econ101
-    expect(socReq?.need).toBe(4);
+    expect(socReq?.placedUnits).toBe(0.5); // econ101
+    expect(socReq?.needUnits).toBe(2.0);
+  });
+
+  it("credits a 1.0-unit course as a full unit", () => {
+    const reqs = deriveBreadthRequirements(prog([hum]), ["clas201"], (code) =>
+      code === "clas201" ? 1.0 : 0.5,
+    );
+    expect(reqs[0].placedUnits).toBe(1.0); // satisfies the 1.0-unit floor alone
   });
 
   it("reads constraints from both unitPlan and degreeRequirements", () => {
-    const reqs = deriveBreadthRequirements(prog([hum], [social]), []);
+    const reqs = deriveBreadthRequirements(prog([hum], [social]), [], half);
     expect(reqs.map((r) => r.title).sort()).toEqual([
       "Humanities",
       "Social Sciences",
@@ -96,7 +104,7 @@ describe("deriveBreadthRequirements", () => {
   });
 
   it("omits non-breadth constraints", () => {
-    const reqs = deriveBreadthRequirements(prog([hum, levelOnly]), []);
+    const reqs = deriveBreadthRequirements(prog([hum, levelOnly]), [], half);
     expect(reqs).toHaveLength(1);
     expect(reqs[0].title).toBe("Humanities");
   });
