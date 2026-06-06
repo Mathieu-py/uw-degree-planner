@@ -1,6 +1,6 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-06-05T10:47:03.269Z",
+  "fetchedAt": "2026-06-06T09:25:46.744Z",
   "courseCount": 10729,
   "courses": [
     {
@@ -15682,10 +15682,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5969055374592834,
-        "useful": 0.844551282051282,
-        "liked": 0.7267080745341615,
-        "filled_count": 483
+        "easy": 0.5965909090909091,
+        "useful": 0.8426517571884984,
+        "liked": 0.7252066115702479,
+        "filled_count": 484
       },
       "sections": [
         {
@@ -28161,10 +28161,10 @@
       "coreqs": "CHEM123.",
       "antireqs": "CHEM125L",
       "rating": {
-        "easy": 0.6720647773279352,
-        "useful": 0.7591836734693878,
-        "liked": 0.6413793103448275,
-        "filled_count": 435
+        "easy": 0.6713709677419355,
+        "useful": 0.758130081300813,
+        "liked": 0.6399082568807339,
+        "filled_count": 436
       },
       "sections": [
         {
