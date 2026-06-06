@@ -1,4 +1,5 @@
 import type { Program, UnitConstraint } from "@/lib/programs";
+import { programConstraints } from "./constraints";
 
 /**
  * Faculty breadth / distribution requirements arrive as verbatim notes
@@ -69,14 +70,6 @@ export function parseBreadthConstraint(
       ? head
       : c.label.replace(/^breadth\s*[—–-]\s*/i, "").trim() || c.label;
   return { title, subjects, needUnits, sourceText: src };
-}
-
-/** Every breadth/distribution constraint a program carries (both sources). */
-function programConstraints(program: Program): UnitConstraint[] {
-  return [
-    ...(program.unitPlan?.constraints ?? []),
-    ...(program.degreeRequirements?.constraints ?? []),
-  ];
 }
 
 /**

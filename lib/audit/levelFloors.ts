@@ -1,5 +1,6 @@
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import type { Program, UnitConstraint } from "@/lib/programs";
+import { programConstraints } from "./constraints";
 
 /**
  * Faculty "level-floor" requirements: a minimum number of UNITS that must sit
@@ -100,13 +101,6 @@ function matches(
   if (f.minLevel != null && lvl < f.minLevel) return false;
   if (f.maxLevel != null && lvl > f.maxLevel) return false;
   return true;
-}
-
-function programConstraints(program: Program): UnitConstraint[] {
-  return [
-    ...(program.unitPlan?.constraints ?? []),
-    ...(program.degreeRequirements?.constraints ?? []),
-  ];
 }
 
 /** Whether a constraint is a level floor (so callers can avoid double-display). */

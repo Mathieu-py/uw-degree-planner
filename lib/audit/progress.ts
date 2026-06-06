@@ -1,5 +1,5 @@
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
-import type { Program, RuleNode } from "@/lib/programs";
+import { type Program, type RuleNode, walkRule } from "@/lib/programs";
 import { type BreadthRequirement, deriveBreadthRequirements } from "./breadth";
 import { deriveCommunicationRequirement } from "./communication";
 import {
@@ -61,16 +61,9 @@ interface Bucket {
 
 /** Every course code appearing in `courses` leaves under a node (pick pools). */
 function leafCodes(node: RuleNode, out: string[]): void {
-  switch (node.kind) {
-    case "courses":
-      out.push(...node.courses);
-      break;
-    case "all":
-    case "pick":
-      for (const c of node.children) leafCodes(c, out);
-      break;
-    // subjectPool / excluded contribute no concrete option codes here.
-  }
+  walkRule(node, (n) => {
+    if (n.kind === "courses") out.push(...n.courses);
+  });
 }
 
 /** Every `subjectPool` leaf under a node (a pick's options can be subject pools). */
@@ -78,15 +71,9 @@ function leafPools(
   node: RuleNode,
   out: Extract<RuleNode, { kind: "subjectPool" }>[],
 ): void {
-  switch (node.kind) {
-    case "subjectPool":
-      out.push(node);
-      break;
-    case "all":
-    case "pick":
-      for (const c of node.children) leafPools(c, out);
-      break;
-  }
+  walkRule(node, (n) => {
+    if (n.kind === "subjectPool") out.push(n);
+  });
 }
 
 /** Does a placed code satisfy a subjectPool's prefix + level filters? */
