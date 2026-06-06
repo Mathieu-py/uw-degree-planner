@@ -1389,3 +1389,95 @@ body {
 .av-opt-toggle:hover {
   text-decoration: underline;
 }
+
+/* Macro sections — the three top-level collapsible groups in the audit panel. */
+.av-macro {
+  border-bottom: 1px solid var(--line);
+}
+.av-macro:last-child {
+  border-bottom: none;
+}
+.av-macro-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  cursor: pointer;
+  padding: 11px 10px;
+}
+.av-macro-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.av-macro-count {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.av-macro-chev {
+  flex: none;
+  color: var(--ink-3);
+}
+.av-macro-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 6px 10px;
+}
+.av-macro-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.av-macro-hint {
+  margin-top: 2px;
+}
+/* A quiet sub-stratum heading inside a macro (Term 1A, "Specialization", a
+   named rule sub-group) — a lighter sibling of .av-grouphead. */
+.av-substrata {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 6px 4px 2px;
+}
+/* Collapsible variant — the sub-label becomes a clickable summary row. */
+.av-substrata-sum {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 5px 4px;
+}
+.av-substrata-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-strata-ring .av-ring-num {
+  font-size: 9px;
+  color: var(--ink-2);
+}
+.av-substrata-chev {
+  flex: none;
+  color: var(--ink-3);
+}
+.av-substrata-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+
+

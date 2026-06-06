@@ -138,17 +138,43 @@ type Section =
       caption: string;
     };
 
-type NodeSection = Extract<Section, { kind: "node" }>;
+/** One of the top-level collapsible macro-sections. */
+type MacroKey = "degree" | "specialization" | "electives" | "other";
 
-interface SectionGroup {
-  heading: string | null;
-  sections: Section[];
+/**
+ * A stratum within a macro: an optional light sub-heading over either a
+ * flattened rule-tree node (rendered as direct rows) or a list of existing
+ * Section objects (breadth, level floors, electives, info) rendered as rows.
+ */
+interface MacroBlock {
+  subLabel: string | null;
+  content:
+    | { kind: "node"; node: AuditNode }
+    | { kind: "sections"; sections: Section[] };
+}
+
+interface Macro {
+  key: MacroKey;
+  label: string;
+  /** Course-count progress for the header chip; null for informational macros. */
+  count: { satisfied: number; needed: number } | null;
+  /** "+N to plan" hint for elective volume the count can't measure. */
+  hint: string | null;
+  blocks: MacroBlock[];
+  defaultOpen: boolean;
 }
 
 /** Units as a compact string: trims trailing zeros (20.0→"20", 13.5→"13.5"). */
 function fmtUnits(n: number): string {
   return String(Math.round(n * 100) / 100);
 }
+
+/**
+ * The generic `all` description (`describeRule`'s fallback). It carries no
+ * information, so it's never shown as a sub-label — flattening a section reads
+ * the requirements directly instead of under a "Complete all of the following".
+ */
+const GENERIC_ALL = "Complete all of the following";
 
 export const AuditPanel = memo(function AuditPanel({
   plan,
@@ -203,9 +229,9 @@ export const AuditPanel = memo(function AuditPanel({
     [catalogByCode],
   );
 
-  const { groups, unverifiedCount } = useMemo(
+  const { macros, unverifiedCount } = useMemo(
     () =>
-      deriveSections(
+      deriveMacros(
         audit,
         program,
         progress.freeUnits,
@@ -246,11 +272,6 @@ export const AuditPanel = memo(function AuditPanel({
   const headlinePct = progress.pct;
   const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${fmtUnits(progress.denom)} units`;
 
-  // Default-open only the first incomplete section, to avoid a wall of open rows.
-  const firstOpenKey = groups
-    .flatMap((g) => g.sections)
-    .find((s) => isIncomplete(s))?.key;
-
   const placedCodes = new Set(audit.placement.keys());
 
   return (
@@ -290,24 +311,16 @@ export const AuditPanel = memo(function AuditPanel({
           <AveragesRow averages={averages} />
         </div>
         <div className="pw-audit-list lg:flex-1 lg:min-h-0 [scrollbar-width:thin]">
-          {groups.map((group, gi) => (
-            <div key={group.heading ?? `group-${gi}`}>
-              {group.heading ? (
-                <div className="av-grouphead">{group.heading}</div>
-              ) : null}
-              {group.sections.map((section) => (
-                <SectionRow
-                  key={section.key}
-                  section={section}
-                  open={section.key === firstOpenKey}
-                  placedCodes={placedCodes}
-                  catalog={catalog}
-                  catalogByCode={catalogByCode}
-                  onDrill={onDrillToRequirement}
-                  drag={drag}
-                />
-              ))}
-            </div>
+          {macros.map((macro) => (
+            <MacroSection
+              key={macro.key}
+              macro={macro}
+              placedCodes={placedCodes}
+              catalog={catalog}
+              catalogByCode={catalogByCode}
+              onDrill={onDrillToRequirement}
+              drag={drag}
+            />
           ))}
         </div>
       </div>
@@ -349,6 +362,143 @@ function isIncomplete(section: Section): boolean {
   if (section.kind === "levelFloor")
     return section.placedUnits < section.needUnits - 1e-9;
   return false;
+}
+
+/**
+ * Satisfied/needed for a node, EXCLUDING illegally-placed satisfiers — a course
+ * placed before its prereqs (or in an antireq conflict) doesn't credit here, the
+ * same way the header bar never credits it. Keeps every ring/count consistent
+ * with the headline. (Legality is only populated when a catalog is present; the
+ * read-only view has none, so this is a no-op there.)
+ */
+function nodeProgress(node: AuditNode): { needed: number; satisfied: number } {
+  const s = summarize(node);
+  const illegal = node.illegalSatisfiers?.length ?? 0;
+  return { needed: s.needed, satisfied: Math.max(0, s.satisfied - illegal) };
+}
+
+/** Progress ring for a sub-labeled node block (a term, spec, named sub-group). */
+function ringFor(node: AuditNode): {
+  pct: number;
+  num: number;
+  optional: boolean;
+} {
+  const { needed, satisfied } = nodeProgress(node);
+  const optional = needed === 0;
+  return {
+    pct: optional ? 0 : Math.min(Math.round((satisfied / needed) * 100), 100),
+    num: satisfied,
+    optional,
+  };
+}
+
+/* -------------------------------- macros -------------------------------- */
+
+/**
+ * One of the three top-level collapsible macro-sections (Degree requirements /
+ * Electives / Co-op & other). A `node` block renders the rule tree flat via
+ * `NodeBody`; a `sections` block renders the existing Section rows inline.
+ */
+function MacroSection({
+  macro,
+  placedCodes,
+  catalog,
+  catalogByCode,
+  onDrill,
+  drag,
+}: { macro: Macro } & OptionRenderProps) {
+  return (
+    <details className="av-macro group/macro" open={macro.defaultOpen}>
+      <summary className="av-macro-head list-none select-none [&::-webkit-details-marker]:hidden">
+        <span className="av-macro-label">{macro.label}</span>
+        {macro.count ? (
+          <span className="av-macro-count u-mono">
+            {macro.count.satisfied} / {macro.count.needed}
+          </span>
+        ) : null}
+        <span className="av-macro-chev inline-flex transition-transform group-open/macro:rotate-90">
+          <Icon name="chevronRight" size="xs" aria-hidden="true" />
+        </span>
+      </summary>
+      <div className="av-macro-body">
+        {macro.blocks.map((block, i) => {
+          const body =
+            block.content.kind === "node" ? (
+              <NodeBody
+                node={block.content.node}
+                placedCodes={placedCodes}
+                catalog={catalog}
+                catalogByCode={catalogByCode}
+                onDrill={onDrill}
+                drag={drag}
+              />
+            ) : (
+              block.content.sections.map((s) => (
+                <SectionRow
+                  key={s.key}
+                  section={s}
+                  open={isIncomplete(s)}
+                  placedCodes={placedCodes}
+                  catalog={catalog}
+                  catalogByCode={catalogByCode}
+                  onDrill={onDrill}
+                  drag={drag}
+                />
+              ))
+            );
+          // A sub-labeled block (a term, "Specialization", "Degree minimums", a
+          // named rule sub-group) is independently collapsible, so long lists —
+          // e.g. an engineering program's eight terms — can be folded away. A
+          // node block also carries a small progress ring (completion at a glance).
+          if (block.subLabel) {
+            const ring =
+              block.content.kind === "node"
+                ? ringFor(block.content.node)
+                : null;
+            return (
+              <details
+                // biome-ignore lint/suspicious/noArrayIndexKey: blocks are derived deterministically
+                key={i}
+                className="group/strata"
+                open
+              >
+                <summary className="av-substrata av-substrata-sum list-none select-none [&::-webkit-details-marker]:hidden">
+                  {ring ? (
+                    <span className="av-ring-wrap av-strata-ring">
+                      <Ring
+                        pct={ring.pct}
+                        size={24}
+                        stroke={3}
+                        tone={ring.optional ? "neutral" : undefined}
+                      />
+                      <span className="av-ring-num">{ring.num}</span>
+                    </span>
+                  ) : null}
+                  <span className="av-substrata-text">{block.subLabel}</span>
+                  <span className="av-substrata-chev inline-flex transition-transform group-open/strata:rotate-90">
+                    <Icon name="chevronRight" size="xs" aria-hidden="true" />
+                  </span>
+                </summary>
+                <div className="av-substrata-body">{body}</div>
+              </details>
+            );
+          }
+          return (
+            <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: blocks are derived deterministically
+              key={i}
+              className="av-macro-block"
+            >
+              {body}
+            </div>
+          );
+        })}
+        {macro.hint ? (
+          <p className="av-hint av-macro-hint">{macro.hint}</p>
+        ) : null}
+      </div>
+    </details>
+  );
 }
 
 /* ------------------------------- sections ------------------------------- */
@@ -486,6 +636,8 @@ function SectionRow({
   if (section.kind === "levelFloor") {
     // A unit-based minimum ("X units at the 200-level or above"). Ring fills on
     // units; the number shows how many placed courses currently contribute.
+    // Static row — the expandable body only restated the requirement (no
+    // courses to drag), so there's nothing useful behind a dropdown.
     const pct =
       section.needUnits > 0
         ? Math.min(
@@ -494,14 +646,18 @@ function SectionRow({
           )
         : 100;
     return (
-      <SectionShell
-        title={section.title}
-        caption={section.caption}
-        ring={{ pct, num: section.satisfiers.length }}
-        open={open}
-      >
-        <LevelFloorBody section={section} catalog={catalog} onDrill={onDrill} />
-      </SectionShell>
+      <div className="av-row">
+        <div className="av-row-head">
+          <span className="av-ring-wrap">
+            <Ring pct={pct} />
+            <span className="av-ring-num">{section.satisfiers.length}</span>
+          </span>
+          <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
+            <span className="av-sec-label">{section.title}</span>
+            <span className="u-small truncate">{section.caption}</span>
+          </span>
+        </div>
+      </div>
     );
   }
 
@@ -731,7 +887,7 @@ function NodeBody({
     // so the parent never adds one (which would double up on mixed picks).
     return (
       <div className="flex flex-col gap-1.5">
-        {depth > 0 && node.description ? (
+        {depth > 0 && node.description && node.description !== GENERIC_ALL ? (
           <span className="u-small mt-1">{node.description}</span>
         ) : null}
         {node.children.map((child, i) => (
@@ -1302,49 +1458,6 @@ function BreadthBody({
   );
 }
 
-/**
- * A faculty level-floor ("X units at the 200-level or above"). Measured in
- * units over an open filter, so — like breadth — there's no fixed list to drag:
- * it shows the verbatim requirement, any subject scope, and the placed courses
- * currently contributing. The ring + caption carry the live unit progress.
- */
-function LevelFloorBody({
-  section,
-}: {
-  section: Extract<Section, { kind: "levelFloor" }>;
-  catalog?: Course[];
-  onDrill?: (codes: string[]) => void;
-}) {
-  return (
-    <div className="av-pool">
-      {section.subjects.length > 0 ? (
-        <div className="av-pool-subj">
-          {section.subjects.map((s) => (
-            <span key={s} className="av-subj">
-              {s}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      <p className="av-hint">{section.sourceText}</p>
-      {section.satisfiers.length > 0 ? (
-        <div className="av-chips mt-1.5">
-          {section.satisfiers.map((code) => (
-            <span
-              key={code}
-              className="av-chip met"
-              title={formatCourseCode(code)}
-            >
-              <Icon name="check" size="xs" aria-hidden="true" />
-              {formatCourseCode(code)}
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 /* ------------------------------ primitives ------------------------------ */
 
 /** SVG donut progress ring. Geometry per the design handoff. */
@@ -1440,7 +1553,52 @@ function Grip({ s = 12 }: { s?: number }) {
  * finite electives); open/unit electives have no honest count and are surfaced
  * in the header caption instead.
  */
-function deriveSections(
+/**
+ * Flatten a rule-tree root into renderable blocks. The generic "Complete all of
+ * the following" wrapper carries no information, so flatten *through* it (render
+ * the whole root as one flat node body); only a meaningfully NAMED sub-group
+ * ("Core Courses", "Design Project") is kept as a light sub-label.
+ */
+function flattenRuleRoot(root: AuditNode): MacroBlock[] {
+  if (root.ruleNode.kind === "all" && root.children.length > 0) {
+    const everyChildGeneric = root.children.every(
+      (c) =>
+        c.ruleNode.kind !== "all" ||
+        c.description == null ||
+        c.description === GENERIC_ALL,
+    );
+    if (everyChildGeneric)
+      return [{ subLabel: null, content: { kind: "node", node: root } }];
+    return root.children.map((c) => ({
+      subLabel:
+        c.ruleNode.kind === "all" &&
+        c.description != null &&
+        c.description !== GENERIC_ALL
+          ? c.description
+          : null,
+      content: { kind: "node", node: c },
+    }));
+  }
+  return [{ subLabel: null, content: { kind: "node", node: root } }];
+}
+
+/**
+ * Translate the compiled `AuditRoot` (+ the program's elective/degree notes)
+ * into the three top-level macro-sections the panel renders:
+ *
+ *  - Degree requirements — every required core course/choice, flattened out of
+ *    the rule tree (engineering: per term; flexible: the rule tree), plus
+ *    specialization, communication, and level-floor minimums.
+ *  - Electives — `program.electives[]`, faculty breadth/distribution, and the
+ *    free-elective volume note.
+ *  - Co-op & other — co-op/PD and other informational notes, non-breadth
+ *    constraints, and requirements the scraper couldn't structure.
+ *
+ * The header chip per macro is a course-ish count; the whole-degree unit
+ * headline above is computed separately (see computeDegreeProgress) and is not
+ * derived here.
+ */
+function deriveMacros(
   audit: AuditRoot,
   program: Program | null,
   /** Free-elective units from the unified headline model. */
@@ -1451,104 +1609,67 @@ function deriveSections(
   levelFloors: LevelFloor[],
   /** Units of a placed course (catalog-backed; default 0.5). */
   unitsOf: (code: string) => number,
-): {
-  groups: SectionGroup[];
-  totals: { needed: number; satisfied: number };
-  /** Count-less elective requirements (open/unit lists) that the % can't cover. */
-  untrackedCount: number;
-  /** Verbatim requirements the scraper couldn't structure (owed, unverifiable). */
-  unverifiedCount: number;
-  headerCaption: string | null;
-} {
-  const groups: SectionGroup[] = [];
-  let totalNeeded = 0;
-  let totalSatisfied = 0;
-  let untrackedCount = 0;
-  const addToTotals = (needed: number, satisfied: number) => {
-    totalNeeded += needed;
-    totalSatisfied += satisfied;
-  };
-
+): { macros: Macro[]; unverifiedCount: number } {
   const placedCodes = new Set(audit.placement.keys());
 
-  // Program requirements -------------------------------------------------
+  // ---- Degree requirements: required core, flattened ----
+  const degreeBlocks: MacroBlock[] = [];
+  let degNeeded = 0;
+  let degSatisfied = 0;
+
   if (audit.byTerm) {
-    const termSections: Section[] = [];
+    // Engineering: keep the per-term breakdown (term order is meaningful) as a
+    // light sub-label over each term's flattened requirement rows.
     for (const t of TERM_LETTERS) {
       const node = audit.byTerm[t];
       if (!node) continue;
-      const summary = summarize(node);
+      const summary = nodeProgress(node);
       if (summary.needed === 0) continue;
-      addToTotals(summary.needed, summary.satisfied);
-      termSections.push({
-        kind: "node",
-        key: `term-${t}`,
-        title: `Term ${t}`,
-        caption: nodeCaption(node, summary),
-        node,
-        summary,
+      degNeeded += summary.needed;
+      degSatisfied += summary.satisfied;
+      degreeBlocks.push({
+        subLabel: `Term ${t}`,
+        content: { kind: "node", node },
       });
     }
-    if (termSections.length > 0)
-      groups.push({ heading: "Academic terms", sections: termSections });
   }
-
   if (audit.flexibleRoot) {
-    const sections = explodeRoot(audit.flexibleRoot, "Program requirements");
-    for (const s of sections)
-      addToTotals(s.summary.needed, s.summary.satisfied);
-    if (sections.length > 0) groups.push({ heading: null, sections });
-  }
-
-  // Electives ------------------------------------------------------------
-  if (program) {
-    const electiveSections = deriveElectiveSections(program).map((e, i) =>
-      toElectiveSection(e, i, placedCodes, unitsOf),
-    );
-    for (const s of electiveSections) {
-      if (s.kind === "electiveFinite")
-        addToTotals(s.need, Math.min(s.placed, s.need));
-      // Browse electives (open reference lists / unit-based) carry no honest
-      // count, so they stay out of the % and are flagged as still-to-plan.
-      else untrackedCount += 1;
+    for (const block of flattenRuleRoot(audit.flexibleRoot)) {
+      if (block.content.kind === "node") {
+        const s = nodeProgress(block.content.node);
+        degNeeded += s.needed;
+        degSatisfied += s.satisfied;
+      }
+      degreeBlocks.push(block);
     }
-    if (electiveSections.length > 0)
-      groups.push({ heading: "Electives", sections: electiveSections });
   }
-
-  // Specialization -------------------------------------------------------
+  // Specialization is its own top-level macro (built into specBlocks), not part
+  // of the Degree-requirements count.
+  const specBlocks: MacroBlock[] = [];
+  let specNeeded = 0;
+  let specSatisfied = 0;
   if (audit.specializationRoot) {
-    const sections = explodeRoot(audit.specializationRoot, "Specialization");
-    for (const s of sections)
-      addToTotals(s.summary.needed, s.summary.satisfied);
-    if (sections.length > 0)
-      groups.push({ heading: "Specialization", sections });
+    for (const block of flattenRuleRoot(audit.specializationRoot)) {
+      if (block.content.kind === "node") {
+        const s = nodeProgress(block.content.node);
+        specNeeded += s.needed;
+        specSatisfied += s.satisfied;
+      }
+      specBlocks.push(block);
+    }
   }
 
-  // Degree-level requirements — faculty breadth, communication, and any
-  // level/subject minimums + informational notes.
-  //
-  // Breadth ("1.0 unit of Humanities: CLAS, ENGL…") converts losslessly to a
-  // course count ("complete 2 courses from {CLAS, ENGL, …}") and is TRACKED as
-  // an independent subject filter that counts toward the headline — so a
-  // breadth-light plan can't read 100%. This is safe where the old unit engine
-  // wasn't: there's no allocation and no reconciliation against a unit total, so
-  // it can't reproduce the count-vs-units contradiction. Any constraint that
-  // isn't subject-list breadth (a level-only minimum) stays a verbatim note.
+  // Communication + level-floor minimums — degree-level course/unit minimums,
+  // grouped under a quiet "Degree minimums" sub-label. Each met requirement
+  // contributes 1/1 to the macro count (units don't map cleanly to a course
+  // count, so floors/breadth are scored as a met boolean here).
   if (program) {
-    const sections: Section[] = [];
-    for (const [i, b] of breadthRequirements.entries()) {
-      sections.push(breadthSection(b, i));
-    }
-
-    const deg = program.degreeRequirements;
-    // Communication requirement — a pick-one named course (e.g. ARTS160 or
-    // ARTS160E). Render it as a tracked, draggable requirement that counts
-    // toward the headline. Skip it when the rules already name the course (it
-    // shows up in a term/rules row, and the headline counts it there).
+    const minima: Section[] = [];
     const comm = deriveCommunicationRequirement(program, placedCodes);
     if (comm && !comm.alreadyInTree) {
-      sections.push({
+      degNeeded += comm.need;
+      degSatisfied += Math.min(comm.placed, comm.need);
+      minima.push({
         kind: "electiveFinite",
         key: "deg-comm",
         title: comm.title,
@@ -1558,13 +1679,13 @@ function deriveSections(
         options: comm.options,
       });
     }
-    // Level floors ("X units at the 200-level or above") — tracked + gated, in
-    // units (an overlapping filter, so not in the denominator). Rendered with a
-    // live progress ring like breadth, not a verbatim note.
     levelFloors.forEach((f, i) => {
       const done = Math.min(f.placedUnits, f.need);
+      const met = f.placedUnits >= f.need - 1e-9;
+      degNeeded += 1;
+      degSatisfied += met ? 1 : 0;
       const subjects = (f.subjects ?? []).map((s) => s.toUpperCase());
-      sections.push({
+      minima.push({
         kind: "levelFloor",
         key: `floor-${i}`,
         title: f.title,
@@ -1576,12 +1697,66 @@ function deriveSections(
         sourceText: f.sourceText,
       });
     });
-    // Remaining constraints that aren't subject breadth OR a level floor stay
-    // as verbatim notes.
+    if (minima.length > 0)
+      degreeBlocks.push({
+        subLabel: "Degree minimums",
+        content: { kind: "sections", sections: minima },
+      });
+  }
+
+  // ---- Electives: program electives + faculty breadth + free-elective volume.
+  // These fold into the Degree-requirements macro under an "Electives" sub-label
+  // (electives ARE degree requirements). Browse / unit-based electives carry no
+  // honest count → surfaced as a "+N to plan" hint on the macro.
+  const electiveSections: Section[] = [];
+  let elecNeeded = 0;
+  let elecSatisfied = 0;
+  let untrackedCount = 0;
+  if (program) {
+    deriveElectiveSections(program)
+      .map((e, i) => toElectiveSection(e, i, placedCodes, unitsOf))
+      .forEach((s) => {
+        if (s.kind === "electiveFinite") {
+          elecNeeded += s.need;
+          elecSatisfied += Math.min(s.placed, s.need);
+        } else if (s.kind === "breadth") {
+          elecNeeded += 1;
+          elecSatisfied += s.placedUnits >= s.needUnits - 1e-9 ? 1 : 0;
+        } else {
+          untrackedCount += 1;
+        }
+        electiveSections.push(s);
+      });
+    breadthRequirements.forEach((b, i) => {
+      elecNeeded += 1;
+      elecSatisfied += b.placedUnits >= b.needUnits - 1e-9 ? 1 : 0;
+      electiveSections.push(breadthSection(b, i));
+    });
+    // Free electives — the degree's open volume AFTER the named requirements
+    // above. The units live on this row (they describe only the free remainder),
+    // never on the macro heading: a program with big named electives (BME's
+    // "pick 7" technical electives) has a tiny free remainder, so a heading
+    // "≈ 0.5 units" would badly understate the section.
+    if (freeElectiveUnits > 0) {
+      const u = Math.round(freeElectiveUnits * 100) / 100;
+      electiveSections.push({
+        kind: "info",
+        key: "free-electives",
+        title: "Free electives",
+        caption: `≈ ${u} unit${u === 1 ? "" : "s"}, any subject — fills the degree beyond the named requirements above.`,
+      });
+    }
+  }
+
+  // ---- Co-op & other: co-op/PD and other informational notes, non-breadth
+  // constraints, and requirements the scraper couldn't structure. Purely
+  // informational (co-op/PD isn't modelled as trackable courses) → no count.
+  const otherSections: Section[] = [];
+  if (program) {
     nonBreadthConstraints(program)
       .filter((c) => !isLevelFloor(c))
       .forEach((c, i) => {
-        sections.push({
+        otherSections.push({
           kind: "info",
           key: `constraint-${i}`,
           title: c.label,
@@ -1593,91 +1768,86 @@ function deriveSections(
       });
     const items = [
       ...(program.informational ?? []),
-      ...(deg?.informational ?? []),
+      ...(program.degreeRequirements?.informational ?? []),
     ];
     items.forEach((it, i) => {
-      sections.push({
+      otherSections.push({
         kind: "info",
         key: `info-${i}`,
         title: it.label,
         caption: it.text,
       });
     });
-
-    // Free electives — the degree's remaining open units (degree total − all
-    // named requirements above). Placed FIRST in this group so the units
-    // reconcile on screen (named + free = degree total). These DO count toward
-    // the headline (any course fills them), so this is the actionable "still to
-    // plan" volume — see computeDegreeProgress. Shown only when positive.
-    if (freeElectiveUnits > 0) {
-      const u = Math.round(freeElectiveUnits * 100) / 100;
-      sections.unshift({
-        kind: "info",
-        key: "free-electives",
-        title: "Free electives",
-        caption: `≈ ${u} unit${u === 1 ? "" : "s"}, any subject — fills out the degree beyond the named requirements above.`,
-      });
-    }
-
-    if (sections.length > 0)
-      groups.push({ heading: "Degree requirements", sections });
   }
-
-  // Requirements the scraper couldn't structure into a rule (unscoped subject
-  // pools, unrecognized "Complete …" prose). They're real and owed but can't be
-  // progress-tracked, so they get their own group and keep the headline honest
-  // (it can't read 100% while these are outstanding — see headlinePct).
   const unverified = program?.unverifiedRequirements ?? [];
-  if (unverified.length > 0) {
-    groups.push({
-      heading: "Needs verification",
-      sections: unverified.map((text, i) => ({
-        kind: "info",
-        key: `unverified-${i}`,
-        title: "Couldn't auto-verify",
-        caption: text,
-      })),
+  unverified.forEach((text, i) => {
+    otherSections.push({
+      kind: "info",
+      key: `unverified-${i}`,
+      title: "Couldn't auto-verify",
+      caption: text,
     });
-  }
+  });
 
-  return {
-    groups,
-    totals: { needed: totalNeeded, satisfied: totalSatisfied },
-    untrackedCount,
-    unverifiedCount: unverified.length,
-    headerCaption: buildHeaderCaption(program, untrackedCount),
-  };
-}
+  const macros: Macro[] = [];
+  if (degreeBlocks.length > 0)
+    macros.push({
+      key: "degree",
+      label: "Degree requirements",
+      count:
+        degNeeded > 0 ? { satisfied: degSatisfied, needed: degNeeded } : null,
+      hint: null,
+      blocks: degreeBlocks,
+      defaultOpen: true,
+    });
+  if (specBlocks.length > 0)
+    macros.push({
+      key: "specialization",
+      label: "Specialization",
+      count:
+        specNeeded > 0
+          ? { satisfied: specSatisfied, needed: specNeeded }
+          : null,
+      hint: null,
+      blocks: specBlocks,
+      defaultOpen: true,
+    });
+  if (electiveSections.length > 0)
+    macros.push({
+      key: "electives",
+      label: "Electives",
+      count:
+        elecNeeded > 0
+          ? { satisfied: elecSatisfied, needed: elecNeeded }
+          : null,
+      hint:
+        untrackedCount > 0
+          ? `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan`
+          : null,
+      blocks: [
+        {
+          subLabel: null,
+          content: { kind: "sections", sections: electiveSections },
+        },
+      ],
+      defaultOpen: false,
+    });
+  if (otherSections.length > 0)
+    macros.push({
+      key: "other",
+      label: "Co-op & other",
+      count: null,
+      hint: null,
+      blocks: [
+        {
+          subLabel: null,
+          content: { kind: "sections", sections: otherSections },
+        },
+      ],
+      defaultOpen: false,
+    });
 
-function explodeRoot(root: AuditNode, fallbackTitle: string): NodeSection[] {
-  // Two sibling groups can share a description (e.g. "Complete 2 courses from
-  // the following choices"), so the key is index-based (unique) and repeated
-  // titles get a trailing count for the reader.
-  const seen = new Map<string, number>();
-  const toSection = (
-    node: AuditNode,
-    baseTitle: string,
-    idx: number,
-  ): NodeSection => {
-    const n = (seen.get(baseTitle) ?? 0) + 1;
-    seen.set(baseTitle, n);
-    const title = n > 1 ? `${baseTitle} (${n})` : baseTitle;
-    const summary = summarize(node);
-    return {
-      kind: "node",
-      key: `grp-${fallbackTitle}-${idx}`,
-      title,
-      caption: nodeCaption(node, summary),
-      node,
-      summary,
-    };
-  };
-  if (root.ruleNode.kind === "all" && root.children.length > 0) {
-    return root.children.map((child, i) =>
-      toSection(child, child.description ?? `${fallbackTitle} ${i + 1}`, i),
-    );
-  }
-  return [toSection(root, root.description ?? fallbackTitle, 0)];
+  return { macros, unverifiedCount: unverified.length };
 }
 
 function toElectiveSection(
@@ -1746,41 +1916,6 @@ function breadthSection(b: BreadthRequirement, index: number): Section {
     subjects: b.subjects,
     satisfiers: b.satisfiers,
   };
-}
-
-/** "{done} of {need} done · {hint}", where the hint counts required vs choice. */
-function nodeCaption(node: AuditNode, summary: SectionSummary): string {
-  let required = 0;
-  let choices = 0;
-  const walk = (n: AuditNode) => {
-    const r = n.ruleNode;
-    if (r.kind === "courses") required += r.courses.length;
-    else if (r.kind === "pick" || r.kind === "subjectPool") choices += 1;
-    else if (r.kind === "all") n.children.forEach(walk);
-  };
-  walk(node);
-  const hintParts: string[] = [];
-  if (required > 0) hintParts.push(`${required} required`);
-  if (choices > 0)
-    hintParts.push(`${choices} choice${choices === 1 ? "" : "s"}`);
-  const hint = hintParts.join(" · ") || "complete";
-  return summary.needed > 0
-    ? `${summary.satisfied} of ${summary.needed} done · ${hint}`
-    : hint;
-}
-
-function buildHeaderCaption(
-  program: Program | null,
-  untrackedCount: number,
-): string | null {
-  if (!program) return null;
-  // The honest, actionable line: how many elective requirements the headline %
-  // can't measure (open/browse lists). These are real requirements, not extras.
-  if (untrackedCount > 0)
-    return `+ ${untrackedCount} elective requirement${untrackedCount === 1 ? "" : "s"} to plan — not counted above.`;
-  if (program.kind === "engineering")
-    return `${TERM_LETTERS.length} academic terms`;
-  return null;
 }
 
 /** Catalog codes matching a subject pool's prefixes + level bounds. */

@@ -75,9 +75,9 @@ describe("AuditPanel", () => {
     expect(screen.queryByText(/pick a program/i)).not.toBeNull();
   });
 
-  it("renders per-term sections for an engineering program (not a Core Courses blob)", () => {
-    // The redesign replaces the synthetic "Core Courses" blob with one section
-    // per academic term, so term titles surface and "Core Courses" does not.
+  it("renders per-term requirements under the Degree requirements macro (not a Core Courses blob)", () => {
+    // Engineering requirements live under the "Degree requirements" macro with a
+    // per-term sub-label, so term titles surface and "Core Courses" does not.
     const engId = engineeringProgramId();
     expect(engId, "engineering program id not found").toBeDefined();
     if (!engId) return;
@@ -89,11 +89,7 @@ describe("AuditPanel", () => {
     expect(aside).not.toBeNull();
     if (!aside) return;
     expect(within(aside).queryByText(/degree audit/i)).not.toBeNull();
-    // "Academic terms" appears in both the group heading and the header
-    // caption ("8 academic terms · …"), so just assert it's present.
-    expect(
-      within(aside).queryAllByText(/academic terms/i).length,
-    ).toBeGreaterThan(0);
+    expect(within(aside).queryByText(/^Degree requirements$/i)).not.toBeNull();
     expect(within(aside).queryByText(/term 1a/i)).not.toBeNull();
     expect(within(aside).queryByText(/core courses/i)).toBeNull();
   });
@@ -288,9 +284,9 @@ describe("AuditPanel", () => {
       0,
     );
     // Tracked in units (multiple 1.0-unit breadths share this text).
-    expect(
-      within(aside).queryAllByText(/0 of 1 unit/i).length,
-    ).toBeGreaterThan(0);
+    expect(within(aside).queryAllByText(/0 of 1 unit/i).length).toBeGreaterThan(
+      0,
+    );
     // Eligible subjects surface as tags.
     expect(within(aside).queryAllByText(/^CLAS$/).length).toBeGreaterThan(0);
     expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
@@ -312,9 +308,9 @@ describe("AuditPanel", () => {
     expect(within(aside).queryAllByText(/PHIL\s*101/i).length).toBeGreaterThan(
       0,
     );
-    expect(
-      within(aside).queryAllByText(/1 of 1 unit/i).length,
-    ).toBeGreaterThan(0);
+    expect(within(aside).queryAllByText(/1 of 1 unit/i).length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("represents the degree's open volume as a 'Free electives' row", () => {
@@ -376,6 +372,57 @@ describe("AuditPanel", () => {
     const toggle = within(container).getByText(/show 2 other options/i);
     fireEvent.click(toggle);
     expect(container.querySelector(".av-opt-card")).not.toBeNull();
+  });
+
+  it("organizes the audit into Degree / Electives / Co-op macro-sections", () => {
+    if (!("data-science-bcs" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: "data-science-bcs" })}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+    const labels = [...container.querySelectorAll(".av-macro-label")].map((l) =>
+      l.textContent?.trim(),
+    );
+    expect(labels).toContain("Degree requirements");
+    expect(labels).toContain("Co-op & other");
+    // Electives is its own top-level macro.
+    expect(labels).toContain("Electives");
+  });
+
+  it("flattens the rule tree under Degree requirements (no 'Complete all of the following' wall)", () => {
+    if (!("data-science-bcs" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programId: "data-science-bcs" })}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+    const aside = container.querySelector("aside");
+    if (!aside) throw new Error("no aside");
+    // The generic wrapper title is gone; required courses render as direct rows.
+    expect(aside.textContent ?? "").not.toMatch(
+      /complete all of the following/i,
+    );
+    const codes = [...container.querySelectorAll(".av-item-code")].map((c) =>
+      c.textContent?.replace(/\s+/g, "").toUpperCase(),
+    );
+    expect(codes).toContain("CS341"); // a known core requirement
+  });
+
+  it("places the co-op requirement note under the 'Co-op & other' macro", () => {
+    if (!("data-science-bcs" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programId: "data-science-bcs" })} />,
+    );
+    const other = [...container.querySelectorAll(".av-macro")].find((m) =>
+      /co-op & other/i.test(
+        m.querySelector(".av-macro-label")?.textContent ?? "",
+      ),
+    );
+    expect(other, "expected a Co-op & other macro").toBeTruthy();
+    expect(other?.textContent ?? "").toMatch(/work term/i);
   });
 
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {
