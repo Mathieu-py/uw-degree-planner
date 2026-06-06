@@ -246,6 +246,7 @@ export const AuditPanel = memo(function AuditPanel({
         progress.breadthRequirements,
         progress.levelFloors,
         unitsOf,
+        legality,
       ),
     [
       audit,
@@ -254,6 +255,7 @@ export const AuditPanel = memo(function AuditPanel({
       progress.breadthRequirements,
       progress.levelFloors,
       unitsOf,
+      legality,
     ],
   );
 
@@ -1762,8 +1764,16 @@ function deriveMacros(
   levelFloors: LevelFloor[],
   /** Units of a placed course (catalog-backed; default 0.5). */
   unitsOf: (code: string) => number,
+  /** Slot-scoped illegality keys; illegal placements don't credit counts. */
+  legality: ReadonlySet<string>,
 ): { macros: Macro[]; unverifiedCount: number } {
-  const placedCodes = new Set(audit.placement.keys());
+  // Count completion the same way the headline does — illegally-placed courses
+  // (unmet prereq / antireq conflict) don't credit. (Degree-requirement rows use
+  // nodeProgress, which already drops illegal satisfiers; this keeps the elective
+  // and communication counts below consistent with both.)
+  const placedCodes = new Set<string>();
+  for (const [code, p] of audit.placement)
+    if (!legality.has(placementLegalityKey(p))) placedCodes.add(code);
 
   // ---- Degree requirements: required core, flattened ----
   const degreeBlocks: MacroBlock[] = [];

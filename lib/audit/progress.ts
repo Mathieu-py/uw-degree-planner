@@ -73,6 +73,22 @@ function leafCodes(node: RuleNode, out: string[]): void {
   }
 }
 
+/** Every `subjectPool` leaf under a node (a pick's options can be subject pools). */
+function leafPools(
+  node: RuleNode,
+  out: Extract<RuleNode, { kind: "subjectPool" }>[],
+): void {
+  switch (node.kind) {
+    case "subjectPool":
+      out.push(node);
+      break;
+    case "all":
+    case "pick":
+      for (const c of node.children) leafPools(c, out);
+      break;
+  }
+}
+
 /** Does a placed code satisfy a subjectPool's prefix + level filters? */
 function matchesPool(
   code: string,
@@ -105,12 +121,19 @@ function collect(
       for (const c of r.courses) required.add(c);
       break;
     case "pick": {
+      // A pick offers options; collapse them into one bucket of `selectMin`
+      // slots. Options are usually course leaves, but can also be subjectPools
+      // ("1 of: {3 SOC@400} or {SOC499A/B + 1 SOC@400}") — admit placed courses
+      // matching any descendant pool too, else those options count for nothing
+      // and the pick is wrongly unsatisfiable.
       const codes: string[] = [];
       leafCodes(r, codes);
-      buckets.push({
-        need: r.selectMin ?? 0,
-        eligible: codes.filter((c) => placed.has(c)),
-      });
+      const pools: Extract<RuleNode, { kind: "subjectPool" }>[] = [];
+      leafPools(r, pools);
+      const eligible = new Set(codes.filter((c) => placed.has(c)));
+      for (const c of placed)
+        if (pools.some((p) => matchesPool(c, p))) eligible.add(c);
+      buckets.push({ need: r.selectMin ?? 0, eligible: [...eligible] });
       break;
     }
     case "subjectPool":

@@ -131,6 +131,43 @@ describe("computeDegreeProgress — excluded courses", () => {
   });
 });
 
+describe("computeDegreeProgress — pick whose option is a subjectPool", () => {
+  // "Complete 1 of: {1 SOC course at the 400-level} or {…}" — the option is a
+  // subjectPool, not a course leaf. A placed in-scope course must satisfy it.
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy w/ pick-of-pool",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [
+            {
+              kind: "subjectPool",
+              selectCount: 1,
+              subjectCodes: ["SOC"],
+              minLevel: 400,
+            },
+          ],
+        },
+      ],
+    },
+    unitPlan: { totalUnits: 0.5 },
+  };
+
+  it("is satisfied by a course matching the pick's subjectPool option", () => {
+    expect(progressOf(program, []).pct).toBe(0);
+    const p = progressOf(program, ["soc450"]); // SOC, 400-level → matches the pool
+    expect(p.creditedUnits).toBe(0.5);
+    expect(p.pct).toBe(100);
+    expect(p.allComplete).toBe(true);
+  });
+});
+
 describe("computeDegreeProgress — overlapping elective pools (BME shape)", () => {
   // Three sub-lists whose union is exactly the aggregate "Technical Electives
   // List". Naive counting needs 1+1+3 = 5 courses; the real requirement is 3.

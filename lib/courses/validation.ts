@@ -33,8 +33,10 @@ export const CourseSchema = z.object({
   rating: RatingSchema,
   sections: z.array(SectionSchema),
   // Unit weight (credits), enriched from the Kuali course catalog at fetch time.
-  // Optional so older snapshots (and synthetic test courses) stay valid.
-  units: z.number().optional(),
+  // Optional so older snapshots (and synthetic test courses) stay valid. Bounded
+  // to the real UW range (0–3; the heaviest course is 3.0) so a bad value is
+  // rejected at parse rather than silently skewing unit math.
+  units: z.number().min(0).max(3).optional(),
 });
 
 const CoursesFileSchema = z.object({

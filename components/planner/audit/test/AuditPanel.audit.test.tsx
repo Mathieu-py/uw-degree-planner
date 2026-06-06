@@ -90,17 +90,20 @@ describe("AuditPanel cross-program mapping audit", () => {
     ["biomedical-engineering", "bme-biomaterials-and-tissues"],
   ] as const)("renders without duplicate React keys: %s %s", (programId, specId) => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    render(
-      <AuditPanel
-        plan={emptyPlan(programId, specId)}
-        onDrillToRequirement={() => {}}
-      />,
-    );
-    const dupKeyWarnings = spy.mock.calls.filter((args) =>
-      /same key/i.test(String(args[0])),
-    );
-    spy.mockRestore();
-    expect(dupKeyWarnings).toEqual([]);
+    try {
+      render(
+        <AuditPanel
+          plan={emptyPlan(programId, specId)}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      const dupKeyWarnings = spy.mock.calls.filter((args) =>
+        /same key/i.test(String(args[0])),
+      );
+      expect(dupKeyWarnings).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it.each(
