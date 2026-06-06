@@ -1,3 +1,4 @@
+import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import { truncate } from "@/lib/format";
 import type { ElectiveCategory, Program } from "@/lib/programs";
 
@@ -22,6 +23,12 @@ import type { ElectiveCategory, Program } from "@/lib/programs";
 /** "Complete 2 of the following: …" → a finite, draggable approved list. */
 const FINITE_RE = /^complete\s+(\d+)\s+of the following/i;
 
+// A connective clause that references sibling lists by position/number
+// ("Complete 3 additional courses from the above lists, …", "… from List 3")
+// rather than carrying its own course pool.
+const CROSS_LIST_CONNECTIVE_RE =
+  /from the above lists?|from List\s+\d|from the following lists/i;
+
 export interface FiniteElectiveSection {
   kind: "finite";
   title: string;
@@ -44,7 +51,84 @@ export interface BrowseElectiveSection {
   sourceText?: string;
 }
 
-export type ElectiveSection = FiniteElectiveSection | BrowseElectiveSection;
+/**
+ * A unit-based rule over a SUBJECT + LEVEL filter ("Complete 0.5 unit of BIOL,
+ * CHEM, HLTH, or KIN courses at the 200-level or above"). Unlike a plain browse,
+ * this IS trackable: any placed course whose prefix is in `subjects` and whose
+ * level fits the bounds counts, so it gets a real progress ring (like a rule-tree
+ * `subjectPool`). `need` is the course count (units ÷ 0.5).
+ */
+export interface SubjectPoolElectiveSection {
+  kind: "subjectPool";
+  title: string;
+  /** Lowercase subject prefixes, e.g. ["biol", "chem", "hlth", "kin"]. */
+  subjects: string[];
+  /** Inclusive level bounds (bucketed to the hundred), when stated. */
+  minLevel?: number;
+  maxLevel?: number;
+  /** Courses to complete = stated units ÷ 0.5. */
+  need: number;
+  /** Verbatim requirement statement, when the source provides one. */
+  sourceText?: string;
+}
+
+export type ElectiveSection =
+  | FiniteElectiveSection
+  | BrowseElectiveSection
+  | SubjectPoolElectiveSection;
+
+/** "… N units of <subjects> courses …" — a unit-based subject filter. */
+const SUBJECT_POOL_RE = /(\d+(?:\.\d+)?)\s*units?\s+of\s+([a-z][a-z,/&\s]*?)\s+courses?/i;
+/** "… at the 200-level or above / below" — an optional level bound. */
+const LEVEL_BOUND_RE = /(\d{3})-level\s+(?:or|and)\s+(above|higher|below|lower)/i;
+
+/**
+ * Parse a unit-based subject-pool rule into a trackable section, or null when
+ * the text isn't that shape. Reads `unitRequirement` for the count when present,
+ * else the units stated in the description.
+ */
+function parseSubjectPoolElective(
+  e: ElectiveCategory,
+): SubjectPoolElectiveSection | null {
+  const desc = e.description.trim();
+  const m = desc.match(SUBJECT_POOL_RE);
+  const units = e.unitRequirement ?? (m ? Number(m[1]) : null);
+  if (units == null || !m) return null;
+  const subjects = m[2]
+    .split(/[,/&]|\bor\b|\band\b|\s+/i)
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => /^[a-z]{2,6}$/.test(s));
+  if (subjects.length === 0) return null;
+
+  const lvl = desc.match(LEVEL_BOUND_RE);
+  const section: SubjectPoolElectiveSection = {
+    kind: "subjectPool",
+    title: `${units} unit${units === 1 ? "" : "s"} of ${subjects
+      .map((s) => s.toUpperCase())
+      .join("/")}${lvl ? ` (${lvl[1]}${/below|lower/i.test(lvl[2]) ? "-" : "+"})` : ""}`,
+    subjects,
+    need: Math.max(1, Math.round(units / 0.5)),
+    ...(e.sourceText ? { sourceText: e.sourceText } : {}),
+  };
+  if (lvl) {
+    const n = Number(lvl[1]);
+    if (/below|lower/i.test(lvl[2])) section.maxLevel = n;
+    else section.minLevel = n;
+  }
+  return section;
+}
+
+/** Whether a placed course satisfies a subject-pool section's subject + level. */
+export function subjectPoolEligible(
+  code: string,
+  s: SubjectPoolElectiveSection,
+): boolean {
+  if (!s.subjects.includes(coursePrefix(code))) return false;
+  const lvl = levelBucket(courseLevel(code));
+  if (s.minLevel != null && lvl < s.minLevel) return false;
+  if (s.maxLevel != null && lvl > s.maxLevel) return false;
+  return true;
+}
 
 /**
  * A clean section label. Many descriptions carry a giant embedded course list
@@ -79,6 +163,11 @@ export function classifyElective(e: ElectiveCategory): ElectiveSection {
       ...(e.sourceText ? { sourceText: e.sourceText } : {}),
     };
   }
+  // A unit-based subject+level filter ("0.5 unit of BIOL/CHEM/HLTH/KIN at
+  // 200+") is trackable even without a fixed list — any in-scope placed course
+  // counts. Prefer it over the plain browse fallback.
+  const pool = parseSubjectPoolElective(e);
+  if (pool) return pool;
   return {
     kind: "browse",
     title: electiveTitle(e),
@@ -120,6 +209,25 @@ export function consolidateElectives(
     // gaps) — otherwise it's a distinct list that merely overlaps, not a parent.
     if (union.size !== aggSet.size) continue;
     for (const p of parts) subsumed.add(p);
+  }
+  // When consolidation fired, also drop courseless "connective" orphans that
+  // reference the now-collapsed sub-lists by position/number — e.g. BME's
+  // "Complete 3 additional courses from the above lists, …no more than 2 from
+  // List 3." It has a `requiredCount` but no `approvedCourses`, so it escapes
+  // the `withList` subsumption above and would otherwise render as a dangling
+  // "Choose from this list" card pointing at lists that no longer appear. Its
+  // count is already part of the aggregate's total. Gated on `subsumed.size`:
+  // with no aggregate to absorb it, we leave it visible rather than silently
+  // hiding an otherwise-unrepresented requirement.
+  if (subsumed.size > 0) {
+    for (const e of cats) {
+      if (
+        !(e.approvedCourses && e.approvedCourses.length > 0) &&
+        CROSS_LIST_CONNECTIVE_RE.test(e.description)
+      ) {
+        subsumed.add(e);
+      }
+    }
   }
   return cats.filter((e) => !subsumed.has(e));
 }

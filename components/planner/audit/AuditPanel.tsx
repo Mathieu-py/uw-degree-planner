@@ -12,6 +12,7 @@ import {
   deriveBreadthRequirements,
   nonBreadthConstraints,
 } from "@/lib/audit/breadth";
+import { deriveCommunicationRequirement } from "@/lib/audit/communication";
 import {
   type AuditNode,
   type AuditRoot,
@@ -22,6 +23,7 @@ import {
 import {
   deriveElectiveSections,
   type ElectiveSection,
+  subjectPoolEligible as electivePoolEligible,
 } from "@/lib/audit/electives";
 import { computeDegreeProgress } from "@/lib/audit/progress";
 import { levelBucket } from "@/lib/courses/code";
@@ -1406,13 +1408,20 @@ function deriveSections(
     }
 
     const deg = program.degreeRequirements;
-    if (deg?.communication && deg.communication.options.length > 0) {
-      const met = deg.communication.options.some((c) => placedCodes.has(c));
+    // Communication requirement — a pick-one named course (e.g. ARTS160 or
+    // ARTS160E). Render it as a tracked, draggable requirement that counts
+    // toward the headline. Skip it when the rules already name the course (it
+    // shows up in a term/rules row, and the headline counts it there).
+    const comm = deriveCommunicationRequirement(program, placedCodes);
+    if (comm && !comm.alreadyInTree) {
       sections.push({
-        kind: "info",
+        kind: "electiveFinite",
         key: "deg-comm",
-        title: "Communication requirement",
-        caption: `${met ? "✓ " : ""}${deg.communication.options.map(formatCourseCode).join(" or ")}`,
+        title: comm.title,
+        caption: `${comm.placed} of ${comm.need} done · ${comm.options.map(formatCourseCode).join(" or ")}`,
+        need: comm.need,
+        placed: comm.placed,
+        options: comm.options,
       });
     }
     nonBreadthConstraints(program).forEach((c, i) => {
@@ -1530,6 +1539,21 @@ function toElectiveSection(
       need: e.need,
       placed,
       options: e.options,
+    };
+  }
+  if (e.kind === "subjectPool") {
+    // A trackable unit-based subject filter → render like breadth (ring + subject
+    // tags), counting any in-scope placed course.
+    const satisfiers = [...placedCodes].filter((c) => electivePoolEligible(c, e));
+    return {
+      kind: "breadth",
+      key: `elec-${index}`,
+      title: e.title,
+      caption: `${Math.min(satisfiers.length, e.need)} of ${e.need} course${e.need === 1 ? "" : "s"} · ${e.subjects.length} subjects`,
+      need: e.need,
+      placed: satisfiers.length,
+      subjects: e.subjects.map((s) => s.toUpperCase()),
+      satisfiers,
     };
   }
   return {

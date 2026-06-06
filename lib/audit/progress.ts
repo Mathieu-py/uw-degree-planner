@@ -1,8 +1,9 @@
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import type { Program, RuleNode } from "@/lib/programs";
 import { deriveBreadthRequirements } from "./breadth";
+import { deriveCommunicationRequirement } from "./communication";
 import type { AuditNode, AuditRoot } from "./compile";
-import { deriveElectiveSections } from "./electives";
+import { deriveElectiveSections, subjectPoolEligible } from "./electives";
 
 /**
  * The degree audit headline as a SINGLE progress bar in UNITS:
@@ -134,15 +135,31 @@ export function computeDegreeProgress(
   ];
   for (const root of roots) if (root) collect(root, placed, buckets, required);
 
-  // Finite electives (consolidated upstream so overlapping pools count once).
+  // Finite electives (consolidated upstream so overlapping pools count once) and
+  // unit-based subject pools ("0.5 unit of BIOL/CHEM/… at 200+").
   if (program) {
     for (const e of deriveElectiveSections(program)) {
-      if (e.kind !== "finite") continue;
-      buckets.push({
-        need: e.need,
-        eligible: e.options.filter((c) => placed.has(c)),
-      });
+      if (e.kind === "finite")
+        buckets.push({
+          need: e.need,
+          eligible: e.options.filter((c) => placed.has(c)),
+        });
+      else if (e.kind === "subjectPool")
+        buckets.push({
+          need: e.need,
+          eligible: placedList.filter((c) => subjectPoolEligible(c, e)),
+        });
     }
+
+    // Communication requirement — a pick-one named course. Skip when the rules
+    // already include the option (it's counted there; adding it would
+    // double-count its units).
+    const comm = deriveCommunicationRequirement(program, placedList);
+    if (comm && !comm.alreadyInTree)
+      buckets.push({
+        need: comm.need,
+        eligible: comm.options.filter((c) => placed.has(c)),
+      });
   }
 
   // Named requirements measured in UNITS — required courses owe their real

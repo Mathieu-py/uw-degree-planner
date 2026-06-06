@@ -144,6 +144,79 @@ describe("computeDegreeProgress — free electives", () => {
   });
 });
 
+describe("computeDegreeProgress — communication requirement", () => {
+  it("counts a not-in-tree communication requirement and gates 100%", () => {
+    const program: Program = {
+      kind: "flexible",
+      name: "Toy",
+      asOf: "2026",
+      rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+      degreeRequirements: {
+        name: "Arts",
+        communication: { options: ["c1", "c2"] },
+      },
+      unitPlan: { totalUnits: 1.0 }, // m1 (0.5) + comm (0.5), no free room
+    };
+    // Without the comm course, its bucket is unfilled → can't read 100%.
+    const partial = progressOf(program, ["m1"]);
+    expect(partial.creditedUnits).toBe(0.5);
+    expect(partial.pct).toBe(50);
+    expect(partial.allComplete).toBe(false);
+    // Placing one option satisfies it → 100%.
+    const full = progressOf(program, ["m1", "c2"]);
+    expect(full.creditedUnits).toBe(1.0);
+    expect(full.pct).toBe(100);
+    expect(full.allComplete).toBe(true);
+  });
+
+  it("does not double-count a communication option already in the rules", () => {
+    const program: Program = {
+      kind: "flexible",
+      name: "Toy",
+      asOf: "2026",
+      rules: { kind: "all", children: [{ kind: "courses", courses: ["c1"] }] },
+      degreeRequirements: {
+        name: "Science",
+        communication: { options: ["c1"] }, // same course the rules already require
+      },
+      unitPlan: { totalUnits: 0.5 },
+    };
+    const p = progressOf(program, ["c1"]);
+    expect(p.freeUnits).toBe(0); // named = 0.5, not 1.0
+    expect(p.creditedUnits).toBe(0.5);
+    expect(p.pct).toBe(100);
+  });
+});
+
+describe("computeDegreeProgress — unit-based subject pool", () => {
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+    electives: [
+      {
+        description:
+          "Complete a minimum of 0.5 unit of BIOL, CHEM, HLTH, or KIN courses at the 200-level or above",
+      },
+    ],
+    unitPlan: { totalUnits: 1.0 }, // m1 (0.5) + pool (0.5)
+  };
+
+  it("counts an in-scope course and gates 100%", () => {
+    expect(progressOf(program, ["m1"]).pct).toBe(50); // pool unfilled
+    const full = progressOf(program, ["m1", "biol250"]);
+    expect(full.pct).toBe(100);
+    expect(full.allComplete).toBe(true);
+  });
+
+  it("rejects an out-of-scope course (wrong level)", () => {
+    const p = progressOf(program, ["m1", "biol150"]); // 100-level
+    expect(p.pct).toBe(50);
+    expect(p.allComplete).toBe(false);
+  });
+});
+
 describe("computeDegreeProgress — Biomedical Engineering (real data)", () => {
   const bme = PROGRAMS["biomedical-engineering"];
 
