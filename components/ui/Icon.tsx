@@ -11,7 +11,9 @@ import Doc from "./icons/doc.svg";
 import Edit from "./icons/edit.svg";
 import External from "./icons/external.svg";
 import Gear from "./icons/gear.svg";
+import Google from "./icons/google.svg";
 import Grid from "./icons/grid.svg";
+import Grip from "./icons/grip.svg";
 import Import from "./icons/import.svg";
 import List from "./icons/list.svg";
 import Moon from "./icons/moon.svg";
@@ -42,7 +44,10 @@ const REGISTRY = {
   edit: Edit,
   external: External,
   gear: Gear,
+  // Fixed-color brand mark — keeps its own fills (doesn't follow currentColor).
+  google: Google,
   grid: Grid,
+  grip: Grip,
   import: Import,
   list: List,
   moon: Moon,

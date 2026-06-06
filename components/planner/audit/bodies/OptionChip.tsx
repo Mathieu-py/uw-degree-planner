@@ -1,4 +1,3 @@
-import { Grip } from "@/components/ui/Grip";
 import { Icon } from "@/components/ui/Icon";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
@@ -53,7 +52,7 @@ export function OptionChip({
       )}
     >
       <span className="av-grip">
-        <Grip s={11} />
+        <Icon name="grip" size="xs" aria-hidden="true" />
       </span>
       {label}
     </button>

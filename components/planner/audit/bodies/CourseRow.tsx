@@ -1,4 +1,3 @@
-import { Grip } from "@/components/ui/Grip";
 import { Icon } from "@/components/ui/Icon";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
@@ -79,7 +78,7 @@ export function CourseRow({
       )}
     >
       <span className="av-item-grip">
-        <Grip />
+        <Icon name="grip" size="xs" className="av-grip" aria-hidden="true" />
       </span>
       <span className="flex flex-col gap-px min-w-0 flex-1">
         <span className="u-mono av-item-code">{label}</span>
