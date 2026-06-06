@@ -200,33 +200,63 @@ export function computeDegreeProgress(
     });
   }
 
-  // Greedy unique assignment, most-constrained buckets first. Each placed course
-  // credits exactly one bucket (its real units) → overlapping pools can't
-  // double-count, and a course's full unit weight lands wherever it's credited.
-  // `namedUnits` reserves real units for FILLED slots and the per-slot estimate
-  // for unfilled ones — so a 1.0-unit pick costs the free-elective pool a full
-  // unit, not a flat 0.5 (no over-stated "free units").
-  const ordered = [...buckets].sort(
-    (a, b) => a.eligible.length - b.eligible.length,
+  // Optimal unique assignment via MAXIMUM BIPARTITE MATCHING. Each bucket
+  // contributes `need` interchangeable slots; each placed course can fill at
+  // most one slot of any bucket whose `eligible` list contains it. Maximising
+  // the matching means an overlapping set of pools that IS jointly satisfiable
+  // can never leave a requirement spuriously unfilled — the old
+  // most-constrained-first greedy could strand a course in the wrong bucket
+  // (e.g. give bucket "1 of {A,C}" the A that bucket "2 of {A,B}" needed). Each
+  // placed course still credits exactly one bucket (its real units), so
+  // overlapping pools can't double-count.
+  const slotBucket: number[] = [];
+  for (let bi = 0; bi < buckets.length; bi++)
+    for (let k = 0; k < buckets[bi].need; k++) slotBucket.push(bi);
+  const bucketEligible = buckets.map((b) => new Set(b.eligible));
+  const courseList = [...new Set(buckets.flatMap((b) => b.eligible))];
+  const slotsForCourse = new Map<string, number[]>(
+    courseList.map((code) => [
+      code,
+      slotBucket.flatMap((bi, s) => (bucketEligible[bi].has(code) ? [s] : [])),
+    ]),
   );
-  const used = new Set<string>();
-  let namedCreditedUnits = 0;
-  let namedUnits = 0;
-  let allBucketsFilled = true;
-  for (const bk of ordered) {
-    let filled = 0;
-    let filledUnits = 0;
-    for (const code of bk.eligible) {
-      if (filled >= bk.need) break;
-      if (used.has(code)) continue;
-      used.add(code);
-      filled++;
-      filledUnits += unitsOf(code);
+  const slotMatch: (string | null)[] = new Array(slotBucket.length).fill(null);
+  const augment = (code: string, seen: boolean[]): boolean => {
+    for (const s of slotsForCourse.get(code) ?? []) {
+      if (seen[s]) continue;
+      seen[s] = true;
+      const cur = slotMatch[s];
+      if (cur === null || augment(cur, seen)) {
+        slotMatch[s] = code;
+        return true;
+      }
     }
-    namedCreditedUnits += filledUnits;
-    namedUnits += filledUnits + (bk.need - filled) * (bk.estimateUnit ?? 0.5);
-    if (filled < bk.need) allBucketsFilled = false;
+    return false;
+  };
+  const used = new Set<string>();
+  for (const code of courseList)
+    if (augment(code, new Array(slotBucket.length).fill(false))) used.add(code);
+
+  // Roll the matching back up: real units of matched courses (FILLED slots) +
+  // the per-slot estimate for whatever stays unfilled — so a 1.0-unit pick costs
+  // the free-elective pool a full unit, not a flat 0.5.
+  const filledByBucket = new Array<number>(buckets.length).fill(0);
+  let namedCreditedUnits = 0;
+  for (let s = 0; s < slotBucket.length; s++) {
+    const code = slotMatch[s];
+    if (code === null) continue;
+    filledByBucket[slotBucket[s]] += 1;
+    namedCreditedUnits += unitsOf(code);
   }
+  let allBucketsFilled = true;
+  let unfilledEstimate = 0;
+  for (let bi = 0; bi < buckets.length; bi++) {
+    const bk = buckets[bi];
+    if (filledByBucket[bi] < bk.need) allBucketsFilled = false;
+    unfilledEstimate +=
+      (bk.need - filledByBucket[bi]) * (bk.estimateUnit ?? 0.5);
+  }
+  const namedUnits = namedCreditedUnits + unfilledEstimate;
 
   // The degree's total units IS the denominator (exact, authoritative) — no
   // course-count rounding. Free-elective units are simply the remainder, so

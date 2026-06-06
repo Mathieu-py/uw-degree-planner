@@ -248,7 +248,10 @@ describe("computeDegreeProgress — unit fidelity for pool/elective slots (T1.3)
     asOf: "2026",
     rules: { kind: "all", children: [] },
     electives: [
-      { description: "Complete 1 of the following: X", approvedCourses: ["big100"] },
+      {
+        description: "Complete 1 of the following: X",
+        approvedCourses: ["big100"],
+      },
     ],
     unitPlan: { totalUnits: 2.0 },
   };
@@ -316,5 +319,49 @@ describe("computeDegreeProgress — Biomedical Engineering (real data)", () => {
     expect(p.pct).toBeGreaterThanOrEqual(0);
     expect(p.pct).toBeLessThanOrEqual(100);
     expect(Number.isNaN(p.creditedUnits)).toBe(false);
+  });
+});
+
+describe("computeDegreeProgress — optimal overlapping-pool matching", () => {
+  // Two overlapping picks that ARE jointly satisfiable: "1 of {A,C}" declared
+  // first, then "2 of {A,B}", with A,B,C all placed. Optimal: A,B fill the
+  // 2-pick and C fills the 1-pick → both met. The old most-constrained-first
+  // greedy (stable order) gave the 1-pick the A that the 2-pick needed, leaving
+  // it unfilled and the headline stuck at 99%. Maximum matching can't strand it.
+  const program: Program = {
+    kind: "flexible",
+    name: "Overlap",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [{ kind: "courses", courses: ["aaa100", "ccc100"] }],
+        },
+        {
+          kind: "pick",
+          selectMin: 2,
+          selectMax: 2,
+          children: [{ kind: "courses", courses: ["aaa100", "bbb100"] }],
+        },
+      ],
+    },
+    unitPlan: { totalUnits: 1.5 }, // 3 slots × 0.5, no free room
+  };
+
+  it("fills both overlapping picks when jointly satisfiable", () => {
+    const p = progressOf(program, ["aaa100", "bbb100", "ccc100"]);
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
+    expect(p.creditedUnits).toBe(1.5);
+  });
+
+  it("still reports unmet when genuinely not satisfiable", () => {
+    // Only A,B placed: the 2-pick takes both, the 1-pick {A,C} has nothing left.
+    const p = progressOf(program, ["aaa100", "bbb100"]);
+    expect(p.allComplete).toBe(false);
   });
 });

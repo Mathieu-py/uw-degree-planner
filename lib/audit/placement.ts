@@ -1,3 +1,4 @@
+import { earnsCredit } from "@/lib/plan/grades";
 import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
 import type { TermId } from "@/lib/terms";
 
@@ -18,11 +19,17 @@ export type PlacementMap = ReadonlyMap<string, Placement>;
  * Build a course-code → placement lookup from a plan. If the same code
  * appears in multiple slots (which shouldn't happen in normal use but is
  * defensible), the FIRST occurrence in slot-iteration order wins.
+ *
+ * No-credit attempts (failed / withdrawn — see {@link earnsCredit}) are skipped:
+ * a failed course can't satisfy a requirement or credit the headline, so the
+ * audit must not see it as placed. A passed retake of the same code elsewhere in
+ * the plan is still picked up.
  */
 export function buildPlacementMap(plan: LocalPlan): PlacementMap {
   const map = new Map<string, Placement>();
   for (const slot of plan.slots) {
     for (const c of slot.courses) {
+      if (!earnsCredit(c.grade)) continue;
       if (map.has(c.code)) continue;
       map.set(c.code, {
         code: c.code,

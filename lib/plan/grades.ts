@@ -52,3 +52,28 @@ export function numericPercent(
   const v = parseGrade(grade);
   return v.kind === "numeric" ? v.percent : null;
 }
+
+/** Waterloo's general pass floor — a numeric grade below this earns no credit. */
+export const PASS_THRESHOLD = 50;
+
+/**
+ * Does a placed course earn credit toward a requirement / the degree headline?
+ * A numeric grade must clear the {@link PASS_THRESHOLD} pass floor; CR/P
+ * (credit), TR (transfer), and not-yet-graded (IP / blank — a planned future
+ * course) all count. Failing / withdrawn / audited / incomplete outcomes (the
+ * `other` kind: F, W, WD, NCR, AU, INC, …) earn no credit. Mirrors the
+ * transcript parser's 50% pass cutoff (`lib/transcript/parse.ts`).
+ */
+export function earnsCredit(grade: string | null | undefined): boolean {
+  const v = parseGrade(grade);
+  switch (v.kind) {
+    case "numeric":
+      return v.percent >= PASS_THRESHOLD;
+    case "credit":
+    case "transfer":
+    case "inProgress":
+      return true;
+    case "other":
+      return false;
+  }
+}

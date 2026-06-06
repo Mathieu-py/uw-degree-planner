@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { numericPercent, parseGrade } from "../grades";
+import { earnsCredit, numericPercent, parseGrade } from "../grades";
 
 describe("parseGrade", () => {
   it("reads a numeric percentage", () => {
@@ -31,5 +31,32 @@ describe("numericPercent", () => {
     expect(numericPercent("91")).toBe(91);
     expect(numericPercent("CR")).toBeNull();
     expect(numericPercent("")).toBeNull();
+  });
+});
+
+describe("earnsCredit", () => {
+  it("credits a passing numeric grade (>= 50)", () => {
+    expect(earnsCredit("50")).toBe(true);
+    expect(earnsCredit("87")).toBe(true);
+  });
+  it("denies credit for a failing numeric grade (< 50)", () => {
+    expect(earnsCredit("49")).toBe(false);
+    expect(earnsCredit("12")).toBe(false);
+  });
+  it("credits CR / P / TR", () => {
+    expect(earnsCredit("CR")).toBe(true);
+    expect(earnsCredit("P")).toBe(true);
+    expect(earnsCredit("TR")).toBe(true);
+  });
+  it("credits not-yet-graded courses (IP / blank — planned)", () => {
+    expect(earnsCredit("")).toBe(true);
+    expect(earnsCredit(undefined)).toBe(true);
+    expect(earnsCredit("IP")).toBe(true);
+  });
+  it("denies credit for withdrawn / failed / other outcomes", () => {
+    expect(earnsCredit("WD")).toBe(false);
+    expect(earnsCredit("W")).toBe(false);
+    expect(earnsCredit("NCR")).toBe(false);
+    expect(earnsCredit("F")).toBe(false);
   });
 });

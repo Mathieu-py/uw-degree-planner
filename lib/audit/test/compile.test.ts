@@ -38,6 +38,35 @@ describe("buildPlacementMap", () => {
     expect(map.get("math115")?.termId).toBe(1239);
     expect(map.get("missing")).toBeUndefined();
   });
+
+  it("skips no-credit attempts (failed/withdrawn) but keeps a passed retake", () => {
+    const plan = makePlan([
+      {
+        id: "s1",
+        termId: 1239,
+        position: "1A",
+        isCoop: false,
+        courses: [
+          { code: "cs135", grade: "40" }, // failed → excluded
+          { code: "cs136", grade: "WD" }, // withdrawn → excluded
+          { code: "math115", grade: "75" }, // passed → kept
+          { code: "math116" }, // not yet graded (planned) → kept
+        ],
+      },
+      {
+        id: "s2",
+        termId: 1241,
+        position: "1B",
+        isCoop: false,
+        courses: [{ code: "cs135", grade: "70" }], // passed retake → kept
+      },
+    ]);
+    const map = buildPlacementMap(plan);
+    expect(map.get("cs135")?.slotId).toBe("s2"); // the passed attempt, not the fail
+    expect(map.has("cs136")).toBe(false); // withdrawn, no retake
+    expect(map.has("math115")).toBe(true);
+    expect(map.has("math116")).toBe(true); // planned (no grade) still counts
+  });
 });
 
 describe("compileAudit — engineering program, courses-under-all", () => {
