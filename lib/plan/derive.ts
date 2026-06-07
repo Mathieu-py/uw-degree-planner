@@ -2,21 +2,16 @@ import type { TermId } from "@/lib/terms";
 import type { PlanSlot } from "./types";
 
 /**
- * Anything carrying plan slots. Both `LocalPlan` and `ServerPlan` satisfy
- * this — these derivations only ever read `slots`, so they don't need the
- * full plan shape (and `ServerPlan` isn't assignable to `LocalPlan`).
+ * Anything carrying plan slots. Both `LocalPlan` and `ServerPlan` satisfy this;
+ * these derivations only read `slots`.
  */
 type WithSlots = { slots: PlanSlot[] };
 
 /**
- * Flatten the plan into a sorted list of unique course codes. If
- * `asOfTermId` is provided, only courses placed in slots whose `termId` is
- * STRICTLY less than `asOfTermId` are included (i.e. "completed before that
- * term started").
- *
- * Pre-arrival transfer credit (termId === null) is always included —
- * incoming credit doesn't have a calendar term but the student has it
- * regardless of cutoff.
+ * Flatten the plan into a sorted list of unique course codes. With `asOfTermId`,
+ * only slots whose `termId` is STRICTLY less are included ("completed before
+ * that term"). Pre-arrival transfer credit (termId === null) is always
+ * included regardless of cutoff.
  */
 export function completedCoursesFromPlan(
   plan: WithSlots,

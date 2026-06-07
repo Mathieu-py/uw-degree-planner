@@ -1,24 +1,20 @@
 /**
- * Extract text from a Quest unofficial transcript PDF on the client. The
- * output is assembled to mimic the columnar layout the parser in
- * `./parse.ts` was tuned for: items on the same horizontal line are
- * concatenated with spaces, lines are joined with `\n`.
+ * Extract text from a Quest unofficial transcript PDF, client-side. Output
+ * mimics the columnar layout `./parse.ts` expects: same-row items joined with
+ * spaces, rows joined with `\n`.
  *
- * `pdfjs-dist` is large (~500 KB minified) and only needed when the user
- * opens the transcript-import modal, so it is dynamic-imported. Callers
- * pay the network cost once, on first use.
+ * `pdfjs-dist` (~500 KB) is dynamic-imported since it's only needed when the
+ * import modal opens.
  */
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
-// A real transcript is a handful of pages; cap well above so a crafted PDF
-// can't tie up the main thread.
+// Real transcripts are a few pages; cap high so a crafted PDF can't tie up the
+// main thread.
 const MAX_PAGES = 50;
-// Ceiling on parse time so a pathological document can't hang the modal.
 const PARSE_TIMEOUT_MS = 15_000;
-// Two pdf-units of vertical jitter still counts as the "same row". Quest's
-// table rows are spaced ~10 units apart; sub-pixel rendering can offset the
-// y by < 1 unit across cells, so a tolerance of 2 absorbs that without
-// merging adjacent rows.
+// Vertical jitter under this many pdf-units counts as the same row. Quest rows
+// are ~10 units apart and sub-pixel rendering offsets y by <1, so 2 absorbs
+// jitter without merging adjacent rows.
 const ROW_Y_TOLERANCE = 2;
 
 interface PdfTextItem {
@@ -42,10 +38,10 @@ export async function extractTextFromPdf(file: File): Promise<string> {
     );
   }
 
-  // Dynamic so the ~500 KB pdfjs payload doesn't bloat the initial bundle.
+  // Dynamic so the ~500 KB pdfjs payload stays out of the initial bundle.
   const pdfjs = await import("pdfjs-dist");
-  // The worker file ships with the package; bundlers (Turbopack/webpack) that
-  // honor `new URL(..., import.meta.url)` will copy it into the build output.
+  // Worker ships with the package; bundlers honoring `new URL(...,
+  // import.meta.url)` copy it into the build output.
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.min.mjs",
     import.meta.url,
@@ -84,9 +80,8 @@ async function extractAllPages(doc: PdfDocLike): Promise<string> {
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     const page = await doc.getPage(pageNum);
     const content = await page.getTextContent();
-    // content.items is (TextItem | TextMarkedContent)[]; only TextItems
-    // carry str + transform. Filter, then narrow via cast — the runtime
-    // check above keeps it sound.
+    // Only TextItems carry str + transform; filter then narrow via cast (the
+    // runtime check keeps it sound).
     const items: PdfTextItem[] = content.items
       .filter((it) => "str" in (it as object) && "transform" in (it as object))
       .map((it) => it as unknown as PdfTextItem);
@@ -96,7 +91,7 @@ async function extractAllPages(doc: PdfDocLike): Promise<string> {
 }
 
 // Reject if `promise` doesn't settle within `ms`. The pdfjs work keeps running
-// but its result is discarded; the caller's `finally` still destroys the doc.
+// but its result is discarded; the caller's `finally` destroys the doc.
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -116,11 +111,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 /**
- * Group text items by y-coordinate (rounded to ROW_Y_TOLERANCE), sort each
- * group by x-coordinate, and concatenate as a single space-delimited line.
- * The output mirrors the visual row layout — which is what the line-based
- * transcript parser expects.
- *
+ * Group items by y (rounded to ROW_Y_TOLERANCE), sort each group by x, join
+ * space-delimited. Output mirrors the visual row layout the parser expects.
  * Exported for tests.
  */
 export function assembleLines(items: PdfTextItem[]): string[] {

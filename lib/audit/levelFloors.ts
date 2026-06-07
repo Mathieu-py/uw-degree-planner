@@ -1,18 +1,21 @@
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
+import { countNoun } from "@/lib/format";
 import type { Program, UnitConstraint } from "@/lib/programs";
-import { programConstraints } from "./constraints";
+import {
+  LEVEL_BOUND_RE,
+  programConstraints,
+  subjectList,
+  UNIT_RE,
+} from "./constraints";
 
 /**
- * Faculty "level-floor" requirements: a minimum number of UNITS that must sit
- * at or above (occasionally below) a course level — e.g. "14.5 units must be at
- * the 200-level or above", "3.0 units at the 300-level or above (excluding SCI
- * courses)", "0.5 unit of BIOL or EARTH courses at the 300-level or above".
+ * Faculty "level-floor" requirements: minimum UNITS at or above (occasionally
+ * below) a course level — e.g. "14.5 units at the 200-level or above", "3.0
+ * units at the 300-level or above (excluding SCI courses)".
  *
- * These arrive as verbatim constraint notes with no subject *list* (so
- * `parseBreadthConstraint` rejects them) and were previously surfaced as inert
- * text — a plan could read 100% with a floor unmet. They're an independent
- * filter over the whole plan (a course counts toward a floor AND its major), so
- * like breadth they GATE completion without inflating the unit denominator.
+ * They arrive as verbatim notes with no subject list (so
+ * `parseBreadthConstraint` rejects them). Like breadth, an independent filter
+ * over the plan: they gate completion without inflating the unit denominator.
  */
 export interface LevelFloor {
   /** Readable label, e.g. "14.5 units at the 200-level or above". */
@@ -34,30 +37,17 @@ export interface LevelFloor {
   sourceText: string;
 }
 
-const UNIT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
-const LEVEL_RE = /(\d{3})-level\s+(?:or|and)\s+(above|higher|below|lower)/i;
 const SUBJECTS_OF_RE =
   /units?\s+of\s+(?:additional\s+)?([a-z][a-z,/&\s]*?)\s+(?:courses|lecture)/i;
 const EXCLUDE_RE = /excluding\s+([a-z][a-z,/&\s]*?)\s+courses?/i;
 
-/** Subject tokens from a fragment like "BIOL or EARTH" → ["biol", "earth"]. */
-function subjectList(fragment: string): string[] {
-  return fragment
-    .split(/[,/&]|\bor\b|\band\b|\s+/i)
-    .map((s) => s.trim().toLowerCase())
-    .filter((s) => /^[a-z]{2,6}$/.test(s) && s !== "additional");
-}
-
-/**
- * Parse a constraint note into a level floor, or null when it isn't one (no
- * unit amount, or no level bound).
- */
+/** Parse a constraint into a level floor, or null (no unit amount or no level bound). */
 export function parseLevelFloor(
   c: UnitConstraint,
 ): Omit<LevelFloor, "placedUnits" | "satisfiers"> | null {
   const src = c.sourceText ?? c.label ?? "";
   const um = src.match(UNIT_RE);
-  const lm = src.match(LEVEL_RE);
+  const lm = src.match(LEVEL_BOUND_RE);
   if (!um || !lm) return null;
   const need = Number(um[1]);
   if (!Number.isFinite(need) || need <= 0) return null;
@@ -70,7 +60,7 @@ export function parseLevelFloor(
   const excludeSubjects = exclMatch ? subjectList(exclMatch[1]) : [];
 
   const title =
-    `${need} unit${need === 1 ? "" : "s"}` +
+    countNoun(need, "unit") +
     (subjects.length
       ? ` of ${subjects.map((s) => s.toUpperCase()).join("/")}`
       : "") +

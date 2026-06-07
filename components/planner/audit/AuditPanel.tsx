@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { computeAverages } from "@/lib/audit/averages";
 import {
   compileAudit,
   legalityKeySet,
@@ -9,27 +8,24 @@ import {
 } from "@/lib/audit/compile";
 import { computeDegreeProgress } from "@/lib/audit/progress";
 import type { Course } from "@/lib/courses/types";
-import { fmtUnits } from "@/lib/format";
+import { countNoun, fmtUnits } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import { validatePlan } from "@/lib/plan/validate";
 import { PROGRAMS } from "@/lib/programs";
 import { deriveMacros } from "./deriveMacros";
-import { AveragesRow } from "./sections/AveragesRow";
 import { MacroSection } from "./sections/MacroSection";
 import type { DragWiring, DrillFn } from "./types";
 
 interface Props {
   plan: LocalPlan;
   /**
-   * Course catalog, used for row titles and to resolve a subject pool's
-   * eligible codes for Browse. Optional — when absent (read-only contexts that
-   * don't pass it) rows fall back to code-only and pool Browse is unavailable.
+   * Catalog for row titles and resolving a pool's eligible codes for Browse.
+   * Absent in read-only contexts → rows show code-only, no pool Browse.
    */
   catalog?: Course[];
   /**
-   * A single "Add" passes one code → the term picker; a multi-code "Browse"
-   * (open pool / elective) opens the slot picker pre-filtered to those codes.
-   * Optional — the read-only shared view passes nothing, leaving rows inert.
+   * One code → term picker; multiple (open pool / elective) → slot picker
+   * pre-filtered to those codes. Omitted by the read-only view (rows inert).
    */
   onDrillToRequirement?: DrillFn;
   /** Drag lifecycle for course rows; omitted alongside the read-only view. */
@@ -50,9 +46,8 @@ export const AuditPanel = memo(function AuditPanel({
   );
 
   // Legality overlay: a satisfier placed before its prereqs (or in antireq
-  // conflict) still counts toward its requirement, but is flagged. Needs the
-  // catalog to read requisite strings; without it (read-only view) the overlay
-  // is simply empty. `blockingIssueCount` is the plan-wide rollup for the header.
+  // conflict) still counts but is flagged. Needs the catalog for requisite
+  // strings; empty without it. `blockingIssueCount` is the header rollup.
   const { legality, blockingIssueCount } = useMemo(() => {
     if (catalogByCode.size === 0)
       return { legality: new Set<string>(), blockingIssueCount: 0 };
@@ -64,13 +59,6 @@ export const AuditPanel = memo(function AuditPanel({
   const audit = useMemo(
     () => compileAudit(program, plan, plan.specializationId, legality),
     [plan, program, legality],
-  );
-
-  // Unit-weighted percentage averages (Waterloo reports percent, not GPA).
-  // Needs the catalog for unit weights; without it the values stay null.
-  const averages = useMemo(
-    () => computeAverages(plan, catalogByCode, audit),
-    [plan, catalogByCode, audit],
   );
 
   const progress = useMemo(
@@ -126,24 +114,17 @@ export const AuditPanel = memo(function AuditPanel({
     );
   }
 
-  // One honest headline: how much of the whole degree (every course it takes,
-  // not a sum of overlapping requirement slots) the plan accounts for. The
-  // denominator is the degree's authoritative size (totalUnits ÷ 0.5); the
-  // numerator credits each placed course to at most one requirement, capped at
-  // that size, and is held below 100% until every requirement is genuinely met.
+  // One honest headline: how much of the whole degree the plan accounts for,
+  // not a sum of overlapping slots. See computeDegreeProgress.
   const headlinePct = progress.pct;
-  // When the calendar states no degree total (e.g. Joint Honours, which split
-  // units across two plans) the denominator falls back to the sum of structured
-  // requirements — an estimate, not the authoritative size. Mark it so the
-  // number isn't read as exact.
+  // No calendar total (e.g. Joint Honours, units split across plans) → fall back
+  // to the sum of structured requirements. Mark it so it's not read as exact.
   const estimatedDenom = progress.totalUnits == null;
   const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${estimatedDenom ? "~" : ""}${fmtUnits(progress.denom)} units`;
 
   const placedCodes = new Set(audit.placement.keys());
-  // Codes whose placement is illegal (placed before prereqs / antireq conflict).
-  // They're in `placedCodes` (so the course still shows on its row) but flagged,
-  // and excluded from the ring counts + the headline — see nodeProgress / the
-  // header warning. Empty in the read-only view (no catalog → no legality).
+  // Illegally-placed codes: still in `placedCodes` (shown on their row) but
+  // flagged and excluded from ring counts + headline.
   const illegalCodes = new Set<string>();
   for (const [code, p] of audit.placement)
     if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
@@ -177,18 +158,17 @@ export const AuditPanel = memo(function AuditPanel({
           ) : null}
           {unverifiedCount > 0 ? (
             <div className="av-note">
-              {unverifiedCount} requirement{unverifiedCount === 1 ? "" : "s"}{" "}
-              couldn't be auto-verified — check with your advisor.
+              {countNoun(unverifiedCount, "requirement")} couldn't be
+              auto-verified — check with your advisor.
             </div>
           ) : null}
           {blockingIssueCount > 0 ? (
             <div className="av-note text-partial">
-              ⚠ {blockingIssueCount} placement issue
-              {blockingIssueCount === 1 ? "" : "s"} (prereq/antireq) — those
-              courses are excluded from the bar until fixed.
+              ⚠ {countNoun(blockingIssueCount, "placement issue")}{" "}
+              (prereq/antireq) — those courses are excluded from the bar until
+              fixed.
             </div>
           ) : null}
-          <AveragesRow averages={averages} />
         </div>
         <div className="pw-audit-list lg:flex-1 lg:min-h-0 [scrollbar-width:thin]">
           {macros.map((macro) => (

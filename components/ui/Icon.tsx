@@ -27,9 +27,8 @@ import Sun from "./icons/sun.svg";
 import Upload from "./icons/upload.svg";
 import Warning from "./icons/warning.svg";
 
-// Add new icons here as: name → component. Names are camelCase strings the
-// rest of the app uses via <Icon name="..." />. Keep each icon component
-// drawing in its own viewBox; the wrapper just applies size + color classes.
+// name → component, camelCase names used via <Icon name="..." />. Each icon
+// draws in its own viewBox; the wrapper just applies size + color.
 const REGISTRY = {
   arrow: Arrow,
   bolt: Bolt,
@@ -81,15 +80,9 @@ interface Props extends Omit<SVGProps<SVGSVGElement>, "name"> {
 }
 
 /**
- * Single entry point for rendering any icon. SVG sources live in `./icons/`;
- * register each one in REGISTRY below. Pass
- * `name` plus an optional `size` (defaults to "md"). Color inherits from the
- * parent via `currentColor`, so wrap with a `text-…` class to recolor.
- *
- *   <Icon name="settings" size="md" />
- *   <button className="text-zinc-500 hover:text-zinc-50">
- *     <Icon name="settings" />
- *   </button>
+ * Single entry point for rendering any icon (registered in REGISTRY). Pass
+ * `name` + optional `size` (default "md"). Color inherits via `currentColor`,
+ * so wrap with a `text-…` class to recolor.
  */
 export function Icon({ name, size = "md", className, ...rest }: Props) {
   const Component = REGISTRY[name];

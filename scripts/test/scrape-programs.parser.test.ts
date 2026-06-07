@@ -1327,6 +1327,57 @@ describe("parseElectives — ambiguous merge guard", () => {
   });
 });
 
+describe("parseElectives — requiredCount from count statements", () => {
+  // Minimal courseListsNew section: an <h2> heading + one ruleView result.
+  const section = (heading: string, ruleText: string) =>
+    `<div><section>
+      <header><div><h2 data-testid="grouping-label">${heading}</h2></div></header>
+      <div><ul><li data-test="ruleView-A">
+        <div data-test="ruleView-A-result">${ruleText}</div>
+      </li></ul></div>
+    </section></div>`;
+
+  it("captures a whole-course total ('Complete a total of 7 Technical Electives')", () => {
+    const r = parseElectives({
+      courseListsNew: section(
+        "Technical Electives",
+        "Complete a total of 7 Technical Electives",
+      ),
+    });
+    expect(r.electives).toHaveLength(1);
+    expect(r.electives[0].requiredCount).toBe(7);
+    expect(r.electives[0].sourceText).toBe(
+      "Complete a total of 7 Technical Electives",
+    );
+  });
+
+  it("captures a sub-list count ('Complete 6 of the following')", () => {
+    const r = parseElectives({
+      courseListsNew: section("Approved Courses List", "Complete 6 of the following."),
+    });
+    expect(r.electives[0].requiredCount).toBe(6);
+  });
+
+  it("does NOT read a decimal unit total as a course count ('Complete a total of 3.5 units')", () => {
+    // Regression: the trailing \b in TOTAL_OF_RE used to match before the
+    // decimal point, capturing "3" from "3.5 units" as requiredCount.
+    const r = parseElectives({
+      courseListsNew: section(
+        "Approved Courses List",
+        "Complete a total of 3.5 units from the following list.",
+      ),
+    });
+    expect(r.electives[0].requiredCount).toBeUndefined();
+  });
+
+  it("does NOT read a whole-number unit total as a course count ('Complete a total of 20.0 units')", () => {
+    const r = parseElectives({
+      courseListsNew: section("Approved Courses List", "Complete a total of 20.0 units:"),
+    });
+    expect(r.electives[0].requiredCount).toBeUndefined();
+  });
+});
+
 describe("parseElectives — deterministic ordering", () => {
   it("sorts the merged result by unitRequirement, then description", () => {
     const gradReqs = `

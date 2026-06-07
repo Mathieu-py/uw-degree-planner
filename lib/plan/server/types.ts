@@ -2,8 +2,8 @@ import type { TermId } from "@/lib/terms";
 import type { PlanSlot, Stream } from "../types";
 
 /**
- * Lightweight row for plan-list UIs (header switcher). Mirrors the columns
- * we select in `listPlans` — no slots/courses, so it's cheap to list dozens.
+ * Lightweight row for plan-list UIs. Mirrors `listPlans`'s columns — no
+ * slots/courses, so listing dozens is cheap.
  */
 export interface PlanSummary {
   id: string;
@@ -17,11 +17,9 @@ export interface PlanSummary {
 }
 
 /**
- * The full plan as returned by `loadServerPlan`. Same shape as a `LocalPlan`
- * but server-owned: carries the server `id`, the user-given `name`, and the
- * `program_scrape_version` we'll use in Phase 2+ to warn on choice-group
- * remap. Does NOT carry `schemaVersion` (server has no equivalent) or
- * `updatedAt` from `LocalPlan` (it has its own server-managed `updatedAt`).
+ * The full plan from `loadServerPlan`. Like `LocalPlan` but server-owned:
+ * carries `id`, `name`, and `programScrapeVersion` (Phase 2+ choice-group
+ * remap warnings). No `schemaVersion`; `updatedAt` is server-managed.
  */
 export interface ServerPlan {
   id: string;
@@ -36,9 +34,9 @@ export interface ServerPlan {
 }
 
 /**
- * Payload accepted by `savePlanState` and (optionally) `createPlan`. The
- * snapshot doesn't carry server-managed fields (`id`, `name`, `updatedAt`)
- * so callers can't accidentally try to rename a plan through save.
+ * Payload for `savePlanState` and (optionally) `createPlan`. Omits
+ * server-managed fields (`id`, `name`, `updatedAt`) so callers can't rename a
+ * plan through save.
  */
 export interface PlanSnapshot {
   programId: string | null;
@@ -50,10 +48,9 @@ export interface PlanSnapshot {
 }
 
 /**
- * Uniform result shape for every server action. Avoids forcing the planner
- * shell to try/catch around every call — the UI can pattern-match on `ok`
- * and surface `error` in a banner. Programmer errors (missing env, bad
- * argument types) still throw.
+ * Uniform result shape for every server action, so the UI pattern-matches on
+ * `ok` instead of try/catch and surfaces `error` in a banner. Programmer
+ * errors (missing env, bad argument types) still throw.
  */
 export type ActionResult<T> =
   | { ok: true; data: T }

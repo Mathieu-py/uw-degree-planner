@@ -6,13 +6,11 @@ import type { LocalPlan, SlotCourse } from "@/lib/plan/types";
  * Course drag-and-drop for the planner timeline.
  *
  * A drag carries a small JSON payload under a private MIME type so the planner
- * only reacts to its own chips (and never to dragged files, links, or text).
- * Two kinds of drag exist:
- *   - "move": an already-placed course chip dragged from one term to another.
- *   - "add":  a still-needed course chip dragged out of the audit panel.
+ * only reacts to its own chips (not dragged files, links, or text). Two kinds:
+ *   - "move": a placed chip dragged from one term to another.
+ *   - "add":  a still-needed chip dragged out of the audit panel.
  *
- * Drops are applied by the pure {@link applyCourseDrop} reducer, which the
- * planner shell funnels through its single `setPlan` entry point.
+ * Drops apply via the pure {@link applyCourseDrop} reducer.
  */
 
 export const COURSE_DRAG_MIME = "application/x-uw-course";
@@ -21,9 +19,9 @@ export type CourseDragData =
   | { kind: "move"; fromSlotId: string; code: string }
   | { kind: "add"; code: string };
 
-// A second, value-less type whose suffix encodes the drag's kind. The payload
-// itself can't be read during `dragover` (the browser's protected mode), but
-// its types can — so this lets a drop target pick the matching cursor there.
+// A value-less type whose suffix encodes the drag's kind. The payload can't be
+// read during `dragover` (protected mode) but its types can, so a drop target
+// can pick the matching cursor there.
 function kindType(kind: CourseDragData["kind"]): string {
   return `${COURSE_DRAG_MIME}+${kind}`;
 }
@@ -39,16 +37,15 @@ export function writeCourseDrag(
   dt.setData(kindType(data.kind), "");
   // Harmless human-readable fallback for anything that only reads text/plain.
   dt.setData("text/plain", data.code);
-  // "add" pulls a still-needed course out of the audit (the chip stays put) —
-  // a copy; "move" relocates a placed chip — a move. dropEffect matches below.
+  // "add" copies a still-needed course out of the audit (chip stays put);
+  // "move" relocates a placed chip.
   dt.effectAllowed = data.kind === "add" ? "copy" : "move";
 }
 
 /**
- * The drag-source contract for a course chip, as plain DOM props to spread onto
- * the draggable element. A factory (not a hook) so it can be called inside a
- * `.map()` of chips. `lifecycle` lets a caller hook dragstart/dragend for UI
- * state such as dimming the in-flight chip; pass nothing to opt out.
+ * Drag-source DOM props for a course chip, to spread onto the draggable. A
+ * factory (not a hook) so it can run inside a `.map()`. `lifecycle` hooks
+ * dragstart/dragend for UI state (e.g. dimming the in-flight chip).
  */
 export function courseDragProps(
   data: CourseDragData,
@@ -118,12 +115,10 @@ export function readCourseDrag(e: {
 }
 
 /**
- * Apply a course drop onto `toSlotId`, returning the next plan.
- *
- * Returns the **same plan reference** for any no-op (foreign/invalid target,
- * self-drop, duplicate, or missing source course) so callers can skip a save.
- * Moves carry the whole {@link SlotCourse} so a transcript grade follows the
- * course to its new term.
+ * Apply a course drop onto `toSlotId`, returning the next plan — or the **same
+ * plan reference** for any no-op (invalid target, self-drop, duplicate, missing
+ * source) so callers can skip a save. Moves carry the whole {@link SlotCourse}
+ * so a transcript grade follows the course.
  */
 export function applyCourseDrop(
   plan: LocalPlan,

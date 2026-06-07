@@ -2,21 +2,11 @@ import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { Ring } from "@/components/ui/Ring";
 import type { Course } from "@/lib/courses/types";
+import { countNoun, pluralize } from "@/lib/format";
 import { BreadthBody } from "../bodies/BreadthBody";
 import { NodeBody } from "../bodies/NodeBody";
 import { OptionChip } from "../bodies/OptionChip";
 import type { DragWiring, DrillFn, Section } from "../types";
-
-export function isIncomplete(section: Section): boolean {
-  if (section.kind === "node")
-    return section.summary.satisfied < section.summary.needed;
-  if (section.kind === "electiveFinite") return section.placed < section.need;
-  if (section.kind === "breadth")
-    return section.placedUnits < section.needUnits - 1e-9;
-  if (section.kind === "levelFloor")
-    return section.placedUnits < section.needUnits - 1e-9;
-  return false;
-}
 
 export function SectionRow({
   section,
@@ -54,11 +44,9 @@ export function SectionRow({
   }
 
   if (section.kind === "node") {
-    // An optional group ("Choose any of the following", needed === 0) has no
-    // target, so the ring reflects what's actually *chosen*: grey 0 with
-    // nothing placed, and a green count once the student picks from the list
-    // (any choice satisfies an optional group). Required groups (needed > 0)
-    // keep their normal progress ring.
+    // An optional group (needed === 0) has no target, so the ring reflects what's
+    // *chosen*: grey 0 when empty, green count once anything is picked. Required
+    // groups (needed > 0) keep their normal progress ring.
     const optional = section.summary.needed === 0;
     const chosen = optional
       ? section.node.satisfiers.length
@@ -75,9 +63,8 @@ export function SectionRow({
         );
     return (
       <SectionShell
-        // An optional group has no target, so a pick shouldn't read as a
-        // completed *required* group: tag it "(optional)" AND render its ring in
-        // a neutral tone (not the green that means "requirement met").
+        // Tag "(optional)" and use a neutral ring tone so a pick doesn't read as
+        // a met *required* group.
         title={optional ? `${section.title} (optional)` : section.title}
         caption={section.caption}
         ring={{ pct, num: chosen, tone: optional ? "neutral" : undefined }}
@@ -130,8 +117,8 @@ export function SectionRow({
   }
 
   if (section.kind === "breadth") {
-    // Breadth is unit-based ("1.0 unit of Humanities"); the ring fills on units,
-    // the number shows how many placed courses currently contribute.
+    // Breadth is unit-based; ring fills on units, the number counts contributing
+    // placed courses.
     const pct =
       section.needUnits > 0
         ? Math.min(
@@ -153,9 +140,8 @@ export function SectionRow({
 
   if (section.kind === "levelFloor") {
     // A unit-based minimum ("X units at the 200-level or above"). Ring fills on
-    // units; the number shows how many placed courses currently contribute.
-    // Static row — the expandable body only restated the requirement (no
-    // courses to drag), so there's nothing useful behind a dropdown.
+    // units, the number counts contributing placed courses. Static row — no
+    // courses to drag, so a dropdown would only restate the requirement.
     const pct =
       section.needUnits > 0
         ? Math.min(
@@ -179,9 +165,8 @@ export function SectionRow({
     );
   }
 
-  // electiveBrowse. When we have a concrete eligible list, show it as draggable
-  // chips (no count target → neutral grey ring). Only when there's genuinely no
-  // fixed list (unit-based / open pool) do we fall back to "browse the catalog".
+  // electiveBrowse: a concrete eligible list → draggable chips (no target →
+  // neutral ring); only a unit-based / open pool falls back to "browse catalog".
   const hasList = section.eligibleCodes.length > 0;
   if (hasList) {
     const placed = section.eligibleCodes.filter((c) =>
@@ -260,17 +245,15 @@ function SectionShell({
           <span className="av-sec-label">{title}</span>
           <span className="u-small truncate">{caption}</span>
         </span>
-        {/* Two distinct flags, kept visually separate (a red "excluded" cross vs
-            an amber "flagged" triangle) so they don't read as contradictory: the
-            red pill is a course that can't count here at all; the amber one is a
-            course that does count on this row but is excluded from the top bar
-            until its prereq/antireq is resolved. */}
+        {/* Two distinct flags: red cross = a course that can't count here at
+            all; amber triangle = one that counts here but is excluded from the
+            top bar until its prereq/antireq is resolved. */}
         {excludedViolationCount > 0 ? (
           <span
             role="img"
             className="inline-flex items-center gap-0.5 rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
-            aria-label={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} excluded — can't count toward this requirement`}
-            title={`${excludedViolationCount} placed course${excludedViolationCount === 1 ? "" : "s"} can't count toward this requirement (excluded by the rule)`}
+            aria-label={`${excludedViolationCount} placed ${pluralize(excludedViolationCount, "course")} excluded — can't count toward this requirement`}
+            title={`${excludedViolationCount} placed ${pluralize(excludedViolationCount, "course")} can't count toward this requirement (excluded by the rule)`}
           >
             <Icon name="close" size="xs" aria-hidden="true" />
             {excludedViolationCount}
@@ -280,8 +263,8 @@ function SectionShell({
           <span
             role="img"
             className="inline-flex items-center gap-0.5 rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
-            aria-label={`${legalityIssueCount} course${legalityIssueCount === 1 ? "" : "s"} flagged — placed before prereqs or in antireq conflict`}
-            title={`${legalityIssueCount} course${legalityIssueCount === 1 ? "" : "s"} here ${legalityIssueCount === 1 ? "is" : "are"} placed before prereqs or in antireq conflict — shown on this row, but excluded from the degree bar until fixed`}
+            aria-label={`${countNoun(legalityIssueCount, "course")} flagged — placed before prereqs or in antireq conflict`}
+            title={`${countNoun(legalityIssueCount, "course")} here ${pluralize(legalityIssueCount, "is", "are")} placed before prereqs or in antireq conflict — shown on this row, but excluded from the degree bar until fixed`}
           >
             <Icon name="warning" size="xs" aria-hidden="true" />
             {legalityIssueCount}

@@ -2,21 +2,10 @@
 
 import { Fragment, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import type { AuditNode } from "@/lib/audit/compile";
-import { formatCourseCode } from "@/lib/format";
+import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
+import { countNoun, formatCourseCode, pluralize } from "@/lib/format";
 import type { OptionRenderProps } from "../types";
 import { NodeBody } from "./NodeBody";
-
-/** When true, a satisfied compound pick collapses to a summary + "show others". */
-const COLLAPSE_WHEN_DECIDED = true;
-
-/** Does this option's placement actually satisfy it (vs. a vacuous "met")? */
-function optionMet(opt: AuditNode): boolean {
-  return (
-    (opt.status === "met" || opt.status === "overSatisfied") &&
-    opt.satisfiers.length > 0
-  );
-}
 
 /** A→Z badge for an option's position in the choice. */
 function optionBadge(index: number): string {
@@ -24,10 +13,8 @@ function optionBadge(index: number): string {
 }
 
 /**
- * A compound `pick` whose options are multi-course bundles. Renders each
- * alternative as a delineated option card so they read as mutually-exclusive
- * choices; once enough options are satisfied it collapses to a compact summary
- * of the completed path with a "show other options" toggle.
+ * A compound `pick` (options are multi-course bundles), rendered as mutually-
+ * exclusive option cards; collapses to a summary + "show others" once satisfied.
  */
 export function CompoundPickBody({
   node,
@@ -39,20 +26,20 @@ export function CompoundPickBody({
 } & OptionRenderProps) {
   const r = node.ruleNode;
   const [showAll, setShowAll] = useState(false);
-  // Local "which option am I considering" focus — it only drives which card is
-  // expanded; placement alone decides what's actually satisfied, so it needs no
-  // persistence. Default to the option already in progress, else the first.
-  const options = r.kind === "pick" ? node.children : [];
+  // Local focus: which card is expanded. Placement (not this) decides what's
+  // satisfied, so it needs no persistence — default to the in-progress option.
+  const options = node.children;
   const [focused, setFocused] = useState(() => initialFocus(options));
   if (r.kind !== "pick") return null;
 
   const selectMin = r.selectMin ?? 1;
   const metOptions = options
     .map((opt, index) => ({ opt, index }))
-    .filter(({ opt }) => optionMet(opt));
+    .filter(({ opt }) => isSatisfied(opt));
   const decided = metOptions.length >= selectMin;
 
-  if (COLLAPSE_WHEN_DECIDED && decided && !showAll) {
+  // A satisfied compound pick collapses to a summary + "show others".
+  if (decided && !showAll) {
     return (
       <CompoundPickSummary
         metOptions={metOptions}
@@ -64,8 +51,8 @@ export function CompoundPickBody({
 
   return (
     <div className="av-choice">
-      {/* A top-level compound pick (rare; none in current data) already has the
-          framing as its section title, so only nested ones add the header. */}
+      {/* Nested picks add the framing header; a top-level one already has it as
+          its section title. */}
       {depth > 0 ? (
         <div className="av-choice-head">{pickFraming(r, options.length)}</div>
       ) : null}
@@ -87,9 +74,12 @@ export function CompoundPickBody({
       {decided ? (
         <button
           type="button"
-          className="av-opt-toggle"
+          className="av-opt-toggle is-open"
           onClick={() => setShowAll(false)}
         >
+          <span className="av-opt-chev">
+            <Icon name="chevronRight" size="xs" aria-hidden="true" />
+          </span>
           Hide other options
         </button>
       ) : null}
@@ -101,7 +91,7 @@ export function CompoundPickBody({
 function initialFocus(options: AuditNode[]): number {
   const partial = options.findIndex((o) => o.status === "partial");
   if (partial >= 0) return partial;
-  const met = options.findIndex(optionMet);
+  const met = options.findIndex(isSatisfied);
   return met >= 0 ? met : 0;
 }
 
@@ -120,15 +110,13 @@ function optionPreviewText(opt: AuditNode): string {
   const parts = uniq.slice(0, 3).map(formatCourseCode);
   const extra = uniq.length - parts.length;
   if (extra > 0) parts.push(`+${extra}`);
-  if (pools > 0) parts.push(`+${pools} course${pools === 1 ? "" : "s"}`);
+  if (pools > 0) parts.push(`+${countNoun(pools, "course")}`);
   return parts.join("  ·  ") || "—";
 }
 
 /**
- * One alternative in a compound pick. Collapsed, it's a single selectable row
- * (radio badge + a preview of its courses); selecting it expands the full
- * requirement body and collapses the siblings, so the group reads as an active
- * "pick one of these" rather than a stack of competing cards.
+ * One alternative in a compound pick: a selectable row (badge + course preview)
+ * that expands to the full requirement body and collapses its siblings.
  */
 function ChoiceOption({
   option,
@@ -142,7 +130,7 @@ function ChoiceOption({
   expanded: boolean;
   onSelect: () => void;
 } & OptionRenderProps) {
-  const met = optionMet(option);
+  const met = isSatisfied(option);
   const cls = `av-choice-opt${expanded ? " is-open" : ""}${met ? " is-met" : ""}`;
   return (
     <div className={cls}>
@@ -172,10 +160,8 @@ function ChoiceOption({
           </span>
         )}
       </button>
-      {/* The body is ALWAYS in the DOM — every option's courses stay present
-          (data integrity + reachable), just hidden when this option isn't the
-          expanded one. Conditional-rendering it would silently drop those codes
-          from the rendered audit. */}
+      {/* Always in the DOM (just hidden when not expanded) — conditional
+          rendering would drop these codes from the rendered audit. */}
       <div className="av-choice-body" hidden={!expanded}>
         <OptionBody node={option} {...rest} />
       </div>
@@ -184,10 +170,8 @@ function ChoiceOption({
 }
 
 /**
- * The body of an option card. An option is usually an `all` bundle — render its
- * children directly so the card boundary stands in for "Complete all of the
- * following". A non-`all` option (a bare multi-code courses leaf, or a single
- * nested pick) renders as-is.
+ * An option card's body. An `all` bundle renders its children directly (the card
+ * is the "complete all" boundary); anything else renders as-is.
  */
 function OptionBody({
   node,
@@ -222,10 +206,12 @@ function CompoundPickSummary({
   onShowAll: () => void;
 }) {
   const others = total - metOptions.length;
+  // Completed path(s) + the "show others" control share one card, so the choice
+  // reads as a single resolved block rather than a card with a stray link below.
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="av-opt-summary">
       {metOptions.map(({ opt, index }) => (
-        <div key={index} className="av-opt-summary">
+        <div key={index} className="av-opt-summary-row">
           <span className="av-opt-summary-mark">
             <Icon name="check" size="sm" aria-hidden="true" />
           </span>
@@ -242,9 +228,15 @@ function CompoundPickSummary({
         </div>
       ))}
       {others > 0 ? (
-        <button type="button" className="av-opt-toggle" onClick={onShowAll}>
-          <Icon name="chevronRight" size="xs" aria-hidden="true" /> show{" "}
-          {others} other option{others === 1 ? "" : "s"}
+        <button
+          type="button"
+          className="av-opt-toggle av-opt-toggle--in-summary"
+          onClick={onShowAll}
+        >
+          <span className="av-opt-chev">
+            <Icon name="chevronRight" size="xs" aria-hidden="true" />
+          </span>
+          show {others} other {pluralize(others, "option")}
         </button>
       ) : null}
     </div>
@@ -258,8 +250,7 @@ function pickFraming(
 ): string {
   const min = r.selectMin;
   const max = r.selectMax;
-  // With a known option count and an exact N-of-M choice, name the total:
-  // "Choose 1 of 3 options" reads better than "Choose 1 of these options:".
+  // Name the total when known: "Choose 1 of 3 options" > "Choose 1 of these…".
   if (optionCount != null && min != null && max != null && min === max)
     return `Choose ${min} of ${optionCount} options`;
   if (min != null && max != null)
@@ -269,37 +260,4 @@ function pickFraming(
   if (max != null) return `Choose up to ${max} of these options:`;
   if (min != null) return `Choose at least ${min} of these options:`;
   return "Choose from these options:";
-}
-
-/**
- * Collapse a 1-of-1 pick whose every leaf is a single course into a flat list
- * of option codes — even across nested 1-of-1 picks. Returns `null` when an
- * option is genuinely compound (requires several courses, is an open subject
- * pool, or the pick isn't a strict 1-of-1), so the caller keeps the structured
- * rendering. Mirrors the compiler's option semantics: a `courses` leaf directly
- * under a pick contributes each of its codes as a separate option, but a
- * `courses` leaf reached as a mixed pick's compiled child means "all of these"
- * and so can't be a single chip.
- */
-export function asFlatChoiceOptions(node: AuditNode): string[] | null {
-  const r = node.ruleNode;
-  if (r.kind === "courses")
-    return r.courses.length === 1 ? [r.courses[0]] : null;
-  if (r.kind !== "pick") return null;
-  if ((r.selectMin ?? 1) !== 1 || (r.selectMax ?? 1) !== 1) return null;
-  const opts: string[] = [];
-  if (node.children.length === 0) {
-    // All-courses pick the compiler unioned: each code is its own option.
-    for (const c of r.children) {
-      if (c.kind !== "courses") return null;
-      opts.push(...c.courses);
-    }
-  } else {
-    for (const child of node.children) {
-      const sub = asFlatChoiceOptions(child);
-      if (!sub) return null;
-      opts.push(...sub);
-    }
-  }
-  return [...new Set(opts)];
 }

@@ -48,7 +48,7 @@ export function compareCourses(
     case "seats":
       return (NUMERIC[key](a) - NUMERIC[key](b)) * mul;
     default: {
-      // Exhaustiveness guard: adding a new SortKey forces this to fail at compile time.
+      // Exhaustiveness guard: a new SortKey fails this at compile time.
       const _exhaustive: never = key;
       return _exhaustive;
     }

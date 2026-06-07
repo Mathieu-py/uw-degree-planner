@@ -1,3 +1,4 @@
+import { PASS_THRESHOLD } from "@/lib/plan/grades";
 import { PROGRAMS, TERM_LETTERS, type TermLetter } from "@/lib/programs";
 import type {
   CourseStatus,
@@ -10,36 +11,28 @@ export type { ParsedCourse, TranscriptParseResult } from "./types";
 const TERM_HEADER_RE = /^(Fall|Winter|Spring)\s+(\d{4})\s*$/i;
 const TRANSFER_HEADER_RE = /^Transfer\s+Credit\s*$/i;
 const WORK_TERM_HEADER_RE = /^(Co-?op\s+)?Work\s+Term\b/i;
-// Quest transcripts label the student's major one of two ways depending on
-// which section it appears in: the academic-record header uses
-// `Plan: <major>`, while the per-term-section header uses
-// `Program: <major>, Honours, Co-operative Program`. Either should resolve
-// to the same program slug. The comma-split happens at extraction time so
-// the suffix doesn't break matchProgramSlug.
+// Quest labels the major as either `Plan: <major>` or `Program: <major>,
+// Honours, Co-operative Program`; both must resolve to the same slug, so we
+// comma-split the suffix off at extraction time.
 const PLAN_LINE_RE = /^(?:Plan|Program):\s*(.+?)\s*$/i;
 
-// Course-code at start of line, strictly uppercase to avoid matching metadata
-// like "Spring 2024 Average: 78". The trailing tail (description + any unit
-// columns + grade) is captured greedily; the grade is the last whitespace
-// token on the line.
+// Course code at line start, strictly uppercase to skip metadata like
+// "Spring 2024 Average: 78". Tail (description + units + grade) captured
+// greedily; the grade is the last whitespace token.
 const COURSE_ROW_RE = /^([A-Z]{2,8})\s*(\d{3,4}[A-Z]?)\b\s*(.+)$/;
 
-// Quest transcript rows for past terms have an "Attempted Earned" decimal
-// pair (e.g. `0.50 0.50`) before the grade column. Future-term enrollments
-// have no grade column yet — only `code` + `description`. Without context,
-// the last whitespace-token of a future-term row resolves to a description
-// word like "2" (from "Calculus 2") or "Systems" (from "Digital Systems")
-// and classifyStatus mis-reads it as a grade.
+// Past-term rows carry an "Attempted Earned" decimal pair (e.g. `0.50 0.50`)
+// before the grade; future-term rows have no grade column. Without this
+// signal, a future row's last token is a description word (e.g. "2" from
+// "Calculus 2") that classifyStatus would misread as a grade.
 const ATTEMPTED_EARNED_RE = /\b\d+\.\d+\s+\d+\.\d+\b/;
 
-// Letter-grade tokens that are valid on their own without the column pair —
-// notably backdated transfer credits (`MATH 137 Calculus 1 TR`) which appear
-// in regular term sections with no Attempted/Earned. Numeric grades are NOT
-// in this set: a bare "2" without columns can't be distinguished from a
+// Letter grades valid without the column pair — notably backdated transfer
+// credits (`MATH 137 Calculus 1 TR`) in regular term sections. Numeric grades
+// are excluded: a bare "2" without columns is indistinguishable from a
 // description word and must be treated as a future enrollment.
-//
-// Single source of truth: NON_NUMERIC_GRADE_RE is derived from the keys so the
-// detector and the classifier can't drift out of sync.
+// NON_NUMERIC_GRADE_RE derives from these keys so detector and classifier
+// can't drift.
 const NON_NUMERIC_GRADES: Record<
   string,
   Exclude<CourseStatus, "unrecognized">
@@ -78,16 +71,14 @@ type SectionState =
 export function parseTranscript(text: string): TranscriptParseResult {
   const lines = text.split(/\r?\n/);
 
-  // Collect every Plan:/Program: candidate so we can pick the first one that
-  // resolves to a real program slug. Necessary because Quest emits multiple
-  // such lines (a faculty header like `Program: Engineering` AND per-term
-  // `Program: Systems Design Engineering, Honours, …`); the faculty header
-  // would otherwise win the "first match" race and silently fail detection.
+  // All Plan:/Program: candidates, so we can pick the first that resolves to a
+  // real slug. Quest emits several (faculty header `Program: Engineering` plus
+  // per-term `Program: Systems Design Engineering, …`); a naive first-match
+  // would let the faculty header win and silently fail detection.
   const planCandidates: string[] = [];
-  // Raw, comma-tail-preserved Plan/Program line bodies. We strip the tail
-  // before pushing into `planCandidates` (since the major name is what
-  // matches program slugs), but `Co-operative Program` lives in that tail —
-  // so co-op detection scans the raw form after the main loop.
+  // Raw bodies with the comma tail intact. planCandidates drops the tail (the
+  // major name matches slugs), but `Co-operative Program` lives in the tail —
+  // co-op detection scans these after the main loop.
   const planLineBodies: string[] = [];
   let currentSection: SectionState = { kind: "none" };
   let studyTermCounter = 0;
@@ -102,9 +93,8 @@ export function parseTranscript(text: string): TranscriptParseResult {
 
     const planMatch = PLAN_LINE_RE.exec(line);
     if (planMatch) {
-      // The Program: line carries `<major>, Honours, Co-operative Program`;
-      // drop everything past the first comma so the major name matches
-      // PROGRAMS[*].name. Plan: lines are typically already bare majors.
+      // Drop everything past the first comma so the major name matches
+      // PROGRAMS[*].name (Plan: lines are usually already bare majors).
       const body = planMatch[1];
       planLineBodies.push(body);
       const candidate = body.split(",")[0].trim();
@@ -138,9 +128,8 @@ export function parseTranscript(text: string): TranscriptParseResult {
     const [, prefix, number, tail] = courseMatch;
     const code = (prefix + number).toLowerCase();
 
-    // WKRPT rows don't contribute to completedCourses and don't make their
-    // containing term count as a study term — the student didn't take real
-    // coursework. Skip entirely.
+    // WKRPT rows aren't real coursework: skip, and don't let them mark their
+    // term as a study term.
     if (code.startsWith("wkrpt")) continue;
 
     // First real course in a term commits the term as a study term.
@@ -153,12 +142,10 @@ export function parseTranscript(text: string): TranscriptParseResult {
     const lastToken = tokens[tokens.length - 1] ?? "";
     const hasGradeColumns = ATTEMPTED_EARNED_RE.test(tail);
 
-    // A row is a future enrollment when it's inside a term section but has
-    // neither Attempted/Earned columns nor a recognized non-numeric grade —
-    // the "last token" then is a description word (e.g. "2" from "Calculus
-    // 2"), not a grade. Treat as in-progress with no grade. Every other
-    // shape delegates to classifyStatus on the last token (handles past
-    // graded rows, backdated TR/CR rows, and transfer-section rows).
+    // Future enrollment: in a term section but with neither grade columns nor
+    // a recognized non-numeric grade, so the last token is a description word,
+    // not a grade. Treat as in-progress; everything else delegates to
+    // classifyStatus on the last token.
     const isFutureEnrollment =
       !hasGradeColumns &&
       !NON_NUMERIC_GRADE_RE.test(lastToken) &&
@@ -226,13 +213,10 @@ export function parseTranscript(text: string): TranscriptParseResult {
     }
   }
 
-  // Pick the first candidate that resolves to a real program slug; fall back
-  // to the first candidate string so the UI can still show what we saw if
-  // none matched ("Detected: <X> — pick after import"). Prefer the
-  // specialization match (program + spec) when available, since it carries
-  // strictly more information than the parent-only match — so a parent-only
-  // hit does not stop the scan; a later candidate carrying a spec can still
-  // upgrade the detection.
+  // First candidate resolving to a real slug wins; fall back to the first raw
+  // string so the UI can still show what we saw. A spec match (program + spec)
+  // outranks a parent-only match, so a parent-only hit doesn't stop the scan —
+  // a later spec-bearing candidate can still upgrade it.
   let detectedProgramId: string | null = null;
   let detectedSpecializationSlug: string | null = null;
   let rawPlanText: string | null = planCandidates[0] ?? null;
@@ -253,10 +237,8 @@ export function parseTranscript(text: string): TranscriptParseResult {
     }
   }
 
-  // Co-op detection: any Plan/Program line carrying "Co-operative Program" in
-  // its tail (after the major name) flips the student to co-op. If we saw a
-  // Plan line at all but none mentioned co-op, treat it as regular. No Plan
-  // line at all → null (unknown).
+  // Any Plan/Program line mentioning "Co-operative Program" → co-op; a Plan
+  // line without it → regular; no Plan line at all → null (unknown).
   const COOP_RE = /co-?operative\s+program/i;
   let detectedSystemOfStudy: "coop" | "regular" | null = null;
   if (planLineBodies.length > 0) {
@@ -287,7 +269,7 @@ function classifyStatus({
   const upper = rawGrade.toUpperCase();
   if (upper in NON_NUMERIC_GRADES) return NON_NUMERIC_GRADES[upper];
   if (/^\d+(?:\.\d+)?$/.test(rawGrade)) {
-    return parseFloat(rawGrade) >= 50 ? "passed" : "skipped";
+    return parseFloat(rawGrade) >= PASS_THRESHOLD ? "passed" : "skipped";
   }
   return "unrecognized";
 }
@@ -304,8 +286,8 @@ function normalizeProgramName(s: string): string {
     .trim();
 }
 
-// Precomputed at module load — PROGRAMS is static, so normalizing every name
-// on each matchProgramSlug call was wasted work.
+// Precomputed at module load: PROGRAMS is static, so re-normalizing per call
+// was wasted work.
 const NORMALIZED_PROGRAMS: ReadonlyArray<{ id: string; normalized: string }> =
   Object.entries(PROGRAMS).map(([id, p]) => ({
     id,
@@ -327,15 +309,13 @@ export function matchProgramSlug(planText: string): string | null {
   return null;
 }
 
-// Quest formats specialization-bearing Plan lines as
-// `Plan: Honours History — Global Interactions Specialization`. The
-// separator is an em-dash (U+2014); some exports also use an en-dash or
-// a plain hyphen-minus surrounded by spaces. The right-hand side is
-// expected to contain the literal "Specialization" (case-insensitive).
+// Spec-bearing Plan lines look like `Plan: Honours History — Global
+// Interactions Specialization`. Separator is em/en-dash or spaced hyphen; the
+// right half is expected to contain "Specialization".
 const PLAN_SPLIT_RE = /\s+[—–-]\s+/;
 
-// "Specialization" appears in every spec name and every Plan spec-half, so
-// it carries no disambiguation signal — strip it when counting tokens.
+// "Specialization" appears in every spec name and Plan spec-half, so it
+// carries no disambiguation signal — strip it when counting tokens.
 const SPEC_SENTINEL_TOKENS = new Set(["specialization", "specializations"]);
 
 function escapeRegExp(s: string): string {
@@ -349,17 +329,14 @@ function tokensForSpecMatch(normalized: string): string[] {
 }
 
 /**
- * Parse a Plan/Program line that contains both a parent program and a
- * specialization. Returns the resolved program slug + specialization slug
- * if both halves match, otherwise null (callers should then fall back to
- * `matchProgramSlug` on the full line).
+ * Resolve a Plan/Program line carrying both a parent program and a
+ * specialization to { programId, specializationSlug }, or null if either half
+ * fails to match (callers fall back to `matchProgramSlug` on the full line).
  *
- * The fallback after exact match uses word-boundary token coverage rather
- * than raw substring: every non-sentinel token in the needle must appear as
- * a whole word in the candidate, AND the needle must carry at least two
- * non-sentinel tokens. A single token like "Interfaces" otherwise
- * substring-matches "Human Factors and Interfaces Specialization" and
- * silently picks a spec the user didn't intend.
+ * The non-exact fallback uses word-boundary token coverage, not substring:
+ * every non-sentinel needle token must appear as a whole word, and the needle
+ * must carry ≥2 such tokens. Otherwise a lone "Interfaces" substring-matches
+ * "Human Factors and Interfaces Specialization" and picks a spec by accident.
  */
 export function matchSpecializationFromPlan(
   planText: string,
@@ -408,9 +385,8 @@ export interface Categorized {
 }
 
 /**
- * Bucket each parsed course by status. Courses with a real status but a
- * code not in the loaded catalog are demoted to `unrecognized` so the
- * modal can prompt the user before adopting them.
+ * Bucket parsed courses by status. A course with a real status but a code not
+ * in the catalog is demoted to `unrecognized` so the modal can prompt first.
  */
 export function categorize(
   parseResult: TranscriptParseResult,

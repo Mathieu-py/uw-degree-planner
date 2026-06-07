@@ -13,3 +13,16 @@ export const TEXT_CODE_RE = /[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?/g;
 // set of courses, NOT a fixed list — must not be scraped as two literal codes.
 export const CODE_RANGE_RE =
   /[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?\s*[-–—]\s*(?:[A-Za-z]{2,8}\s?)?\d{3,4}/;
+
+/**
+ * Uppercase subject-code tokens (e.g. "BIOL", "ENVS") found in `text`, returned
+ * lowercased (default) or uppercased. The match is case-sensitive, so only
+ * already-uppercase tokens count — mixed-case prose words are ignored.
+ */
+export function extractSubjectCodes(
+  text: string,
+  to: "lower" | "upper" = "lower",
+): string[] {
+  const codes = text.match(/[A-Z]{2,8}/g) ?? [];
+  return codes.map((s) => (to === "lower" ? s.toLowerCase() : s.toUpperCase()));
+}

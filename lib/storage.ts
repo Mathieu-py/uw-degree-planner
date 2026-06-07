@@ -1,12 +1,8 @@
 /**
- * Browser localStorage wrappers that swallow access errors. Safari private
- * mode throws `SecurityError` on every call and quota-exceeded throws on
- * setItem; without these wrappers a single failure crashes the rendering
- * component. Reads return `null` on failure, writes/removes are best-effort.
- *
- * SSR-safe: every call checks for `window` before touching it, so these
- * helpers are callable from useEffect bodies and event handlers in client
- * components without conditional imports.
+ * Browser localStorage wrappers that swallow access errors (Safari private mode
+ * throws SecurityError; setItem throws on quota). Reads return `null` on
+ * failure, writes/removes are best-effort. SSR-safe: each call checks for
+ * `window` first.
  */
 
 export function safeGetItem(key: string): string | null {
@@ -19,11 +15,9 @@ export function safeGetItem(key: string): string | null {
 }
 
 /**
- * Returns `true` on a successful write, `false` if storage is unavailable or
- * the write threw (QuotaExceededError, SecurityError in Safari private mode,
- * SSR). Callers that need to surface a "couldn't save" affordance should check
- * the return value; callers that only want best-effort persistence can ignore
- * it.
+ * Returns `true` on a successful write, `false` if storage is unavailable or the
+ * write threw (quota, Safari private mode, SSR). Check the return value to
+ * surface a "couldn't save" affordance; ignore it for best-effort persistence.
  */
 export function safeSetItem(key: string, value: string): boolean {
   if (typeof window === "undefined") return false;

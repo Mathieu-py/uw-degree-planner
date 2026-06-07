@@ -23,15 +23,13 @@ import { discoverCatalogId } from "./scrape-programs";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 
-// UWFlow exposes no unit weights, so we enrich each course from UW's public
-// Kuali course catalog (keyless): one list call for the codes+pids, then one
-// detail call per course for its `credits.value`.
+// UWFlow exposes no unit weights, so enrich from UW's keyless Kuali catalog:
+// one list call for codes+pids, then a detail call per course for credits.value.
 const KUALI_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";
 const UNITS_CONCURRENCY = 12;
 
-// UWFlow returns the calendar description; we keep it through the fetch and
-// then split it into a sibling descriptions file so the committed catalog
-// (and the client payload built from it) stays lean.
+// UWFlow returns the calendar description; we split it into a sibling
+// descriptions file so the committed catalog (and client payload) stays lean.
 const FetchedCourseSchema = CourseSchema.extend({
   description: z.string().nullable(),
 });

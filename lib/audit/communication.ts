@@ -7,16 +7,11 @@ import {
 
 /**
  * The faculty Communication requirement (`degreeRequirements.communication`),
- * e.g. "ARTS160 or ARTS160E". It's a genuine pick-one degree requirement, but
- * it lives outside the rule tree — so unless one of its options is ALSO a named
- * course in the tree, nothing tracks it. This derives a trackable pick-one
- * requirement and flags whether the rules already cover it.
+ * e.g. "ARTS160 or ARTS160E" — a pick-one that lives outside the rule tree.
  *
- * `alreadyInTree` is the key guard: ~1/3 of programs (notably the sciences) list
- * the communication course as a required course, so it's already counted and
- * gated by the rules. Tracking it again would double-count its units. Callers
- * (the panel row, the headline) only treat it as a standalone requirement when
- * `alreadyInTree` is false.
+ * `alreadyInTree` guards double-counting: ~1/3 of programs (notably sciences)
+ * already list the communication course as required. Callers treat it as
+ * standalone only when `alreadyInTree` is false.
  */
 export interface CommunicationRequirement {
   title: string;
@@ -44,10 +39,7 @@ function ruleTreeCodes(program: Program): Set<string> {
   return codes;
 }
 
-/**
- * The program's communication requirement scored against placed courses, or
- * null when the program states none.
- */
+/** The communication requirement scored against placed courses, or null if none. */
 export function deriveCommunicationRequirement(
   program: Program,
   placedCodes: Iterable<string>,

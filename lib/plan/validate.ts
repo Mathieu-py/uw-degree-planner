@@ -1,25 +1,18 @@
 /**
- * Plan-level validations. Returns per-slot issues; the UI surfaces them as
- * inline badges on individual courses (prereq/antireq/coreq) and on the term
- * column header (overload).
+ * Plan-level validations. Returns per-slot issues; the UI shows them as inline
+ * badges on courses (prereq/antireq/coreq) and on the term header (overload).
  *
- * Strategy per validation:
- *  - Prereq: build the completed set of every slot STRICTLY before this
- *    slot's term, parse the course's prereq string with `parsePrereqs`,
- *    and run the existing `evaluate` engine. "uncertain" results (raw text /
- *    level expressions) are NOT flagged — they're surfaced as informational
- *    hints elsewhere in the audit.
- *  - Antireq: free-form course-code extraction from the antireq string. If
- *    ANY listed code appears anywhere in the plan (other than the course
- *    itself), flag both. This matches UW's convention that completing one
- *    of {X, Y} bars the other.
- *  - Coreq: parse the coreq string like prereqs, but evaluate against
- *    (completed-before-slot ∪ same-slot-courses) — coreqs allow either
- *    co-scheduled or previously-completed satisfiers.
- *  - Overload: academic slot has more than `ACADEMIC_TERM_CAP` courses.
+ * Per validation:
+ *  - Prereq: evaluate the course's parsed prereqs against everything completed
+ *    STRICTLY before this slot's term. "uncertain" results (raw text / level
+ *    expressions) are surfaced as hints elsewhere, not flagged here.
+ *  - Antireq: extract codes from the antireq string; if any appears elsewhere
+ *    in the plan, flag both (UW's "one of {X,Y} bars the other" convention).
+ *  - Coreq: like prereqs, but evaluated against completed-before ∪ same-slot
+ *    (coreqs allow co-scheduled or prior satisfiers).
+ *  - Overload: academic slot exceeds `ACADEMIC_TERM_CAP` courses.
  *
- * Co-op slots are skipped entirely (no overload, no per-course checks —
- * they don't have courses).
+ * Co-op slots are skipped entirely (they hold no courses).
  */
 
 import type { Course } from "@/lib/courses/types";
@@ -52,11 +45,9 @@ export function validatePlan(
 
   for (const slot of plan.slots) {
     if (slot.isCoop) continue;
-    // Pre-arrival transfer slots aren't real academic terms: they hold
-    // credits the student already has, often from another institution where
-    // our prereq/antireq strings don't apply. Skip validation entirely so we
-    // don't flag e.g. a transfer "MATH 137" against UW's "MATH 137" antireq
-    // list.
+    // Pre-arrival transfer slots aren't real academic terms (often from
+    // another institution where our prereq/antireq strings don't apply). Skip,
+    // so we don't flag e.g. a transfer "MATH 137" against UW's antireq list.
     if (slot.position === "pre") continue;
 
     if (slot.courses.length > ACADEMIC_TERM_CAP) {
@@ -146,11 +137,9 @@ export function validatePlan(
 }
 
 /**
- * Pull course codes out of a free-form requirement string. Matches sequences
- * like "ANTH 201", "MATH 137", "CS 246A" — letters followed by optional
- * whitespace and digits with an optional trailing letter. Returns lowercase
- * codes with whitespace stripped, deduplicated. Case-insensitive so the
- * helper survives a future scraper that emits mixed-case codes.
+ * Pull course codes out of a free-form requirement string ("ANTH 201",
+ * "CS 246A"): letters + optional space + digits + optional trailing letter.
+ * Returns lowercase, whitespace-stripped, deduped codes. Case-insensitive.
  */
 export function extractCourseCodes(text: string): string[] {
   const re = /\b([A-Za-z]+)\s*(\d+[A-Z]*)\b/gi;
@@ -164,9 +153,9 @@ export function extractCourseCodes(text: string): string[] {
 const extractCache = new Map<string, readonly string[]>();
 
 /**
- * Memoized {@link extractCourseCodes}, keyed on the raw string. The eligibility
- * core re-checks antireqs for many rows on every picker keystroke; the cache
- * avoids re-running the regex over thousands of strings. Mirrors `cachedParsePrereqs`.
+ * Memoized {@link extractCourseCodes}, keyed on the raw string. Eligibility
+ * re-checks antireqs for many rows on every picker keystroke, so this avoids
+ * re-running the regex over thousands of strings.
  */
 export function cachedExtractCourseCodes(
   text: string | null | undefined,

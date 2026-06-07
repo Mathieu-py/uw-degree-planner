@@ -12,11 +12,8 @@ import type { LocalPlan, PlanSlot, SlotCourse } from "@/lib/plan/types";
 
 /**
  * Append `course` to slot `slotId`, deduping by code. No-op if the slot is
- * missing or already holds the code.
- *
- * Generic over the plan shape (it only touches `slots`) so the catalog's
- * signed-in add can mutate a `ServerPlan` and get a `ServerPlan` back without
- * a cast, while `LocalPlan` callers keep their return type.
+ * missing or already holds the code. Generic over the plan shape so a
+ * `ServerPlan` in / `ServerPlan` out works without a cast.
  */
 export function addCourseToSlot<T extends { slots: PlanSlot[] }>(
   plan: T,

@@ -1,5 +1,5 @@
 import { Icon } from "@/components/ui/Icon";
-import type { AuditNode } from "@/lib/audit/compile";
+import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { describeRule } from "@/lib/programs";
@@ -22,13 +22,10 @@ export function ChooseOneRow({
 }) {
   const r = node.ruleNode;
   if (r.kind !== "pick") return null;
-  // `selectMin` is absent for "choose any" / "no more than N" picks, which the
-  // compiler reports as vacuously met. Only collapse to the chosen chip(s) once
-  // a placement actually satisfies the choice — otherwise keep showing the
-  // options (a vacuously-met optional pick has none, and would render empty).
-  const decided =
-    (node.status === "met" || node.status === "overSatisfied") &&
-    node.satisfiers.length > 0;
+  // Only collapse to the chosen chip(s) once a placement satisfies the choice.
+  // A vacuously-met optional pick (no selectMin) has no satisfiers and would
+  // otherwise render empty, so keep showing the options until truly decided.
+  const decided = isSatisfied(node);
   const selectMin = r.selectMin ?? 0;
   const label =
     selectMin === 1 && (r.selectMax ?? 1) === 1

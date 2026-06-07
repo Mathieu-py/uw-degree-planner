@@ -1,12 +1,11 @@
 import { Icon } from "@/components/ui/Icon";
-import { formatCourseCode } from "@/lib/format";
+import { formatCourseCode, joinWithOverflow } from "@/lib/format";
 
 /**
- * A criteria-based requirement (subject pool / faculty breadth) — defined by a
- * subject + level filter, not a fixed course list. Renders as one "search the
- * catalog" card summarizing the criteria; clicking it opens the picker
- * pre-filtered to those subjects/levels (so the sidebar shows the filter).
- * Placed courses that count show as met chips above.
+ * A criteria-based requirement (subject pool / breadth) — a subject + level
+ * filter, not a fixed list. Renders as one "search the catalog" card; clicking
+ * opens the picker pre-filtered to those subjects/levels. Counting courses show
+ * as met chips above.
  */
 export function PoolCard({
   lead,
@@ -21,9 +20,7 @@ export function PoolCard({
   satisfiers: string[];
   onBrowse: (() => void) | null;
 }) {
-  const shown = subjects.slice(0, 3);
-  const extra = subjects.length - shown.length;
-  const sub = [shown.join(" · ") + (extra > 0 ? ` +${extra}` : ""), levelText]
+  const sub = [joinWithOverflow(subjects), levelText]
     .filter(Boolean)
     .join("  ·  ");
   const inner = (

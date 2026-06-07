@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal, ModalHeader } from "@/components/ui/Modal";
+import { pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { HandoffResolution } from "@/lib/plan/sync/useAnonHandoff";
 import type { LocalPlan } from "@/lib/plan/types";
@@ -30,10 +31,9 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
     () => void onResolve("cancel"),
   );
 
-  // Import/discard are async actions paired with the exit animation via
-  // Promise.all — the fade-out runs while createPlanWithSeed is in flight.
-  // On failure (onResolve resolves without the parent unmounting us),
-  // reset() restores visibility so the user can retry.
+  // Import/discard pair the async action with the exit animation via Promise.all
+  // (fade-out runs while createPlanWithSeed is in flight). On failure, reset()
+  // restores visibility so the user can retry.
   const pick = useCallback(
     async (choice: HandoffResolution) => {
       if (busy) return;
@@ -48,9 +48,8 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
     [busy, onResolve, animateOut, reset],
   );
 
-  // Disable all action buttons during busy OR during the cancel-exit
-  // animation. Without the isClosing check, a user who pressed Esc could
-  // still click Import during the 300ms exit and end up resolving twice.
+  // Disable actions during busy OR the cancel-exit animation, else an Esc
+  // followed by an Import click during the 300ms exit resolves twice.
   const disabled = busy || isClosing;
 
   return (
@@ -97,5 +96,5 @@ function summarize(plan: LocalPlan): string {
   const start = plan.startTermId
     ? (termInfo(plan.startTermId)?.label ?? `Term ${plan.startTermId}`)
     : "no start term";
-  return `${slotCount} placed course${slotCount === 1 ? "" : "s"} · ${start}`;
+  return `${slotCount} placed ${pluralize(slotCount, "course")} · ${start}`;
 }

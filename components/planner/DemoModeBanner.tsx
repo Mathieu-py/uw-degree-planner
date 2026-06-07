@@ -4,17 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 
-// Mirrors the `uwfinder.handoff.done` sessionStorage convention in
-// lib/plan/sync/useAnonHandoff.ts: dismissing hides the banner for the rest of
-// the browser session (survives in-session navigation) but it returns on a
-// fresh session / new tab.
+// Per-session dismissal (survives in-session nav, returns on a new tab), like
+// the handoff convention in useAnonHandoff.ts.
 const DISMISS_KEY = "uwfinder.demoBanner.dismissed";
 
 /**
- * Slim informational banner shown to anonymous ("Demo mode") users in the
- * planner, naming the no-account experience and pointing to sign-in to save.
- * Rendered by PlannerLayout only when `!isAuthed`, so it appears across every
- * branch (empty state, loaded plan, loading, error). Dismissible per session.
+ * Slim banner for anonymous ("Demo mode") planner users, pointing to sign-in to
+ * save. Rendered by PlannerLayout only when `!isAuthed`. Dismissible per session.
  */
 export function DemoModeBanner() {
   // Lazy initializer reads sessionStorage browser-side only. PlannerShell gates

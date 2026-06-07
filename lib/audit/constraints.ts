@@ -13,3 +13,20 @@ export function programConstraints(program: Program): UnitConstraint[] {
     ...(program.degreeRequirements?.constraints ?? []),
   ];
 }
+
+// --- Shared patterns for parsing constraint text (breadth / level-floor /
+// elective rules all read the same Kuali phrasings). ---
+
+/** A unit amount: "1.0 unit", "14.5 units". */
+export const UNIT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
+/** A level bound: "200-level or above", "300-level and below". */
+export const LEVEL_BOUND_RE =
+  /(\d{3})-level\s+(?:or|and)\s+(above|higher|below|lower)/i;
+
+/** Subject tokens from a fragment like "BIOL or EARTH" → ["biol", "earth"]. */
+export function subjectList(fragment: string): string[] {
+  return fragment
+    .split(/[,/&]|\bor\b|\band\b|\s+/i)
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => /^[a-z]{2,6}$/.test(s) && s !== "additional");
+}

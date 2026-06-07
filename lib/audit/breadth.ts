@@ -1,19 +1,14 @@
 import type { Program, UnitConstraint } from "@/lib/programs";
-import { programConstraints } from "./constraints";
+import { programConstraints, UNIT_RE } from "./constraints";
 
 /**
  * Faculty breadth / distribution requirements arrive as verbatim notes
- * (`program.unitPlan.constraints` / `program.degreeRequirements.constraints`),
- * e.g. "Humanities — 1.0 unit: CLAS, ENGL, HIST, MEDVL, PHIL". The calendar
- * states them in UNITS, so we track them in units too — "how many units of
- * placed courses are in these subjects?" — rather than fabricating a course
- * count (the old "1.0 unit → 2 courses" assumed 0.5 units/course and
- * under-credited a 1.0-unit course).
+ * (`program.{unitPlan,degreeRequirements}.constraints`), e.g. "Humanities — 1.0
+ * unit: CLAS, ENGL, HIST, …". The calendar states them in UNITS, so we track
+ * units, not a fabricated course count (0.5/course under-credits a 1.0 course).
  *
- * It's an INDEPENDENT subject filter over the plan: a course can satisfy breadth
- * AND the major (as real audits allow), with no allocation and no reconciliation
- * against the unit total — so it gates completion without inflating the
- * denominator.
+ * An independent subject filter: a course can satisfy breadth AND the major, so
+ * it gates completion without inflating the unit-total denominator.
  */
 export interface BreadthRequirement {
   /** Display name, e.g. "Humanities". */
@@ -30,7 +25,6 @@ export interface BreadthRequirement {
   sourceText: string;
 }
 
-const UNIT_RE = /(\d+(?:\.\d+)?)\s*units?/i;
 /** A subject code: 1–10 letters, optionally with an internal slash/ampersand. */
 const SUBJECT_RE = /^[A-Z][A-Z/&]{0,9}$/;
 
@@ -40,9 +34,8 @@ export function subjectOf(code: string): string {
 }
 
 /**
- * Parse a breadth/distribution constraint into a trackable count requirement.
- * Returns null when the text isn't a subject-list breadth rule (e.g. a level-only
- * minimum with no subject list) — the caller surfaces those verbatim instead.
+ * Parse a breadth constraint into a trackable requirement, or null when it isn't
+ * a subject-list rule (e.g. a level-only minimum) — caller surfaces those verbatim.
  */
 export function parseBreadthConstraint(
   c: UnitConstraint,
@@ -62,20 +55,17 @@ export function parseBreadthConstraint(
     .filter((s) => SUBJECT_RE.test(s));
   if (subjects.length === 0) return null;
 
-  // Title: the segment before the dash ("Humanities — 1.0 unit: …"), else the
-  // label with any "Breadth — " prefix stripped.
-  const head = src.split(/\s+[—–-]\s+/)[0]?.trim();
+  // Title: the segment before the dash ("Humanities — …"), else the label with
+  // any "Breadth — " prefix stripped.
+  const head = src.split(/\s+[—–-]\s+/)[0].trim();
   const title =
-    head && head.length > 0
-      ? head
-      : c.label.replace(/^breadth\s*[—–-]\s*/i, "").trim() || c.label;
+    head || c.label.replace(/^breadth\s*[—–-]\s*/i, "").trim() || c.label;
   return { title, subjects, needUnits, sourceText: src };
 }
 
 /**
- * Trackable breadth requirements for a program, scored against the placed
- * courses. Constraints that don't parse as subject-list breadth are omitted
- * here (see {@link nonBreadthConstraints}).
+ * A program's trackable breadth requirements, scored against placed courses.
+ * Non-subject-list constraints are omitted (see {@link nonBreadthConstraints}).
  */
 export function deriveBreadthRequirements(
   program: Program,

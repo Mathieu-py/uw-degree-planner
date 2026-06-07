@@ -1,26 +1,16 @@
 /**
- * Silent-loss diagnostic for the program-requirements parser.
+ * Silent-loss diagnostic for the requirements parser: a requirement dropped with
+ * NO trace (no rule node, no `unverified` entry) lets the audit read "100%"
+ * while a real requirement went untracked.
  *
- * The audit can only read "100% complete" honestly if every owed requirement in
- * a program's calendar entry was either turned into a rule node OR recorded as
- * `unverified` (which gates the headline below 100% and is surfaced to the
- * student). A requirement that the parser drops with NO trace is a silent loss:
- * the audit would read complete while a real requirement was never tracked.
- *
- * This script re-runs `parseProgramRequirements` over the saved raw Kuali
- * payloads in `scripts/diagnostic/raw/*.json` (no network needed) and reports,
- * per program:
- *   - warnings  : parser misses (recognized-but-unextractable rules, unknown prose)
+ * Re-runs `parseProgramRequirements` over the saved raw payloads in
+ * `scripts/diagnostic/raw/*.json` (no network) and reports per program:
+ *   - warnings  : parser misses (unextractable rules, unknown prose)
  *   - unverified: owed requirements we couldn't structure (audit gates on these)
+ * A clean run is zero warnings.
  *
- * A clean run is zero warnings everywhere. Any warning is a requirement that was
- * either dropped or only partially captured — investigate it.
- *
- * Run: pnpm tsx scripts/diagnostic/check-dropped.ts
- *
- * Note: this covers only the 8-9 saved sample programs. For the full 194-program
- * picture, run `pnpm scrape-programs` and watch its per-program warning output —
- * the same parser, the same signals.
+ * Run: pnpm tsx scripts/diagnostic/check-dropped.ts. Covers only the saved
+ * samples; for the full set run `pnpm scrape-programs`.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";

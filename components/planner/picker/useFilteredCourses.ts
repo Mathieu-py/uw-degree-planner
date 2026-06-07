@@ -72,11 +72,10 @@ export interface UseFilteredCoursesResult {
 }
 
 /**
- * Slot-picker filter+sort+paginate pipeline as a hook. The default view
- * narrows the catalog to candidates for the target slot (not placed, optional
- * focus list), then applies user filters, full-text search, prereq eligibility
- * annotation, and column sort. Pagination resets to the first page on every
- * filter / sort change.
+ * Slot-picker filter+sort+paginate pipeline. Narrows the catalog to slot
+ * candidates (not placed, optional focus list), then applies user filters,
+ * search, prereq eligibility annotation, and sort. Pagination resets on every
+ * filter/sort change.
  */
 export function useFilteredCourses({
   catalog,
@@ -89,9 +88,8 @@ export function useFilteredCourses({
   focusCodes,
   initialFilters,
 }: UseFilteredCoursesArgs): UseFilteredCoursesResult {
-  // Seed once on mount; the picker remounts per open, so a drill-in's preset
-  // (e.g. a subject pool's subjects) lands as the starting filter state and the
-  // sidebar reflects it — the student can widen/narrow from there.
+  // Seed once on mount (the picker remounts per open), so a drill-in's preset
+  // lands as the starting filter state, which the student can widen/narrow.
   const [filters, setFilters] = useState<PickerFilters>(() => ({
     ...DEFAULT_FILTERS,
     ...initialFilters,
@@ -139,18 +137,13 @@ export function useFilteredCourses({
     );
   }, [userFiltered, filters.query]);
 
-  // Eligibility annotation is the most expensive step (parsing every
-  // course's prereq AST + walking it against the completed set). It splits
-  // by mode:
-  //
-  // - `hideUnmetPrereqs === true`: we MUST annotate everything before
-  //   pagination, otherwise an unmet row would survive into a later page.
-  //   Correctness > perf here.
-  //
-  // - `hideUnmetPrereqs === false`: annotation is purely decorative, so we
-  //   defer it past sort+slice and only evaluate the ~50 rows we render.
-  //   Every keystroke in the search box used to re-evaluate the entire
-  //   ~10k catalog; this brings it down to one screenful.
+  // Eligibility annotation is the most expensive step (parse + walk each prereq
+  // AST). Split by mode:
+  // - hideUnmetPrereqs true: MUST annotate everything before pagination, else
+  //   an unmet row survives into a later page.
+  // - hideUnmetPrereqs false: annotation is decorative, so defer past sort+slice
+  //   and only evaluate the ~50 rendered rows (vs. the whole ~10k catalog per
+  //   keystroke).
   const sortedCourses = useMemo<EligibilityRow[]>(() => {
     if (filters.hideUnmetPrereqs) {
       const baseRows = searched.map((course) => ({

@@ -5,10 +5,9 @@ import { useEffect, useSyncExternalStore } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
- * NEXT_PUBLIC_* vars are inlined at build time, so this is a true constant
- * per build. When unset (fresh clone with no .env.local), the auth store
- * stays empty and `ready` flips to true immediately — consumers can hide
- * sign-in UI and the planner falls back to its anon localStorage path.
+ * NEXT_PUBLIC_* vars are inlined at build time, so this is a per-build constant.
+ * When unset (fresh clone, no .env.local), the store stays empty and `ready`
+ * flips true immediately — sign-in UI hides and the planner uses the anon path.
  */
 export const SUPABASE_CONFIGURED =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -34,10 +33,9 @@ function subscribe(listener: () => void) {
   };
 }
 
-// Two snapshot getters returning PRIMITIVES so useSyncExternalStore's
-// reference-equality check is trivially correct. Returning a fresh object
-// (e.g. `{ user, ready }`) from a single getter would trigger an infinite
-// render loop — this is the canonical foot-gun of the pattern.
+// Snapshot getters return PRIMITIVES so useSyncExternalStore's reference check
+// is trivially correct. Returning a fresh object from one getter would loop
+// renders forever — the canonical foot-gun of this pattern.
 function getUserSnapshot(): User | null {
   return state.user;
 }
@@ -48,14 +46,11 @@ function getReadySnapshot(): boolean {
   return state.ready;
 }
 
-// Server snapshots — used by useSyncExternalStore for SSR *and* the first
-// client hydration render, which must agree byte-for-byte. initAuth only runs
-// in an effect (client-only), so the server always renders the pre-init state;
-// these constants pin hydration to that same state. Without them, hydration
-// reads the live getters above, and a fast getSession() resolution can flip
-// `ready` to true before React hydrates this subtree — producing a mismatch
-// against the skeleton the server emitted. After hydration React switches to
-// the live getters and re-renders if auth has since resolved.
+// Server snapshots — used for SSR and the first hydration render, which must
+// match byte-for-byte. initAuth runs only in an effect, so the server renders
+// pre-init state; these pin hydration to it. Without them a fast getSession()
+// could flip `ready` before hydration and mismatch the server's skeleton. React
+// switches to the live getters after hydration.
 function getUserServerSnapshot(): User | null {
   return null;
 }
@@ -66,10 +61,9 @@ function getReadyServerSnapshot(): boolean {
   return false;
 }
 
-// Module-level guard. We never tear down the Supabase listener — it lives
-// for the page's lifetime alongside the underlying @supabase/ssr browser
-// singleton. Tearing down on hook unmount would mean the last unmounted
-// consumer severs auth tracking for any future mounts.
+// Module-level guard. The Supabase listener is never torn down — it lives for
+// the page's lifetime alongside the @supabase/ssr browser singleton. Tearing
+// down on unmount would let the last consumer sever auth for future mounts.
 let initialized = false;
 
 function initAuth(): void {
@@ -84,9 +78,8 @@ function initAuth(): void {
 
   const supabase = createSupabaseBrowserClient();
 
-  // Refresh the username from the canonical profiles row. Best-effort and only
-  // ever *upgrades* to a non-null DB value — a failed/empty fetch leaves the
-  // metadata-seeded username (below) in place rather than clobbering it. Guarded
+  // Refresh username from the profiles row. Best-effort; only ever upgrades to
+  // a non-null DB value (a failed/empty fetch keeps the metadata seed). Guarded
   // by id so a stale response for a previous user can't win.
   function syncProfile(user: User | null): void {
     if (!user) return;
@@ -108,11 +101,11 @@ function initAuth(): void {
       });
   }
 
-  // getSession() reads the persisted session from local storage (no network
-  // round-trip), so `ready` flips almost immediately and the planner can paint
-  // the correct branch on first render. getUser() would block first paint on a
-  // call to the auth server. This only gates UI — every server action still
-  // re-validates the token via RLS, so trusting the stored session here is safe.
+  // getSession() reads the persisted session from local storage (no network),
+  // so `ready` flips almost immediately and the planner paints the right branch
+  // on first render; getUser() would block on the auth server. UI-only — server
+  // actions re-validate the token via RLS, so trusting the stored session here
+  // is safe.
   supabase.auth
     .getSession()
     .then(({ data }) => {
@@ -141,10 +134,9 @@ function initAuth(): void {
 }
 
 /**
- * The username is stored in user_metadata at sign-up, so it rides along on the
- * user object and is available synchronously — no profiles round-trip. Seeding
- * from here is what stops the header briefly showing the email before the DB
- * fetch resolves. Returns null for OAuth users (no username set).
+ * Username from user_metadata (set at sign-up), available synchronously on the
+ * user object — no profiles round-trip. Seeding from here stops the header
+ * flashing the email before the DB fetch. Null for OAuth users.
  */
 function usernameFromMetadata(user: User | null): string | null {
   const raw = user?.user_metadata?.username;
@@ -162,10 +154,9 @@ export interface UseAuthStateResult {
 }
 
 /**
- * Subscribe to the shared auth store. The first hook to mount kicks off
- * `initAuth`; subsequent mounts are no-ops. Two separate `useSyncExternalStore`
- * calls keep snapshots primitive — the returned object is assembled in the
- * hook body, which React doesn't compare across renders.
+ * Subscribe to the shared auth store. The first mount kicks off `initAuth`;
+ * later mounts are no-ops. Separate `useSyncExternalStore` calls keep snapshots
+ * primitive — the returned object is assembled in the hook body.
  */
 export function useAuthState(): UseAuthStateResult {
   useEffect(() => {
@@ -195,11 +186,7 @@ export function useAuthState(): UseAuthStateResult {
   };
 }
 
-/**
- * Test-only: drops the store back to defaults and clears the init guard so
- * each test starts from a clean slate. The leading underscore signals
- * "don't call this from app code".
- */
+/** Test-only: reset the store to defaults and clear the init guard. */
 export function __resetAuthStoreForTests(): void {
   state = { user: null, username: null, ready: false };
   listeners.clear();

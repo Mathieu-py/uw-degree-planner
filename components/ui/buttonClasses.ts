@@ -1,7 +1,6 @@
-// Class logic for the button design system, kept in a plain (non-"use client")
-// module so it can be called from Server Components too — e.g. a `<Link>` CTA
-// styled with `buttonClasses(...)`. The interactive `<Button>` wrapper lives in
-// Button.tsx and is built on this.
+// Button design-system class logic, in a plain (non-"use client") module so
+// Server Components can call it too (e.g. a `<Link>` CTA). The interactive
+// `<Button>` wrapper in Button.tsx is built on this.
 
 // Design-system variants:
 //   primary       — ink fill (black/white). The default CTA. NOT gold.
@@ -57,15 +56,10 @@ const SIZES: Record<ButtonSize, string> = {
 
 /**
  * The merged class string for the button visual, independent of the `<button>`
- * element. Apply it directly to a non-button CTA — e.g. a `<Link>` that should
- * look like a button:
- *
- *   <Link className={buttonClasses({ variant: "primary", size: "lg" })}>…</Link>
- *
- * Prefer this over rendering a `<Button>` around a `<Link>`: a Server Component
- * passing a `<Link>` child into the client `<Button>` serializes it as a lazy
- * element, which can't be cloned to merge classes and causes a hydration
- * mismatch. `<Button>` itself is built on this helper.
+ * element — apply it directly to a non-button CTA like a `<Link>`. Prefer this
+ * over wrapping a `<Link>` in `<Button>`: a Server Component passing a `<Link>`
+ * into the client `<Button>` serializes it as a lazy element that can't be
+ * cloned to merge classes, causing a hydration mismatch.
  */
 export function buttonClasses({
   variant = "primary",

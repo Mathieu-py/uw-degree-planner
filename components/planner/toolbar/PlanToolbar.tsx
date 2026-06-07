@@ -21,28 +21,24 @@ interface Props {
   /** Anon users get no bar — they have a single local plan. */
   isAuthed: boolean;
   /**
-   * When true, renders as inline flex content (no border/background) so it
-   * can sit inside the toolbar's left group. When false, renders as a
-   * self-contained bordered card — used by branches that don't have a
-   * toolbar (EmptyState, load errors) so the user can still switch plans.
+   * Inline flex content (no border/bg) to sit in the toolbar's left group, vs.
+   * a self-contained bordered card for branches without a toolbar (EmptyState,
+   * load errors).
    */
   inline?: boolean;
   /**
-   * Inline mode only: rendered between the plan dropdown (left) and the
-   * "+ New plan" + options menu (right). PlannerShell injects the save
-   * status badge here so it shares a single flex row with the plan switcher.
+   * Inline only: rendered between the plan dropdown and the "+ New plan"/options
+   * menu. PlannerShell injects the save-status badge here.
    */
   children?: ReactNode;
   /**
-   * Inline mode only: rendered as the last element in the toolbar, after
-   * the "Plan options" menu. Used by PlannerShell for the "Data & settings"
-   * menu so it sits at the far right of the header.
+   * Inline only: rendered last, after the options menu. Used for the "Data &
+   * settings" menu at the far right.
    */
   trailing?: ReactNode;
   /**
-   * Extra entries appended to the "Edit plan" menu (after rename / duplicate
-   * / share / delete). Lets PlannerShell fold plan-settings + workspace-level
-   * actions into the same menu so the toolbar doesn't need a second one.
+   * Extra entries appended to the "Edit plan" menu, so PlannerShell can fold
+   * plan-settings + workspace actions into one menu.
    */
   extraItems?: MenuItem[];
 }
@@ -52,15 +48,10 @@ function focusOnMount(el: HTMLInputElement | null) {
 }
 
 /**
- * Compact plan switcher: dropdown of the user's plans, an "Edit plan"
- * overflow menu (rename / duplicate / share / delete), and a primary
- * "+ New plan" button. The four CRUD actions used to render as inline
- * buttons; folding them into a menu keeps the header quiet so the plan
- * dropdown + save indicator stay legible.
- *
- * Rename and delete swap the dropdown for an inline form when active.
- * Their triggers live in the options menu on the right; the form replaces
- * the dropdown on the left because that's where the plan name lives.
+ * Compact plan switcher: a plans dropdown, an "Edit plan" overflow menu (rename
+ * / duplicate / share / delete), and a "+ New plan" button. CRUD lives in the
+ * menu to keep the header quiet. Rename/delete swap the dropdown for an inline
+ * form when active (the form replaces the dropdown, where the plan name lives).
  */
 export function PlanToolbar({
   isAuthed,
@@ -150,9 +141,8 @@ function PlanToolbarAuthed({
     setConfirmingDelete(false);
   }, []);
 
-  // Single Escape handler: close the plan picker and dismiss any inline
-  // edit/confirm in one listener. Both actions are no-ops when their state
-  // is already cleared, so running both is safe.
+  // Single Escape handler: close the picker and dismiss any inline edit/confirm.
+  // Both are no-ops when already cleared, so running both is safe.
   const handleEscape = useCallback(() => {
     setPickerOpen(false);
     dismissInline();
@@ -231,8 +221,7 @@ function PlanToolbarAuthed({
   }
 
   // Loading + empty: the planner redirects "no plans yet" to /plan/new and
-  // shows a skeleton while plans load. The bar would be duplicative or
-  // confusing in those states, so hide it.
+  // skeletons while loading, so the bar would be redundant — hide it.
   if (plans === null || plans.length === 0) return null;
 
   // A stale/invalid planId in the URL shouldn't hide the toolbar — fall back to

@@ -1,7 +1,7 @@
 /**
- * Eligibility annotation for the slot-picker rows. Kept separate from
- * `filters.ts` because evaluation is expensive and only the picker needs it.
- * Delegates the decision to the shared {@link evaluateCourseEligibility}.
+ * Eligibility annotation for slot-picker rows. Separate from `filters.ts` since
+ * evaluation is expensive and only the picker needs it. Delegates to the shared
+ * {@link evaluateCourseEligibility}.
  */
 
 import type { ProgramIdentity } from "@/lib/programs";
@@ -39,11 +39,10 @@ export interface AttachEligibilityOptions {
 }
 
 /**
- * Annotate rows with an eligibility verdict and optionally drop ineligible ones.
- *
- * With an empty `completed` set we can't judge prereqs, so prereq/level/program
- * verdicts carry no chip and aren't hidden. The term-independent antireq check
- * still applies (e.g. an antireq in a later term blocks adding to term 1A).
+ * Annotate rows with an eligibility verdict, optionally dropping ineligible
+ * ones. With an empty `completed` set we can't judge prereqs, so those verdicts
+ * carry no chip and aren't hidden; the term-independent antireq check still
+ * applies.
  */
 export function attachEligibility(
   rows: EligibilityRow[],
@@ -69,10 +68,9 @@ export function attachEligibility(
         programReferenced,
         placedAnywhere,
       });
-      // Without a completed set, only the term-independent antireq verdict is
-      // trustworthy; suppress prereq-based chips/filtering. (The duplicate
-      // verdict never fires here — picker candidates are pre-filtered by the
-      // placed set in useFilteredCourses.)
+      // Without a completed set, only the antireq verdict is trustworthy;
+      // suppress prereq-based chips/filtering. (The duplicate verdict never
+      // fires here — candidates are pre-filtered in useFilteredCourses.)
       const trustworthy =
         canAssessPrereqs || verdict.antireqConflicts.length > 0;
       return { course: r.course, eligibility: trustworthy ? verdict : null };

@@ -1,3 +1,4 @@
+import { countNoun, formatLevelRange } from "@/lib/format";
 import type { SubjectPoolNode } from "@/lib/programs";
 import type { DrillFn } from "../types";
 import { PoolCard } from "./PoolCard";
@@ -11,15 +12,6 @@ function poolLevels(min?: number, max?: number): number[] {
   return sub.length === all.length ? [] : sub;
 }
 
-/** Human level-range note, e.g. "300–400 level". Null when unbounded. */
-function poolLevelText(min?: number, max?: number): string | null {
-  if (min == null && max == null) return null;
-  if (min != null && max != null)
-    return min === max ? `${min} level` : `${min}–${max} level`;
-  if (min != null) return `${min}+ level`;
-  return `up to ${max} level`;
-}
-
 /** An open subject pool: "choose N courses in these subjects/levels". */
 export function SubjectPoolBody({
   node,
@@ -31,9 +23,9 @@ export function SubjectPoolBody({
   const subjects = node.subjectCodes.map((s) => s.toUpperCase());
   return (
     <PoolCard
-      lead={`Choose ${node.selectCount} course${node.selectCount === 1 ? "" : "s"}`}
+      lead={`Choose ${countNoun(node.selectCount, "course")}`}
       subjects={subjects}
-      levelText={poolLevelText(node.minLevel, node.maxLevel)}
+      levelText={formatLevelRange(node.minLevel, node.maxLevel)}
       satisfiers={[]}
       onBrowse={
         onDrill

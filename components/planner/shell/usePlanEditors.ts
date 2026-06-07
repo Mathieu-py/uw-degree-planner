@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import type { FilterPreset } from "@/lib/courses/types";
+import { countNoun, pluralize } from "@/lib/format";
 import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
 import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { rebuildSlotsForStream } from "@/lib/plan/sequence";
@@ -29,14 +30,11 @@ interface UsePlanEditorsArgs {
 
 /**
  * The planner's mutation surface: every edit handler (pick, remove, drag, apply
- * transcript, save settings, reset, audit drill-in) plus the small bits of
- * transient state they own (`termChoiceCode`, the in-flight `creating` guard).
- * All writes route through `setPlan`, so persistence + re-validation happen
- * uniformly. Kept apart from the shell so the orchestrator stays scannable.
- *
- * Handlers read the latest plan off a ref rather than closing over `plan`, so
- * they stay referentially stable across edits — the memoized timeline columns
- * don't churn on every keystroke.
+ * transcript, save settings, reset, audit drill-in) plus the transient state
+ * they own. All writes route through `setPlan` for uniform persistence +
+ * re-validation. Handlers read the latest plan off a ref rather than closing
+ * over `plan`, so they stay referentially stable (memoized timeline columns
+ * don't churn per keystroke).
  */
 export function usePlanEditors({
   plan,
@@ -52,22 +50,19 @@ export function usePlanEditors({
   setTranscriptOpen,
   setImportBanner,
 }: UsePlanEditorsArgs) {
-  // Latest plan, read by the edit handlers so they don't have to list `plan`
-  // in their dep arrays — keeping the handlers referentially stable across
-  // edits so the memoized timeline columns aren't invalidated every keystroke.
+  // Latest plan, read by the edit handlers so they stay off `plan` in their dep
+  // arrays (see the hook doc).
   const planRef = useRef(plan);
   planRef.current = plan;
 
   const [termChoiceCode, setTermChoiceCode] = useState<string | null>(null);
-  // Guards the in-planner transcript import against the double-click
-  // duplicate-plan bug — without it, a second click during the network
-  // round-trip creates a second server plan.
+  // Guards the transcript import against the double-click duplicate-plan bug
+  // (a second click mid-round-trip would create a second server plan).
   const [creating, setCreating] = useState(false);
 
-  // Bridge for the in-planner transcript import: writes route to setPlan when
-  // there's a current plan, or create+navigate when authed without a planId.
-  // Returns whether the write landed — a failed server create (create → null)
-  // reports false so the caller doesn't flash a success state.
+  // Transcript-import bridge: setPlan when there's a current plan, else
+  // create+navigate when authed with no planId. Returns false on a failed
+  // server create so the caller doesn't flash a success state.
   const persistOrCreate = useCallback(
     async (next: LocalPlan, name: string = NEW_PLAN_NAME): Promise<boolean> => {
       if (isAuthed && planId === null) {
@@ -137,9 +132,9 @@ export function usePlanEditors({
     }) => {
       if (!plan) return;
       const streamChanged = next.stream !== plan.stream;
-      // Stream changes re-sequence the cadence; programId/specializationId
-      // alone never touch slots. startTermId === null means the plan has no
-      // calendar anchor yet — update the metadata but skip rebuild.
+      // Stream changes re-sequence the cadence; program/spec alone never touch
+      // slots. startTermId === null means no calendar anchor — update metadata,
+      // skip rebuild.
       if (streamChanged && plan.startTermId !== null) {
         const { slots, droppedCodes } = rebuildSlotsForStream(
           plan.slots,
@@ -156,7 +151,7 @@ export function usePlanEditors({
         });
         if (droppedCodes.length > 0) {
           setImportBanner(
-            `Switched stream to ${next.stream}. ${droppedCodes.length} course${droppedCodes.length === 1 ? "" : "s"} no longer fit and ${droppedCodes.length === 1 ? "was" : "were"} removed: ${droppedCodes.join(", ")}.`,
+            `Switched stream to ${next.stream}. ${countNoun(droppedCodes.length, "course")} no longer fit and ${pluralize(droppedCodes.length, "was", "were")} removed: ${droppedCodes.join(", ")}.`,
           );
         }
         return;
@@ -171,11 +166,10 @@ export function usePlanEditors({
     [plan, setPlan, setImportBanner],
   );
 
-  // Audit drill-in. A single named course (an "Add") only needs a term, so open
-  // the term picker for it. A multi-code "Browse" (a finite list) opens the slot
-  // picker focused on those codes; a `preset` (a subject pool / breadth, no
-  // fixed list) instead opens the picker with its subject + level filters
-  // pre-applied. Both target the first academic term.
+  // Audit drill-in. A single named course needs only a term → term picker. A
+  // multi-code "Browse" opens the slot picker focused on those codes; a `preset`
+  // (subject pool / breadth, no fixed list) opens it with subject + level
+  // filters pre-applied. Both target the first academic term.
   const handleDrillToRequirement = useCallback(
     (codes: string[], preset?: FilterPreset) => {
       if (codes.length === 0 && !preset) return;
@@ -229,9 +223,8 @@ export function usePlanEditors({
     [setPlan],
   );
 
-  // Drag-and-drop: a placed chip dropped on another term ("move") or an audit
-  // "missing" chip dropped into a term ("add"). All routed through setPlan, so
-  // persistence and re-validation happen exactly as for any other edit.
+  // Drag-and-drop: a placed chip moved to another term ("move") or an audit
+  // "missing" chip dropped into a term ("add"). Routed through setPlan.
   const handleCourseDrop = useCallback(
     (toSlotId: string, data: CourseDragData) => {
       const cur = planRef.current;
@@ -279,7 +272,7 @@ function buildImportBanner(args: {
   }
   if (args.unsortedCodes.length > 0) {
     parts.push(
-      `${args.unsortedCodes.length} course${args.unsortedCodes.length === 1 ? "" : "s"} couldn't be placed onto the cadence (${args.unplacedTerms.join(", ")}): ${args.unsortedCodes.join(", ")}.`,
+      `${countNoun(args.unsortedCodes.length, "course")} couldn't be placed onto the cadence (${args.unplacedTerms.join(", ")}): ${args.unsortedCodes.join(", ")}.`,
     );
   }
   return parts.join(" ");

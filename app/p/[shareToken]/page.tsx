@@ -7,8 +7,8 @@ import { loadSharedPlan } from "@/lib/plan/server/actions";
 import { getProgramOptions } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
 
-// generateMetadata and the page both need the shared plan. Dedup the RPC
-// across them with React.cache so cold visitors pay one round trip, not two.
+// generateMetadata and the page both need the shared plan; React.cache dedups
+// the RPC so cold visitors pay one round trip.
 const loadSharedPlanCached = cache(loadSharedPlan);
 
 interface PageProps {
@@ -34,8 +34,7 @@ export default async function SharedPlanPage({ params }: PageProps) {
   const result = await loadSharedPlanCached(shareToken);
   if (!result.ok || !result.data) notFound();
 
-  // Same digest as the main /plan route — kept tiny on the wire so the
-  // shared view loads fast even for cold visitors.
+  // Same tiny digest as /plan, so the shared view loads fast for cold visitors.
   const programOptions = getProgramOptions();
 
   const catalog = await loadTerm(PINNED_TERM);

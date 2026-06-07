@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { earnsCredit, numericPercent, parseGrade } from "../grades";
+import { earnsCredit, parseGrade } from "../grades";
 
 describe("parseGrade", () => {
   it("reads a numeric percentage", () => {
@@ -23,14 +23,6 @@ describe("parseGrade", () => {
   it("keeps other non-graded outcomes verbatim", () => {
     expect(parseGrade("WD")).toEqual({ kind: "other", raw: "WD" });
     expect(parseGrade("audit?")).toEqual({ kind: "other", raw: "audit?" });
-  });
-});
-
-describe("numericPercent", () => {
-  it("returns the percent only for numeric grades", () => {
-    expect(numericPercent("91")).toBe(91);
-    expect(numericPercent("CR")).toBeNull();
-    expect(numericPercent("")).toBeNull();
   });
 });
 

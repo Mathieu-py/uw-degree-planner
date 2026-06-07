@@ -52,10 +52,9 @@ const LocalPlanSchema = z.object({
 
 /**
  * Read a `LocalPlan` from localStorage. Returns `null` when nothing is stored
- * OR when the stored value can't be parsed (malformed JSON, shape drift,
- * wrong `schemaVersion`). On any parse/validation failure the raw blob is
- * stashed under `<key>.broken` (overwriting any previous backup) so future
- * code can build a migrator without the user having already lost their data.
+ * or the value can't be parsed (malformed JSON, shape drift, wrong
+ * `schemaVersion`). On failure the raw blob is stashed under `<key>.broken` so
+ * future code can build a migrator before the user loses data.
  */
 export function loadPlan(): LocalPlan | null {
   const raw = safeGetItem(PLAN_STORAGE_KEY);
@@ -75,12 +74,10 @@ export function loadPlan(): LocalPlan | null {
 }
 
 /**
- * Persist a `LocalPlan`. Returns `true` on a successful write, `false` when
- * localStorage is unavailable or rejected the write (quota, private mode).
- * `schemaVersion` and `updatedAt` are always re-stamped, and per-slot
- * duplicate courses are removed (keeping the first occurrence) so a stale
- * caller can't push a shape that crashes React's key uniqueness check —
- * callers don't need to set or normalize any of these.
+ * Persist a `LocalPlan`. Returns `true` on success, `false` when localStorage
+ * is unavailable or rejected the write (quota, private mode). Always re-stamps
+ * `schemaVersion`/`updatedAt` and drops per-slot duplicate courses (keeping the
+ * first), so a stale caller can't crash React's key-uniqueness check.
  */
 export function savePlan(plan: LocalPlan): boolean {
   const stamped: LocalPlan = {
@@ -108,9 +105,8 @@ export function clearPlan(): void {
 }
 
 /**
- * Build an empty plan shell. The caller decides what slots to attach (via
- * `buildEmptySlots` from sequence.ts) and what program/stream to apply —
- * this helper just gets the metadata fields right.
+ * Build an empty plan shell with the metadata fields set. Caller attaches slots
+ * (via `buildEmptySlots`) and applies program/stream.
  */
 export function emptyPlan(): LocalPlan {
   return {

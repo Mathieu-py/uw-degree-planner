@@ -23,13 +23,10 @@ export interface TermOption {
 }
 
 /**
- * Per-term eligibility for adding `course` from the catalog. With no target
- * term, we check every academic term: a course is "missing" early and becomes
- * "eligible" once its prereqs sit in earlier terms. Delegates to the shared
- * {@link evaluateCourseEligibility}.
- *
- * Pure and plan-shape-agnostic (reads only `slots`) so the local and server
- * plans share one source of truth. Pre-arrival and co-op slots are excluded.
+ * Per-term eligibility for adding `course`, across every academic term: a course
+ * is "missing" early and turns "eligible" once its prereqs sit in earlier terms.
+ * Pure and plan-shape-agnostic (reads only `slots`); pre-arrival and co-op slots
+ * are excluded. Delegates to {@link evaluateCourseEligibility}.
  */
 export function computeTermOptions(
   slots: PlanSlot[],
@@ -74,9 +71,8 @@ export function computeTermOptions(
 }
 
 /**
- * Where the course already lives, as a human label, or null if it's not yet
- * placed. A course belongs in exactly one term; the picker uses this to show
- * an "already placed" banner and disable every option.
+ * Where the course already lives, as a human label, or null if unplaced. The
+ * picker uses this to show an "already placed" banner and disable every option.
  */
 export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
   const slot = slots.find((s) => s.courses.some((c) => c.code === code));
@@ -87,11 +83,9 @@ export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
 }
 
 /**
- * Shared derivation behind every course→term "add" surface (catalog local +
- * server bodies, planner audit drill-in): derive the per-term
- * {@link computeTermOptions} and {@link alreadyInLabel}. `slots` is nullable so
- * callers can render before the plan loads — options stay empty until it
- * arrives.
+ * Shared hook behind every course→term "add" surface: derives
+ * {@link computeTermOptions} + {@link alreadyInLabel}. `slots` is nullable so
+ * callers can render before the plan loads (options stay empty until it does).
  */
 export function useTermOptions(
   course: Course,

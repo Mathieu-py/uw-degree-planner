@@ -54,18 +54,14 @@ interface Props {
 }
 
 /**
- * Client root for the planner. Branches on auth state: signed-out plans
- * live in localStorage (via usePlanSync's local path); signed-in plans
- * live on Supabase and are keyed by the `?planId=uuid` URL param. The
- * mutation surface (slot picker, transcript import, settings) is identical
- * across both modes — usePlanSync routes the writes.
+ * Client root for the planner. Branches on auth: signed-out plans live in
+ * localStorage (usePlanSync's local path); signed-in plans live on Supabase,
+ * keyed by `?planId=uuid`. The mutation surface is identical across both —
+ * usePlanSync routes the writes.
  *
- * Mounting the inner shell is gated on `ready` from the shared auth store.
- * Without that gate, a returning signed-in user briefly renders the anon
- * branch (and any stale localStorage plan) before the `getUser()` round-trip
- * flips `isAuthed` true and triggers the server load — a visible flicker on
- * every page load. Showing a single skeleton until the auth state resolves
- * makes the loaded-plan branch the first render the user sees.
+ * Mounting the inner shell is gated on `ready` from the auth store: without it,
+ * a returning user briefly renders the anon branch (and stale local plan)
+ * before `getUser()` flips `isAuthed` — a flicker on every load.
  */
 export function PlannerShell(props: Props) {
   const { isAuthed, ready } = useAuthState();
@@ -157,9 +153,8 @@ function PlannerShellInner({
     setImportBanner,
   });
 
-  // /plan resolves to either the planner or the create flow when there's no
-  // ?planId — see usePlannerRedirect. Plan creation lives at /plan/new, so
-  // there's no inline empty state here.
+  // With no ?planId, /plan redirects to the planner or the create flow (see
+  // usePlannerRedirect). Creation lives at /plan/new — no inline empty state.
   usePlannerRedirect({ isAuthed, planId, plans, hydrated, plan });
 
   // Catalog-derived lookups.
@@ -179,19 +174,15 @@ function PlannerShellInner({
   const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
 
   // The audit panel recompiles the full rule tree on every plan change and is
-  // non-interactive, so feed it a deferred copy of the plan: the timeline (the
-  // surface the user is actually editing) updates synchronously while React
-  // recomputes the audit in a lower-priority pass, keeping edits snappy.
+  // non-interactive, so feed it a deferred plan: the timeline updates
+  // synchronously while React recomputes the audit at lower priority.
   const deferredPlan = useDeferredValue(plan);
 
-  // Code of the audit chip being dragged, so the timeline can tint its eligible
-  // terms. Owned here (not a context) since the eligibility math already needs
-  // the shell's plan/catalog/program.
+  // Code of the dragged audit chip, so the timeline can tint its eligible terms.
   const [draggingAddCode, setDraggingAddCode] = useState<string | null>(null);
-  // A successful drop can unmount the source chip before its `dragend` fires,
-  // leaving the flag stale and the timeline stuck highlighted. A drop always
-  // yields a new `plan` ref, so clear the flag on any plan change (the same
-  // render-phase reset SlotBody uses for in-flight "move" chips).
+  // A successful drop can unmount the source chip before `dragend` fires,
+  // leaving the flag stale. A drop yields a new `plan` ref, so clear it on any
+  // plan change.
   const planRef = useRef(plan);
   if (planRef.current !== plan) {
     planRef.current = plan;
@@ -203,7 +194,7 @@ function PlannerShellInner({
   );
   const handleAddDragEnd = useCallback(() => setDraggingAddCode(null), []);
   // Codes the program references, so a stale restriction can't grey out a
-  // course the program requires. Shared by the drag highlight and the picker.
+  // required course. Shared by the drag highlight and the picker.
   const programReferenced = useMemo(
     () => programReferencedCodes(plan?.programId, plan?.specializationId),
     [plan?.programId, plan?.specializationId],
@@ -271,10 +262,8 @@ function PlannerShellInner({
     ? (catalogByCode.get(termChoiceCode) ?? null)
     : null;
 
-  // Rendered alongside every branch below: the handoff modal can appear over
-  // the loading skeleton, the not-found banner, the empty state, or the
-  // populated planner — whichever branch happens to be live when the user
-  // signs in.
+  // Rendered alongside every branch below, so the handoff modal can appear over
+  // whichever branch is live when the user signs in.
   const handoffElement = conflict ? (
     <HandoffModal localPlan={conflict.localPlan} onResolve={resolveConflict} />
   ) : null;
@@ -292,12 +281,9 @@ function PlannerShellInner({
   }
 
   const isLocalSource = source === "local";
-  // Signed-in with a planId that finished loading but produced no plan. Two
-  // distinct outcomes both end up here:
-  //   - loadError === null → server returned ok with no row: genuinely
-  //     missing (deleted, never theirs, bad URL). Show the not-found note.
-  //   - loadError !== null → network/auth/DB failure. Show a retryable
-  //     error banner; don't gaslight the user about their plan being gone.
+  // Signed-in with a planId that loaded but produced no plan. Two outcomes:
+  //   - loadError === null → ok with no row: genuinely missing → not-found note.
+  //   - loadError !== null → network/auth/DB failure → retryable error banner.
   const onServerPath =
     isAuthed && planId !== null && plan === null && typeof source !== "string";
   const planNotFound = onServerPath && loadError === null;
@@ -330,9 +316,8 @@ function PlannerShellInner({
     );
   }
 
-  // No plan to show: the redirect effect above is navigating — to /plan/new
-  // (no plan yet) or to the most recent plan (signed in, no planId). Render a
-  // skeleton meanwhile so the planner never flashes an empty state.
+  // No plan: the redirect effect above is navigating (to /plan/new or the most
+  // recent plan). Render a skeleton so the planner never flashes empty.
   if (!plan) {
     return (
       <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
@@ -345,9 +330,8 @@ function PlannerShellInner({
     programOptions.find((p) => p.id === plan.programId)?.name ?? "—";
 
   // Tag the timeline's course links as plan-originated so the detail page hides
-  // its (here redundant) "Add to plan" button — the course is already in view —
-  // and carry the plan id so "Back to planner" returns to this exact plan (not
-  // a generic /plan). Signed-out local plans have no planId and stay at /plan.
+  // its redundant "Add to plan", and carry the plan id so "Back to planner"
+  // returns to this exact plan. Local plans have no planId and stay at /plan.
   const planOriginQuery = planId
     ? `?from=plan&planId=${encodeURIComponent(planId)}`
     : "?from=plan";
@@ -355,9 +339,8 @@ function PlannerShellInner({
   return (
     <PlannerLayout
       isAuthed={isAuthed}
-      // null suppresses the fallback PlanToolbar — the loaded branch
-      // handles its own header/controls inside the two-column layout below
-      // so the audit panel can align with the very top of the page.
+      // null suppresses the fallback PlanToolbar — the loaded branch handles its
+      // own header inside the layout below so the audit panel aligns to the top.
       toolbar={null}
       overlays={
         <>
@@ -423,8 +406,8 @@ function PlannerShellInner({
             </BottomSheet>
           ) : null}
 
-          {/* Sticky audit trigger — phone widths only. Sits above the
-              keyboard/safe area so it doesn't collide with iOS home bar. */}
+          {/* Sticky audit trigger, phone only. Above the safe area so it clears
+              the iOS home bar. */}
           <button
             type="button"
             onClick={() => setAuditSheetOpen(true)}
@@ -563,13 +546,11 @@ function PlannerShellInner({
 
 /**
  * Three-column shell wrapping every branch of PlannerShellInner. At lg+ the
- * PlanToolbar sits as a 240px column at left and the branch's children fill
- * the rest, with the Audit column rendered as the rightmost inspector inside
- * the children. Below lg the sidebar collapses to a top dropdown and the
- * columns stack. Anon users get no sidebar at all (PlanToolbar returns null
- * when isAuthed is false). The optional `toolbar` sits sticky above the row
- * — populated only by the loaded-plan branch. Overlays render outside the
- * flex container so fixed-position modals don't become flex items.
+ * PlanToolbar is a 240px left column, children fill the rest, and the Audit
+ * column is the rightmost inspector inside children; below lg the sidebar
+ * collapses to a top dropdown. Anon users get no sidebar (PlanToolbar returns
+ * null). Overlays render outside the flex container so fixed modals aren't flex
+ * items.
  */
 function PlannerLayout({
   isAuthed,

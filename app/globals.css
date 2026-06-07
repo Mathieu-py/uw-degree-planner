@@ -1456,11 +1456,16 @@ body {
 }
 .av-opt-summary {
   display: flex;
-  align-items: flex-start;
-  gap: 9px;
+  flex-direction: column;
+  gap: 7px;
   padding: 8px 9px;
   border-radius: 10px;
   background: var(--met-soft);
+}
+.av-opt-summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
 }
 .av-opt-summary-mark {
   flex: none;
@@ -1487,17 +1492,49 @@ body {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 0 0;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 4px 8px 4px 6px;
+  border-radius: 7px;
   font-size: 11.5px;
-  font-weight: 600;
-  color: var(--accent);
+  font-weight: 500;
+  color: var(--ink-3);
   background: none;
   border: 0;
   cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 .av-opt-toggle:hover {
-  text-decoration: underline;
+  background: var(--bg-3);
+  color: var(--ink-1);
+}
+.av-opt-chev {
+  display: inline-flex;
+  color: var(--ink-3);
+  transition: transform 0.15s ease;
+}
+.av-opt-toggle.is-open .av-opt-chev {
+  transform: rotate(90deg);
+}
+/* The "show others" control living inside the completed summary card: a full-
+   width footer split off by a met-tinted hairline, with a text-only (green)
+   hover so it sits flush on the green surface. */
+.av-opt-toggle--in-summary {
+  align-self: stretch;
+  justify-content: flex-start;
+  margin-top: 1px;
+  padding: 7px 3px 1px;
+  border-top: 1px solid color-mix(in srgb, var(--met) 20%, transparent);
+  border-radius: 0;
+}
+.av-opt-toggle--in-summary:hover {
+  background: none;
+  color: var(--met);
+}
+.av-opt-toggle--in-summary:hover .av-opt-chev {
+  color: var(--met);
 }
 
 /* Macro sections — the three top-level collapsible groups in the audit panel. */

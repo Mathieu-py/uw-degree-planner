@@ -1,13 +1,10 @@
 import { z } from "zod";
 
 /**
- * Recursive AST for program requirements. Mirrors the pattern in
- * `lib/prereqs/parse.ts` — discriminated union, walkable via `walkRule`.
- *
- * Schemas below use `z.lazy` for the self-reference. `selectCount` on
- * `subjectPool` is exactly-N (semantically `selectMin === selectMax === N`
- * on `pick`); the field name differs because Kuali emits subject pools as
- * "Complete N additional <SUBJECT> courses …" with no range form.
+ * Recursive AST for program requirements: a discriminated union walkable via
+ * `walkRule`, with `z.lazy` for the self-reference. `subjectPool.selectCount`
+ * is exactly-N (no range), since Kuali emits pools only as "Complete N
+ * additional <SUBJECT> courses".
  */
 export const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
   z.discriminatedUnion("kind", [
@@ -27,8 +24,8 @@ export const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
       kind: z.literal("subjectPool"),
       description: z.string().optional(),
       /**
-       * Course count to pick. When the source stated the pool in units
-       * ("5.25 units of Science courses"), this is an approximation (units ÷ 0.5).
+       * Course count to pick. Approximate (units ÷ 0.5) when the source stated
+       * the pool in units ("5.25 units of Science courses").
        */
       selectCount: z.number(),
       subjectCodes: z.array(z.string()),

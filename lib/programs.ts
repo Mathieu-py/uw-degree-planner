@@ -8,9 +8,8 @@ import {
 } from "./requirements/types";
 import { requiredCoursesIn, walkRule } from "./requirements/walk";
 
-// The requirement AST (RuleNode) and its helpers now live in `lib/requirements`.
-// Re-export them here so `@/lib/programs` stays the stable entry point for
-// requirement structures alongside the Program schema.
+// The requirement AST (RuleNode) and helpers live in `lib/requirements`;
+// re-export so `@/lib/programs` stays the stable entry point.
 export {
   describeRule,
   type RuleNode,
@@ -41,16 +40,11 @@ const ElectiveCategorySchema = z.object({
   /** Explicit approved-course list (catalog form, lowercase). */
   approvedCourses: z.array(z.string()).optional(),
   /**
-   * Subject prefixes that satisfy a unit-based bucket when there's no fixed
-   * list — e.g. ["anth"] for "6.0 units of ANTH courses". Lets the audit sum
-   * the units of any in-scope placed course instead of leaving it untracked.
+   * Subject prefixes for a unit-based bucket with no fixed list — e.g. ["anth"]
+   * for "6.0 units of ANTH courses". Lets the audit sum any in-scope course.
    */
   subjectScope: z.array(z.string()).optional(),
-  /**
-   * Verbatim requirement statement from the UW source. Always shown to the
-   * student so the exact wording is preserved even when our structured parse
-   * is partial.
-   */
+  /** Verbatim requirement statement, always shown to preserve exact wording. */
   sourceText: z.string().optional(),
 });
 
@@ -58,19 +52,12 @@ export type ElectiveCategory = z.infer<typeof ElectiveCategorySchema>;
 
 /* --------------------------- unit accounting ---------------------------- */
 /*
- * UW degrees are measured in units (credits). We no longer audit a bucketed
- * unit plan; what survives is the degree's `totalUnits` (denominator of the soft
- * "courses planned" gauge) and a list of `constraints`. Subject-list breadth
- * constraints are re-derived into trackable course counts by `lib/audit/breadth`
- * ("1.0 unit of Humanities" → "2 courses from CLAS, ENGL, …"); any constraint
- * without a subject list (a level-only minimum) is surfaced verbatim as a note.
+ * No bucketed unit plan is audited; what survives is `totalUnits` and a list of
+ * `constraints`. `lib/audit/breadth` re-derives subject-list constraints into
+ * course counts; level-only minimums surface verbatim as notes.
  */
 
-/**
- * A degree rule kept as display text (faculty breadth, "min 14.5 units at the
- * 200-level or above"). The structured scope isn't stored; where the text is
- * subject-list breadth, `lib/audit/breadth` re-derives a course count from it.
- */
+/** A degree rule kept as display text (faculty breadth, level minimums). */
 const UnitConstraintSchema = z.object({
   label: z.string(),
   sourceText: z.string().optional(),
@@ -94,10 +81,8 @@ const InformationalItemSchema = z.object({
 export type InformationalItem = z.infer<typeof InformationalItemSchema>;
 
 /**
- * Which Undergraduate Calendar (Kuali catalog) a program's requirements were
- * scraped from. Stamped per program so a Program is self-describing about its
- * provenance; `year` is the catalog's academic span (e.g. "2025-2026"),
- * derived from its start/end dates.
+ * Which Undergraduate Calendar (Kuali catalog) a program was scraped from.
+ * `year` is the catalog's academic span (e.g. "2025-2026").
  */
 const CatalogProvenanceSchema = z.object({
   id: z.string(),
@@ -108,9 +93,9 @@ const CatalogProvenanceSchema = z.object({
 export type CatalogProvenance = z.infer<typeof CatalogProvenanceSchema>;
 
 /**
- * Faculty-wide "Bachelor of X degree-level requirements" shared by every major
- * in that faculty: breadth/level constraints (verbatim notes), a communication
- * requirement, and informational items (residency, averages, co-op work terms).
+ * Faculty-wide degree-level requirements shared by every major in a faculty:
+ * breadth/level constraints, a communication requirement, and informational
+ * items (residency, averages, co-op work terms).
  */
 const DegreeRequirementsSchema = z.object({
   kualiId: z.string().optional(),
@@ -186,9 +171,8 @@ export type Program = z.infer<typeof ProgramSchema>;
 const ProgramsFileSchema = z.record(z.string(), ProgramSchema);
 
 /**
- * Validate a `slug → Program` map, throwing on the first schema violation.
- * Used both to parse the bundled `programs.json` at import and by the scraper
- * to fail fast before it writes a malformed file the app couldn't load.
+ * Validate a `slug → Program` map, throwing on the first violation. Parses
+ * bundled `programs.json` at import; lets the scraper fail fast before writing.
  */
 export function validatePrograms(raw: unknown): Record<string, Program> {
   return ProgramsFileSchema.parse(raw);
@@ -206,9 +190,8 @@ export type Faculty =
   | "health";
 
 /**
- * Normalized, matchable description of the student's program, used to resolve
- * program-restriction prereqs (e.g. "Honours Mathematics students only") to a
- * definite eligible/missing instead of "check". Derived from {@link PROGRAMS}.
+ * Normalized, matchable description of a program, to resolve program-restriction
+ * prereqs ("Honours Mathematics students only") to eligible/missing not "check".
  */
 export interface ProgramIdentity {
   programId: string;
@@ -219,16 +202,16 @@ export interface ProgramIdentity {
 }
 
 /**
- * Curated aliases keyed by program short name (lowercased). UWFlow restriction
- * text uses abbreviations the registry names don't ("CS", "SE", "BBA/BMath");
- * a miss here only narrows coverage (falls back to "check"), never correctness.
+ * Curated aliases keyed by program short name (lowercased), for the
+ * abbreviations UWFlow uses ("CS", "SE", "BBA/BMath"). A miss only narrows
+ * coverage (falls back to "check"), never correctness.
  */
 const PROGRAM_ALIASES: Record<string, string[]> = {
   "computer science": ["cs"],
   "software engineering": ["se"],
   "systems design engineering": ["syde"],
-  // UWFlow restriction text says "Architecture students only"; the registry
-  // calls these programs "Architectural Studies" / "Architectural Engineering".
+  // UWFlow says "Architecture students only"; the registry calls these
+  // "Architectural Studies" / "Architectural Engineering".
   "architectural studies": ["architecture"],
   "architectural engineering": ["architecture"],
   "accounting and financial management": ["afm"],
@@ -276,9 +259,9 @@ function facultyFromName(name: string): Faculty | null {
 }
 
 /**
- * Build a {@link ProgramIdentity} for the student's program (and optional
- * specialization), or null when the program id is unknown. The specialization
- * name, when present, is added as an extra matchable name.
+ * Build a {@link ProgramIdentity} for a program (and optional specialization),
+ * or null when the program id is unknown. A specialization name, when present,
+ * is added as an extra matchable name.
  */
 export function programIdentity(
   programId: string | null | undefined,
@@ -301,10 +284,9 @@ export function programIdentity(
 }
 
 /**
- * Lowercased set of every program short name + alias in the registry. Serves as
- * the recognition vocabulary for {@link matchProgram}: a restriction can only be
- * resolved to a definite "block" when every program it names is recognized here
- * (otherwise we can't be sure the student isn't in an unrecognized synonym).
+ * Lowercased set of every program short name + alias — the recognition
+ * vocabulary for {@link matchProgram}. A restriction resolves to "block" only
+ * when every program it names is recognized here.
  */
 let shortNamesCache: ReadonlySet<string> | null = null;
 export function programShortNames(): ReadonlySet<string> {
@@ -334,10 +316,8 @@ export interface ProgramOption {
 }
 
 /**
- * The `(id, name, kind)` digest of every program, sorted by name. Server
- * components ship this to the client instead of the full programs.json so the
- * planner / onboarding UI can populate a program dropdown without the rule
- * trees. Callers that only need `(id, name)` accept the richer shape fine.
+ * The `(id, name, kind)` digest of every program, sorted by name. Shipped to
+ * the client instead of full programs.json so the dropdown works without trees.
  */
 export function getProgramOptions(): ProgramOption[] {
   return Object.entries(PROGRAMS)
@@ -370,10 +350,8 @@ export function isKnownSpecialization(
 }
 
 /**
- * Flat union of all required courses across whatever shape the program has.
- * Engineering: union of every term tree. Flexible: the program's single tree.
- * Choice-group options are intentionally NOT included — those need a student
- * variant pick first (deferred to the variant-picker modal).
+ * Flat union of all required courses (every term tree for engineering, the
+ * single tree for flexible). Choice-group options excluded — those need a pick.
  */
 export function getRequiredCourses(program: Program): string[] {
   if (program.kind === "engineering") {
@@ -404,8 +382,8 @@ const referencedCodesCache = new Map<string, ReadonlySet<string>>();
 
 /** Collect every explicit course code a rule tree names (lowercased). */
 function collectReferenced(root: RuleNode, out: Set<string>): void {
-  // Only `courses` names explicit codes; `excluded` is forbidden (not
-  // referenced) and `subjectPool` matches by prefix/level.
+  // Only `courses` names explicit codes (`excluded` is forbidden, not
+  // referenced; `subjectPool` matches by prefix/level).
   walkRule(root, (n) => {
     if (n.kind === "courses") {
       for (const c of n.courses) out.add(c.toLowerCase());
@@ -414,11 +392,11 @@ function collectReferenced(root: RuleNode, out: Set<string>): void {
 }
 
 /**
- * Every course code the program (and optional specialization) references,
- * lowercased. Broader than {@link getRequiredCourses} — includes choice-group
- * options and elective pools. Used by the eligibility core to suppress a stale
- * program restriction (`suppressProgramBlock`): a program can't sensibly require
- * a course its own restriction would block. Memoized on the static program data.
+ * Every course code the program (+ optional specialization) references,
+ * lowercased. Broader than {@link getRequiredCourses}: includes choice-group
+ * options and elective pools. Lets eligibility suppress a stale program
+ * restriction (a program can't require a course its own restriction blocks).
+ * Memoized.
  */
 export function programReferencedCodes(
   programId: string | null | undefined,

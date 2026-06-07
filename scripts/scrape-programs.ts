@@ -21,6 +21,7 @@
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { countNoun } from "../lib/format";
 import {
   type CatalogProvenance,
   type DegreeRequirements,
@@ -92,13 +93,10 @@ async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
 }
 
 /**
- * Iterate `items` sequentially with a polite delay between requests. Each
- * iteration prints `[i/N] <label>... ` followed by either the caller's result
- * string or `ERROR: <message>`. State recording (success buckets, failure
- * lists) is the caller's responsibility via `onResult` / `onError`.
- *
- * Extracted to dedupe Phase A and Phase B, which previously shared this
- * loop structure verbatim.
+ * Iterate `items` sequentially with a polite delay. Each iteration prints
+ * `[i/N] <label>... ` plus the caller's result or `ERROR: <message>`. State
+ * recording is the caller's job via `onResult` / `onError`. Shared by Phase A
+ * and Phase B.
  */
 async function fetchEachPaced<T, R>(opts: {
   items: readonly T[];
@@ -133,9 +131,8 @@ function reportList(label: string, items: readonly string[]): void {
 }
 
 /**
- * Deduplicate the spec ids referenced by every parent. 153 unique ids vs 283
- * total references across all parents, so Phase B can fetch each id at most
- * once and attach the result to every parent that referenced it.
+ * Dedup the spec ids referenced across all parents (153 unique vs 283 refs), so
+ * Phase B fetches each id once and attaches it to every referencing parent.
  */
 export function collectUniqueSpecIds(
   refsByParent: ReadonlyMap<string, readonly SpecializationRef[]>,
@@ -148,13 +145,10 @@ export function collectUniqueSpecIds(
 }
 
 /**
- * Pick a slug for a spec, avoiding collisions with prior specs that already
- * claimed `baseSlug`. Idempotent: if `id` is the same as the one that already
- * owns `baseSlug`, returns `baseSlug` unchanged with no warning. Otherwise
- * appends `-2`, `-3`, … and emits a warning.
- *
- * Does NOT mutate `takenSlugs` — callers are responsible for `.set(slug, id)`
- * after a successful build, so a parse failure doesn't reserve a slot.
+ * Pick a spec slug, avoiding collisions with prior specs. Idempotent: if `id`
+ * already owns `baseSlug`, returns it unchanged; otherwise appends `-2`, `-3`, …
+ * and warns. Does NOT mutate `takenSlugs` — callers `.set` after a successful
+ * build, so a parse failure doesn't reserve a slot.
  */
 export function resolveSpecSlug(
   baseSlug: string,
@@ -173,10 +167,9 @@ export function resolveSpecSlug(
 }
 
 /**
- * Build a `Specialization` from a fetched Kuali detail. Handles slug-collision
- * resolution (mutates `takenSlugs`), routes through `parseProgramRequirements`
- * and `parseElectives`, and surfaces an "unexpected engineering" warning if
- * Kuali ever ships a spec with `requiredCoursesTermByTerm` populated.
+ * Build a `Specialization` from a Kuali detail: resolve slug collisions (mutates
+ * `takenSlugs`), parse rules + electives, and warn if Kuali ever ships an
+ * engineering-shaped spec.
  */
 export function buildSpecialization(
   detail: ProgramDetail,
@@ -198,9 +191,8 @@ export function buildSpecialization(
 
   const result = parseProgramRequirements(detail, `spec:${slug}`);
   if (result.kind === "engineering") {
-    // Specs are expected to be flexible-shaped — see spike findings.
-    // If Kuali ever ships an engineering-shaped spec, surface it loudly
-    // rather than silently truncating to the flexible path.
+    // Specs are expected to be flexible-shaped; surface an engineering-shaped
+    // one loudly rather than silently truncating to the flexible path.
     warnings.push(
       `[spec:${slug}] unexpected kind:"engineering" — using empty rule tree as a placeholder`,
     );
@@ -227,16 +219,10 @@ export function buildSpecialization(
 }
 
 /**
- * Attach each parent's specs in the order they appeared in `specializationsList`.
- * Missing specs (failed fetches) are silently skipped. Parents not present in
- * `programs` are skipped (e.g. parent itself failed Phase A). Mutates
- * `programs[parentSlug].specializations`.
- *
- * The same `Specialization` instance is shared by reference across every
- * parent that references it (153 unique objects across 283 attachments in the
- * current calendar). Consumers must treat the returned spec objects as
- * immutable — mutating one parent's spec will silently mutate the same object
- * everywhere it's attached.
+ * Attach each parent's specs in `specializationsList` order, mutating
+ * `programs[parentSlug].specializations`. Missing specs and absent parents are
+ * skipped. The same `Specialization` instance is shared by reference across
+ * every referencing parent, so consumers must treat spec objects as immutable.
  */
 export function attachSpecsToParents(
   programs: Record<string, Program>,
@@ -260,9 +246,8 @@ export function attachSpecsToParents(
 }
 
 /**
- * The discovered catalog's id plus provenance (title + academic-year span),
- * stamped onto every program so the data is self-describing about which
- * Undergraduate Calendar it came from.
+ * The discovered catalog's id + provenance (title, academic-year span), stamped
+ * onto every program so the data names which Undergraduate Calendar it's from.
  */
 export type CatalogInfo = CatalogProvenance;
 
@@ -275,13 +260,10 @@ function catalogYear(entry: CatalogEntry): string | undefined {
 }
 
 /**
- * Auto-discovers the catalog by fetching the public catalogs list, filtering
- * to undergraduate calendars that are currently active (startDate <= today <
- * endDate), and picking the most recent. Returns its id + provenance. Falls
- * back to FALLBACK_CATALOG_ID on any failure.
- *
- * Tolerates both bare-array and `{catalogs: [...]}` payload shapes, and
- * accepts `id` or `_id` field names.
+ * Auto-discover the catalog: fetch the public catalogs list, keep currently
+ * active undergraduate calendars (startDate <= today < endDate), pick the most
+ * recent, return id + provenance. Falls back to FALLBACK_CATALOG_ID on failure.
+ * Tolerates bare-array and `{catalogs:[...]}` shapes, and `id`/`_id`.
  */
 export async function discoverCatalog(
   now: Date = new Date(),
@@ -449,7 +431,7 @@ async function runPhaseA(
       withData++;
       const specSuffix =
         specRefs.length > 0
-          ? `, ${specRefs.length} spec ref${specRefs.length === 1 ? "" : "s"}`
+          ? `, ${countNoun(specRefs.length, "spec ref")}`
           : "";
       return `ok (${result.kind}${specSuffix})`;
     },
@@ -497,7 +479,7 @@ async function runPhaseDegrees(
       );
       byPid.set(pid, parsed);
       const b = parsed.degree.constraints?.length ?? 0;
-      return `ok (${b} breadth constraint${b === 1 ? "" : "s"})`;
+      return `ok (${b} ${countNoun(b, "breadth constraint")})`;
     },
     onError: () => {},
   });
@@ -679,9 +661,7 @@ async function main() {
   ]);
 }
 
-// Only run main() when invoked directly via `tsx scripts/scrape-programs.ts`,
-// not when imported by tests. process.argv[1] is the entrypoint script path;
-// import.meta.url is the file:// URL of the current module.
+// Run main() only when invoked directly (not when imported by tests).
 const isDirectInvocation =
   process.argv[1] != null &&
   import.meta.url === pathToFileURL(process.argv[1]).href;

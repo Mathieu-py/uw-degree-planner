@@ -9,12 +9,9 @@ export function walkRule(node: RuleNode, visit: (n: RuleNode) => void): void {
 }
 
 /**
- * A `pick` whose `selectMin` equals the total number of unique course-leaf
- * options is functionally mandatory — the student must take every listed
- * course. Kuali emits some single-course mandatory rules as `pick(1,1)` over
- * one course rather than `all` + courses, and this predicate recovers them.
- *
- * Returns the flat list of course codes if the node qualifies, else null.
+ * A `pick` whose `selectMin` equals its unique course-leaf count is
+ * functionally mandatory (Kuali sometimes emits mandatory rules as `pick(1,1)`
+ * not `all`). Returns the flat course codes if so, else null.
  */
 function functionallyMandatoryCourses(node: RuleNode): string[] | null {
   if (node.kind !== "pick" || node.selectMin === undefined) return null;

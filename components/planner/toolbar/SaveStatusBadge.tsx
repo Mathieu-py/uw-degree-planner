@@ -9,15 +9,10 @@ interface Props {
 }
 
 /**
- * Header indicator for in-flight server-save status. Idle renders nothing
- * so the header isn't permanently noisy after a save settles.
- *
- * Visual weights are tiered: "Saved" reads as a quiet check + label (it's
- * the common steady state), "Saving…" gets an amber spinner-style dot to
- * signal in-flight work, and "Save failed" is a button-shaped chip
- * because it requires a user action. Only the error chip announces via
- * `aria-live`: rapid editing flips saving↔saved every 1.5–3s, and
- * announcing each transition would spam assistive tech.
+ * Header indicator for server-save status; idle renders nothing. Weights are
+ * tiered: "Saved" is a quiet check, "Saving…" an amber dot, "Save failed" a
+ * button-shaped chip (it needs action). Only the error chip uses `aria-live` —
+ * announcing every saving↔saved flip would spam assistive tech.
  */
 export function SaveStatusBadge({ status, onRetry }: Props) {
   if (status.kind === "idle") return null;

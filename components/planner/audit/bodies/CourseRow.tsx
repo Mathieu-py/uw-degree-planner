@@ -28,9 +28,8 @@ export function CourseRow({
   const title = catalogByCode.get(code)?.name ?? "";
 
   if (placed) {
-    // Placed-but-illegal: keep the row (it IS in the plan) but flag it amber and
-    // explain — our ring/headline counts exclude it, so a plain green check would
-    // read as "done" when it isn't credited yet.
+    // Placed-but-illegal: keep the row but flag it amber, since counts exclude
+    // it and a green check would wrongly read as "done".
     return (
       <div
         className={`av-item ${illegal ? "flagged" : "met"}`}

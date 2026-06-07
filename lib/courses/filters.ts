@@ -4,9 +4,8 @@ import type { CatalogCourse, Course, PureFilters } from "./types";
 const PREFIX_RE = /^[A-Z]+/;
 
 /**
- * A `PureFilters` with all rules disabled — every course passes. Useful as
- * a starting point in tests and as the picker's "no user filters applied"
- * sentinel.
+ * A `PureFilters` with all rules disabled — every course passes. A starting
+ * point for tests and the picker's "no filters applied" sentinel.
  */
 export const DEFAULT_PURE_FILTERS: PureFilters = {
   excludePrefixes: [],
@@ -19,9 +18,8 @@ export const DEFAULT_PURE_FILTERS: PureFilters = {
 };
 
 /**
- * Sum of remaining capacity across all sections, or null when the course has
- * no scheduled sections (distinct from "0 seats open"). Lives here because it
- * derives from the same enrollment data as `enrichCourse`'s `hasSeats`.
+ * Sum of remaining capacity across sections, or null when the course has no
+ * scheduled sections (distinct from "0 seats open").
  */
 export function seatsAvailable(course: Course): number | null {
   if (course.sections.length === 0) return null;
@@ -50,10 +48,9 @@ export function passesPrefixExclusion(
 }
 
 /**
- * Allow-list gate: passes everything when the list is empty (rule disabled),
- * otherwise only courses whose prefix is in the list. Paired with
- * {@link passesPrefixExclusion} in the AND-chain, so a prefix that is BOTH
- * included and excluded is hidden — exclude wins, with no special-casing.
+ * Allow-list gate: passes everything when the list is empty, else only matching
+ * prefixes. AND-chained with {@link passesPrefixExclusion}, so a prefix in both
+ * lists is hidden — exclude wins, no special-casing.
  */
 export function passesPrefixInclusion(
   course: Course,
@@ -97,9 +94,8 @@ export function passesSeatsFilter(
 }
 
 /**
- * Each predicate self-gates on its slice of PureFilters (false / empty array
- * / null threshold all mean "rule disabled, course passes"), so this is a
- * flat AND-chain with no outer toggle logic.
+ * Each predicate self-gates on its slice of PureFilters (false / empty / null
+ * = "disabled, passes"), so this is a flat AND-chain with no outer toggles.
  */
 export function applyFilters(
   courses: ReadonlyArray<Course>,

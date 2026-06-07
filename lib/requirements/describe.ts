@@ -1,15 +1,10 @@
 import type { RuleNode } from "./types";
 
 /**
- * Derive the display prose for a rule node from its structure. The scraper
- * deliberately omits these standard phrasings from `data/programs.json` to
- * keep the file small and avoid duplication; consumers reconstruct them on
- * demand here.
- *
- * Returns `undefined` for leaves (`courses`) and for nodes whose stored
- * `description` should win (a non-standard wrapper text the parser couldn't
- * fold into a recognized shape — currently no such cases exist in the data
- * but the type allows it).
+ * Derive display prose for a rule node from its structure. The scraper omits
+ * these standard phrasings from `data/programs.json` to keep it small.
+ * Returns `undefined` for `courses` leaves and nodes whose stored `description`
+ * should win.
  */
 export function describeRule(node: RuleNode): string | undefined {
   switch (node.kind) {
@@ -31,9 +26,8 @@ export function describeRule(node: RuleNode): string | undefined {
       if (selectMin === undefined && selectMax !== undefined) {
         return `Complete no more than ${selectMax} from the following`;
       }
-      // metaParent shape: a pick whose children are themselves rules (not a
-      // single `courses` leaf) emits the variant "from … choices" phrasing.
-      // The leaf form wraps a single courses leaf with "of the following".
+      // metaParent (children are rules, not a single `courses` leaf) uses the
+      // "from … choices" phrasing; the leaf form uses "of the following".
       const isMetaParent =
         children.length !== 1 || children[0].kind !== "courses";
       if (selectMin === selectMax && selectMin !== undefined) {
@@ -48,8 +42,7 @@ export function describeRule(node: RuleNode): string | undefined {
           ? `Complete at least ${selectMin} ${noun} from the following choices`
           : `Complete at least ${selectMin} of the following`;
       }
-      // Remaining shape: both bounds defined and unequal (the equal case is
-      // handled above).
+      // Both bounds defined and unequal (equal case handled above).
       return isMetaParent
         ? `Complete between ${selectMin} and ${selectMax} courses from the following choices`
         : `Complete between ${selectMin} and ${selectMax} of the following`;

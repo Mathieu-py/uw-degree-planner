@@ -29,11 +29,9 @@ import { ErrorBody, StatusBody, serverActionError } from "./termPickerShared";
 export type TermPickerStep = "plans" | "term";
 
 /**
- * Signed-in add flow: pick which of the user's server-side plans to add to,
- * then pick a term within it; the add is persisted with a server round-trip
- * (read-modify-write via `savePlanState`). `step` is owned by the parent
- * {@link TermPicker} so it can title the modal ("which plan?" vs "which term?")
- * without a state round-trip.
+ * Signed-in add flow: pick which server plan to add to, then a term within it;
+ * persisted via a read-modify-write `savePlanState`. `step` is owned by the
+ * parent {@link TermPicker} so it can title the modal accordingly.
  */
 export function TermPickerAuthed({
   course,
@@ -62,13 +60,12 @@ export function TermPickerAuthed({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Plan ids that already contain this course — those plans are shown disabled
-  // in the picker. Null until the lookup resolves; greying is an enhancement,
-  // so a failed lookup just leaves every plan selectable.
+  // Plan ids that already contain this course — shown disabled. Null until the
+  // lookup resolves; a failed lookup just leaves every plan selectable.
   const [containing, setContaining] = useState<Set<string> | null>(null);
 
-  // serverPlan is null during the plan-picker step and mid-load, so options
-  // come back empty until a plan resolves — exactly the term step's gate.
+  // serverPlan is null during the plan-picker step and mid-load, so options stay
+  // empty until a plan resolves.
   const { options, alreadyIn } = useTermOptions(
     course,
     serverPlan?.slots,
@@ -110,9 +107,8 @@ export function TermPickerAuthed({
     [setStep],
   );
 
-  // Exactly one plan: skip the plan-picker step entirely (mirrors the
-  // signed-out path, which has no plan selection). Fires once — the
-  // `!selectedPlanId` guard keeps it from re-running after it advances.
+  // Exactly one plan: skip the plan-picker step. The `!selectedPlanId` guard
+  // keeps it from re-running after it advances.
   useEffect(() => {
     if (plans && plans.length === 1 && step === "plans" && !selectedPlanId) {
       void openPlan(plans[0].id);
@@ -134,8 +130,8 @@ export function TermPickerAuthed({
     if (updated === serverPlan) return;
     setSaving(true);
     setSaveError(null);
-    // savePlanState is a full atomic REPLACE, so we send the entire updated
-    // plan — never a partial — to avoid clobbering its other courses.
+    // savePlanState is a full atomic REPLACE, so send the entire updated plan to
+    // avoid clobbering its other courses.
     const res = await savePlanState(selectedPlanId, toSnapshot(updated));
     setSaving(false);
     if (!res.ok) {

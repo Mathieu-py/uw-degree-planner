@@ -1,7 +1,6 @@
 /**
- * Small pure helpers for reading the structure of a course code (e.g. "CS486",
- * "MATH135"). Shared by the catalog filters and the audit compiler so the
- * level/prefix extraction lives in one place. These extract, never validate —
+ * Pure helpers for reading a course code's structure ("CS486", "MATH135"),
+ * shared by the catalog filters and audit compiler. Extract, never validate —
  * an unparseable code yields level 0 / empty prefix rather than throwing.
  */
 

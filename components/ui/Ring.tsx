@@ -13,7 +13,8 @@ export function Ring({
 }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - Math.min(pct, 100) / 100);
+  const clampedPct = Math.max(0, Math.min(pct, 100));
+  const offset = circ * (1 - clampedPct / 100);
   const color =
     tone === "neutral"
       ? "var(--ink-3)"

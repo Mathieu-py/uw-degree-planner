@@ -8,35 +8,30 @@ export interface UseModalExitResult {
   /** When true, the modal should render its exit classes (scale-95 opacity-0). */
   isClosing: boolean;
   /**
-   * Synchronous close: plays the exit animation, then calls `onClose` after
-   * {@link EXIT_MS}. Subsequent calls during the animation are no-ops so
-   * rapid Esc + click can't double-fire.
+   * Synchronous close: play the exit animation, then call `onClose` after
+   * {@link EXIT_MS}. Re-entrant calls during the animation are no-ops.
    */
   handleClose: () => void;
   /**
-   * Async variant for modals whose close coincides with an awaited action
-   * (e.g. HandoffModal's `pick` runs `onResolve` in parallel with the exit
-   * animation via `Promise.all`). Returns a promise that resolves once the
-   * animation duration has elapsed.
+   * Async variant for a close that coincides with an awaited action (e.g.
+   * HandoffModal runs `onResolve` in parallel with the exit). Resolves once the
+   * animation duration elapses.
    */
   animateOut: () => Promise<void>;
   /**
-   * Restore the modal to its visible state. Used when an async action
-   * triggered the exit but failed — the parent didn't unmount us, so we
-   * need to undo the closing class so the modal stays usable.
+   * Restore the modal to visible. Used when an async action triggered the exit
+   * but failed and the parent didn't unmount us.
    */
   reset: () => void;
 }
 
 /**
- * Shared exit-animation lifecycle for the planner's modals. The CSS-side
- * pattern is `transition-all duration-300` + `isClosing ? "scale-95
- * opacity-0" : "scale-100 opacity-100"`; this hook owns the state flag and
- * the post-animation callback.
+ * Shared exit-animation lifecycle for the planner's modals (CSS side:
+ * `transition-all duration-300` + an `isClosing` scale/opacity toggle). Owns the
+ * state flag and post-animation callback.
  *
- * Pass `onClose` for the common "close button / Esc / backdrop click → run
- * exit animation → unmount" flow. Omit it (or pass `undefined`) when the
- * caller wires the unmount themselves via `animateOut` + custom logic.
+ * Pass `onClose` for the common "close → animate → unmount" flow; omit it when
+ * the caller wires unmount itself via `animateOut`.
  */
 export function useModalExit(onClose?: () => void): UseModalExitResult {
   const [isClosing, setIsClosing] = useState(false);

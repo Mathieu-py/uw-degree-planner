@@ -31,16 +31,10 @@ interface Props {
 }
 
 /**
- * Generic header dropdown menu: a trigger button that reveals a list of
- * actions in a popover. Used for both "Plan options" (rename/duplicate/
- * share/delete) and "Data & settings" (import transcript / plan settings)
- * — folding clusters of related actions into menus keeps the action row
- * quiet so the plan switcher + primary "+ New plan" stay legible.
- *
- * Closing behavior: click outside, Escape, or selecting an item all close
- * the menu. Click-outside uses `pointerdown` (not `click`) so the menu
- * dismisses before the target element receives the click — relevant when
- * the user clicks a different button while the menu is open.
+ * Generic header dropdown menu: a trigger button revealing a popover of actions
+ * (e.g. "Plan options", "Data & settings"). Closes on click-outside, Escape, or
+ * item select. Click-outside uses `pointerdown` (not `click`) so the menu
+ * dismisses before another button receives the click.
  */
 export function DropdownMenu({ label, icon, items }: Props) {
   const [open, setOpen] = useState(false);

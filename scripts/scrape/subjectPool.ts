@@ -1,19 +1,6 @@
 import type { RuleNode } from "../../lib/programs";
-
-const WORD_AMOUNT: Record<string, number> = {
-  a: 1,
-  an: 1,
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
-};
+import { WORD_NUMBERS } from "./counts";
+import { extractSubjectCodes } from "./normalize";
 
 interface PoolHead {
   amount: number;
@@ -23,11 +10,9 @@ interface PoolHead {
 }
 
 /**
- * Match the "Complete N …" lead-in and the optional unit keyword. The count may
- * be a digit ("3"), a word ("two"), or the article "a"/"an"; the unit keyword
- * may be followed by "of" OR "in" ("0.5 unit IN additional CHEM courses"), by a
- * level ("1.0 unit AT the 300-level …"), or directly by the subject ("units
- * PSYCH courses"). Returns null when the text isn't a "Complete N" rule.
+ * Match the "Complete N …" lead-in and optional unit keyword. The count may be a
+ * digit, a word ("two"), or "a"/"an"; the unit keyword may be followed by
+ * "of"/"in", a level, or the subject directly. Null when not a "Complete N" rule.
  */
 function parseHead(fullText: string): PoolHead | null {
   const head = fullText.match(
@@ -35,17 +20,17 @@ function parseHead(fullText: string): PoolHead | null {
   );
   if (!head) return null;
   return {
-    amount: WORD_AMOUNT[head[1].toLowerCase()] ?? Number(head[1]),
+    amount: WORD_NUMBERS[head[1].toLowerCase()] ?? Number(head[1]),
     isUnits: head[2] != null,
     rest: fullText.slice(head[0].length).trim(),
   };
 }
 
 /**
- * Pull parenthetical clauses out ("(excluding CS100, MATH103)", "(exclusive of
- * BIOL225 …)") so they don't confuse level/from parsing; collect them as
- * verbatim exclusion notes. Then drop count-qualifier noise: a stray leading
- * "additional", and a per-course unit-size qualifier ("0.5-unit course").
+ * Pull parenthetical clauses out ("(excluding CS100)") so they don't confuse
+ * level/from parsing, collecting them as verbatim exclusions. Then drop
+ * count-qualifier noise: a stray leading "additional" and a per-course unit-size
+ * qualifier ("0.5-unit course").
  */
 function stripExclusionsAndQualifiers(
   rest: string,
@@ -63,9 +48,8 @@ function stripExclusionsAndQualifiers(
       // "N units of additional ERS courses" → drop the stray "additional" so the
       // subject code that follows it is found (it sits after "units of", not before).
       .replace(/^additional\s+/i, "")
-      // "N additional 0.5-unit course(s) from …" / "a 0.5 unit math course …" → drop
-      // the per-course unit size qualifier (hyphenated or spaced); it's a count
-      // requirement (N courses), not a unit total.
+      // Drop a per-course unit-size qualifier ("0.5-unit course"); it's a count
+      // requirement, not a unit total.
       .replace(/^[\d.]+[\s-]unit\s+/i, "")
   );
 }
@@ -77,24 +61,20 @@ interface SubjectMatch {
 }
 
 /**
- * Parse the subject descriptor: "STAT courses" (one code) | "ENVS and/or ERS
- * courses" (several codes) | "math/Science courses" (a noun whose subjects come
- * from a later "from …" clause) | bare "courses". Subjects may instead arrive
- * via the "from:" clause, so an empty result here is not yet a failure.
+ * Parse the subject descriptor: "STAT courses" | "ENVS and/or ERS courses" |
+ * "math/Science courses" (subjects from a later "from …") | bare "courses".
+ * Subjects may instead arrive via "from:", so an empty result isn't yet a fail.
  */
 function parseSubjects(rest: string): SubjectMatch {
-  // All-caps codes, optionally joined by "and/or", "and", "or", ",", or an
-  // Oxford ", or" / ", and". Matched case-sensitively so prose words ("Science",
-  // "additional") aren't mistaken for codes (those fall through to "from:"). A
-  // descriptor adjective ("lecture", "lab", "elective", "approved") may sit
-  // between the codes and "courses" ("BIOL lecture courses").
+  // All-caps codes joined by "and/or", "and", "or", "," or an Oxford ", or".
+  // Case-sensitive so prose words aren't mistaken for codes (they fall through
+  // to "from:"). A descriptor adjective ("lecture", "lab") may sit before
+  // "courses".
   const codesMatch = rest.match(
     /^([A-Z]{2,8}(?:\s*(?:,\s*(?:or|and)|and\/or|,|and|or)\s*[A-Z]{2,8})*)\s+(?:(?:lecture|laboratory|lab|elective|approved)\s+)*courses?\b/,
   );
   if (codesMatch) {
-    const subjectCodes = (codesMatch[1].match(/[A-Z]{2,8}/g) ?? []).map((s) =>
-      s.toUpperCase(),
-    );
+    const subjectCodes = extractSubjectCodes(codesMatch[1], "upper");
     return { subjectCodes, rest: rest.slice(codesMatch[0].length).trim() };
   }
   if (/^[A-Za-z]+\s+courses?\b/.test(rest)) {
@@ -161,19 +141,14 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
 }
 
 /**
- * Parse a "Complete N …" subject-pool rule into a `subjectPool` node. Returns
- * null if the prose doesn't name an enumerable subject set. Handles:
- *   - "Complete 2 additional STAT courses at the 300-level"
- *   - "Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, CS, …"
- *   - "Complete 3 additional courses from: ACTSC, AMATH, CO, …"
- *   - "Complete 0.5 unit of BIOL courses at the 100- or 200-level (exclusive of BIOL225 …)"
- *   - "Complete 5.25 units of Science courses from the following subjects: BIOL, CHEM, …"
+ * Parse a "Complete N …" subject-pool rule into a `subjectPool` node, or null if
+ * the prose names no enumerable subject set. Handles the varied phrasings
+ * ("…STAT courses at the 300-level", "…from: ACTSC, AMATH, …", "N units of …").
  *
- * A unit amount ("N units of …") is converted to an approximate course count
- * (units / 0.5) so the count-based audit has a threshold; the unit audit
- * re-weights satisfiers by their real catalog units, so the approximation only
- * affects the count-based fallback. Exclusion clauses (parenthetical or `;`-led)
- * are kept verbatim for display; they don't gate matching.
+ * A unit amount is converted to an approximate course count (units / 0.5) for
+ * the count-based audit; the unit audit re-weights by real catalog units, so the
+ * approximation only affects the count fallback. Exclusions are kept verbatim
+ * for display and don't gate matching.
  */
 export function parseSubjectPool(fullText: string): RuleNode | null {
   const head = parseHead(fullText);
@@ -197,10 +172,9 @@ export function parseSubjectPool(fullText: string): RuleNode | null {
   const fromSubjects = parseFromClause(rest, exclusions);
   if (fromSubjects.length > 0) subjectCodes = fromSubjects;
 
-  // No enumerable subject codes (a spelled-out noun like "Science courses at the
-  // 300-level" with no `from: <CODES>` list) → we won't fabricate a subject set,
-  // so the requirement is dropped from the rule tree rather than mis-scoped.
-  // Conservative-but-lossy: such a rule is then untracked (no count ring).
+  // No enumerable subject codes (e.g. "Science courses…" with no `from:` list):
+  // drop rather than fabricate a subject set. Conservative-but-lossy — the rule
+  // is then untracked (no count ring).
   if (subjectCodes.length === 0) return null;
 
   // A unit-stated pool ("5.25 units of Science courses") has no per-course units

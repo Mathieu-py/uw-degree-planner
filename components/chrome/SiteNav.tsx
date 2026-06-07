@@ -32,12 +32,9 @@ const MY_PLANS_LINK: NavLink = {
 };
 
 /**
- * Sticky, blurred top navigation shared across marketing/catalog/settings.
- * Left: wordmark + section links (active state from the pathname). Right:
- * appearance toggle + the sign-in/account control. Visual styling (blur,
- * hairline, height) lives in the `.nav` class in globals.css.
- *
- * The wordmark is the app's "home": the plans dashboard when signed in, the
+ * Sticky, blurred top nav. Left: wordmark + section links (active from the
+ * pathname). Right: theme toggle + sign-in/account control. Styling lives in
+ * the `.nav` class. The wordmark links "home": plans dashboard when signed in,
  * marketing landing when signed out.
  */
 export function SiteNav() {

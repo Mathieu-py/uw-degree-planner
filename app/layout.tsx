@@ -4,15 +4,13 @@ import { SiteNav } from "@/components/chrome/SiteNav";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
-// Runs synchronously during HTML parsing, before first paint, so the saved
-// theme is applied with no flash. Defaults to dark when nothing is stored.
-// Kept inline (not next/script) because framework-injected scripts aren't
-// guaranteed to run before paint. Mirror of applyTheme() in ThemeProvider.
+// Runs synchronously during HTML parsing, before paint, so the saved theme
+// applies with no flash (defaults to dark). Inline, not next/script, since
+// framework scripts aren't guaranteed pre-paint. Mirrors applyTheme().
 const THEME_INIT_SCRIPT = `(function(){try{var v=localStorage.getItem("udp-theme");document.documentElement.setAttribute("data-mode",v==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-mode","dark");}})();`;
 
-// Hanken Grotesk = all UI text; JetBrains Mono = course codes, term labels,
-// counts, share URLs. Both are variable fonts, so `weight: "variable"` ships a
-// single self-hosted face covering the full design range (400–800 / 400–700).
+// Hanken Grotesk = UI text; JetBrains Mono = course codes, term labels, counts.
+// Both variable fonts, so one self-hosted face covers the full weight range.
 const hanken = Hanken_Grotesk({
   variable: "--font-hanken",
   subsets: ["latin"],
@@ -28,8 +26,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  // `default` titles the home page; `template` suffixes every child segment's
-  // own title, so route pages set just their bare name (e.g. "Settings").
+  // `default` titles the home page; `template` suffixes each child segment's
+  // own bare title (e.g. "Settings").
   title: {
     default: "UW Degree Planner",
     template: "%s · UW Degree Planner",

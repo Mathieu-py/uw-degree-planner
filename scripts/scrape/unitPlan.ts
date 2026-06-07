@@ -6,11 +6,9 @@ import type {
   UnitPlan,
 } from "../../lib/programs";
 
-// A degree total ("Complete a total of 20.0 units:"). Some programs qualify it
-// as "academic units" (e.g. engineering: "Complete a total of 21.25 academic
-// units (excluding COOP, PD, WKRPT)"), so the qualifier is optional. The
-// negative lookahead rejects "Complete a total of 8.0 units of HIST" — that's a
-// subject requirement, not the degree total (which lives on the degree page).
+// A degree total ("Complete a total of 20.0 units:"). The optional "academic"
+// qualifier covers engineering's "…21.25 academic units". The negative
+// lookahead rejects a subject requirement ("…8.0 units of HIST").
 const TOTAL_UNITS_RE =
   /complete a total of\s+(\d+(?:\.\d+)?)\s*(?:academic\s+)?units\b(?!\s+of\b)/i;
 // "minimum of 14.5 units must be at the 200-level or above"
@@ -27,11 +25,10 @@ export interface UnitPlanResult {
 }
 
 /**
- * Parse the `graduationRequirements` prose into the surviving unit data: the
- * degree total (gauge denominator) and level-minimum constraints surfaced as
- * verbatim notes, plus informational notes (failed-unit caps, communication
- * prose) and the degree-level reference. Subject/elective unit *buckets* are no
- * longer extracted — the count audit and the soft units gauge cover the degree.
+ * Parse `graduationRequirements` prose into surviving unit data: the degree
+ * total (gauge denominator), level-minimum constraints as verbatim notes,
+ * informational notes (failed-unit caps, communication), and the degree-level
+ * reference. Subject/elective unit buckets are no longer extracted.
  */
 export function parseUnitPlan(
   html: string,
@@ -99,10 +96,9 @@ export function parseUnitPlan(
 }
 
 /**
- * Drop elective entries that have nothing trackable to render: a "pure unit
- * bucket" ("5.5 units of elective courses" — a unit amount with no approved-course
- * list and no finite count) can't be shown as a count-based section, so it's
- * filtered out. Everything else (approved lists, finite count-based lists) stays.
+ * Drop elective entries with nothing trackable: a "pure unit bucket" ("5.5 units
+ * of elective courses" — a unit amount, no approved list, no finite count) can't
+ * render as a count-based section. Approved lists and finite counts stay.
  */
 export function reconcileUnitsAndElectives(
   unitPlan: UnitPlan | null,

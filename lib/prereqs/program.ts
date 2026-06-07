@@ -1,11 +1,10 @@
 /**
  * Resolve a UWFlow program-restriction clause (e.g. "Honours Mathematics or
- * Software Engineering students only") against the student's program. The
- * grammar here is deliberately conservative: we only ever return a definite
- * "block" when every program/faculty the clause names is recognized AND the
- * student matches none of them. Any unrecognized token or unusual shape falls
- * back to "unknown" so the UI keeps showing the amber "check" rather than
- * wrongly hiding a course the student can actually take.
+ * Software Engineering students only") against the student's program.
+ * Deliberately conservative: only "block" when every named program/faculty is
+ * recognized AND the student matches none. Any unrecognized token or odd shape
+ * → "unknown", so the UI keeps the amber "check" rather than wrongly hiding a
+ * takeable course.
  */
 
 import {
@@ -71,9 +70,8 @@ function tokenize(segment: string): string[] {
  * "unknown").
  */
 export function parseProgramClause(clause: string): ProgramConstraint {
-  // Normalize "&" to "and" up front: UWFlow writes program names both ways
-  // (e.g. "Accounting & Financial Management" vs the registry's "… and …"),
-  // and an unnormalized "&" makes the name fail to match → a needless "check".
+  // Normalize "&" to "and": UWFlow writes program names both ways, and an
+  // unnormalized "&" fails to match → a needless "check".
   const s = clause
     .toLowerCase()
     .trim()
@@ -88,20 +86,17 @@ export function parseProgramClause(clause: string): ProgramConstraint {
   if (openMatch) {
     body = openMatch[1];
   } else {
-    // "… students only" or the bare "… students" form (no "only").
+    // "… students only" / bare "… students".
     const onlyMatch = s.match(/^(.+?) students?(?:\s+only)?$/);
     if (onlyMatch) body = onlyMatch[1];
-    // A bare level-prefixed restriction with no "students" at all
-    // ("1A Civil Engineering"): the whole clause names the program.
+    // Bare level-prefixed restriction, no "students" ("1A Civil Engineering").
     else if (/^(?:level\s+)?\d[a-z]/i.test(s)) body = s;
   }
   if (body === null) return { allow: [], exclude: [] };
 
-  // Peel a leading level / year qualifier so it doesn't pollute the program
-  // tokens — and so a "2A or 3A …" prefix isn't split on its own "or". Handles
-  // "Level at least 2A", "Level 1A", and the bare "1A" / "2A or 3A" forms.
-  // ("Level at least NA" alone is already a level node; this is the inline case
-  // where a level directly prefixes the program list.)
+  // Peel a leading level/year qualifier so it doesn't pollute program tokens
+  // (and a "2A or 3A …" prefix isn't split on its own "or"). The inline case
+  // where a level directly prefixes the program list.
   body = body
     .replace(/^(?:level\s+)?(?:at least\s+)?\d[a-z](?:\s+or\s+\d[a-z])*\s+/, "")
     .replace(/^(?:first|second|third|fourth)-year\s+/, "");
@@ -151,26 +146,22 @@ export function matchProgram(
 
   const vocab = programShortNames();
 
-  // Excluded outright. excludeMatch tests the student's own identity directly,
-  // so an unrecognized synonym in the exclude list can't hide them.
+  // Excluded outright. Tests the student's identity directly, so an
+  // unrecognized synonym in the exclude list can't hide them.
   if (exclude.some((t) => identityMatchesToken(identity, t))) return "block";
 
   if (allow.some((t) => identityMatchesToken(identity, t))) return "allow";
 
-  // The student matches nothing in the clause — but a faculty token is only
-  // decidable when we actually know the student's faculty. If the clause names
-  // a faculty and we couldn't derive the student's (faculty === null), we can't
-  // rule out membership, so stay "unknown" rather than wrongly blocking a
-  // course the student may well be able to take.
+  // Student matches nothing — but a faculty token is only decidable when we
+  // know the student's faculty. If the clause names a faculty and we couldn't
+  // derive the student's, stay "unknown" rather than wrongly block.
   if (identity.faculty === null && allow.some((t) => t in FACULTY_WORDS)) {
     return "unknown";
   }
 
-  // Block when at least one allowed token is a program/faculty we recognize —
-  // that proves this is a real program restriction (other unrecognized tokens
-  // are just programs the student isn't in). If NONE is recognized the clause
-  // may be universal prose ("Enrolment in an undergraduate degree program …"),
-  // so stay "unknown".
+  // Block when ≥1 allowed token is a recognized program/faculty (proving this
+  // is a real restriction; other tokens are just programs the student isn't
+  // in). If NONE is recognized it may be universal prose, so stay "unknown".
   if (allow.some((t) => tokenRecognized(t, vocab))) return "block";
   return "unknown";
 }

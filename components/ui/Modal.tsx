@@ -7,42 +7,33 @@ import { Icon } from "./Icon";
 
 interface ModalProps {
   /**
-   * True while the exit animation is playing. Drives the dialog's
-   * `scale-95 opacity-0` and the backdrop's `opacity-0` classes. The
-   * caller owns this flag — usually via `useModalExit`.
+   * True while the exit animation plays; drives the dialog/backdrop exit
+   * classes. Caller owns it, usually via `useModalExit`.
    */
   isClosing: boolean;
   /**
-   * Called by backdrop click and Escape. The caller is responsible for
-   * triggering the exit animation and unmounting; this prop is typically
-   * wired to `useModalExit().handleClose`.
+   * Called by backdrop click and Escape. Caller triggers the exit animation and
+   * unmount — typically `useModalExit().handleClose`.
    */
   onClose: () => void;
   /** Element id of the dialog's accessible title (set as aria-labelledby). */
   titleId: string;
-  /**
-   * Extra classes for the dialog box (e.g. `max-w-md`, `max-w-5xl
-   * max-h-[90vh]`). Defaults to `max-w-md`.
-   */
+  /** Extra classes for the dialog box (e.g. `max-w-5xl`). Defaults to `max-w-md`. */
   className?: string;
   /**
-   * Pass -1 to remove the backdrop from tab order. Useful when the dialog
-   * content has its own primary autoFocus element (SlotPicker's search box)
-   * and we don't want the first Tab to land on the invisible "Close dialog"
-   * button.
+   * Pass -1 to drop the backdrop from tab order when the content has its own
+   * autoFocus element (e.g. SlotPicker's search box).
    */
   backdropTabIndex?: number;
   children: ReactNode;
 }
 
 /**
- * Shared modal shell for the planner's custom-div modals. Renders the
- * fixed-position wrapper, dimmed backdrop, dialog box, entry+exit
- * animations, and Escape handling. The caller owns the exit-animation
- * lifecycle via `useModalExit` and passes `isClosing` + `onClose` in —
- * keeping that hook at the caller level avoids a split into wrapper +
- * Content components and lets the caller access `animateOut`/`reset` for
- * async close flows (see HandoffModal).
+ * Shared modal shell: fixed wrapper, dimmed backdrop, dialog box, entry/exit
+ * animations, Escape handling. The caller owns the exit lifecycle via
+ * `useModalExit` and passes `isClosing` + `onClose` in — keeping that hook at
+ * the caller level gives it `animateOut`/`reset` for async close (see
+ * HandoffModal).
  */
 export function Modal({
   isClosing,
@@ -76,10 +67,8 @@ export function Modal({
 }
 
 /**
- * Standard dialog header: a hairline-underlined bar with the accessible title.
- * Pass `onClose` to get the right-aligned icon close button (and the
- * space-between layout); omit it for a plain title-only header. `titleId` must
- * match the `titleId` given to the parent {@link Modal} (aria-labelledby).
+ * Standard dialog header. Pass `onClose` for the right-aligned close button;
+ * omit for a title-only header. `titleId` must match the parent {@link Modal}'s.
  */
 export function ModalHeader({
   titleId,

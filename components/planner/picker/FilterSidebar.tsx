@@ -7,10 +7,9 @@ import type { PickerFilters } from "./useFilteredCourses";
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
 
 /**
- * Filter rail shared by the in-planner slot picker and the standalone catalog
- * page: level chips, subject-prefix exclude list, min-rating sliders, and
- * has-seats / hide-unmet toggles. The `hideUnmet` toggle is hidden on the
- * catalog (which has no target term, so eligibility isn't computed there).
+ * Filter rail shared by the slot picker and the catalog page: level chips,
+ * subject-prefix excludes, min-rating sliders, has-seats/hide-unmet toggles.
+ * `hideUnmet` is hidden on the catalog (no target term → no eligibility).
  */
 export function FilterSidebar({
   filters,

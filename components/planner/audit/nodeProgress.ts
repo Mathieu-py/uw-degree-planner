@@ -1,11 +1,9 @@
 import { type AuditNode, summarize } from "@/lib/audit/compile";
 
 /**
- * Satisfied/needed for a node, EXCLUDING illegally-placed satisfiers — a course
- * placed before its prereqs (or in an antireq conflict) doesn't credit here, the
- * same way the header bar never credits it. Keeps every ring/count consistent
- * with the headline. (Legality is only populated when a catalog is present; the
- * read-only view has none, so this is a no-op there.)
+ * Satisfied/needed for a node, EXCLUDING illegally-placed satisfiers (same as
+ * the header bar), so every ring/count matches the headline. Legality is only
+ * populated with a catalog, so this is a no-op in the read-only view.
  */
 export function nodeProgress(node: AuditNode): {
   needed: number;

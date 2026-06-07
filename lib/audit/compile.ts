@@ -1,19 +1,16 @@
 /**
- * Audit compiler: walks a `RuleNode` paired with a `LocalPlan`'s placed
- * courses and emits an `AuditNode` tree whose shape mirrors the rule tree,
- * decorated with status, satisfiers, and miss-counts for the UI.
+ * Audit compiler: walks a `RuleNode` against a plan's placed courses, emitting
+ * a same-shape `AuditNode` tree with status, satisfiers, and miss-counts.
  *
  * Semantics:
- *  - `all`: every child must be met (or overSatisfied). Mixed → partial.
- *  - `pick` whose direct children are all `courses` leaves: union the codes
- *    into one option pool; count distinct placed codes. Met when count
- *    ≥ selectMin; overSatisfied when count > selectMax.
- *  - `pick` with mixed/nested children: count children whose status is met
- *    or overSatisfied; same threshold logic against selectMin/selectMax.
- *  - `subjectPool`: count placed courses whose prefix and level match the
- *    pool's filters. Threshold is `selectCount` exactly.
- *  - `courses` leaf at the top of a tree (no pick parent): treat as all-required.
- *  - `excluded`: never gates status; the UI surfaces violations as warnings.
+ *  - `all`: every child met/overSatisfied; mixed → partial.
+ *  - `pick` over all-`courses` children: union codes into one pool, count
+ *    distinct placed; met at ≥ selectMin, overSatisfied at > selectMax.
+ *  - `pick` over mixed/nested children: count met children, same threshold.
+ *  - `subjectPool`: count placed courses matching prefix + level; threshold is
+ *    `selectCount` exactly.
+ *  - `courses` leaf with no pick parent: all-required.
+ *  - `excluded`: never gates status; violations surface as UI warnings.
  */
 
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
@@ -38,19 +35,18 @@ export interface AuditNode {
   description?: string;
   /** Placed courses that contribute to satisfying this node. */
   satisfiers: Placement[];
-  /** Codes still needed (only meaningful for courses leaves and pick aggregates). */
+  /** Codes still needed (meaningful for courses leaves and pick aggregates). */
   missingCodes: string[];
   /** For pick + subjectPool: how many slots/options are filled. */
   satisfiedCount?: number;
   selectMin?: number;
   selectMax?: number;
-  /** Excluded-courses violations: codes the student has placed that the rule says cannot count. */
+  /** Placed codes that hit an `excluded` rule (the rule says they can't count). */
   excludedViolations?: Placement[];
   /**
-   * Satisfiers that ARE placed but NOT legally (an unmet prereq or an antireq
-   * conflict in their slot). They still count toward the requirement
-   * ("met-but-flagged"), but the UI surfaces a warning so the student knows the
-   * progress rests on an invalid placement. Coreqs are advisory and excluded.
+   * Satisfiers placed illegally (unmet prereq / antireq conflict in their
+   * slot). Still count ("met-but-flagged"), but the UI warns. Coreqs are
+   * advisory, so excluded.
    */
   illegalSatisfiers?: Placement[];
   children: AuditNode[];
@@ -112,6 +108,21 @@ function withIllegal(node: AuditNode, illegal: Placement[]): AuditNode {
   return illegal.length > 0 ? { ...node, illegalSatisfiers: illegal } : node;
 }
 
+/** Split codes into the placements that satisfy them and the codes still missing. */
+function partitionByPlacement(
+  codes: Iterable<string>,
+  placement: PlacementMap,
+): { satisfiers: Placement[]; missing: string[] } {
+  const satisfiers: Placement[] = [];
+  const missing: string[] = [];
+  for (const code of codes) {
+    const p = placement.get(code);
+    if (p) satisfiers.push(p);
+    else missing.push(code);
+  }
+  return { satisfiers, missing };
+}
+
 function compile(
   node: RuleNode,
   placement: PlacementMap,
@@ -120,13 +131,10 @@ function compile(
   switch (node.kind) {
     case "courses": {
       // Top-level / under all: treat as all-required.
-      const satisfiers: Placement[] = [];
-      const missing: string[] = [];
-      for (const code of node.courses) {
-        const p = placement.get(code);
-        if (p) satisfiers.push(p);
-        else missing.push(code);
-      }
+      const { satisfiers, missing } = partitionByPlacement(
+        node.courses,
+        placement,
+      );
       const status: AuditStatus =
         satisfiers.length === node.courses.length
           ? "met"
@@ -165,11 +173,10 @@ function compile(
     case "subjectPool":
       return compileSubjectPool(node, placement, legality);
     case "excluded": {
-      const violations: Placement[] = [];
-      for (const code of node.courses) {
-        const p = placement.get(code);
-        if (p) violations.push(p);
-      }
+      const { satisfiers: violations } = partitionByPlacement(
+        node.courses,
+        placement,
+      );
       return {
         ruleNode: node,
         // Excluded rules never block status — informational only.
@@ -185,9 +192,9 @@ function compile(
 }
 
 /**
- * A `pick` node. When every child is a `courses` leaf, the options collapse
- * into one distinct-code pool (so MATH235 named in two branches counts once).
- * Otherwise each child must be independently met to count toward the threshold.
+ * A `pick` node. All-`courses` children collapse into one distinct-code pool
+ * (MATH235 in two branches counts once); otherwise each child must be
+ * independently met to count toward the threshold.
  */
 function compilePick(
   node: Extract<RuleNode, { kind: "pick" }>,
@@ -203,13 +210,7 @@ function compilePick(
         node.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
       ),
     ];
-    const satisfiers: Placement[] = [];
-    const missing: string[] = [];
-    for (const code of options) {
-      const p = placement.get(code);
-      if (p) satisfiers.push(p);
-      else missing.push(code);
-    }
+    const { satisfiers, missing } = partitionByPlacement(options, placement);
     return withIllegal(
       {
         ruleNode: node,
@@ -232,11 +233,9 @@ function compilePick(
   }
   // Mixed/nested children: each must be independently met to count as 1.
   const children = node.children.map((c) => compile(c, placement, legality));
-  // A child only counts toward the parent's threshold when placements actually
-  // satisfy it. An *optional* child (e.g. "Choose any of the following", with
-  // selectMin 0/undefined) is vacuously "met" with nothing placed; counting it
-  // would inflate the parent's progress on an empty plan (issue #95). Requiring
-  // ≥1 satisfier excludes those vacuous mets without affecting genuine ones.
+  // Require ≥1 satisfier: an optional child (selectMin 0/undefined) is
+  // vacuously "met" with nothing placed, which would inflate the parent on an
+  // empty plan (issue #95).
   const count = children.filter(
     (c) =>
       (c.status === "met" || c.status === "overSatisfied") &&
@@ -254,9 +253,8 @@ function compilePick(
       ),
       description: describeRule(node),
       satisfiers: children.flatMap((c) => c.satisfiers),
-      // No definite missing set: a compound pick needs only `selectMin` of its
-      // children, so there's no single list of codes that "would complete it".
-      // The panel surfaces the per-child state by recursing into `children`.
+      // No definite missing set: a compound pick needs only `selectMin`
+      // children, so no single code list completes it. Panel recurses instead.
       missingCodes: [],
       satisfiedCount: count,
       selectMin: node.selectMin,
@@ -269,8 +267,7 @@ function compilePick(
 
 /**
  * A `subjectPool` node: count placed courses whose prefix is in the pool and
- * whose level falls within the optional min/max bounds. The threshold is
- * `selectCount` exactly (used as both selectMin and selectMax).
+ * level is within the optional bounds. Threshold is `selectCount` exactly.
  */
 function compileSubjectPool(
   node: Extract<RuleNode, { kind: "subjectPool" }>,
@@ -308,10 +305,9 @@ function compileSubjectPool(
 }
 
 /**
- * Build the slot-scoped key set of placements that are placed but NOT legally
- * — an unmet prereq or an antireq conflict. Coreqs are advisory (never block),
- * so they're excluded. Keyed `slotId::code` so the same course in two slots is
- * judged per-placement. {@link compileAudit} consumes this to flag satisfiers.
+ * Slot-scoped keys (`slotId::code`) of illegally-placed courses (unmet prereq /
+ * antireq; coreqs are advisory). Per-slot so the same course in two slots is
+ * judged independently. {@link compileAudit} flags satisfiers against it.
  */
 export function legalityKeySet(
   issues: readonly { slotId: string; courseCode: string; kind: string }[],
@@ -330,9 +326,8 @@ export function compileAudit(
   plan: LocalPlan,
   specializationId: string | null = null,
   /**
-   * Slot-scoped keys (`slotId::code`) of illegally-placed courses, from
-   * {@link legalityKeySet}. Satisfiers matching a key are flagged on their node
-   * (met-but-flagged). Empty/omitted → no legality overlay.
+   * Slot-scoped keys from {@link legalityKeySet}. Matching satisfiers are
+   * flagged (met-but-flagged). Empty/omitted → no legality overlay.
    */
   legality: ReadonlySet<string> = new Set(),
 ): AuditRoot {
@@ -383,16 +378,25 @@ export function compileAudit(
 }
 
 /**
- * Roll-up summary across an audit subtree. Counts each leaf-equivalent
- * "requirement slot" once: a `courses` leaf under all = N requirements, a
- * `pick` = selectMin requirements, a `subjectPool` = selectCount, and an
- * `all` propagates the sum of its children. Used for headline numbers.
+ * Whether a node is GENUINELY satisfied — "met"/"overSatisfied" with ≥1
+ * satisfier — vs. a vacuously-met optional group. Lets choice UIs tell whether
+ * a pick has actually been decided.
+ */
+export function isSatisfied(node: AuditNode): boolean {
+  return (
+    (node.status === "met" || node.status === "overSatisfied") &&
+    node.satisfiers.length > 0
+  );
+}
+
+/**
+ * Roll-up across a subtree for headline numbers, counting each slot once:
+ * `courses` = N, `pick` = selectMin, `subjectPool` = selectCount, `all` sums
+ * its children.
  *
- * `excludedViolationCount` is the total number of placed courses that hit
- * an `excluded` rule anywhere in this subtree. Excluded rules deliberately
- * do NOT change `status` (see "Semantics" comment at the top of this file);
- * the count is surfaced so the panel can render a small warning badge
- * without re-walking the tree.
+ * `excludedViolationCount` totals placed courses hitting an `excluded` rule.
+ * Those rules don't change `status`; the count is surfaced so the panel can
+ * badge it without re-walking the tree.
  */
 export function summarize(node: AuditNode): {
   needed: number;
@@ -422,9 +426,8 @@ export function summarize(node: AuditNode): {
     case "pick": {
       const min = r.selectMin ?? 0;
       const got = Math.min(node.satisfiedCount ?? 0, min);
-      // Pick children are subordinate: an excluded leaf can sit underneath
-      // a pick when the program wraps "either A or B" choices around a
-      // shared excluded note. Fold counts up the same way as `all`.
+      // An excluded leaf can sit under a pick (program wraps "either A or B"
+      // around a shared excluded note). Fold counts up the same way as `all`.
       let excludedViolationCount = 0;
       for (const c of node.children) {
         excludedViolationCount += summarize(c).excludedViolationCount;

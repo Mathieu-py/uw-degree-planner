@@ -5,6 +5,12 @@ import {
   TERM_LETTERS,
   type TermLetter,
 } from "../../lib/programs";
+import {
+  anchorCourseCodes,
+  cleanText,
+  RULE_RESULT_SELECTOR,
+  SECTION_HEADING_SELECTOR,
+} from "./dom";
 import { CODE_RANGE_RE, normalizeCourseCode, TEXT_CODE_RE } from "./normalize";
 import { parseSubjectPool } from "./subjectPool";
 
@@ -44,27 +50,28 @@ const COMPLETE_N_FROM_CHOICES_RE =
   /^Complete (\d+) courses? from the following choices/i;
 const EXCLUDED_RE =
   /^The following cannot be used towards (?:this )?(?:academic )?plan/i;
-// Catch-all for prose that doesn't fit any recognized rule shape. After #43
-// removed "Choose" and the rule-tree refactor handles "Complete N additional
-// …" as subject pools, what remains is genuinely unstructured prose: stray
-// notes, conditional preambles without enumerable courses, exclusion clauses,
-// and the unit-bound elective phrasings handled by `parseElectives`. "Choose"
-// is deliberately absent so future Kuali drift on `Choose …` phrasings
-// surfaces as warnings.
+// Catch-all for prose that fits no recognized rule shape: stray notes,
+// conditional preambles, exclusion clauses, and unit-bound elective phrasings
+// (handled by `parseElectives`). "Choose" is deliberately absent so future
+// Kuali drift on `Choose …` surfaces as warnings.
 const DEFERRED_PROSE_RE =
   /^(?:Complete|The following|Note|If\b|Subject concentration)/i;
+
+// A colon-less rule has no clean "prefix" to slice, so we fall back to its
+// leading slice — long enough for every `^`-anchored rule regex to match, short
+// enough to keep warning messages readable.
+const MAX_PREFIX_LEN = 200;
 
 /**
  * Parse a Kuali program detail into a discriminated `ParseResult`.
  *
  * Field-selection precedence (first non-empty wins):
- *   1. `requiredCoursesTermByTerm` → engineering (per-term rule trees)
- *   2. `requirements`              → flexible (single rule tree)
- *   3. `courseRequirementsNoUnits` → flexible (single rule tree)
+ *   1. `requiredCoursesTermByTerm` → engineering (per-term trees)
+ *   2. `requirements`              → flexible (single tree)
+ *   3. `courseRequirementsNoUnits` → flexible (single tree)
  *
- * The `requirements` and `courseRequirementsNoUnits` fields are HTML-equivalent
- * — Kuali emits the same `<section><h2>Required Courses</h2>...` shape into
- * one or the other depending on whether unit counts are tracked.
+ * 2 and 3 are HTML-equivalent — Kuali emits the same shape into one or the
+ * other depending on whether unit counts are tracked.
  */
 export function parseProgramRequirements(
   detail: ProgramDetailFields,
@@ -90,10 +97,7 @@ function parseEngineering(html: string, programLabel: string): ParseResult {
 
   $("section").each((_, section) => {
     const $section = $(section);
-    const header = $section
-      .find('h2[data-testid="grouping-label"]')
-      .text()
-      .trim();
+    const header = cleanText($section.find(SECTION_HEADING_SELECTOR).text());
     const termLetter = parseTermLetter(header);
     if (!termLetter) return;
 
@@ -104,7 +108,7 @@ function parseEngineering(html: string, programLabel: string): ParseResult {
       warnings,
       unverified,
     );
-    if (root.children.length > 0 || root.kind !== "all") {
+    if (root.children.length > 0) {
       terms[termLetter] = root;
     }
   });
@@ -129,8 +133,8 @@ function parseFlexible(html: string, programLabel: string): ParseResult {
       warnings,
       unverified,
     );
-    if (root.kind === "all") allChildren.push(...root.children);
-    else allChildren.push(root);
+    // parseSectionTree always returns an `all` node — flatten its children in.
+    allChildren.push(...root.children);
   });
 
   if (allChildren.length === 0) {
@@ -146,13 +150,11 @@ function parseFlexible(html: string, programLabel: string): ParseResult {
 }
 
 /**
- * Build a rule tree from a `<section>`. Walks the section's top-level `<ul>`
- * hierarchically rather than flattening every `ruleView-*` descendant. Two
- * parent-child shapes both produce a tree:
- *   - DOM-nested: `<li><span>Complete all of the following</span><ul>…children…</ul></li>`
- *   - Sibling-implied: a leaf `<li data-test="…">` containing meta-prose
- *     ("Complete N courses from the following choices:") consumes its
- *     subsequent same-level siblings as children.
+ * Build a rule tree from a `<section>`, walking its top-level `<ul>`
+ * hierarchically. Two parent-child shapes both produce a tree:
+ *   - DOM-nested: `<li><span>Complete all…</span><ul>…children…</ul></li>`
+ *   - Sibling-implied: a leaf `<li>` with meta-prose ("Complete N courses from
+ *     the following choices:") consumes subsequent same-level siblings.
  */
 function parseSectionTree(
   $: cheerio.CheerioAPI,
@@ -210,6 +212,9 @@ function walkUl(
         selectMax: parsed.selectMax,
         children,
       });
+      // Resume at the sibling that stopped us; the outer loop re-parses it.
+      // Safe: parseLi only stops on a metaParent, whose branch has no side
+      // effects.
       i = j - 1;
       continue;
     }
@@ -251,12 +256,10 @@ type ParsedLi =
     };
 
 /**
- * A rule whose prefix we DID recognize ("Complete all/N of/any/no more than …")
- * but whose course codes we failed to extract is a SILENT LOSS: a bare
- * `return null` would drop a real owed requirement with no trace, letting the
- * audit read 100% while a requirement was never tracked. Record the verbatim
- * statement as UNVERIFIED (this gates the headline below 100% and surfaces it to
- * the student) and emit a developer warning so the parser miss is visible.
+ * A recognized rule prefix whose course codes we failed to extract is a SILENT
+ * LOSS — a bare `return null` drops a real requirement and the audit reads 100%.
+ * Record it as UNVERIFIED (gates the headline below 100%, shown to the student)
+ * and warn so the parser miss is visible to developers.
  */
 function recordUnextracted(
   fullText: string,
@@ -286,7 +289,7 @@ function parseLi(
     const $span = $directChildren.filter("span").first();
     const $childUl = $directChildren.filter("ul").first();
     if ($childUl.length === 0) return null;
-    const wrapperText = $span.text().replace(/\s+/g, " ").trim();
+    const wrapperText = cleanText($span.text());
     const children = walkUl($, $childUl, contextLabel, warnings, unverified);
     if (children.length === 0) return null;
     const wrapper = wrapWithProse(wrapperText, children);
@@ -294,15 +297,15 @@ function parseLi(
   }
 
   // Leaf rule: <li data-test="ruleView-X"> with <div data-test="ruleView-X-result"> inside.
-  const $result = $li
-    .children('div[data-test^="ruleView-"][data-test$="-result"]')
-    .first();
+  const $result = $li.children(RULE_RESULT_SELECTOR).first();
   if ($result.length === 0) return null;
 
-  const fullText = $result.text().replace(/\s+/g, " ").trim();
+  const fullText = cleanText($result.text());
   const colonIdx = fullText.indexOf(":");
   const prefix =
-    colonIdx >= 0 ? fullText.slice(0, colonIdx).trim() : fullText.slice(0, 200);
+    colonIdx >= 0
+      ? fullText.slice(0, colonIdx).trim()
+      : fullText.slice(0, MAX_PREFIX_LEN);
 
   const codes = collectCourseCodes($, $result);
 
@@ -404,20 +407,18 @@ function parseLi(
   const subjectPool = parseSubjectPool(fullText);
   if (subjectPool) return { kind: "node", node: subjectPool };
 
-  // We couldn't structure this <li> into a rule. If it states an owed action
-  // ("Complete …" — an unscoped subject pool that `parseSubjectPool` rejected
-  // for lack of a subject list, or otherwise unrecognized "Complete" prose),
-  // surface it verbatim as an UNVERIFIED requirement so the audit doesn't read
-  // complete when a real requirement was silently dropped. Non-action prose
-  // (Note/If/preambles caught by DEFERRED_PROSE_RE) is genuine noise and stays
-  // dropped. A truly unrecognized rule still emits a developer warning.
+  // Unstructurable <li>. If it states an owed action ("Complete …" — an
+  // unscoped subject pool, or unrecognized "Complete" prose), surface it
+  // verbatim as UNVERIFIED so the audit doesn't read complete. Owed-but-
+  // unstructured, not a parser miss, so no developer warning.
   if (/^Complete\b/i.test(prefix)) {
     unverified.push(fullText);
-    if (!DEFERRED_PROSE_RE.test(prefix))
-      warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
     return null;
   }
 
+  // Non-action prose (Note/If/preambles caught by DEFERRED_PROSE_RE) is genuine
+  // noise and stays dropped silently. Anything else is a truly unrecognized rule
+  // shape — warn so future Kuali drift surfaces to developers.
   if (DEFERRED_PROSE_RE.test(prefix)) return null;
 
   warnings.push(`${contextLabel}: unrecognized rule — "${prefix}"`);
@@ -428,18 +429,12 @@ function collectCourseCodes(
   $: cheerio.CheerioAPI,
   $result: ReturnType<cheerio.CheerioAPI>,
 ): string[] {
-  const codes = new Set<string>();
-  $result.find("a").each((_, a) => {
-    const code = normalizeCourseCode($(a).text());
-    if (code) codes.add(code);
-  });
-  // Fallback for required courses Kuali renders as PLAIN TEXT (no <a> to link)
-  // because they're absent from UW's own course DB — cross-institution "…W"
-  // codes (e.g. BUS127W) or just-unlinked ones (INDEV387). Only when NOTHING was
-  // hyperlinked, scan the course-list portion after the rule's colon. Bail on a
-  // range expression ("CS340-CS398"): that's a course set, not a fixed list, so
-  // pulling its endpoints as two literal courses would be wrong — leave such a
-  // rule unextracted (it surfaces as unverified) rather than mis-structured.
+  const codes = new Set<string>(anchorCourseCodes($, $result));
+  // Fallback for required courses Kuali renders as PLAIN TEXT (absent from UW's
+  // course DB — cross-institution "…W" codes like BUS127W, or unlinked INDEV387).
+  // Only when nothing was hyperlinked, scan the list after the colon. Bail on a
+  // range ("CS340-CS398"): pulling its endpoints as two literals would be wrong,
+  // so leave it unextracted (surfaces as unverified).
   if (codes.size === 0) {
     const text = $result.text();
     const colon = text.indexOf(":");
@@ -454,16 +449,11 @@ function collectCourseCodes(
 }
 
 /**
- * Wrap a list of children based on the prose carried by a DOM wrapper `<li>`.
- * Only `Complete N of` is structurally meaningful here; everything else
- * (`Complete all of …`, or unrecognized prose) is treated as a plain `all`
- * since the children themselves carry the rule shape.
- *
- * Wrapper text matching the recognized "Complete all of the following" or
- * "Complete N of the following" forms is dropped — `describeRule()` will
- * reconstruct it from structure. Non-standard wrapper prose (none in current
- * data; defensive future-proofing) is preserved on the node and consumers
- * fall back to it before deriving.
+ * Wrap children by the prose on a DOM wrapper `<li>`. Only `Complete N of` is
+ * structurally meaningful; everything else becomes a plain `all` (the children
+ * carry the rule shape). Recognized "Complete all/N of …" text is dropped —
+ * `describeRule()` reconstructs it. Non-standard prose (defensive; none in
+ * current data) is preserved on the node.
  */
 function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
   const nOf = COMPLETE_N_OF_RE.exec(wrapperText);

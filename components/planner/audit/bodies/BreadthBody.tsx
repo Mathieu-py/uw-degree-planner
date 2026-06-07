@@ -1,4 +1,4 @@
-import { fmtUnits } from "@/lib/format";
+import { fmtUnits, pluralize } from "@/lib/format";
 import type { DrillFn, Section } from "../types";
 import { PoolCard } from "./PoolCard";
 
@@ -15,7 +15,7 @@ export function BreadthBody({
 }) {
   return (
     <PoolCard
-      lead={`${fmtUnits(section.needUnits)} unit${section.needUnits === 1 ? "" : "s"}`}
+      lead={`${fmtUnits(section.needUnits)} ${pluralize(section.needUnits, "unit")}`}
       subjects={section.subjects}
       levelText={null}
       satisfiers={section.satisfiers}

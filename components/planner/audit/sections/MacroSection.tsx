@@ -2,8 +2,8 @@ import { Icon } from "@/components/ui/Icon";
 import { Ring } from "@/components/ui/Ring";
 import { NodeBody } from "../bodies/NodeBody";
 import { ringFor } from "../nodeProgress";
-import type { Macro, OptionRenderProps } from "../types";
-import { isIncomplete, SectionRow } from "./SectionRow";
+import { isIncomplete, type Macro, type OptionRenderProps } from "../types";
+import { SectionRow } from "./SectionRow";
 
 /**
  * One of the three top-level collapsible macro-sections (Degree requirements /
@@ -60,10 +60,9 @@ export function MacroSection({
                 />
               ))
             );
-          // A sub-labeled block (a term, "Specialization", "Degree minimums", a
-          // named rule sub-group) is independently collapsible, so long lists —
-          // e.g. an engineering program's eight terms — can be folded away. A
-          // node block also carries a small progress ring (completion at a glance).
+          // A sub-labeled block (a term, "Specialization", a named sub-group) is
+          // independently collapsible, so long lists fold away; a node block
+          // also carries a small progress ring.
           if (block.subLabel) {
             const ring =
               block.content.kind === "node"

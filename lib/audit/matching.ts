@@ -13,19 +13,17 @@ export interface MatchResult {
 }
 
 /**
- * Optimal unique assignment of courses to requirement slots via MAXIMUM
- * BIPARTITE MATCHING. Each bucket contributes `need` interchangeable slots;
- * each placed course can fill at most one slot of any bucket whose `eligible`
- * list contains it.
+ * Optimal unique assignment of courses to requirement slots via maximum
+ * bipartite matching. Each bucket offers `need` interchangeable slots; a course
+ * fills at most one slot of any bucket whose `eligible` list contains it.
  *
- * Maximising the matching means an overlapping set of pools that IS jointly
- * satisfiable can never leave a requirement spuriously unfilled — a
- * most-constrained-first greedy could strand a course in the wrong bucket (e.g.
- * give bucket "1 of {A,C}" the A that bucket "2 of {A,B}" needed). Each course
- * credits exactly one bucket, so overlapping pools can't double-count.
+ * Maximising means overlapping pools never leave a satisfiable requirement
+ * spuriously unfilled — a greedy could strand a course in the wrong bucket
+ * (give "1 of {A,C}" the A that "2 of {A,B}" needed). One bucket per course, so
+ * overlapping pools can't double-count.
  *
- * Standard Kuhn's algorithm: try to assign each course, augmenting along
- * alternating paths to bump an already-matched course to another open slot.
+ * Kuhn's algorithm: assign each course, augmenting along alternating paths to
+ * bump an already-matched course to another open slot.
  */
 export function maxBipartiteMatch(
   buckets: readonly MatchBucket[],

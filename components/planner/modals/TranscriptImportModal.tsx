@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
+import { countNoun, pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { PROGRAMS, type TermLetter } from "@/lib/programs";
 import {
@@ -17,9 +18,8 @@ import type { TranscriptParseResult } from "@/lib/transcript/types";
 
 interface Props {
   /**
-   * Called after the exit animation completes so the parent can unmount
-   * us. Mount/unmount is driven by the parent's conditional render — this
-   * component is always considered "open" while mounted.
+   * Called after the exit animation so the parent can unmount us. The component
+   * is always "open" while mounted.
    */
   onClose: () => void;
   /** Hands the parsed transcript to the planner to build a `LocalPlan`. */
@@ -70,16 +70,10 @@ export function TranscriptImportModal({
     [parseResult, catalogCodes],
   );
 
-  // `included` is the set of unrecognized codes the user has opted IN. The
-  // unrecognized bucket is excluded by default (Commit 4) because most
-  // unrecognized entries are placeholder rows or codes the user actually
-  // doesn't want as completed courses; check-to-include avoids silently
-  // polluting the completed-courses list.
-  //
-  // Intersect with the currently-unrecognized codes: a code in `included`
-  // that has since been re-categorized (e.g. catalog updated, parse re-ran)
-  // would otherwise be double-counted by the passed/inProgress/transfer
-  // tallies AND `included.size`.
+  // `included` = unrecognized codes the user opted IN (the bucket is excluded by
+  // default to avoid polluting the completed list with placeholder rows).
+  // Intersect with the current unrecognized set so a since-recategorized code
+  // isn't double-counted by both the tallies and `included.size`.
   const unrecognizedCodes = new Set(
     categorized.unrecognized.map((c) => c.code),
   );
@@ -240,7 +234,7 @@ export function TranscriptImportModal({
           Cancel
         </Button>
         <Button onClick={handleApply} disabled={includedCount === 0}>
-          Add {includedCount} course{includedCount === 1 ? "" : "s"}
+          Add {countNoun(includedCount, "course")}
         </Button>
       </ModalFooter>
     </Modal>
@@ -325,7 +319,7 @@ function Headline({
         {count}
       </span>
       <span className="text-sm text-ink-2">
-        course{count === 1 ? "" : "s"} found in {programNode}
+        {pluralize(count, "course")} found in {programNode}
         {termNode}.
       </span>
     </div>

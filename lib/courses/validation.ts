@@ -1,9 +1,7 @@
 /**
- * Boundary validator for the committed UWFlow snapshots in data/. The fetch
- * script produces these files but anyone can hand-edit them, and a malformed
- * field would otherwise surface as a deep TypeError inside enrichCourse or
- * the prereq parser. A zod parse fails fast at the boundary with a path that
- * pinpoints the offending field.
+ * Boundary validator for the committed UWFlow snapshots in data/. These can be
+ * hand-edited; a zod parse fails fast with a path to the bad field instead of a
+ * deep TypeError downstream.
  */
 
 import { z } from "zod";
@@ -32,10 +30,6 @@ export const CourseSchema = z.object({
   antireqs: z.string().nullable(),
   rating: RatingSchema,
   sections: z.array(SectionSchema),
-  // Unit weight (credits), enriched from the Kuali course catalog at fetch time.
-  // Optional so older snapshots (and synthetic test courses) stay valid. Bounded
-  // to the real UW range (0–3; the heaviest course is 3.0) so a bad value is
-  // rejected at parse rather than silently skewing unit math.
   units: z.number().min(0).max(3).optional(),
 });
 
