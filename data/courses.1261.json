@@ -1,6 +1,6 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-06-06T09:25:46.744Z",
+  "fetchedAt": "2026-06-07T10:04:11.811Z",
   "courseCount": 10729,
   "courses": [
     {
@@ -40252,10 +40252,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.8551282051282051,
-        "useful": 0.9314720812182741,
-        "liked": 0.8918918918918919,
-        "filled_count": 296
+        "easy": 0.8533163265306123,
+        "useful": 0.9318181818181819,
+        "liked": 0.8922558922558923,
+        "filled_count": 297
       },
       "sections": [
         {
@@ -50856,10 +50856,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5215633423180593,
-        "useful": 0.8331117021276596,
-        "liked": 0.787085514834206,
-        "filled_count": 573
+        "easy": 0.5221774193548387,
+        "useful": 0.833554376657825,
+        "liked": 0.7874564459930313,
+        "filled_count": 574
       },
       "sections": [
         {
