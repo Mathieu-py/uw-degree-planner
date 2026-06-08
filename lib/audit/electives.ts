@@ -1,4 +1,4 @@
-import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
+import { poolMatch } from "@/lib/courses/code";
 import { countNoun, truncate } from "@/lib/format";
 import type { ElectiveCategory, Program } from "@/lib/programs";
 import { LEVEL_BOUND_RE, subjectList } from "./constraints";
@@ -117,11 +117,11 @@ export function subjectPoolEligible(
   code: string,
   s: SubjectPoolElectiveSection,
 ): boolean {
-  if (!s.subjects.includes(coursePrefix(code))) return false;
-  const lvl = levelBucket(courseLevel(code));
-  if (s.minLevel != null && lvl < s.minLevel) return false;
-  if (s.maxLevel != null && lvl > s.maxLevel) return false;
-  return true;
+  return poolMatch(code, {
+    subjects: s.subjects,
+    minLevel: s.minLevel,
+    maxLevel: s.maxLevel,
+  });
 }
 
 /**

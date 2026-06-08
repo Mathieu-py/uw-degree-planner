@@ -1,4 +1,4 @@
-import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
+import { type PoolFilter, poolMatch } from "@/lib/courses/code";
 import { unitsMet } from "@/lib/format";
 import { type Program, type RuleNode, walkRule } from "@/lib/programs";
 import { type BreadthRequirement, deriveBreadthRequirements } from "./breadth";
@@ -6,6 +6,7 @@ import { deriveCommunicationRequirement } from "./communication";
 import {
   type AuditNode,
   type AuditRoot,
+  isSatisfied,
   placementLegalityKey,
 } from "./compile";
 import { deriveElectiveSections, subjectPoolEligible } from "./electives";
@@ -62,35 +63,24 @@ function leafCodes(node: RuleNode, out: string[]): void {
   });
 }
 
-/** Every `subjectPool` leaf under a node (a pick's options can be subject pools). */
-function leafPools(
-  node: RuleNode,
-  out: Extract<RuleNode, { kind: "subjectPool" }>[],
-): void {
-  walkRule(node, (n) => {
-    if (n.kind === "subjectPool") out.push(n);
-  });
-}
-
-/** Does a placed code satisfy a subjectPool's prefix + level filters? */
-function matchesPool(
-  code: string,
+/** A subjectPool rule as a normalized (lowercased) {@link PoolFilter}. */
+function poolFilterOf(
   node: Extract<RuleNode, { kind: "subjectPool" }>,
-): boolean {
-  const prefix = coursePrefix(code);
-  if (!node.subjectCodes.some((s) => s.toLowerCase() === prefix)) return false;
-  const lvl = levelBucket(courseLevel(code));
-  if (node.minLevel != null && lvl < node.minLevel) return false;
-  if (node.maxLevel != null && lvl > node.maxLevel) return false;
-  if (node.exclusions?.some((c) => c.toLowerCase() === code)) return false;
-  return true;
+): PoolFilter {
+  return {
+    subjects: node.subjectCodes.map((s) => s.toLowerCase()),
+    minLevel: node.minLevel,
+    maxLevel: node.maxLevel,
+    excludeCodes: node.exclusions?.map((c) => c.toLowerCase()),
+  };
 }
 
 /**
  * Walk a rule tree, collecting volume buckets and required-course codes.
- * `courses` under `all` are all-required (one singleton each); a `pick` unions
- * its descendant leaves into one pool; a `subjectPool` filters by prefix/level;
- * `excluded` is ignored.
+ * `courses` under `all` are all-required (one singleton each); a `subjectPool`
+ * filters by prefix/level; `excluded` is ignored. Picks mirror {@link compilePick}:
+ * an all-`courses` pick collapses into one pool, a compound pick credits only its
+ * genuinely-satisfied option-groups (see the `pick` case).
  */
 function collect(
   node: AuditNode,
@@ -104,25 +94,48 @@ function collect(
       for (const c of r.courses) required.add(c);
       break;
     case "pick": {
-      // Collapse a pick's options into one bucket of `selectMin` slots. Options
-      // can be subjectPools ("1 of: {3 SOC@400} or …"), so admit placed courses
-      // matching any descendant pool too, else the pick is wrongly unsatisfiable.
-      const codes: string[] = [];
-      leafCodes(r, codes);
-      const pools: Extract<RuleNode, { kind: "subjectPool" }>[] = [];
-      leafPools(r, pools);
-      const eligible = new Set(codes.filter((c) => placed.has(c)));
-      for (const c of placed)
-        if (pools.some((p) => matchesPool(c, p))) eligible.add(c);
-      buckets.push({ need: r.selectMin ?? 0, eligible: [...eligible] });
+      // No selectMin ⇒ an optional pick: 0 required slots, so it neither gates
+      // completion nor reserves units; its placed courses fall to free electives.
+      const min = r.selectMin ?? 0;
+      // Mirror compilePick. When every option is a bare `courses` leaf, collapse
+      // them into one pool of `min` interchangeable slots ("1 of: A, B, C").
+      // Test r.children: compilePick collapses an all-`courses` pick to an empty
+      // AuditNode.children, so node.children can't distinguish the two cases.
+      const allCoursesLeaves =
+        r.children.length > 0 && r.children.every((c) => c.kind === "courses");
+      if (allCoursesLeaves) {
+        const codes: string[] = [];
+        leafCodes(r, codes);
+        buckets.push({
+          need: min,
+          eligible: [...new Set(codes.filter((c) => placed.has(c)))],
+        });
+        break;
+      }
+      // Compound pick ("1 of: {A and B} or {C and D}", or nested picks/pools):
+      // a single course must NOT satisfy a whole option-group. Credit only the
+      // genuinely-satisfied children (per the compiled audit), up to `min`, so
+      // their real units flow through the matcher; reserve the rest at the flat
+      // per-slot estimate (an empty-eligible bucket), exactly as before.
+      let credited = 0;
+      for (const child of node.children) {
+        if (credited >= min) break;
+        if (isSatisfied(child)) {
+          collect(child, placed, buckets, required);
+          credited += 1;
+        }
+      }
+      if (credited < min) buckets.push({ need: min - credited, eligible: [] });
       break;
     }
-    case "subjectPool":
+    case "subjectPool": {
+      const f = poolFilterOf(r);
       buckets.push({
         need: r.selectCount,
-        eligible: [...placed].filter((c) => matchesPool(c, r)),
+        eligible: [...placed].filter((c) => poolMatch(c, f)),
       });
       break;
+    }
     case "all":
       for (const c of node.children) collect(c, placed, buckets, required);
       break;
@@ -182,6 +195,8 @@ export function computeDegreeProgress(
 
   // Finite electives (consolidated upstream so overlapping pools count once)
   // and unit-based subject pools ("0.5 unit of BIOL/CHEM/… at 200+").
+  // Option lists and placement keys are both catalog-lowercase, so the exact
+  // `placed.has`/`filter` matches below are case-safe; nothing normalizes here.
   if (program) {
     for (const e of deriveElectiveSections(program)) {
       if (e.kind === "finite")
@@ -218,12 +233,12 @@ export function computeDegreeProgress(
   // Optimal unique assignment of courses to slots (maxBipartiteMatch): each
   // matched course credits exactly one bucket, so overlapping pools can't
   // double-count and a satisfiable set is never left spuriously unfilled.
-  const { filledByBucket, matched: used } = maxBipartiteMatch(buckets);
+  const { filledByBucket, matched } = maxBipartiteMatch(buckets);
 
   // Roll up: real units of matched courses + per-slot estimate for unfilled
   // slots, so a 1.0-unit pick costs the free pool a full unit, not a flat 0.5.
   let namedCreditedUnits = 0;
-  for (const code of used) namedCreditedUnits += unitsOf(code);
+  for (const code of matched) namedCreditedUnits += unitsOf(code);
   let allBucketsFilled = true;
   let unfilledEstimate = 0;
   for (let bi = 0; bi < buckets.length; bi++) {
@@ -244,12 +259,14 @@ export function computeDegreeProgress(
   // Leftover placed courses fill the genuine free-elective allotment only.
   let freeCreditedUnits = 0;
   for (const code of placedList) {
-    if (used.has(code)) continue;
+    if (matched.has(code)) continue;
     if (freeCreditedUnits >= freeUnits) break;
     freeCreditedUnits += unitsOf(code);
   }
   freeCreditedUnits = Math.min(freeCreditedUnits, freeUnits);
 
+  // Real units only — unfilled-slot estimates (in `namedUnits`) shape free room
+  // but must never reach credit, or an empty plan would show progress.
   const creditedUnits = Math.min(namedCreditedUnits + freeCreditedUnits, denom);
 
   // Breadth is an independent filter (a course may satisfy breadth AND the
@@ -268,7 +285,9 @@ export function computeDegreeProgress(
   const levelFloors = program
     ? deriveLevelFloors(program, placedList, unitsOf)
     : [];
-  const allFloorsMet = levelFloors.every((f) => unitsMet(f.placedUnits, f.need));
+  const allFloorsMet = levelFloors.every((f) =>
+    unitsMet(f.placedUnits, f.need),
+  );
 
   const allComplete =
     allBucketsFilled && allBreadthMet && allFloorsMet && !unverifiedOwed;

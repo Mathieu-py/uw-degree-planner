@@ -168,6 +168,57 @@ describe("computeDegreeProgress — pick whose option is a subjectPool", () => {
   });
 });
 
+describe("computeDegreeProgress — compound pick (option is an `all` group)", () => {
+  // "Complete 1 of: {csa and csb} or {csc and csd}". Each option is a full group,
+  // so a single placed course must NOT satisfy the pick — `collect` used to flatten
+  // every pick's leaves into one pool, which let one course complete the group.
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy compound pick",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [
+            {
+              kind: "all",
+              children: [
+                { kind: "courses", courses: ["csa"] },
+                { kind: "courses", courses: ["csb"] },
+              ],
+            },
+            {
+              kind: "all",
+              children: [
+                { kind: "courses", courses: ["csc"] },
+                { kind: "courses", courses: ["csd"] },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    unitPlan: { totalUnits: 1.0 }, // one satisfied option = two 0.5-unit courses
+  };
+
+  it("a single course does not complete the option-group", () => {
+    const p = progressOf(program, ["csa"]);
+    expect(p.allComplete).toBe(false);
+    expect(p.pct).toBeLessThan(100);
+  });
+
+  it("completing one full option-group reaches 100%", () => {
+    const p = progressOf(program, ["csa", "csb"]);
+    expect(p.creditedUnits).toBe(1.0);
+    expect(p.pct).toBe(100);
+    expect(p.allComplete).toBe(true);
+  });
+});
+
 describe("computeDegreeProgress — overlapping elective pools (BME shape)", () => {
   // Three sub-lists whose union is exactly the aggregate "Technical Electives
   // List". Naive counting needs 1+1+3 = 5 courses; the real requirement is 3.
@@ -428,5 +479,86 @@ describe("computeDegreeProgress — optimal overlapping-pool matching", () => {
     // Only A,B placed: the 2-pick takes both, the 1-pick {A,C} has nothing left.
     const p = progressOf(program, ["aaa100", "bbb100"]);
     expect(p.allComplete).toBe(false);
+  });
+});
+
+describe("computeDegreeProgress — breadth gates completion", () => {
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+    unitPlan: {
+      totalUnits: 1.0, // m1 (0.5) + 0.5 free
+      constraints: [
+        {
+          label: "Humanities",
+          sourceText: "Humanities — 0.5 unit: HIST, ENGL",
+        },
+      ],
+    },
+  };
+
+  it("holds below 100% while a breadth subject is unmet, even at full volume", () => {
+    const p = progressOf(program, ["m1", "math101"]); // neither is HIST/ENGL
+    expect(p.creditedUnits).toBe(1.0); // degree volume is full
+    expect(p.breadthRequirements[0].placedUnits).toBe(0);
+    expect(p.allComplete).toBe(false);
+    expect(p.pct).toBe(99); // would be 100, held by the unmet breadth
+  });
+
+  it("reaches 100% once a breadth course is placed", () => {
+    const p = progressOf(program, ["m1", "hist101"]); // hist101 satisfies Humanities
+    expect(p.breadthRequirements[0].placedUnits).toBe(0.5);
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
+  });
+});
+
+describe("computeDegreeProgress — several gates owed at once", () => {
+  // Volume is full and no breadth/floor is owed, but the program still carries
+  // an unverified requirement — completion waits on every gate together.
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+    unitPlan: { totalUnits: 0.5 },
+    unverifiedRequirements: ["A co-op work-term sequence (not audited here)."],
+  };
+
+  it("stays below 100% while an unverified requirement is owed", () => {
+    const p = progressOf(program, ["m1"]);
+    expect(p.creditedUnits).toBe(0.5); // volume full
+    expect(p.allComplete).toBe(false);
+    expect(p.pct).toBe(99);
+  });
+});
+
+describe("computeDegreeProgress — degenerate inputs", () => {
+  it("returns a zeroed headline when there is no program", () => {
+    const plan = makePlan(["cs100", "cs200"]);
+    const audit = compileAudit(null, plan);
+    const p = computeDegreeProgress(audit, null, () => 0.5);
+    expect(p.totalUnits).toBeNull();
+    expect(p.denom).toBe(0);
+    expect(p.creditedUnits).toBe(0);
+    expect(p.pct).toBe(0); // denom 0 is guarded — no NaN
+    expect(p.freeUnits).toBe(0);
+    expect(p.breadthRequirements).toEqual([]);
+    expect(p.levelFloors).toEqual([]);
+  });
+
+  it("never divides by zero when a program states no unit total", () => {
+    const program: Program = {
+      kind: "flexible",
+      name: "No total",
+      asOf: "2026",
+      rules: { kind: "all", children: [] }, // no requirements, no totalUnits
+    };
+    const p = progressOf(program, []);
+    expect(p.denom).toBe(0);
+    expect(p.pct).toBe(0);
+    expect(Number.isNaN(p.pct)).toBe(false);
   });
 });

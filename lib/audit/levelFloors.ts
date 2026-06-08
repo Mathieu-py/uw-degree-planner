@@ -1,4 +1,4 @@
-import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
+import { poolMatch } from "@/lib/courses/code";
 import { countNoun } from "@/lib/format";
 import type { Program, UnitConstraint } from "@/lib/programs";
 import {
@@ -84,13 +84,12 @@ function matches(
   code: string,
   f: Omit<LevelFloor, "placedUnits" | "satisfiers">,
 ): boolean {
-  const prefix = coursePrefix(code);
-  if (f.subjects && !f.subjects.includes(prefix)) return false;
-  if (f.excludeSubjects?.includes(prefix)) return false;
-  const lvl = levelBucket(courseLevel(code));
-  if (f.minLevel != null && lvl < f.minLevel) return false;
-  if (f.maxLevel != null && lvl > f.maxLevel) return false;
-  return true;
+  return poolMatch(code, {
+    subjects: f.subjects,
+    minLevel: f.minLevel,
+    maxLevel: f.maxLevel,
+    excludeSubjects: f.excludeSubjects,
+  });
 }
 
 /** Whether a constraint is a level floor (so callers can avoid double-display). */
