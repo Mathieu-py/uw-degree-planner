@@ -16,8 +16,8 @@ export const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
     z.object({
       kind: z.literal("pick"),
       description: z.string().optional(),
-      selectMin: z.number().optional(),
-      selectMax: z.number().optional(),
+      selectMin: z.number().int().positive().optional(),
+      selectMax: z.number().int().positive().optional(),
       children: z.array(RuleNodeSchema),
     }),
     z.object({
@@ -25,22 +25,23 @@ export const RuleNodeSchema: z.ZodType<RuleNode> = z.lazy(() =>
       description: z.string().optional(),
       /**
        * Course count to pick. Approximate (units ÷ 0.5) when the source stated
-       * the pool in units ("5.25 units of Science courses").
+       * the pool in units ("5.25 units of Science courses"), so it can be a
+       * half-integer (0.5) — not necessarily a whole count.
        */
-      selectCount: z.number(),
-      subjectCodes: z.array(z.string()),
-      minLevel: z.number().optional(),
-      maxLevel: z.number().optional(),
-      exclusions: z.array(z.string()).optional(),
+      selectCount: z.number().positive().multipleOf(0.5),
+      subjectCodes: z.array(z.string()).min(1),
+      minLevel: z.number().int().positive().optional(),
+      maxLevel: z.number().int().positive().optional(),
+      exclusions: z.array(z.string()).min(1).optional(),
     }),
     z.object({
       kind: z.literal("courses"),
-      courses: z.array(z.string()),
+      courses: z.array(z.string()).min(1),
     }),
     z.object({
       kind: z.literal("excluded"),
       description: z.string().optional(),
-      courses: z.array(z.string()),
+      courses: z.array(z.string()).min(1),
     }),
   ]),
 );

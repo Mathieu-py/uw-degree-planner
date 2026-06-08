@@ -487,7 +487,7 @@ describe("unverified requirements — owed prose we can't structure", () => {
     expect(r.warnings).toEqual([]);
   });
 
-  it("captures unrecognized 'Complete …' prose as unverified AND warns", () => {
+  it("captures unrecognized 'Complete …' prose as unverified (no warning)", () => {
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(
@@ -499,6 +499,9 @@ describe("unverified requirements — owed prose we can't structure", () => {
     expect(r.unverified).toEqual([
       "Complete the residency requirement at Waterloo",
     ]);
+    // "Complete …" prose is owed-but-unstructured, not a parser miss, so it is
+    // surfaced as unverified WITHOUT a developer warning (see requirements.ts).
+    expect(r.warnings).toEqual([]);
   });
 
   it("does not capture non-action preamble prose (Note/If)", () => {

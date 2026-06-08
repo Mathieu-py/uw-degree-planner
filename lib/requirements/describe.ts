@@ -53,7 +53,7 @@ export function describeRule(node: RuleNode): string | undefined {
         node.subjectCodes.length === 1 ? `${node.subjectCodes[0]} ` : "";
       const level =
         node.minLevel !== undefined && node.maxLevel !== undefined
-          ? ` at the ${node.minLevel}- or ${node.maxLevel}-level`
+          ? ` at the ${node.minLevel}-${node.maxLevel}-level`
           : node.minLevel !== undefined
             ? ` at the ${node.minLevel}-level`
             : "";
