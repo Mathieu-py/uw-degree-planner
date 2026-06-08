@@ -18,6 +18,6 @@ export {
   parseSpecializationsList,
 } from "./scrape/slugs";
 export {
+  dropPureUnitBucketElectives,
   parseUnitPlan,
-  reconcileUnitsAndElectives,
 } from "./scrape/unitPlan";

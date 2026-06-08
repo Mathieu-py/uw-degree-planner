@@ -36,8 +36,6 @@ export interface PoolFilter {
   maxLevel?: number;
   /** Subject prefixes to exclude. */
   excludeSubjects?: readonly string[];
-  /** Full course codes to exclude. */
-  excludeCodes?: readonly string[];
 }
 
 /** Whether a placed `code` satisfies a {@link PoolFilter}'s subject + level bounds. */
@@ -45,7 +43,6 @@ export function poolMatch(code: string, f: PoolFilter): boolean {
   const prefix = coursePrefix(code);
   if (f.subjects && !f.subjects.includes(prefix)) return false;
   if (f.excludeSubjects?.includes(prefix)) return false;
-  if (f.excludeCodes?.includes(code)) return false;
   const lvl = levelBucket(courseLevel(code));
   if (f.minLevel != null && lvl < f.minLevel) return false;
   if (f.maxLevel != null && lvl > f.maxLevel) return false;

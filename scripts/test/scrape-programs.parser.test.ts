@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import type { RuleNode } from "../../lib/programs";
+import { parseLevelFloor } from "../../lib/audit/levelFloors";
+import type { ElectiveCategory, RuleNode } from "../../lib/programs";
 import { describeRule, requiredCoursesIn, walkRule } from "../../lib/programs";
 import {
   buildConflictCounts,
   buildProgramSlug,
   buildSpecializationSlug,
+  dropPureUnitBucketElectives,
   normalizeCourseCode,
   parseDegreeRequirements,
   parseElectives,
@@ -875,6 +877,20 @@ describe("subject-pool parsing — synthetic variants", () => {
     expect(pool.exclusions?.some((e) => /BIOL225/.test(e))).toBe(true);
   });
 
+  it("collects only genuine exclusion clauses, dropping clarifying parentheticals", () => {
+    const r = parseProgramRequirements({
+      requirements: wrapSection(
+        "<div>Complete 2 math courses from: ACTSC, AMATH (1.5 units) (excluding CS100)</div>",
+      ),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["ACTSC", "AMATH"]);
+    // "(1.5 units)" is noise and must NOT be collected; only "excluding CS100".
+    expect(pool.exclusions).toEqual(["excluding CS100"]);
+  });
+
   it("unit-based multi-subject: 'Complete 5.25 units of Science courses from the following subjects: …'", () => {
     const r = parseProgramRequirements({
       requirements: wrapSection(
@@ -1353,7 +1369,10 @@ describe("parseElectives — requiredCount from count statements", () => {
 
   it("captures a sub-list count ('Complete 6 of the following')", () => {
     const r = parseElectives({
-      courseListsNew: section("Approved Courses List", "Complete 6 of the following."),
+      courseListsNew: section(
+        "Approved Courses List",
+        "Complete 6 of the following.",
+      ),
     });
     expect(r.electives[0].requiredCount).toBe(6);
   });
@@ -1372,7 +1391,10 @@ describe("parseElectives — requiredCount from count statements", () => {
 
   it("does NOT read a whole-number unit total as a course count ('Complete a total of 20.0 units')", () => {
     const r = parseElectives({
-      courseListsNew: section("Approved Courses List", "Complete a total of 20.0 units:"),
+      courseListsNew: section(
+        "Approved Courses List",
+        "Complete a total of 20.0 units:",
+      ),
     });
     expect(r.electives[0].requiredCount).toBeUndefined();
   });
@@ -1504,6 +1526,37 @@ describe("parseUnitPlan", () => {
     expect(cs.some((c) => /PLAN/.test(c.label))).toBe(true);
     expect(cs.some((c) => /excluding SCI/.test(c.label))).toBe(true);
     for (const c of cs) expect(c.sourceText?.length).toBeGreaterThan(0);
+  });
+
+  it("emits level constraints that round-trip into parseLevelFloor", () => {
+    // Guards against scrape-time vs audit-time regex drift: the verbatim
+    // sourceText must satisfy the audit's UNIT_RE + LEVEL_BOUND_RE.
+    const { unitPlan } = parseUnitPlan(
+      "<ul><li>Complete a total of 20.0 units:<ul>" +
+        "<li>2.0 units must be at the 300-level or above.</li>" +
+        "</ul></li></ul>",
+    );
+    const note = unitPlan?.constraints?.[0];
+    expect(note).toBeDefined();
+    const floor = note ? parseLevelFloor(note) : null;
+    expect(floor).not.toBeNull();
+    expect(floor?.need).toBe(2.0);
+    expect(floor?.minLevel).toBe(300);
+  });
+});
+
+describe("dropPureUnitBucketElectives", () => {
+  it("drops a pure unit bucket but keeps approved-list and finite-count entries", () => {
+    const electives: ElectiveCategory[] = [
+      { description: "5.5 units of elective courses", unitRequirement: 5.5 },
+      { description: "Complete 1 of: a, b", approvedCourses: ["a", "b"] },
+      { description: "Complete 2 of the following", requiredCount: 2 },
+    ];
+    const kept = dropPureUnitBucketElectives(electives);
+    expect(kept).toHaveLength(2);
+    expect(kept.some((e) => e.unitRequirement === 5.5)).toBe(false);
+    expect(kept.some((e) => e.requiredCount === 2)).toBe(true);
+    expect(kept.some((e) => e.approvedCourses?.length === 2)).toBe(true);
   });
 });
 

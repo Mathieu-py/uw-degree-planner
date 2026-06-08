@@ -71,7 +71,6 @@ function poolFilterOf(
     subjects: node.subjectCodes.map((s) => s.toLowerCase()),
     minLevel: node.minLevel,
     maxLevel: node.maxLevel,
-    excludeCodes: node.exclusions?.map((c) => c.toLowerCase()),
   };
 }
 

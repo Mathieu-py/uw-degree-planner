@@ -11,7 +11,11 @@ import type {
 // lookahead rejects a subject requirement ("…8.0 units of HIST").
 const TOTAL_UNITS_RE =
   /complete a total of\s+(\d+(?:\.\d+)?)\s*(?:academic\s+)?units\b(?!\s+of\b)/i;
-// "minimum of 14.5 units must be at the 200-level or above"
+// "minimum of 14.5 units must be at the 200-level or above". Intentionally
+// matches "or above" floors only — the calendar states level minimums that way,
+// and a "or below" cap (which parseLevelFloor downstream could also handle) has
+// never appeared. The captured groups are unused; only `.test()` is called, and
+// the full verbatim text is stored as sourceText for the audit to re-parse.
 const LEVEL_CONSTRAINT_RE =
   /(\d+(?:\.\d+)?)\s*units?\b[^.]*?\bat the\s+(\d)00-level\s+or above/i;
 const FAILED_UNITS_RE = /maximum of\s+(\d+(?:\.\d+)?)\s*(?:failed )?units/i;
@@ -21,7 +25,6 @@ export interface UnitPlanResult {
   informational: InformationalItem[];
   /** Referenced "Bachelor of X degree-level requirements" Kuali pid, if any. */
   degreeRef: { pid: string; name: string } | null;
-  warnings: string[];
 }
 
 /**
@@ -30,12 +33,8 @@ export interface UnitPlanResult {
  * informational notes (failed-unit caps, communication), and the degree-level
  * reference. Subject/elective unit buckets are no longer extracted.
  */
-export function parseUnitPlan(
-  html: string,
-  _programLabel = "(unknown)",
-): UnitPlanResult {
+export function parseUnitPlan(html: string): UnitPlanResult {
   const $ = cheerio.load(html);
-  const warnings: string[] = [];
   const constraints: UnitConstraint[] = [];
   const informational: InformationalItem[] = [];
 
@@ -92,7 +91,7 @@ export function parseUnitPlan(
         }
       : null;
 
-  return { unitPlan, informational, degreeRef, warnings };
+  return { unitPlan, informational, degreeRef };
 }
 
 /**
@@ -100,20 +99,13 @@ export function parseUnitPlan(
  * of elective courses" — a unit amount, no approved list, no finite count) can't
  * render as a count-based section. Approved lists and finite counts stay.
  */
-export function reconcileUnitsAndElectives(
-  unitPlan: UnitPlan | null,
+export function dropPureUnitBucketElectives(
   electives: ElectiveCategory[],
-): {
-  unitPlan: UnitPlan | null;
-  electives: ElectiveCategory[];
-} {
+): ElectiveCategory[] {
   const isPureUnitBucket = (e: ElectiveCategory) =>
     e.unitRequirement != null &&
     !(e.approvedCourses && e.approvedCourses.length > 0) &&
     e.requiredCount == null;
 
-  return {
-    unitPlan,
-    electives: electives.filter((e) => !isPureUnitBucket(e)),
-  };
+  return electives.filter((e) => !isPureUnitBucket(e));
 }

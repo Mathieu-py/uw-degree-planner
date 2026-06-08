@@ -2,6 +2,14 @@ import type { RuleNode } from "../../lib/programs";
 import { WORD_NUMBERS } from "./counts";
 import { extractSubjectCodes } from "./normalize";
 
+/**
+ * A clause that genuinely narrows the pool ("excluding CS100", "exclusive of
+ * BIOL225 and BIOL280", "except …"). Used to keep real exclusions out of the
+ * noise — clarifying parentheticals ("0.5 unit", "see Additional Constraints",
+ * "including any taken above") are NOT exclusions and are dropped.
+ */
+const EXCLUSION_RE = /^(?:exclud|exclusive\s+of|except)/i;
+
 interface PoolHead {
   amount: number;
   isUnits: boolean;
@@ -28,9 +36,9 @@ function parseHead(fullText: string): PoolHead | null {
 
 /**
  * Pull parenthetical clauses out ("(excluding CS100)") so they don't confuse
- * level/from parsing, collecting them as verbatim exclusions. Then drop
- * count-qualifier noise: a stray leading "additional" and a per-course unit-size
- * qualifier ("0.5-unit course").
+ * level/from parsing, collecting only the ones that are genuine exclusions (see
+ * {@link EXCLUSION_RE}). Then drop count-qualifier noise: a stray leading
+ * "additional" and a per-course unit-size qualifier ("0.5-unit course").
  */
 function stripExclusionsAndQualifiers(
   rest: string,
@@ -40,7 +48,7 @@ function stripExclusionsAndQualifiers(
     rest
       .replace(/\(([^)]*)\)/g, (_m, inner: string) => {
         const t = inner.trim();
-        if (t) exclusions.push(t);
+        if (t && EXCLUSION_RE.test(t)) exclusions.push(t);
         return " ";
       })
       .replace(/\s+/g, " ")
@@ -124,7 +132,8 @@ function parseLevelRange(rest: string): LevelRange {
 /**
  * Parse an optional "from [the following subject codes|subjects][:] <list>[;
  * <exclusion>]" clause. Returns the subject codes it names (empty when absent)
- * and pushes any trailing `;`-led clauses onto `exclusions`.
+ * and pushes any trailing `;`-led clause that is a genuine exclusion (see
+ * {@link EXCLUSION_RE}) onto `exclusions`.
  */
 function parseFromClause(rest: string, exclusions: string[]): string[] {
   const fromMatch = rest.match(
@@ -136,7 +145,7 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
     .split(/[,\s]+/)
     .map((s) => s.trim())
     .filter((s) => /^[A-Z]{2,8}$/.test(s));
-  for (const p of parts.slice(1)) if (p.length > 0) exclusions.push(p);
+  for (const p of parts.slice(1)) if (EXCLUSION_RE.test(p)) exclusions.push(p);
   return fromSubjects;
 }
 

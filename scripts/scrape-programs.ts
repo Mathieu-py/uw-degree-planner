@@ -35,12 +35,12 @@ import {
   buildProgramSlug,
   buildSpecializationSlug,
   type DegreeParseResult,
+  dropPureUnitBucketElectives,
   parseDegreeRequirements,
   parseElectives,
   parseProgramRequirements,
   parseSpecializationsList,
   parseUnitPlan,
-  reconcileUnitsAndElectives,
 } from "./scrape-programs.parser";
 
 const FALLBACK_CATALOG_ID = "67e557ed6ed2fe2bd3a38956";
@@ -370,25 +370,15 @@ async function runPhaseA(
       const electivesResult = parseElectives(detail, slug);
       warnings.push(...electivesResult.warnings);
 
-      // Unit accounting from grad-req prose, reconciled against the elective
-      // lists so a requirement isn't counted twice.
-      const planResult = parseUnitPlan(
-        detail.graduationRequirements ?? "",
-        slug,
-      );
-      warnings.push(...planResult.warnings);
-      const reconciled = reconcileUnitsAndElectives(
-        planResult.unitPlan,
-        electivesResult.electives,
-      );
+      // Unit accounting from grad-req prose. Drop pure-unit-bucket electives so a
+      // unit requirement isn't also counted as an (untrackable) elective section.
+      const planResult = parseUnitPlan(detail.graduationRequirements ?? "");
+      const electives = dropPureUnitBucketElectives(electivesResult.electives);
       if (planResult.degreeRef) degreeRefBySlug.set(slug, planResult.degreeRef);
 
-      const electivesField =
-        reconciled.electives.length > 0
-          ? { electives: reconciled.electives }
-          : {};
-      const unitPlanField = reconciled.unitPlan
-        ? { unitPlan: reconciled.unitPlan }
+      const electivesField = electives.length > 0 ? { electives } : {};
+      const unitPlanField = planResult.unitPlan
+        ? { unitPlan: planResult.unitPlan }
         : {};
       const informationalField =
         planResult.informational.length > 0
