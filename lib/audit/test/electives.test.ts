@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyElective,
+  consolidateElectives,
   deriveElectiveSections,
+  subjectPoolEligible,
 } from "@/lib/audit/electives";
 import { type ElectiveCategory, PROGRAMS, type Program } from "@/lib/programs";
 
@@ -42,27 +44,31 @@ describe("classifyElective", () => {
     expect(classifyElective(e).kind).toBe("browse");
   });
 
-  it("flags unit-based rules and never fabricates a count", () => {
+  it("parses a unit-based subject+level rule into a trackable subjectPool", () => {
     const e: ElectiveCategory = {
       description:
         "Complete a minimum of 0.5 unit of BIOL, CHEM, HLTH, or KIN courses at the 200-level or above",
     };
     const s = classifyElective(e);
-    expect(s.kind).toBe("browse");
-    if (s.kind !== "browse") return;
-    expect(s.unitBased).toBe(true);
-    expect(s.eligibleCodes).toEqual([]);
+    expect(s.kind).toBe("subjectPool");
+    if (s.kind !== "subjectPool") return;
+    expect(s.subjects).toEqual(["biol", "chem", "hlth", "kin"]);
+    expect(s.minLevel).toBe(200);
+    expect(s.maxLevel).toBeUndefined();
+    expect(s.need).toBe(1); // 0.5 unit ÷ 0.5
   });
 
-  it("flags an explicit unitRequirement as unit-based", () => {
+  it("parses a level-less unit subject rule (need = units ÷ 0.5)", () => {
     const e: ElectiveCategory = {
       description: "6.0 units of ANTH courses",
       unitRequirement: 6,
     };
     const s = classifyElective(e);
-    expect(s.kind).toBe("browse");
-    if (s.kind !== "browse") return;
-    expect(s.unitBased).toBe(true);
+    expect(s.kind).toBe("subjectPool");
+    if (s.kind !== "subjectPool") return;
+    expect(s.subjects).toEqual(["anth"]);
+    expect(s.need).toBe(12);
+    expect(s.minLevel).toBeUndefined();
   });
 
   it("does not treat a finite phrase without an approved list as draggable", () => {
@@ -70,6 +76,21 @@ describe("classifyElective", () => {
       description: "Complete 3 additional courses from the above lists",
     };
     expect(classifyElective(e).kind).toBe("browse");
+  });
+});
+
+describe("subjectPoolEligible", () => {
+  const s = classifyElective({
+    description:
+      "Complete a minimum of 0.5 unit of BIOL, CHEM, HLTH, or KIN courses at the 200-level or above",
+  });
+
+  it("matches by subject prefix and respects the level bound", () => {
+    if (s.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(subjectPoolEligible("biol250", s)).toBe(true);
+    expect(subjectPoolEligible("kin486", s)).toBe(true);
+    expect(subjectPoolEligible("biol150", s)).toBe(false); // below 200
+    expect(subjectPoolEligible("math250", s)).toBe(false); // wrong subject
   });
 });
 
@@ -112,6 +133,101 @@ describe("deriveElectiveSections", () => {
       rules: { kind: "all", children: [] },
     } as unknown as Program;
     expect(deriveElectiveSections(program)).toEqual([]);
+  });
+});
+
+describe("consolidateElectives", () => {
+  it("drops sub-lists subsumed by an aggregate that unions them (BME shape)", () => {
+    const cats: ElectiveCategory[] = [
+      {
+        description: "Complete 1 of the following: A",
+        approvedCourses: ["c1", "c2"],
+      },
+      {
+        description: "Complete 1 of the following: B",
+        approvedCourses: ["c3"],
+      },
+      {
+        description: "Technical Electives List",
+        requiredCount: 3,
+        approvedCourses: ["c1", "c2", "c3"],
+      },
+    ];
+    const out = consolidateElectives(cats);
+    expect(out).toHaveLength(1);
+    expect(out[0].description).toBe("Technical Electives List");
+  });
+
+  it("keeps lists that merely overlap but aren't an exact union", () => {
+    const cats: ElectiveCategory[] = [
+      { description: "List A", approvedCourses: ["c1", "c2"] },
+      { description: "List B", approvedCourses: ["c3"] },
+      // aggregate has an extra code (c4) → not exactly A ∪ B, so keep all three
+      { description: "Aggregate", approvedCourses: ["c1", "c2", "c3", "c4"] },
+    ];
+    expect(consolidateElectives(cats)).toHaveLength(3);
+  });
+
+  it("leaves distinct sibling lists untouched", () => {
+    const cats: ElectiveCategory[] = [
+      { description: "Complete 1 of the following: A", approvedCourses: ["a"] },
+      { description: "Complete 1 of the following: B", approvedCourses: ["b"] },
+      { description: "Complete 1 of the following: C", approvedCourses: ["c"] },
+    ];
+    expect(consolidateElectives(cats)).toHaveLength(3);
+  });
+
+  it("collapses Biomedical Engineering to a single technical-electives row", () => {
+    const titles = deriveElectiveSections(
+      PROGRAMS["biomedical-engineering"],
+    ).map((s) => s.title);
+    // No more "(2)"/"(3)" duplicates of "Complete 1 of the following".
+    expect(
+      titles.filter((t) => /^Complete 1 of the following/.test(t)),
+    ).toEqual([]);
+    expect(titles).toContain("Technical Electives List");
+    // The courseless "Complete 3 additional courses from the above lists…"
+    // connective orphan is gone too — it pointed at the now-collapsed sub-lists.
+    expect(titles.filter((t) => /from the above lists/i.test(t))).toEqual([]);
+  });
+
+  it("drops a courseless cross-list connective orphan when an aggregate is present", () => {
+    const cats: ElectiveCategory[] = [
+      {
+        description: "Complete 1 of the following: A",
+        approvedCourses: ["c1", "c2"],
+      },
+      {
+        description: "Complete 1 of the following: B",
+        approvedCourses: ["c3"],
+      },
+      {
+        description: "Technical Electives List",
+        requiredCount: 3,
+        approvedCourses: ["c1", "c2", "c3"],
+      },
+      {
+        description:
+          "Complete 3 additional courses from the above lists, including no more than 2 from List 3.",
+        requiredCount: 3,
+      },
+    ];
+    const out = consolidateElectives(cats);
+    expect(out.map((e) => e.description)).toEqual(["Technical Electives List"]);
+  });
+
+  it("keeps a cross-list connective orphan when no aggregate fired", () => {
+    // No aggregate unions these two distinct lists, so consolidation does not
+    // fire — leave the orphan visible rather than hide an unrepresented rule.
+    const cats: ElectiveCategory[] = [
+      { description: "Complete 1 of the following: A", approvedCourses: ["a"] },
+      { description: "Complete 1 of the following: B", approvedCourses: ["b"] },
+      {
+        description: "Complete 2 additional courses from the above lists.",
+        requiredCount: 2,
+      },
+    ];
+    expect(consolidateElectives(cats)).toHaveLength(3);
   });
 });
 

@@ -8,11 +8,8 @@ import type { Course } from "@/lib/courses/types";
 
 /**
  * "Add to plan" CTA on the course detail page. Opens the shared
- * {@link TermPicker} in place (the catalog "Add" flow) instead of bouncing to
- * /plan, then returns to the catalog once the course is added.
- *
- * Hidden when arriving from a plan (`?from=plan`): that link is opened from a
- * course already placed in the plan, so adding it again is redundant.
+ * {@link TermPicker} in place, then returns to the catalog once added. Hidden
+ * when arriving from a plan (`?from=plan`) — the course is already placed.
  */
 export function AddInPlannerButton({
   course,
@@ -41,8 +38,8 @@ export function AddInPlannerButton({
         <TermPicker
           course={course}
           onClose={() => setOpen(false)}
-          // From the catalog → back to the catalog after adding. A direct visit
-          // has no origin, so it just closes and stays on the page.
+          // From the catalog → back to it after adding; a direct visit just
+          // closes and stays.
           onAdded={
             from === "catalog" ? () => router.push("/catalog") : undefined
           }

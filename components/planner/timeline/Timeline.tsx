@@ -30,11 +30,9 @@ interface Props {
 }
 
 /**
- * Wrapping grid of the whole degree — academic term cards with co-op work
- * terms interleaved in calendar order (`repeat(auto-fill, minmax(184px,1fr))`).
- * The grid grows downward and its container scrolls vertically, so it never
- * scrolls horizontally. Pre-arrival / transfer credits, when present, render
- * as the first cell with distinct styling.
+ * Wrapping grid of the whole degree — academic term cards with co-op terms
+ * interleaved in calendar order. Grows downward, scrolls vertically only.
+ * Pre-arrival / transfer credits, when present, render as the first cell.
  */
 export function Timeline({
   plan,

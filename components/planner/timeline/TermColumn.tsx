@@ -47,9 +47,8 @@ export const TermColumn = memo(function TermColumn({
   const filled = slot.courses.length;
   const allDone = filled > 0 && slot.courses.every((c) => !!c.grade);
 
-  // Bind the slot id here so the parent's handlers stay referentially stable
-  // across edits (they take a slotId) while SlotBody still gets the simple
-  // zero/one-arg callbacks it expects — both stable, so SlotBody's memo holds.
+  // Bind slotId here so SlotBody gets stable zero/one-arg callbacks (and its
+  // memo holds) while the parent's handlers stay slotId-keyed.
   const slotId = slot.id;
   const handleAdd = useCallback(
     () => onSlotClick(slotId),

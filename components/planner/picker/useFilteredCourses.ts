@@ -13,13 +13,14 @@ import {
   type EligibilityRow,
 } from "@/lib/courses/eligibility";
 import { applyFilters } from "@/lib/courses/filters";
-import type { Course } from "@/lib/courses/types";
+import type { Course, FilterPreset } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
 
 export interface PickerFilters {
   query: string;
   levels: number[];
   excludePrefixes: string[];
+  includePrefixes: string[];
   minUseful: number | null;
   minEasy: number | null;
   hasSeatsOnly: boolean;
@@ -30,6 +31,7 @@ const DEFAULT_FILTERS: PickerFilters = {
   query: "",
   levels: [],
   excludePrefixes: [],
+  includePrefixes: [],
   minUseful: null,
   minEasy: null,
   hasSeatsOnly: false,
@@ -51,6 +53,8 @@ export interface UseFilteredCoursesArgs {
   /** Codes already in the target slot (lets coreqs resolve same-term). */
   sameTerm?: ReadonlySet<string>;
   focusCodes?: string[];
+  /** Filter values to seed on mount (e.g. a subject-pool Browse's subjects). */
+  initialFilters?: FilterPreset;
 }
 
 export interface UseFilteredCoursesResult {
@@ -68,11 +72,10 @@ export interface UseFilteredCoursesResult {
 }
 
 /**
- * Slot-picker filter+sort+paginate pipeline as a hook. The default view
- * narrows the catalog to candidates for the target slot (not placed, optional
- * focus list), then applies user filters, full-text search, prereq eligibility
- * annotation, and column sort. Pagination resets to the first page on every
- * filter / sort change.
+ * Slot-picker filter+sort+paginate pipeline. Narrows the catalog to slot
+ * candidates (not placed, optional focus list), then applies user filters,
+ * search, prereq eligibility annotation, and sort. Pagination resets on every
+ * filter/sort change.
  */
 export function useFilteredCourses({
   catalog,
@@ -83,8 +86,14 @@ export function useFilteredCourses({
   programReferenced,
   sameTerm,
   focusCodes,
+  initialFilters,
 }: UseFilteredCoursesArgs): UseFilteredCoursesResult {
-  const [filters, setFilters] = useState<PickerFilters>(DEFAULT_FILTERS);
+  // Seed once on mount (the picker remounts per open), so a drill-in's preset
+  // lands as the starting filter state, which the student can widen/narrow.
+  const [filters, setFilters] = useState<PickerFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    ...initialFilters,
+  }));
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT_KEY);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT_DIR);
   const [limit, setLimit] = useState(PAGE);
@@ -108,6 +117,7 @@ export function useFilteredCourses({
     () =>
       applyFilters(candidates, {
         excludePrefixes: filters.excludePrefixes,
+        includePrefixes: filters.includePrefixes,
         levels: filters.levels,
         hasSeatsAvailable: filters.hasSeatsOnly,
         hideUnmetPrereqs: false, // prereq filtering happens in attachEligibility
@@ -127,18 +137,13 @@ export function useFilteredCourses({
     );
   }, [userFiltered, filters.query]);
 
-  // Eligibility annotation is the most expensive step (parsing every
-  // course's prereq AST + walking it against the completed set). It splits
-  // by mode:
-  //
-  // - `hideUnmetPrereqs === true`: we MUST annotate everything before
-  //   pagination, otherwise an unmet row would survive into a later page.
-  //   Correctness > perf here.
-  //
-  // - `hideUnmetPrereqs === false`: annotation is purely decorative, so we
-  //   defer it past sort+slice and only evaluate the ~50 rows we render.
-  //   Every keystroke in the search box used to re-evaluate the entire
-  //   ~10k catalog; this brings it down to one screenful.
+  // Eligibility annotation is the most expensive step (parse + walk each prereq
+  // AST). Split by mode:
+  // - hideUnmetPrereqs true: MUST annotate everything before pagination, else
+  //   an unmet row survives into a later page.
+  // - hideUnmetPrereqs false: annotation is decorative, so defer past sort+slice
+  //   and only evaluate the ~50 rendered rows (vs. the whole ~10k catalog per
+  //   keystroke).
   const sortedCourses = useMemo<EligibilityRow[]>(() => {
     if (filters.hideUnmetPrereqs) {
       const baseRows = searched.map((course) => ({

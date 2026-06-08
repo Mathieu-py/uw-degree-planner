@@ -1,25 +1,16 @@
 /**
- * Per-program rule patches for cases where the Kuali catalog source is
- * malformed and the parser cannot recover the requirement on its own.
- *
- * Each entry's nodes are AND-ed onto the program's parsed rule tree, so an
- * override only ever *adds* a requirement that Kuali dropped — it never edits
- * or removes what the parser found.
- *
- * Keep this map as small as possible: prefer fixing the parser when a pattern
- * is general. Use an override only for genuine one-off source typos.
+ * Per-program rule patches for malformed Kuali source the parser can't recover.
+ * Each entry's nodes are AND-ed onto the parsed tree, so an override only *adds*
+ * a dropped requirement — never edits or removes what the parser found. Keep
+ * this map tiny: fix the parser for general patterns; override only one-off typos.
  */
 import type { RuleNode } from "../lib/programs";
 
 const RULE_OVERRIDES: Record<string, RuleNode[]> = {
-  // Kuali emits the BSc Communication Requirement as
-  //   "Complete of the following: COMMST 193, ENGL 193"
-  // with the count missing, so the prose matches DEFERRED_PROSE_RE and the
-  // whole rule is silently dropped — leaving the program with no comms
-  // requirement at all. The intent is "complete 1 of": the UW Science
-  // communication requirement is one of ENGL 193 / COMMST 193. See issue #49.
-  // (Other Earth Sciences specializations parse their comms rule cleanly; only
-  // hydrogeology hits the malformed phrasing.)
+  // Kuali emits the BSc Communication Requirement as "Complete of the following:
+  // COMMST 193, ENGL 193" — count missing, so it matches DEFERRED_PROSE_RE and is
+  // silently dropped. Intent is "complete 1 of" (issue #49). Only hydrogeology
+  // hits the malformed phrasing.
   "earth-sciences-hydrogeology": [
     {
       kind: "pick",
@@ -31,12 +22,9 @@ const RULE_OVERRIDES: Record<string, RuleNode[]> = {
 };
 
 /**
- * Return `rules` with any per-program override nodes AND-ed in. Programs with
- * no override are returned unchanged (identity).
- *
- * Override nodes are appended to the deepest top-level "all" group so they sit
- * alongside the program's other requirement nodes rather than wrapping the
- * whole tree in an extra layer.
+ * Return `rules` with any per-program override nodes AND-ed in (identity when
+ * none). Nodes append into the top-level "all" group so they sit alongside the
+ * existing requirements rather than wrapping the tree in an extra layer.
  */
 export function applyRuleOverrides(slug: string, rules: RuleNode): RuleNode {
   const extra = RULE_OVERRIDES[slug];

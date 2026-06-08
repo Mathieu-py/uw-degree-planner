@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/Icon";
 import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
-import { formatCourseCode, formatPercent } from "@/lib/format";
+import { countNoun, formatCourseCode, formatPercent } from "@/lib/format";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 import { AddInPlannerButton } from "./AddInPlannerButton";
 
@@ -80,8 +80,7 @@ export default async function CoursePage(props: {
               <div className="card overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-line text-sm">
                   <span className="text-ink-2">
-                    {course.sections.length} section
-                    {course.sections.length === 1 ? "" : "s"}
+                    {countNoun(course.sections.length, "section")}
                   </span>
                   <span className={totalSeats > 0 ? "text-met" : "text-ink-3"}>
                     {totalSeats > 0 ? `${totalSeats} seats open` : "Full"}
@@ -124,8 +123,7 @@ export default async function CoursePage(props: {
               <RatingRow label="Easy" value={rating.easy} />
               <RatingRow label="Liked" value={rating.liked} />
               <p className="u-small">
-                Based on {rating.filled_count} UWFlow review
-                {rating.filled_count === 1 ? "" : "s"}
+                Based on {countNoun(rating.filled_count ?? 0, "UWFlow review")}
               </p>
             </div>
           ) : (

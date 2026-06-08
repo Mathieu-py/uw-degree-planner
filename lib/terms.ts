@@ -1,8 +1,6 @@
 /**
- * UWFlow term IDs are `1<YY><season>` where YY is the last two digits of the
- * calendar year and the season digit is 1 = Winter, 5 = Spring, 9 = Fall.
- * This holds for every term we've fetched (1255 / 1259 / 1261 / 1265 / 1269)
- * and matches UW's documented Quest term-number scheme.
+ * UWFlow term IDs are `1<YY><season>` (YY = last two year digits; season digit
+ * 1 = Winter, 5 = Spring, 9 = Fall) — UW's documented Quest term scheme.
  */
 export type TermId = number;
 
@@ -88,9 +86,8 @@ export function sequenceTermsFrom(start: TermInfo, count: number): TermInfo[] {
 }
 
 /**
- * Pre-generated table of terms used by /browse and snapshot lookups. Spans
- * 2020 through 2030 inclusive — large enough to cover any in-flight student
- * plan without being absurd. Generated, not hand-edited.
+ * Pre-generated table of terms (2020–2030) used by /browse and snapshot
+ * lookups — wide enough for any in-flight plan. Generated, not hand-edited.
  */
 export const KNOWN_TERMS: TermInfo[] = (() => {
   const out: TermInfo[] = [];
@@ -106,13 +103,10 @@ export const KNOWN_TERMS: TermInfo[] = (() => {
 export const PINNED_TERM: TermId = 1261;
 
 /**
- * Parse the human label produced by the transcript parser
- * (e.g. "Fall 2023", "Winter 2024") back into a calendar TermId. Returns
- * `null` for shapes we don't recognize — including "Transfer Credit" and
- * any free-form text the parser couldn't classify (the caller decides
- * whether those land in the synthetic pre-arrival slot or are dropped).
- *
- * Tolerates case differences and surrounding whitespace.
+ * Parse a transcript-parser label ("Fall 2023", "Winter 2024") back into a
+ * TermId. Returns `null` for unrecognized shapes — including "Transfer Credit"
+ * and unclassified text (the caller decides where those land). Tolerates case
+ * and surrounding whitespace.
  */
 export function termLabelToTermId(label: string): TermId | null {
   const m = label.trim().match(/^(Winter|Spring|Fall)\s+(\d{4})$/i);

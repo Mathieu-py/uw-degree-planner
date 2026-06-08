@@ -14,9 +14,9 @@ export interface UserState {
   /** Student's program, so program-restriction clauses resolve instead of "check". */
   program?: ProgramIdentity;
   /**
-   * Demote a program-restriction "block" to a "check" instead of a hard fail.
-   * Set when the student's own program references this course, so a stale prose
-   * restriction can't grey it out. Other prereqs still gate normally.
+   * Demote a program-restriction "block" to a "check". Set when the student's
+   * program references this course, so a stale prose restriction can't grey it
+   * out. Other prereqs still gate normally.
    */
   suppressProgramBlock?: boolean;
 }
@@ -84,9 +84,8 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
     }
     case "level": {
       const gate = `Level at least ${node.minLevel}`;
-      // Unknown level → uncertain ("check"); known level → definite, and on a
-      // fail we surface the gate so the UI names the level rather than a bare
-      // "Missing prereqs".
+      // Unknown level → "check". Known level is definite; on a fail we surface
+      // the gate so the UI names the level, not a bare "Missing prereqs".
       if (!state.level) return res({ uncertain: true, raw: [gate] });
       const ok = compareLevel(state.level, node.minLevel) >= 0;
       return res({ satisfied: ok, raw: ok ? [] : [gate] });
@@ -96,9 +95,8 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
         parseProgramClause(node.clause),
         state.program ?? null,
       );
-      // block → hard fail (surfaced via raw, since there's no missing course to
-      // point at); unknown → "check"; allow → pass. suppressProgramBlock demotes
-      // a block to "check" (see UserState).
+      // block → hard fail (via raw, no missing course to point at); unknown →
+      // "check"; allow → pass. suppressProgramBlock demotes a block to "check".
       if (verdict === "block") {
         if (state.suppressProgramBlock) {
           return res({ uncertain: true, raw: [node.clause] });
@@ -129,10 +127,9 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       });
     }
     case "or": {
-      // If any child is definitely satisfied, the OR is satisfied (no asterisk).
-      // Otherwise, if any child is uncertain (raw text / unknown level), we
-      // bias toward "satisfied + uncertain" rather than failing — the student
-      // may still meet the requirement via a route we can't evaluate.
+      // Any definitely-satisfied child satisfies the OR. Otherwise, if any is
+      // uncertain (raw text / unknown level), bias to "satisfied + uncertain"
+      // rather than fail — the student may meet it via a route we can't see.
       const child = node.children.map((c) => walk(c, state));
       if (child.some((c) => c.satisfied && !c.uncertain)) return res();
       const anyUncertain = child.some((c) => c.uncertain);

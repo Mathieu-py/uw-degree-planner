@@ -2,11 +2,9 @@ import type { ServerPlan } from "../server/types";
 import { type LocalPlan, PLAN_SCHEMA_VERSION } from "../types";
 
 /**
- * Project a `ServerPlan` into the `LocalPlan` shape consumed by the planner
- * components. Drops server-managed identity (`id`, `name`,
- * `programScrapeVersion`) and stamps the on-disk schema version. The server
- * may store `stream` as null (legacy / empty plans); the planner UI requires
- * a concrete stream so we default to "regular".
+ * Project a `ServerPlan` into the `LocalPlan` shape the planner consumes. Drops
+ * server identity (`id`, `name`, `programScrapeVersion`), stamps the schema
+ * version, and defaults a null `stream` (legacy/empty plans) to "regular".
  */
 export function serverPlanToLocal(plan: ServerPlan): LocalPlan {
   return {

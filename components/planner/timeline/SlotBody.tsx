@@ -21,9 +21,8 @@ interface Props {
 
 type SlotStatus = "done" | "plan" | "warn";
 
-// A graded course is one the student has completed (transcript-imported pass),
-// so it reads as "done" regardless of any stale prereq flag. Otherwise an
-// outstanding validation issue makes it "warn" (amber); else it's "plan".
+// A graded course is completed, so it reads "done" regardless of any stale
+// prereq flag; else an outstanding issue makes it "warn", otherwise "plan".
 function courseStatus(course: SlotCourse, hasIssue: boolean): SlotStatus {
   if (course.grade) return "done";
   if (hasIssue) return "warn";
@@ -31,11 +30,9 @@ function courseStatus(course: SlotCourse, hasIssue: boolean): SlotStatus {
 }
 
 /**
- * One term's placed courses, rendered as the design's status-colored slots
- * (done = green / plan = neutral / warn = amber) plus a single dashed
- * "+ add course" affordance. Each filled slot shows its status glyph by
- * default and reveals view (↗) + remove (×) actions on hover. Warn slots list
- * their validation message(s) inline so the problem is visible at a glance.
+ * One term's placed courses as status-colored slots (done/plan/warn) plus a
+ * dashed "+ add course". Each slot shows its status glyph and reveals view (↗) +
+ * remove (×) on hover; warn slots list their validation messages inline.
  */
 export const SlotBody = memo(function SlotBody({
   slot,
@@ -45,15 +42,13 @@ export const SlotBody = memo(function SlotBody({
   readOnly = false,
   planOriginQuery = "",
 }: Props) {
-  // Code of the chip currently being dragged out of this term, so we can dim
-  // it while it's in flight. Cleared on dragend (drop or cancel).
+  // Chip being dragged out of this term, dimmed while in flight; cleared on
+  // dragend.
   const [draggingCode, setDraggingCode] = useState<string | null>(null);
 
-  // A drop relocates a chip by mutating the plan, which unmounts the source
-  // chip — and React's event delegation can't deliver its `dragend` to a gone
-  // element, so `draggingCode` is left stale. If that course later lands back
-  // in this term the remounted chip would render dimmed forever, so drop the
-  // flag whenever the term's course set changes (covers the leave and return).
+  // A drop unmounts the source chip, so its `dragend` never fires and
+  // `draggingCode` is left stale — clear it whenever the term's course set
+  // changes (covers the chip's leave and any return).
   const coursesRef = useRef(slot.courses);
   if (coursesRef.current !== slot.courses) {
     coursesRef.current = slot.courses;

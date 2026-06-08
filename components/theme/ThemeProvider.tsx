@@ -35,10 +35,9 @@ function readStoredTheme(): Theme {
 }
 
 /**
- * Applies the theme to <html> by setting data-mode (the token CSS keys off it).
- * The anti-FOUC inline script in layout.tsx does the same on first load before
- * paint — including defaulting to dark when nothing is stored — so there's no
- * flash; this just keeps it in sync after hydration.
+ * Sets data-mode on <html> (the token CSS keys off it). The anti-FOUC inline
+ * script in layout.tsx does the same before paint, so this just keeps it in
+ * sync after hydration.
  */
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute("data-mode", theme);

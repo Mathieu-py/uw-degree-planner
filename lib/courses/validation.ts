@@ -1,9 +1,7 @@
 /**
- * Boundary validator for the committed UWFlow snapshots in data/. The fetch
- * script produces these files but anyone can hand-edit them, and a malformed
- * field would otherwise surface as a deep TypeError inside enrichCourse or
- * the prereq parser. A zod parse fails fast at the boundary with a path that
- * pinpoints the offending field.
+ * Boundary validator for the committed UWFlow snapshots in data/. These can be
+ * hand-edited; a zod parse fails fast with a path to the bad field instead of a
+ * deep TypeError downstream.
  */
 
 import { z } from "zod";
@@ -32,6 +30,7 @@ export const CourseSchema = z.object({
   antireqs: z.string().nullable(),
   rating: RatingSchema,
   sections: z.array(SectionSchema),
+  units: z.number().min(0).max(3).optional(),
 });
 
 const CoursesFileSchema = z.object({

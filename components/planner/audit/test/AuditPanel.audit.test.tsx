@@ -8,7 +8,7 @@
 // These are the invariants a presentation rewrite can quietly violate (e.g. a
 // pick branch that drops its non-`courses` siblings).
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { deriveElectiveSections } from "@/lib/audit/electives";
 import { formatCourseCode } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
@@ -79,6 +79,31 @@ describe("AuditPanel cross-program mapping audit", () => {
     // Guard against the fixture silently shrinking; the audit is only as good
     // as its breadth.
     expect(programIds.length).toBeGreaterThan(150);
+  });
+
+  // Programs/specs with two sibling requirement groups sharing a description
+  // (e.g. computational-mathematics's two "Complete 2 courses from the
+  // following choices"), which previously collided on `grp-${title}` keys.
+  it.each([
+    ["computational-mathematics", null],
+    ["h-geography-and-environmental-management", null],
+    ["biomedical-engineering", "bme-biomaterials-and-tissues"],
+  ] as const)("renders without duplicate React keys: %s %s", (programId, specId) => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      render(
+        <AuditPanel
+          plan={emptyPlan(programId, specId)}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      const dupKeyWarnings = spy.mock.calls.filter((args) =>
+        /same key/i.test(String(args[0])),
+      );
+      expect(dupKeyWarnings).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it.each(

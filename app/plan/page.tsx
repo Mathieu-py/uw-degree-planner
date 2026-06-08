@@ -10,13 +10,12 @@ export const metadata = {
 };
 
 export default async function PlanPage() {
-  // Server: pass the sorted program list down so the client doesn't ship the
-  // entire programs.json again. The small (id, name, kind) digest is all the
-  // planner UI needs until a slot picker opens.
+  // Sorted program list passed to the client so it doesn't re-ship
+  // programs.json. The (id, name, kind) digest is all the UI needs pre-picker.
   const programOptions = getProgramOptions();
 
-  // Per-program specialization digest for the Plan Settings modal — only
-  // slug + name are shipped to the client; full spec rule trees stay server-side.
+  // Per-program spec digest for Plan Settings — only slug + name ship; full
+  // spec rule trees stay server-side.
   const specializationsByProgram: Record<
     string,
     Array<{ slug: string; name: string }>
@@ -29,18 +28,14 @@ export default async function PlanPage() {
     ]),
   );
 
-  // Catalog for the slot picker. Today we ship a single pinned term; once a
-  // term picker / multi-term snapshots land, this expands to a map. Course
-  // descriptions are split into a sibling file, so this catalog stays lean.
+  // Catalog for the slot picker — a single pinned term for now (expands to a
+  // map once a term picker lands). Descriptions live in a sibling file.
   const catalog = await loadTerm(PINNED_TERM);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
-      {/*
-        Next 16 requires a Suspense boundary around any subtree that calls
-        useSearchParams (PlannerShell reads `?planId=…`), otherwise the
-        whole route is forced into CSR-only mode at build.
-      */}
+    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 lg:pb-0 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
+      {/* Next 16 requires a Suspense boundary around any useSearchParams subtree
+          (PlannerShell reads `?planId=…`), else the route goes CSR-only. */}
       <Suspense fallback={<PlannerSkeleton />}>
         <PlannerShell
           programOptions={programOptions}

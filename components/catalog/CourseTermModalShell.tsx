@@ -8,17 +8,11 @@ import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 
 /**
- * Shared chrome for the two course→term "add" modals: the catalog's
- * {@link import("./TermPicker").TermPicker} and the planner's
- * {@link import("@/components/planner/picker/TermChoiceModal").TermChoiceModal}.
- * Owns the modal shell, the "{heading} · CODE · name" header, and the footer
- * that flips to "Added to … ✓" once `addedTo` is set. The option list (terms,
- * or the signed-in plan-picker step) is passed as `children`.
- *
- * The caller owns the exit-animation lifecycle via `useModalExit` and threads
- * `isClosing` + `onClose` (its `handleClose`) through — the same contract as
- * {@link Modal}. `heading` is a prop, not derived, so the catalog flow can flip
- * it between its "which plan?" and "which term?" steps.
+ * Shared chrome for the two course→term "add" modals (TermPicker and
+ * TermChoiceModal). Owns the shell, the "{heading} · CODE · name" header, and
+ * the footer that flips to "Added to … ✓" once `addedTo` is set; the option list
+ * is `children`. Caller owns the exit lifecycle via `useModalExit` (same
+ * contract as {@link Modal}); `heading` is a prop so the catalog flow can flip it.
  */
 export function CourseTermModalShell({
   course,

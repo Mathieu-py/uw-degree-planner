@@ -1,23 +1,20 @@
 /**
- * Convert a parsed Quest transcript into a fully-formed `LocalPlan`.
+ * Convert a parsed Quest transcript into a fully-formed `LocalPlan`:
+ *  1. Start term = earliest parsed course's `termLabel`.
+ *  2. Build the canonical slot sequence (1A→4B + co-op) via `sequenceTerms`.
+ *  3. Drop each course into its term-label's slot. Transfers go to the
+ *     synthetic `'pre'` slot; off-cadence courses go to "unsorted" so they
+ *     stay visible rather than silently lost.
  *
- * Strategy:
- *  1. Determine the student's start term from the EARLIEST parsed course's
- *     `termLabel` (the parser already ordered courses chronologically).
- *  2. Build the canonical slot sequence (1A→4B + co-op slots) via
- *     `sequenceTerms(startTermId, stream)`.
- *  3. Drop each parsed course into the slot whose `termId` matches the
- *     course's term-label. Courses with `status === "transfer"` land in the
- *     synthetic `'pre'` slot. Unmatched courses (e.g. the student took a
- *     term we couldn't place onto the cadence) go into an "unsorted" overflow
- *     slot at the end of the sequence so they're visible, not silently lost.
- *
- * Skipped courses are always dropped. Unrecognized courses are included
- * only if their code is in `includedUnrecognized` (caller opt-in).
+ * Skipped courses are dropped; unrecognized ones only if opted into via
+ * `includedUnrecognized`.
  */
 
 import { type TermId, termLabelToTermId } from "@/lib/terms";
-import type { TranscriptParseResult } from "@/lib/transcript/types";
+import type {
+  ParsedCourse,
+  TranscriptParseResult,
+} from "@/lib/transcript/types";
 import { sequenceTerms } from "./sequence";
 import {
   type LocalPlan,
@@ -44,15 +41,23 @@ export interface TranscriptToPlanResult {
   unplacedTerms: string[];
 }
 
+/**
+ * Build a `SlotCourse` from a parsed row, carrying the grade through. An empty
+ * `rawGrade` (future enrollment) stays grade-less.
+ */
+function toSlotCourse(c: ParsedCourse): SlotCourse {
+  const code = c.code.toLowerCase();
+  return c.rawGrade ? { code, grade: c.rawGrade } : { code };
+}
+
 export function applyTranscriptToPlan(
   parseResult: TranscriptParseResult,
   opts: TranscriptToPlanOptions,
 ): TranscriptToPlanResult {
   const { stream, includedUnrecognized, mintId } = opts;
 
-  // Step 1: derive the start term from the earliest course with a recognizable
-  // term-label. If none exists we still produce an empty plan rather than
-  // throwing — the caller can prompt the user for a manual start.
+  // Step 1: start term = earliest course with a recognizable term-label. If
+  // none, return an empty plan rather than throw, so the caller can prompt.
   const startTermId = inferStartTermId(parseResult);
   if (startTermId === null) {
     return {
@@ -85,8 +90,8 @@ export function applyTranscriptToPlan(
     })),
   ];
 
-  // Quick index: termId → academic slot. We intentionally do NOT route a
-  // course into a co-op slot — that breaks the cadence assumption.
+  // termId → academic slot. Deliberately never routes into a co-op slot —
+  // that would break the cadence assumption.
   const academicByTerm = new Map<TermId, PlanSlot>();
   for (const s of slots) {
     if (s.termId === null || s.isCoop) continue;
@@ -104,7 +109,7 @@ export function applyTranscriptToPlan(
     const lc = c.code.toLowerCase();
     if (c.status === "transfer") {
       if (!preSlot.courses.some((x) => x.code === lc)) {
-        preSlot.courses.push({ code: lc });
+        preSlot.courses.push(toSlotCourse(c));
       }
       continue;
     }
@@ -116,16 +121,15 @@ export function applyTranscriptToPlan(
     }
     const target = academicByTerm.get(tid);
     if (!target) {
-      // Term exists on the calendar but isn't in the student's cadence
-      // (e.g. they took a course in a "Spring 2024" while on stream8 — that
-      // would be a work term in this stream). Drop into unsorted rather than
-      // overwriting cadence semantics.
+      // Term exists on the calendar but not in this student's cadence (e.g. a
+      // "Spring 2024" course while on stream8, where that's a work term). Drop
+      // into unsorted rather than overwrite cadence semantics.
       unsorted.push(lc);
       unplacedTermLabels.add(c.termLabel);
       continue;
     }
     if (!target.courses.some((x) => x.code === lc)) {
-      target.courses.push({ code: lc });
+      target.courses.push(toSlotCourse(c));
     }
   }
 
@@ -148,12 +152,11 @@ export function applyTranscriptToPlan(
 
 /**
  * Infer a co-op student's stream from when their academic terms fall. Stream 4
- * and Stream 8 interleave work terms differently, so the set of terms a student
- * takes classes in fingerprints their stream: score each cadence by how many
- * observed terms hit an academic slot and return the unambiguous winner.
+ * and 8 interleave work terms differently, so the academic terms fingerprint
+ * the stream: score each cadence by observed hits, return the clear winner.
  *
- * Returns `"regular"` for a regular transcript, and `null` when undecidable
- * (unknown system of study, <2 datable terms, or a tie) so the caller can ask.
+ * `"regular"` for a regular transcript; `null` when undecidable (unknown
+ * system, <2 datable terms, or a tie) so the caller can ask.
  */
 export function detectStream(
   parseResult: TranscriptParseResult,
@@ -171,8 +174,7 @@ export function detectStream(
   ];
   if (observed.length < 2) return null;
 
-  // TermIds sort chronologically, so the smallest is the 1A start both
-  // cadences begin from.
+  // TermIds sort chronologically, so the smallest is the shared 1A start.
   const startTermId = Math.min(...observed);
   const academicHits = (stream: Stream): number => {
     const academic = new Set(

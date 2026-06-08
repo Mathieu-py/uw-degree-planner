@@ -7,10 +7,9 @@ interface DbErrorLike {
 }
 
 /**
- * Map a raw DB/RPC error to a generic client code and log the detail
- * server-side — returning `error.message` verbatim leaks schema internals.
- * This is the fallback; action-specific codes (username_taken,
- * not_found_or_unauthorized) are handled before reaching here.
+ * Map a raw DB/RPC error to a generic client code, logging detail server-side
+ * (returning `error.message` verbatim leaks schema internals). The fallback;
+ * action-specific codes are handled before reaching here.
  */
 export function mapDbError(error: DbErrorLike, context: string): string {
   logError(`[db] ${context}`, error);

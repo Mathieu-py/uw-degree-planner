@@ -516,7 +516,7 @@ describe("describeRule", () => {
         exclusions: ["excluding courses cross-listed with a CO course"],
       }),
     ).toBe(
-      "Complete 2 additional courses at the 300- or 400-level from: ACTSC, AMATH, CS; excluding courses cross-listed with a CO course",
+      "Complete 2 additional courses at the 300-400-level from: ACTSC, AMATH, CS; excluding courses cross-listed with a CO course",
     );
   });
 

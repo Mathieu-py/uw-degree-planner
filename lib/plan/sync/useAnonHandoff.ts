@@ -15,17 +15,16 @@ export type HandoffResolution = "import" | "discard" | "cancel";
 export interface UseAnonHandoffArgs {
   isAuthed: boolean;
   /**
-   * Performs the actual server create with the supplied snapshot. Caller
-   * provides this so the hook stays decoupled from the plan-list cache —
-   * usePlanList's `create` is what gets injected in the planner.
+   * Server create with the supplied snapshot. Injected (usePlanList's `create`)
+   * so the hook stays decoupled from the plan-list cache.
    */
   createPlanWithSeed: (
     name: string,
     snapshot: PlanSnapshot,
   ) => Promise<string | null>;
   /**
-   * Called after a successful import (silent OR via the conflict modal). The
-   * caller navigates to `?planId=newId` and renders the user-facing toast.
+   * Called after a successful import (silent or via the modal). The caller
+   * navigates to `?planId=newId` and shows the toast.
    */
   onImported: (newPlanId: string) => void;
 }
@@ -38,28 +37,22 @@ export interface UseAnonHandoffResult {
 }
 
 /**
- * Detect the first sign-in event after the user built an anonymous plan, and
- * decide whether to silently import it or prompt for a merge choice.
+ * Detect the first sign-in after the user built an anonymous plan, and decide
+ * whether to silently import it or prompt for a merge choice.
  *
- * Trigger: the `isAuthed` prop transitioning from false to true. Earlier
- * versions listened for `SIGNED_IN` directly on supabase auth, but Supabase
- * fires `INITIAL_SESSION` (not `SIGNED_IN`) when the page mounts with a
- * pre-existing session cookie — the exact case produced by this app's
- * server-side OAuth code-exchange route. And `INITIAL_SESSION` is dispatched
- * synchronously during client construction, often before this hook's effect
- * has registered its listener. Driving off `isAuthed` instead sidesteps both
- * problems: `useAuthedFlag` upstream already aggregates getUser() + every
- * auth event into one boolean, so we just react to its transition.
+ * Trigger: `isAuthed` going false→true. We don't listen for `SIGNED_IN`
+ * directly: with a pre-existing session cookie (this app's server-side OAuth
+ * route) Supabase fires `INITIAL_SESSION`, dispatched synchronously during
+ * client construction — often before this effect registers a listener.
+ * `useAuthedFlag` upstream folds getUser() + every auth event into one boolean.
  *
  * Re-prompt prevention (three layers):
- *   1. `loadPlan()` early-returns when no local plan exists — returning
- *      authed users with no orphan local plan never see the modal.
+ *   1. `loadPlan()` early-returns when no local plan exists.
  *   2. `handoffRanRef` blocks a second trigger within one mount.
- *   3. `sessionStorage` flag set by Import/Discard blocks re-entry across
- *      remounts (StrictMode dev double-mount, hard reload within the tab).
- * "Decide later" intentionally does NOT set the sessionStorage flag and does
- * NOT clear the local plan, so the prompt returns on the next sign-in or
- * page reload — which is the documented semantics for that branch.
+ *   3. `sessionStorage` flag (set by Import/Discard) blocks re-entry across
+ *      remounts (StrictMode double-mount, hard reload).
+ * "Decide later" deliberately sets neither the flag nor clears the local plan,
+ * so the prompt returns on the next sign-in or reload.
  */
 export function useAnonHandoff({
   isAuthed,
@@ -120,12 +113,10 @@ export function useAnonHandoff({
     if (isAuthed) {
       void runHandoff();
     } else {
-      // Reset BOTH guards on sign-out: the ref so a subsequent sign-in
-      // re-runs the handoff, and the sessionStorage flag so a previously
-      // resolved handoff doesn't block the next sign-in's fresh local plan.
-      // The flag's purpose is to suppress StrictMode/hard-reload re-prompts
-      // within one sign-in session — not to permanently silence the handoff
-      // for the lifetime of the tab.
+      // Reset both guards on sign-out: the ref so a later sign-in re-runs the
+      // handoff, and the flag so a resolved handoff doesn't block the next
+      // sign-in's fresh local plan (it only suppresses re-prompts within one
+      // sign-in session, not for the tab's lifetime).
       handoffRanRef.current = false;
       if (typeof window !== "undefined") {
         window.sessionStorage.removeItem(HANDOFF_DONE_KEY);

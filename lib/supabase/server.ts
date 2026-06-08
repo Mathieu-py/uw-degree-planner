@@ -5,15 +5,13 @@ import { cookies } from "next/headers";
 import { supabasePublicEnv } from "./env";
 
 /**
- * Server-side Supabase client for use in Server Components, Route Handlers,
- * and Server Actions. A fresh client per request: `cookies()` is a per-request
- * store, so we must not memoize this across requests.
+ * Server-side Supabase client for Server Components, Route Handlers, and Server
+ * Actions. Fresh per request — `cookies()` is a per-request store, so never
+ * memoize across requests.
  *
- * `setAll` is wrapped in try/catch because Server Components cannot mutate
- * cookies during render — Next.js throws when you try. The Supabase SSR
- * pattern is to swallow that error here and rely on the root `proxy.ts` to
- * refresh the session on every navigation, which sets cookies in a context
- * where it IS allowed.
+ * `setAll` is try/catch'd because Server Components can't mutate cookies during
+ * render (Next throws). Swallow it here and rely on `proxy.ts` to refresh the
+ * session per navigation, where setting cookies IS allowed.
  */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -30,8 +28,8 @@ export async function createSupabaseServerClient() {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Server Component render: cookies are read-only here. The proxy
-          // handles refresh-on-navigation, so this is safe to ignore.
+          // Cookies are read-only during Server Component render; the proxy
+          // handles refresh-on-navigation, so ignore.
         }
       },
     },

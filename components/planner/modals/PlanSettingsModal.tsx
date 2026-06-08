@@ -34,13 +34,10 @@ const STREAM_LABELS: Record<Stream, string> = {
 };
 
 /**
- * Modal that lets the student change program, specialization, and stream on
- * an existing plan. Stream changes re-sequence the slot cadence: courses
- * placed on positions that exist in the new stream (matched by label, e.g.
- * "1A", "coop1") are carried forward; courses on positions that disappear
- * (e.g. coop slots when switching to "regular") are dropped and surfaced as
- * a banner by the caller. Start-term changes still require Reset + re-import
- * since they shift every calendar term.
+ * Modal to change a plan's program, specialization, and stream. Stream changes
+ * re-sequence the cadence: courses on positions that survive (matched by label)
+ * carry forward; those on vanished positions (e.g. coop slots → "regular") drop
+ * and surface as a caller banner. Start-term changes still need Reset + re-import.
  */
 export function PlanSettingsModal({
   plan,

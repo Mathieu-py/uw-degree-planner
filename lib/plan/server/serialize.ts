@@ -2,9 +2,8 @@ import { z } from "zod";
 import type { PlanSlot, SlotCourse, SlotPosition, Stream } from "../types";
 import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 
-// Caps on a snapshot before it hits the unbounded `save_plan_state` RPC
-// (migrations/0002), guarding against resource-exhaustion payloads. Well above
-// any real plan (a dozen-ish terms of ≤6 courses).
+// Caps before the unbounded `save_plan_state` RPC (migrations/0002), guarding
+// against resource-exhaustion payloads. Well above any real plan.
 export const MAX_SLOTS = 50;
 export const MAX_COURSES_PER_SLOT = 100;
 
@@ -28,9 +27,8 @@ export function snapshotSizeError(snapshot: PlanSnapshot): string | null {
 }
 
 /**
- * Row shape returned by `select * from plans` via supabase-js. Field names
- * are the raw Postgres column names (snake_case). The selectors below pluck
- * them into camelCase for the rest of the app.
+ * Row shape from `select * from plans` (raw snake_case Postgres columns). The
+ * selectors below pluck them into camelCase for the app.
  */
 export interface PlanRow {
   id: string;
@@ -62,8 +60,8 @@ export interface PlanCourseRow {
 }
 
 /**
- * Project a `plans` row into the lightweight summary we expose to UI lists.
- * No slot data, so the listPlans query stays a single table read.
+ * Project a `plans` row into the lightweight UI-list summary. No slot data, so
+ * listPlans stays a single table read.
  */
 export function planRowToSummary(row: PlanRow): PlanSummary {
   return {
@@ -79,10 +77,9 @@ export function planRowToSummary(row: PlanRow): PlanSummary {
 }
 
 /**
- * Assemble a `ServerPlan` from the three joined queries. Slot/course order
- * is taken from the `ordinal` column; ties broken by `id` for determinism.
- * The caller is responsible for fetching only rows that belong to `plan` —
- * this function does no filtering of its own.
+ * Assemble a `ServerPlan` from the three joined queries. Slot/course order is
+ * by `ordinal`, ties broken by `id`. The caller must pass only rows belonging
+ * to `plan` — this does no filtering.
  */
 export function assembleServerPlan(
   plan: PlanRow,
@@ -95,10 +92,9 @@ export function assembleServerPlan(
   );
   for (const c of sortedCourses) {
     const bucket = coursesBySlot.get(c.slot_id);
-    // Explicit null check: only DB nulls should drop the field. An empty
-    // string is a valid (if semantically odd) grade and must round-trip,
-    // since the save RPC's `nullif(..., '')` is the only place that should
-    // normalize empties to null — the read path stays faithful to the row.
+    // Explicit null check: only DB nulls drop the field. An empty string is a
+    // valid grade and must round-trip — the save RPC's `nullif(..., '')` is the
+    // only place that normalizes empties to null; the read path stays faithful.
     const entry: SlotCourse =
       c.grade !== null
         ? { code: c.course_code, grade: c.grade }
@@ -132,11 +128,10 @@ export function assembleServerPlan(
 }
 
 /**
- * Map the JSONB payload returned by the `get_shared_plan(token)` RPC into a
- * `ServerPlan`. The RPC pre-orders slots by `ordinal` and courses by
- * `(ordinal, course_code)` (see migrations/0001_initial.sql:155-176), so we
- * don't re-sort here. Returns null when the input is null (RPC's null-token
- * path) so callers can pattern-match without an extra check.
+ * Map the `get_shared_plan(token)` RPC's JSONB payload into a `ServerPlan`. The
+ * RPC pre-orders slots by `ordinal` and courses by `(ordinal, course_code)`
+ * (migrations/0001_initial.sql:155-176), so no re-sort. Returns null on null
+ * input (RPC's null-token path) so callers can pattern-match.
  */
 export function mapSharedPlanJson(input: unknown): ServerPlan | null {
   if (input === null || input === undefined) return null;
@@ -181,8 +176,8 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
 
 /**
  * Convert a `ServerPlan` (or `LocalPlan`-shaped value) into the snapshot
- * payload accepted by `save_plan_state`. We don't ship the server-managed
- * fields (id, name, updatedAt) — those are owned by the plans row itself.
+ * payload for `save_plan_state`. Omits server-managed fields (id, name,
+ * updatedAt) owned by the plans row.
  */
 export function toSnapshot(plan: {
   programId: string | null;

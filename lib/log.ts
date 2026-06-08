@@ -1,7 +1,6 @@
 /**
- * Logging seam: forwards to `console` today, but a single place to wire an
- * error reporter (Sentry, etc.) later. `logError` for recovered exceptions,
- * `logWarn` for degraded-but-non-fatal conditions.
+ * Logging seam: forwards to `console`, but one place to wire a reporter (Sentry)
+ * later. `logError` for recovered exceptions, `logWarn` for non-fatal issues.
  */
 
 export function logError(message: string, ...detail: unknown[]): void {

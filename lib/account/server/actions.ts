@@ -4,16 +4,15 @@ import type { ActionResult } from "@/lib/plan/server/types";
 import { mapDbError } from "@/lib/server/dbError";
 import { requireUser } from "@/lib/supabase/requireUser";
 
-// Same rules the sign-up form enforces (LoginForm's usernameSchema): 3–20 chars,
-// letters / numbers / underscores. Re-validated here because client validation
-// is advisory — the server action is the trust boundary.
+// Same rules as the sign-up form (LoginForm's usernameSchema): 3–20 chars,
+// letters/numbers/underscores. Re-validated here — the server action is the
+// trust boundary.
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 /**
- * Rename the signed-in user. Writes both the canonical `profiles.username`
- * (which the unique index guards) and the `user_metadata.username` that the
- * auth store seeds synchronously, so the header reflects the new name on the
- * next session refresh without a profiles round-trip.
+ * Rename the signed-in user. Writes both `profiles.username` (unique-index
+ * guarded) and `user_metadata.username` (which the auth store seeds), so the
+ * header reflects the new name on the next refresh without a profiles fetch.
  */
 export async function updateProfile(input: {
   username: string;
@@ -30,9 +29,8 @@ export async function updateProfile(input: {
     return { ok: false, error: "username_invalid" };
   }
 
-  // Update the profiles row first — its unique constraint is the source of
-  // truth for collisions. `.select()` lets us tell "updated" from "RLS hid the
-  // row" (matches renamePlan's trick in the plan actions).
+  // Profiles row first — its unique constraint is the source of truth for
+  // collisions. `.select()` tells "updated" from "RLS hid the row".
   const { data, error } = await auth.client
     .from("profiles")
     .update({ username })
@@ -53,18 +51,17 @@ export async function updateProfile(input: {
     return { ok: false, error: "not_found" };
   }
 
-  // Best-effort metadata sync. A failure here doesn't undo the profiles write —
-  // the auth store upgrades from profiles on its next fetch regardless.
+  // Best-effort metadata sync; a failure doesn't undo the profiles write (the
+  // auth store upgrades from profiles on its next fetch anyway).
   await auth.client.auth.updateUser({ data: { username } });
 
   return { ok: true, data: { username } };
 }
 
 /**
- * Permanently delete the signed-in user's account and all their data. The
- * `delete_own_account` RPC (migration 0005) removes the auth.users row scoped
- * to auth.uid(); the cascade clears profiles + plans. The caller is responsible
- * for signing out on the client afterward.
+ * Permanently delete the signed-in user's account and data. The
+ * `delete_own_account` RPC (migration 0005) removes the auth.users row scoped to
+ * auth.uid(); the cascade clears profiles + plans. Caller signs out afterward.
  */
 export async function deleteAccount(): Promise<ActionResult<void>> {
   const auth = await requireUser();

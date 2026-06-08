@@ -19,22 +19,18 @@ const ACADEMIC_TERMS: TermLetter[] = [
 ];
 
 /**
- * Cadence per stream: the sequence of slot kinds, where each entry is either
- * the next academic term letter or "coop" (a work term to be numbered in
- * placement order). Source:
- * https://uwaterloo.ca/engineering/undergraduate-students/co-op-experience/co-op-study-sequences
+ * Cadence per stream: a sequence of slot kinds, each the next academic term
+ * letter or "coop" (a work term, numbered in placement order).
+ * Source: https://uwaterloo.ca/engineering/undergraduate-students/co-op-experience/co-op-study-sequences
  *
- * Both engineering streams have 8 academic + 6 work terms. They differ in
- * when the first work term lands:
- * - Stream 4 starts co-op in January of 1st year (Architectural, Electrical,
- *   Environmental, Geological, Systems Design): WT between every academic
- *   term until 3B, then 4A and 4B back-to-back at the end.
- * - Stream 8 starts co-op in May of 1st year (Software, Biomedical, Civil,
- *   Nanotechnology, Management): straight 1A → 1B, then alternating with
- *   work terms, and two back-to-back WTs before 4A.
+ * Both engineering streams have 8 academic + 6 work terms; they differ in when
+ * the first work term lands:
+ * - Stream 4 (Architectural, Electrical, Environmental, Geological, Systems
+ *   Design): WT between every academic term until 3B, then 4A/4B back-to-back.
+ * - Stream 8 (Software, Biomedical, Civil, Nanotechnology, Management): 1A→1B,
+ *   then alternating, with two back-to-back WTs before 4A.
  *
- * Math sequences (SEQ 1-4 plus specialized) are not yet modeled — students
- * in Math programs can pick stream8 and manually adjust slots.
+ * Math sequences aren't modeled yet — those students pick stream8 and adjust.
  */
 const CADENCE: Record<Stream, Array<TermLetter | "coop">> = {
   regular: [...ACADEMIC_TERMS],
@@ -79,9 +75,9 @@ export interface SequencedSlot {
 }
 
 /**
- * Generate the slot sequence for a student starting in `startTermId` on
- * `stream`. Calendar terms advance monotonically (Winter → Spring → Fall →
- * Winter ...); positions follow the cadence table.
+ * Slot sequence for a student starting in `startTermId` on `stream`. Calendar
+ * terms advance monotonically (Winter → Spring → Fall → …); positions follow
+ * the cadence table.
  */
 export function sequenceTerms(
   startTermId: TermId,
@@ -109,9 +105,8 @@ export function sequenceTerms(
 }
 
 /**
- * Convenience: build empty PlanSlots for a fresh plan. Caller supplies an
- * ID minter (so we can use `crypto.randomUUID()` in the browser and a stub
- * in tests).
+ * Build empty PlanSlots for a fresh plan. Caller supplies an ID minter
+ * (`crypto.randomUUID()` in the browser, a stub in tests).
  */
 export function buildEmptySlots(
   startTermId: TermId,
@@ -128,16 +123,13 @@ export function buildEmptySlots(
 }
 
 /**
- * Re-sequence an existing plan's slots for a new stream while preserving
- * course placements by slot position. Used when the student changes stream
- * mid-plan in PlanSettingsModal.
+ * Re-sequence a plan's slots for a new stream, preserving placements by slot
+ * position. Used when the student changes stream in PlanSettingsModal.
  *
- * Strategy: match each new slot to the old slot with the same `position`
- * (e.g. "1A" → "1A", "coop1" → "coop1") and copy its courses. Positions
- * that exist in the old cadence but not the new one (e.g. coop slots when
- * switching to "regular") have their courses returned as `droppedCodes` so
- * the caller can surface a banner. The "pre" slot (transfer credits) is
- * passed through untouched — it's independent of stream.
+ * Matches each new slot to the old slot with the same `position` ("1A"→"1A",
+ * "coop1"→"coop1") and copies its courses. Positions in the old cadence but
+ * not the new (e.g. coop slots → "regular") return their courses as
+ * `droppedCodes` for a banner. The "pre" slot passes through untouched.
  */
 export function rebuildSlotsForStream(
   oldSlots: PlanSlot[],

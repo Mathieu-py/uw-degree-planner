@@ -4,28 +4,21 @@ import { supabasePublicEnv } from "./env";
 
 /**
  * Refresh the Supabase auth session for an incoming request and return the
- * `NextResponse` that should be returned from `proxy.ts`. Designed to be
- * called from the root proxy.ts on every navigation.
+ * `NextResponse` for `proxy.ts` to return. Called from proxy.ts on every nav.
  *
- * Without this, `getUser()` from a Server Component would race the cookie
- * refresh during render and occasionally log users out — see the
- * "concurrent requests with the same expired session" note in
- * node_modules/@supabase/ssr/README.md.
- *
- * Returning the response is important: the cookies written here are how the
- * browser learns about a refreshed access token.
+ * Without it, a Server Component's `getUser()` races the cookie refresh during
+ * render and occasionally logs users out (see @supabase/ssr README's
+ * "concurrent requests with the same expired session"). Returning the response
+ * matters: its cookies are how the browser learns the refreshed access token.
  */
 export async function updateSupabaseSession(
   request: NextRequest,
 ): Promise<NextResponse> {
   let response = NextResponse.next({ request });
 
-  // Skip session refresh when Supabase isn't configured. Reasons this happens:
-  //   - Contributor hasn't created .env.local yet
-  //   - NODE_ENV=test, which makes Next.js intentionally skip .env.local
-  //     (so e2e tests are deterministic across machines)
-  // Either way, the planner's signed-out path is fully functional — the only
-  // thing missing is auth, which the UI degrades to "Sign in" gracefully.
+  // Skip refresh when Supabase isn't configured (no .env.local, or NODE_ENV=test
+  // where Next skips it for deterministic e2e). The signed-out path is fully
+  // functional; the UI just degrades to "Sign in".
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -51,9 +44,8 @@ export async function updateSupabaseSession(
     },
   });
 
-  // Calling getUser() forces the SDK to verify the current access token and,
-  // if it has expired, exchange the refresh token. The new cookies land via
-  // the setAll callback above.
+  // getUser() verifies the access token and, if expired, exchanges the refresh
+  // token; new cookies land via the setAll callback above.
   await supabase.auth.getUser();
 
   return response;

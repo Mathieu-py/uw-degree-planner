@@ -15,7 +15,7 @@ import type { SortKey } from "@/lib/courses/courseSort";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { Course } from "@/lib/courses/types";
-import { formatCourseCode, formatPercent } from "@/lib/format";
+import { formatCourseCode, formatPercent, pluralize } from "@/lib/format";
 import { TermPicker } from "./TermPicker";
 
 // No placed/completed context on the catalog: it's a plan-independent browse
@@ -98,8 +98,8 @@ export function CatalogView({ catalog }: { catalog: Course[] }) {
           </div>
 
           <p className="u-small">
-            {sorted.length.toLocaleString()} course
-            {sorted.length === 1 ? "" : "s"}
+            {sorted.length.toLocaleString()}{" "}
+            {pluralize(sorted.length, "course")}
           </p>
 
           {visible.length === 0 ? (

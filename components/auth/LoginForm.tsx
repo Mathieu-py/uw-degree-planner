@@ -5,6 +5,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -19,9 +20,8 @@ const usernameSchema = z
     "Username can only contain letters, numbers, and underscores",
   );
 
-// Sign-in accepts either an email or a username, so the first field is just a
-// non-empty identifier here (we detect which it is at submit time). It reuses
-// the `email` state / `errors.email` key shared with the sign-up email field.
+// Sign-in accepts an email or username, so the first field is just a non-empty
+// identifier (resolved at submit time), reusing the `email` state/error key.
 const signInSchema = z.object({
   email: z.string().min(1, "Enter your email or username"),
   password: z.string().min(1, "Enter your password"),
@@ -45,11 +45,9 @@ type FieldErrors = Partial<
 >;
 
 /**
- * Read the `?next=` redirect target from the live URL at submit time. Done here
- * (inside event handlers, browser-only) rather than via `useSearchParams` so the
- * component needs no Suspense boundary. Falls back to /plan, and rejects
- * anything that isn't a plain same-origin path (mirrors the callback route's
- * open-redirect guard).
+ * Read the `?next=` redirect from the live URL at submit time (browser-only, so
+ * no Suspense boundary needed). Falls back to /plan and rejects anything that
+ * isn't a plain same-origin path (mirrors the callback route's guard).
  */
 function readNext(): string {
   if (typeof window === "undefined") return "/plan";
@@ -90,9 +88,9 @@ export function LoginForm() {
       }
       setBusy(true);
 
-      // signInWithPassword only takes an email. If the identifier isn't one,
-      // treat it as a username and resolve it to an email via the RPC. A
-      // generic error keeps username/email failures indistinguishable.
+      // signInWithPassword only takes an email; if the identifier isn't one,
+      // resolve the username to an email via the RPC. Generic error keeps
+      // username/email failures indistinguishable.
       let loginEmail = parsed.data.email.trim();
       if (!loginEmail.includes("@")) {
         const { data: resolved, error: rpcError } = await supabase.rpc(
@@ -132,10 +130,9 @@ export function LoginForm() {
     }
     setBusy(true);
 
-    // Username uniqueness is enforced by the DB (the handle_new_user trigger),
-    // but a collision there surfaces as a generic "Database error saving new
-    // user". Pre-check via the lookup RPC so the common case gets a clean inline
-    // message; the constraint still backstops the race between two sign-ups.
+    // The DB enforces username uniqueness, but a collision there surfaces as a
+    // generic "Database error saving new user". Pre-check via the lookup RPC for
+    // a clean inline message; the constraint still backstops the race.
     const { data: takenEmail } = await supabase.rpc("email_for_username", {
       uname: parsed.data.username,
     });
@@ -155,8 +152,8 @@ export function LoginForm() {
       setErrors(signUpError(error.message));
       return;
     }
-    // Email confirmation is disabled on the project, so signUp returns a
-    // session and we go straight to the planner.
+    // Email confirmation is disabled, so signUp returns a session — go straight
+    // to the planner.
     router.push(next);
   }
 
@@ -295,33 +292,10 @@ export function LoginForm() {
         disabled={busy}
         className="flex w-full items-center justify-center gap-2.5"
       >
-        <GoogleIcon />
+        <Icon name="google" size="sm" aria-hidden="true" />
         Sign in with Google
       </Button>
     </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 18 18" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.02-3.7H.96v2.34A9 9 0 0 0 9 18Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.98 10.72a5.4 5.4 0 0 1 0-3.44V4.94H.96a9 9 0 0 0 0 8.12l3.02-2.34Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58A8.98 8.98 0 0 0 9 0 9 9 0 0 0 .96 4.94l3.02 2.34C4.68 5.16 6.66 3.58 9 3.58Z"
-      />
-    </svg>
   );
 }
 
@@ -358,15 +332,11 @@ function zodErrors(error: z.ZodError): FieldErrors {
 }
 
 /**
- * Map a Supabase signUp error message onto the right field. The only way our
- * handle_new_user trigger fails is a duplicate username, which Supabase reports
- * as a generic "Database error saving new user" — translate that to a clear
- * username message. A duplicate email is a distinct error we route to that field.
+ * Map a Supabase signUp error message onto the right field. A duplicate username
+ * surfaces (per GoTrue version) as the raw Postgres error or a generic "Database
+ * error saving new user"; a duplicate email is distinct. Match both.
  */
 function signUpError(message: string): FieldErrors {
-  // A duplicate username trips the profiles unique constraint; depending on the
-  // GoTrue version this surfaces as the raw Postgres error or a generic
-  // "Database error saving new user" — match both.
   if (
     /duplicate key|unique constraint|profiles_username|database error/i.test(
       message,

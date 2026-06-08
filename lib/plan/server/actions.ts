@@ -46,13 +46,10 @@ export async function listPlans(): Promise<ActionResult<PlanSummary[]>> {
 }
 
 /**
- * The ids of the caller's plans that already contain `courseCode`. Used by the
- * catalog add flow to grey out plans the course is already in. There's no join
- * to `plans`: scoping to the caller's own rows relies on the RLS policies
- * (`plan_courses_owner_all` on public.plan_courses, `plan_slots_owner_all` on
- * public.plan_slots), so the `plan_slots!inner(plan_id)` embed only surfaces
- * plan ids from RLS-scoped rows. Course codes are stored lowercase, so we match
- * lowercase.
+ * The ids of the caller's plans that already contain `courseCode`, so the
+ * catalog add flow can grey them out. No join to `plans`: RLS policies
+ * (`plan_courses_owner_all`, `plan_slots_owner_all`) scope the
+ * `plan_slots!inner(plan_id)` embed to the caller's rows. Codes are lowercase.
  */
 export async function plansContainingCourse(
   courseCode: string,
@@ -72,7 +69,7 @@ export async function plansContainingCourse(
     return { ok: false, error: mapDbError(error, "plansContainingCourse") };
   }
 
-  // PostgREST types a to-one embed as an object, but can surface an array;
+  // PostgREST types a to-one embed as an object but can surface an array;
   // accept both so a relationship-shape change can't silently drop ids.
   const ids = new Set<string>();
   for (const row of (data ?? []) as Array<{
@@ -92,9 +89,8 @@ export async function plansContainingCourse(
 export interface CreatePlanInput {
   name: string;
   /**
-   * Optional initial state. When provided, the new plan is seeded in a single
-   * round trip via `save_plan_state`. This is how the Phase 2 anon→auth
-   * handoff will upload the user's localStorage plan as their first plan.
+   * Optional initial state, seeded in one round trip via `save_plan_state`.
+   * How the Phase 2 anon→auth handoff uploads the localStorage plan.
    */
   seed?: PlanSnapshot;
 }
@@ -128,9 +124,8 @@ export async function createPlan(
       input.seed,
     );
     if (!seedResult.ok) {
-      // Roll back the empty plan we just created so the user doesn't end up
-      // with an empty orphan. Best-effort — if the rollback itself fails we
-      // surface the original seed error rather than masking it.
+      // Roll back the empty plan so the user isn't left with an orphan.
+      // Best-effort; we surface the original seed error, not any rollback one.
       await auth.client.from("plans").delete().eq("id", data.id);
       return seedResult;
     }
@@ -153,12 +148,10 @@ export async function duplicatePlan(
 
   const source = loaded.data;
   const name = (nameOverride ?? `${source.name} (copy)`).trim();
-  // `save_plan_state` inserts plan_slots using the snapshot's slot UUIDs —
-  // a deliberate choice so the UI's in-flight slot identity survives a save
-  // (see migrations/0002_save_plan_state.sql). For duplicate that's the
-  // wrong default: the source's slot rows still own those UUIDs, so reusing
-  // them PK-conflicts. Mint fresh slot ids; course rows are keyed by
-  // (slot_id, course_code) and don't carry client ids, so they're already fine.
+  // `save_plan_state` reuses the snapshot's slot UUIDs so UI slot identity
+  // survives a save (migrations/0002_save_plan_state.sql). For a duplicate
+  // that PK-conflicts with the source's slot rows, so mint fresh slot ids.
+  // Course rows key on (slot_id, course_code) with no client id, so they're fine.
   const seed = toSnapshot(source);
   const seedWithFreshSlotIds: PlanSnapshot = {
     ...seed,
@@ -264,9 +257,8 @@ export async function renamePlan(
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "name_required" };
 
-  // `.select('id')` forces PostgREST to return the updated rows so we can
-  // detect "0 rows updated" (plan didn't exist OR wasn't owned — RLS hides
-  // both behind the same response).
+  // `.select('id')` returns the updated rows so we can detect "0 rows updated"
+  // (plan didn't exist OR wasn't owned — RLS hides both the same way).
   const { data, error } = await auth.client
     .from("plans")
     .update({ name: trimmed })
@@ -285,10 +277,9 @@ export async function renamePlan(
 // ---------------------------------------------------------------------------
 
 /**
- * Mint or revoke the public share token for a plan. Returns the new token
- * (or null when sharing is disabled). On the off-chance of a UNIQUE collision
- * — `share_token` is a 128-bit URL-safe random, so this is astronomically
- * unlikely — we retry once before surfacing the error.
+ * Mint or revoke a plan's public share token. Returns the new token (null when
+ * disabling). `share_token` is 128-bit random, so a UNIQUE collision is
+ * astronomically unlikely; we retry once before surfacing the error.
  */
 export async function setPlanShare(
   planId: string,
@@ -337,9 +328,9 @@ export async function setPlanShare(
 // ---------------------------------------------------------------------------
 
 /**
- * Load a plan by its public share token. Calls the `get_shared_plan` RPC
- * which is SECURITY DEFINER and granted to `anon` + `authenticated`, so
- * this works without a session. Returns null when the token is unknown.
+ * Load a plan by its public share token via the `get_shared_plan` RPC
+ * (SECURITY DEFINER, granted to anon + authenticated, so no session needed).
+ * Returns null when the token is unknown.
  */
 export async function loadSharedPlan(
   token: string,
@@ -359,9 +350,9 @@ export async function deletePlan(planId: string): Promise<ActionResult<void>> {
   const auth = await requireUser();
   if (!auth.ok) return { ok: false, error: auth.error };
 
-  // Same trick as renamePlan: ask for the deleted rows back so we can tell
-  // success from "RLS hid the row from this user". Cascade clears slots and
-  // courses via the foreign-key on-delete-cascade in 0001_initial.sql.
+  // Same trick as renamePlan: ask for the deleted rows back to tell success
+  // from "RLS hid the row". FK on-delete-cascade (0001_initial.sql) clears
+  // slots and courses.
   const { data, error } = await auth.client
     .from("plans")
     .delete()

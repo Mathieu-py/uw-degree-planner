@@ -4,12 +4,12 @@ import type { CatalogCourse, Course, PureFilters } from "./types";
 const PREFIX_RE = /^[A-Z]+/;
 
 /**
- * A `PureFilters` with all rules disabled — every course passes. Useful as
- * a starting point in tests and as the picker's "no user filters applied"
- * sentinel.
+ * A `PureFilters` with all rules disabled — every course passes. A starting
+ * point for tests and the picker's "no filters applied" sentinel.
  */
 export const DEFAULT_PURE_FILTERS: PureFilters = {
   excludePrefixes: [],
+  includePrefixes: [],
   levels: [],
   hasSeatsAvailable: false,
   hideUnmetPrereqs: false,
@@ -18,9 +18,8 @@ export const DEFAULT_PURE_FILTERS: PureFilters = {
 };
 
 /**
- * Sum of remaining capacity across all sections, or null when the course has
- * no scheduled sections (distinct from "0 seats open"). Lives here because it
- * derives from the same enrollment data as `enrichCourse`'s `hasSeats`.
+ * Sum of remaining capacity across sections, or null when the course has no
+ * scheduled sections (distinct from "0 seats open").
  */
 export function seatsAvailable(course: Course): number | null {
   if (course.sections.length === 0) return null;
@@ -37,6 +36,7 @@ export function enrichCourse(raw: CatalogCourse): Course {
   const hasSeats = raw.sections.some(
     (s) => s.enrollment_capacity > s.enrollment_total,
   );
+  // `units` rides along on `raw` (a CatalogCourse field) — no join needed.
   return { ...raw, prefix, level, hasSeats };
 }
 
@@ -45,6 +45,19 @@ export function passesPrefixExclusion(
   excludePrefixes: ReadonlyArray<string>,
 ): boolean {
   return !excludePrefixes.includes(course.prefix);
+}
+
+/**
+ * Allow-list gate: passes everything when the list is empty, else only matching
+ * prefixes. AND-chained with {@link passesPrefixExclusion}, so a prefix in both
+ * lists is hidden — exclude wins, no special-casing.
+ */
+export function passesPrefixInclusion(
+  course: Course,
+  includePrefixes: ReadonlyArray<string>,
+): boolean {
+  if (includePrefixes.length === 0) return true;
+  return includePrefixes.includes(course.prefix);
 }
 
 export function passesMinUsefulFilter(
@@ -81,9 +94,8 @@ export function passesSeatsFilter(
 }
 
 /**
- * Each predicate self-gates on its slice of PureFilters (false / empty array
- * / null threshold all mean "rule disabled, course passes"), so this is a
- * flat AND-chain with no outer toggle logic.
+ * Each predicate self-gates on its slice of PureFilters (false / empty / null
+ * = "disabled, passes"), so this is a flat AND-chain with no outer toggles.
  */
 export function applyFilters(
   courses: ReadonlyArray<Course>,
@@ -92,6 +104,7 @@ export function applyFilters(
   return courses.filter(
     (c) =>
       passesPrefixExclusion(c, s.excludePrefixes) &&
+      passesPrefixInclusion(c, s.includePrefixes) &&
       passesLevelFilter(c, s.levels) &&
       passesSeatsFilter(c, s.hasSeatsAvailable) &&
       passesMinUsefulFilter(c, s.minUseful) &&

@@ -27,21 +27,19 @@ export interface UsePlanSyncResult {
   loadError: string | null;
   /**
    * Update the in-memory plan and persist it. Signed-out: synchronous
-   * localStorage write. Signed-in with a planId: schedule a debounced server
-   * save (1500ms trailing edge). `saveStatus` flips to `saving` immediately
-   * so the badge tells the user there's unsaved state even before the wire
-   * call goes out.
+   * localStorage write. Signed-in with a planId: debounced server save (1500ms
+   * trailing). `saveStatus` flips to `saving` immediately so the badge shows
+   * unsaved state before the wire call.
    */
   setPlan: (next: LocalPlan) => void;
   /** Drop the localStorage plan. No-op on the server path. */
   clearLocalPlan: () => void;
   /**
-   * Force any queued save to drain immediately and resolve once the
-   * in-flight save (if any) settles. Used by the plan switcher before
-   * changing `?planId` and as the implicit cleanup on unmount / planId
-   * change. The drained save always targets the planId baked into the
-   * queued snapshot — never the currently-prop planId — so flushing during
-   * a plan switch writes to the correct plan.
+   * Drain any queued save immediately, resolving once the in-flight save (if
+   * any) settles. Used by the plan switcher before changing `?planId` and as
+   * cleanup on unmount / planId change. The drained save targets the planId
+   * baked into the queued snapshot — never the prop — so flushing during a
+   * switch writes to the correct plan.
    */
   flushSave: () => Promise<void>;
 }
@@ -64,8 +62,7 @@ export function usePlanSync({
   );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef<Promise<void> | null>(null);
-  // For the local path: the most recent plan written. Used by flushSave's
-  // local retry, which otherwise has nothing to do (savePlan is synchronous).
+  // Local path: most recent plan written, for flushSave's local retry.
   const lastLocalPlanRef = useRef<LocalPlan | null>(null);
 
   const retryLocalSave = useCallback(() => {
@@ -83,18 +80,14 @@ export function usePlanSync({
     );
   }, []);
 
-  // The single drain pump. Cancels the timer, waits for any in-flight save,
-  // then loops: pulls whatever is in the queue, runs it, and re-checks. The
-  // re-check is what handles "user edited again while we were saving" — the
-  // setPlan call wrote to queueRef during the await, so the next iteration
-  // picks it up without an extra debounce delay.
+  // The single drain pump. Cancels the timer, awaits any in-flight save, then
+  // loops the queue, re-checking each pass so an edit made during a save (which
+  // wrote queueRef) is picked up without another debounce.
   //
-  // Token-protected UI status: each iteration captures loadTokenRef at the
-  // top. If the token moves while we're awaiting savePlanState (planId or
-  // isAuthed changed underneath us), we still let the save finish — the
-  // queued snapshot has the correct planId baked in — but skip the success/
-  // error setSaveStatus, because the badge now belongs to a different plan's
-  // lifecycle and the effect has already reset it to idle.
+  // Token-protected status: each pass captures loadTokenRef. If it moves mid-
+  // save (planId/isAuthed changed), the save still finishes (correct planId is
+  // baked into the snapshot) but we skip setSaveStatus — the badge now belongs
+  // to a different plan and the effect already reset it.
   const drain = useCallback(async () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -109,9 +102,8 @@ export function usePlanSync({
       setSaveStatus({ kind: "saving" });
 
       const promise = savePlanState(job.planId, job.snapshot);
-      // Track the in-flight save as a swallowed promise so concurrent
-      // awaiters can hang off it without seeing the resolution value or
-      // any rejection.
+      // Swallowed copy so concurrent awaiters can hang off it without seeing
+      // the value or a rejection.
       inFlightRef.current = promise.then(
         () => undefined,
         () => undefined,
@@ -128,9 +120,8 @@ export function usePlanSync({
   }, []);
 
   const flushSave = useCallback(async () => {
-    // Local path: re-run the synchronous savePlan against the last-known
-    // good snapshot so the retry button on a quota/permission error has
-    // something to do. No-op when there's no recorded plan.
+    // Local path: re-run savePlan against the last-known-good snapshot so the
+    // retry button on a quota/permission error has something to do.
     if (lastLocalPlanRef.current) retryLocalSave();
     await drain();
   }, [drain, retryLocalSave]);
@@ -174,10 +165,9 @@ export function usePlanSync({
       setHydrated(true);
     })();
 
-    // Cleanup: planId is changing or component is unmounting. Drain so the
-    // pending save (still targeting the old planId via its queued snapshot)
-    // lands before we move on. We can't await from a cleanup; if the user
-    // navigates away before the wire call settles, the save is best-effort.
+    // Cleanup (planId change / unmount): drain so the pending save (still
+    // targeting the old planId via its snapshot) lands. Can't await from
+    // cleanup, so it's best-effort if the user navigates away mid-call.
     return () => {
       void drain();
     };
@@ -212,8 +202,7 @@ export function usePlanSync({
         );
         return;
       }
-      // Crossing into the server path: any older local snapshot is no longer
-      // relevant to a flushSave retry.
+      // On the server path, an older local snapshot is irrelevant to retries.
       lastLocalPlanRef.current = null;
       if (planId === null) return;
 

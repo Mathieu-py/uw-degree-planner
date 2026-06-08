@@ -1,9 +1,10 @@
+import { earnsCredit } from "@/lib/plan/grades";
 import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
 import type { TermId } from "@/lib/terms";
 
 /**
- * Location of a placed course within a plan: which slot it sits in.
- * `termId === null` is the synthetic pre-arrival slot (transfer credits).
+ * Where a placed course sits in a plan. `termId === null` is the synthetic
+ * pre-arrival slot (transfer credits).
  */
 export interface Placement {
   code: string;
@@ -15,14 +16,18 @@ export interface Placement {
 export type PlacementMap = ReadonlyMap<string, Placement>;
 
 /**
- * Build a course-code → placement lookup from a plan. If the same code
- * appears in multiple slots (which shouldn't happen in normal use but is
- * defensible), the FIRST occurrence in slot-iteration order wins.
+ * Course-code → placement lookup for a plan. On duplicate codes (rare but
+ * tolerated) the FIRST in slot order wins.
+ *
+ * No-credit attempts (failed / withdrawn — see {@link earnsCredit}) are skipped
+ * so the audit doesn't treat them as placed; a passed retake elsewhere still
+ * registers.
  */
 export function buildPlacementMap(plan: LocalPlan): PlacementMap {
   const map = new Map<string, Placement>();
   for (const slot of plan.slots) {
     for (const c of slot.courses) {
+      if (!earnsCredit(c.grade)) continue;
       if (map.has(c.code)) continue;
       map.set(c.code, {
         code: c.code,

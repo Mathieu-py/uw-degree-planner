@@ -11,8 +11,13 @@ import type { SortDir, SortKey } from "@/lib/courses/courseSort";
 import type { EligibilityRow } from "@/lib/courses/eligibility";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
-import type { Course } from "@/lib/courses/types";
-import { formatCourseCode, formatPercent, truncate } from "@/lib/format";
+import type { Course, FilterPreset } from "@/lib/courses/types";
+import {
+  formatCourseCode,
+  formatPercent,
+  pluralize,
+  truncate,
+} from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { ProgramIdentity } from "@/lib/programs";
 import { FilterSidebar } from "./FilterSidebar";
@@ -35,6 +40,8 @@ interface Props {
   sameTerm?: ReadonlySet<string>;
   /** Optional restriction to specific codes (e.g. audit drill-in). */
   focusCodes?: string[];
+  /** Filters to pre-apply on open (e.g. a subject-pool Browse → its subjects). */
+  initialFilters?: FilterPreset;
   onPick: (code: string) => void;
   onClose: () => void;
 }
@@ -54,6 +61,7 @@ export function SlotPicker({
   programReferenced,
   sameTerm,
   focusCodes,
+  initialFilters,
   onPick,
   onClose,
 }: Props) {
@@ -79,6 +87,7 @@ export function SlotPicker({
     programReferenced,
     sameTerm,
     focusCodes,
+    initialFilters,
   });
 
   // Row clicks forward the picked code AFTER the exit animation. animateOut
@@ -235,8 +244,9 @@ export function SlotPicker({
             ) : null}
           </div>
           <footer className="border-t border-line px-4 py-2 text-xs text-ink-3">
-            {sorted.length.toLocaleString()} candidate
-            {sorted.length === 1 ? "" : "s"} · click a row to add to the slot
+            {sorted.length.toLocaleString()}{" "}
+            {pluralize(sorted.length, "candidate")} · click a row to add to the
+            slot
           </footer>
         </div>
       </div>
@@ -377,9 +387,8 @@ function EligibilityChip({ verdict }: { verdict: CourseEligibilityVerdict }) {
       </span>
     );
   }
-  // Ineligible — label the specific reason rather than a bare "missing prereqs".
-  // (A picker row is never `alreadyPlaced`: candidates are pre-filtered by the
-  // placed set in useFilteredCourses, so that verdict can't reach here.)
+  // Ineligible — label the specific reason. (Never `alreadyPlaced`: candidates
+  // are pre-filtered by the placed set in useFilteredCourses.)
   if (verdict.antireqConflicts.length > 0) {
     return (
       <span

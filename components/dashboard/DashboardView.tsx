@@ -10,6 +10,7 @@ import { Pill } from "@/components/ui/Pill";
 import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuthState } from "@/lib/auth/store";
+import { countNoun } from "@/lib/format";
 import type { PlanSummary } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 
@@ -155,9 +156,7 @@ export function DashboardView({
 
         {/* View toggle */}
         <div className="flex items-center justify-between">
-          <span className="u-small">
-            {list.length} plan{list.length === 1 ? "" : "s"}
-          </span>
+          <span className="u-small">{countNoun(list.length, "plan")}</span>
           <Segmented<ViewMode>
             ariaLabel="View mode"
             value={view}

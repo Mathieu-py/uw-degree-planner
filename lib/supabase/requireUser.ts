@@ -9,12 +9,10 @@ export type RequireUserResult =
   | { ok: false; error: "not_authenticated" };
 
 /**
- * Resolve the current user, returning `not_authenticated` for unauthenticated
- * callers rather than throwing. Centralizing the auth check keeps the server
- * actions uniform: every action returns `not_authenticated` when the session is
- * gone (which happens routinely as refresh tokens expire mid-session). The
- * resolved `client` is handed back so callers reuse the same request-scoped
- * Supabase client they authenticated with.
+ * Resolve the current user, returning `not_authenticated` rather than throwing.
+ * Keeps server actions uniform when a session expires mid-flight. Hands back the
+ * resolved request-scoped `client` so callers reuse the one they authenticated
+ * with.
  */
 export async function requireUser(): Promise<RequireUserResult> {
   const client = await createSupabaseServerClient();

@@ -1,7 +1,7 @@
 /**
- * UWFlow prereq text → boolean AST. The grammar is reverse-engineered from
- * the prose; anything that doesn't match becomes a RAW node so satisfied.ts
- * can surface it as "uncertain" rather than failing the user.
+ * UWFlow prereq text → boolean AST. Grammar reverse-engineered from the prose;
+ * unmatched text becomes a RAW node so satisfied.ts surfaces it as "uncertain"
+ * rather than failing the user.
  *
  * Grammar (precedence, lowest → highest):
  *   expression := and_clause (";" and_clause)*
@@ -108,13 +108,11 @@ function tokenize(input: string): Token[] {
       continue;
     }
 
-    // A program/faculty restriction. Course and level tokens are tried first
-    // (above), so by here `segment` is the trailing restriction prose. Grab the
-    // whole segment up to the next ";" as one token — its internal "or" /
-    // commas / slashes are part of the clause, not boolean structure. A leading
-    // "or"/"and" is the connective joining this restriction to what precedes
-    // it, NOT part of the clause: skip the PROGRAM branch so it's tokenized as
-    // OR/AND below (the restriction then starts on the next iteration).
+    // A program/faculty restriction (course/level tried first, so this is
+    // trailing restriction prose). Grab up to the next ";" as one token — its
+    // internal "or"/commas/slashes belong to the clause, not boolean structure.
+    // A leading "or"/"and" is the connective to what precedes it, so skip this
+    // branch and let it tokenize as OR/AND (restriction starts next iteration).
     const semiIdx = rest.indexOf(";");
     const segment = semiIdx === -1 ? rest : rest.slice(0, semiIdx);
     if (
@@ -183,12 +181,11 @@ class Parser {
 
   parseAndClause(): PrereqNode {
     const parts: PrereqNode[] = [this.parseOrClause()];
-    // Explicit "and", plus implicit conjunction: UWFlow often juxtaposes a
-    // structured requirement after another with no connective (e.g. "Level at
-    // least 4A Mathematics … students only"). Treat an adjacent structured
-    // primary as AND so it isn't silently dropped. RAW is excluded — trailing
-    // prose like "with a grade of at least 60%" should keep being ignored
-    // rather than making the whole clause uncertain.
+    // Explicit "and" plus implicit conjunction: UWFlow often juxtaposes two
+    // structured requirements with no connective ("Level at least 4A
+    // Mathematics … students only"), so treat an adjacent structured primary as
+    // AND. RAW is excluded so trailing prose ("with a grade of 60%") stays
+    // ignored rather than making the clause uncertain.
     while (this.match("AND") || this.atStructuredPrimary()) {
       parts.push(this.parseOrClause());
     }

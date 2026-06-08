@@ -26,37 +26,26 @@ export interface UsePlanListResult {
    * cache. Returns the new plan id on success, null on failure.
    */
   create: (name: string, seed?: PlanSnapshot) => Promise<string | null>;
-  /**
-   * Optimistic rename. The cache reflects the new name immediately; the
-   * row reverts on server failure.
-   */
+  /** Optimistic rename; reverts on server failure. */
   rename: (id: string, name: string) => Promise<boolean>;
-  /**
-   * Optimistic remove. The row vanishes immediately; restored on server
-   * failure (preserving its original position).
-   */
+  /** Optimistic remove; restored to its original position on failure. */
   remove: (id: string) => Promise<boolean>;
   /**
-   * Pessimistic duplicate: waits for the server to copy the plan before
-   * prepending an optimistic summary to the cache (matches the `create`
-   * pattern — the new id is only known after the round trip). Returns the
-   * new plan id on success, null on failure.
+   * Pessimistic duplicate: like `create`, the new id is only known after the
+   * round trip. Returns the new plan id, or null on failure.
    */
   duplicate: (id: string) => Promise<string | null>;
   /**
-   * Mint or revoke the plan's public share token. Updates the cached row
-   * optimistically and reverts on server failure. Returns the new token
-   * (or null when sharing was disabled) on success, undefined on failure.
+   * Mint or revoke the plan's share token, optimistically; reverts on failure.
+   * Returns the new token (null when disabled), or undefined on failure.
    */
   share: (id: string, enable: boolean) => Promise<string | null | undefined>;
 }
 
 /**
- * Module-level store backing usePlanList. The previous implementation kept
- * state inside the hook itself, which meant every component that called
- * usePlanList got its own independent copy — so a create() in PlannerShell
- * would not propagate to PlanToolbar's instance. Hoisting state here lets
- * useSyncExternalStore broadcast every mutation to every subscriber.
+ * Module-level store backing usePlanList. State lives here, not in the hook, so
+ * every caller shares one copy — a create() in PlannerShell propagates to
+ * PlanToolbar's instance via useSyncExternalStore.
  */
 interface StoreState {
   plans: PlanSummary[] | null;
@@ -108,11 +97,7 @@ async function refetchInternal(isAuthed: boolean): Promise<void> {
   }
 }
 
-/**
- * Test-only: drops all in-memory state and listeners back to defaults so
- * each test starts from a clean slate. The leading underscore signals
- * "don't call this from app code".
- */
+/** Test-only: reset all in-memory state and listeners to defaults. */
 export function __resetPlanListStoreForTests(): void {
   state = { plans: null, loading: false, error: null };
   listeners.clear();
@@ -201,10 +186,9 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
   );
 
   const duplicate = useCallback(async (id: string): Promise<string | null> => {
-    // Look up the source from cache so the optimistic row carries the same
-    // program/spec/stream/start-term as what's about to land on the server.
-    // The button only renders inside the populated sidebar, so cache miss is
-    // a defensive case (e.g. mid-refetch); fall back to refetch in that case.
+    // Source from cache so the optimistic row matches what lands on the server.
+    // The button only renders in the populated sidebar, so a cache miss is
+    // defensive (mid-refetch) — fall back to a refetch then.
     const source = state.plans?.find((p) => p.id === id);
     const name = source ? `${source.name} (copy)` : undefined;
 
@@ -244,9 +228,8 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
           plans: state.plans.map((p) => {
             if (p.id !== id) return p;
             previousToken = p.shareToken;
-            // Optimistically clear when disabling; when enabling we don't
-            // know the token yet, so leave the previous value and patch
-            // once the server replies.
+            // Clear when disabling; when enabling we don't know the token yet,
+            // so leave the previous value and patch once the server replies.
             return enable ? p : { ...p, shareToken: null };
           }),
         });

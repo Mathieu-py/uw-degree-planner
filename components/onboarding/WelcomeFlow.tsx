@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Select } from "@/components/ui/Select";
 import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
+import { countNoun, pluralize } from "@/lib/format";
 import { logError } from "@/lib/log";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
@@ -223,8 +224,7 @@ export function WelcomeFlow({
                   {parseResult.detectedCurrentTerm
                     ? ` · through ${parseResult.detectedCurrentTerm}`
                     : ""}{" "}
-                  · {parseResult.courses.length} course
-                  {parseResult.courses.length === 1 ? "" : "s"}
+                  · {countNoun(parseResult.courses.length, "course")}
                 </span>
                 <button
                   type="button"
@@ -303,7 +303,7 @@ export function WelcomeFlow({
               <>
                 <p className="u-body">
                   We'll build a plan from your transcript — <b>{placedCount}</b>{" "}
-                  past course{placedCount === 1 ? "" : "s"} auto-placed
+                  past {pluralize(placedCount, "course")} auto-placed
                   {draftPlan.startTermId ? (
                     <>
                       {" "}

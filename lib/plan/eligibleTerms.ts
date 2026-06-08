@@ -33,10 +33,10 @@ function fallbackCourse(code: string): Course {
 }
 
 /**
- * Slot ids where `code` can be placed (never co-op or pre-arrival). `referenced`
- * is the program-referenced codes, so a required course isn't blocked by a stale
- * restriction. A "check" term stays in the set — only a definitive "ineligible"
- * (failed prereq/level, antireq conflict, duplicate) drops a term.
+ * Slot ids where `code` can be placed (never co-op or pre-arrival).
+ * `referenced` = program-referenced codes, so a required course isn't blocked
+ * by a stale restriction. A "check" term stays in; only a definitive
+ * "ineligible" (failed prereq/level, antireq conflict, duplicate) drops a term.
  */
 export function eligibleSlotIdsForCourse(
   plan: LocalPlan,

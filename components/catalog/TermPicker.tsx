@@ -10,18 +10,11 @@ import { TermPickerLocal } from "./TermPickerLocal";
 import { StatusBody } from "./termPickerShared";
 
 /**
- * Catalog "Add" flow. The catalog has no target term, so this runs the prereq
- * check per academic term — a course is "missing prereqs" in early terms and
- * "eligible" once its prereqs sit in earlier terms. Adding writes the course
- * into the chosen term's slot.
- *
- * Signed-out users edit their single local plan (localStorage). Signed-in
- * users first pick which of their server-side plans to add to, then the same
- * term picker runs against that plan and the add is persisted with a server
- * round-trip (read-modify-write via `savePlanState`).
- *
- * `onAdded`, when given, fires after a successful add in place of the default
- * close — the course-detail "Add" flow uses it to redirect back to the catalog.
+ * Catalog "Add" flow. With no target term, the prereq check runs per academic
+ * term; adding writes the course into the chosen term's slot. Signed-out users
+ * edit their local plan; signed-in users first pick a server plan, then the
+ * same term picker runs against it (persisted via `savePlanState`). `onAdded`,
+ * when given, fires after a successful add in place of the default close.
  */
 export function TermPicker({
   course,
@@ -44,10 +37,9 @@ export function TermPicker({
   const heading =
     isAuthed && step === "plans" ? "Add to which plan?" : "Add to which term?";
 
-  // A successful add dismisses the picker: record the label (the footer flashes
-  // "Added ✓" during the exit), play the close animation, then hand off to
-  // `onAdded` if the caller wants to redirect, else just close. Bodies call this
-  // only on success, so a failed server save keeps the modal open.
+  // A successful add dismisses the picker: record the label (footer flashes
+  // "Added ✓" during exit), play the close animation, then `onAdded` or close.
+  // Bodies call this only on success, so a failed save keeps the modal open.
   const handleAdded = useCallback(
     (label: string) => {
       setAddedTo(label);

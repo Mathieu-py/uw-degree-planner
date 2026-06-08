@@ -1,7 +1,4 @@
-/**
- * Shape of a course as returned by UWFlow's GraphQL endpoint.
- * Field names match the upstream schema and use snake_case.
- */
+/** A course from UWFlow's GraphQL endpoint (upstream snake_case schema). */
 export interface UWFlowRating {
   easy: number | null;
   useful: number | null;
@@ -28,16 +25,20 @@ export interface UWFlowCourse {
 }
 
 /**
- * A course as persisted in the committed catalog snapshot. `description` is
- * deliberately excluded — that prose is the bulk of the file and is only read
- * by the /course/[code] route, so it lives in a sibling descriptions file
- * instead of being shipped with every catalog payload.
+ * A course in the committed catalog snapshot. `description` is excluded (it
+ * dominates the file and only /course/[code] reads it, so it lives in a sibling
+ * descriptions file).
  */
-export type CatalogCourse = Omit<UWFlowCourse, "description">;
+export type CatalogCourse = Omit<UWFlowCourse, "description"> & {
+  /**
+   * Unit weight: 0.5 standard, 0.25 lab/seminar, 1.0+ full-year. UWFlow doesn't
+   * expose it, so the fetch script enriches from Kuali. `undefined` when
+   * unknown — the audit counts the course rather than misreport units.
+   */
+  units?: number;
+};
 
-/**
- * Course enriched with derived fields used by filters and UI.
- */
+/** Course enriched with derived fields used by filters and UI. */
 export interface Course extends CatalogCourse {
   prefix: string;
   level: number;
@@ -45,20 +46,37 @@ export interface Course extends CatalogCourse {
 }
 
 /**
- * A catalog course re-joined with its calendar description, for the course
- * detail page. Everywhere else uses the lean {@link Course}.
+ * A catalog course re-joined with its calendar description, for the detail
+ * page. Everywhere else uses the lean {@link Course}.
  */
 export type CourseDetail = Course & { description: string | null };
 
 /**
- * Filter predicates that act on a Course in isolation. `hideUnmetPrereqs` is
- * a presentation toggle — an empty completed-courses list makes it a no-op.
+ * Filter predicates acting on a Course in isolation. `hideUnmetPrereqs` is a
+ * presentation toggle — a no-op when the completed list is empty.
  */
 export interface PureFilters {
+  /** Subject prefixes to hide (deny-list). Empty = disabled. */
   excludePrefixes: string[];
+  /**
+   * Subject prefixes to restrict results to (allow-list). Empty = disabled;
+   * non-empty shows ONLY these prefixes. `excludePrefixes` still applies, so a
+   * prefix in both lists is hidden (exclude wins).
+   */
+  includePrefixes: string[];
   levels: number[];
   hasSeatsAvailable: boolean;
   hideUnmetPrereqs: boolean;
   minUseful: number | null;
   minEasy: number | null;
+}
+
+/**
+ * Filter values to pre-apply when the slot picker opens — e.g. an audit
+ * subject-pool "Browse" seeds its subjects (as `includePrefixes`) and level
+ * range, which the student can adjust.
+ */
+export interface FilterPreset {
+  includePrefixes?: string[];
+  levels?: number[];
 }

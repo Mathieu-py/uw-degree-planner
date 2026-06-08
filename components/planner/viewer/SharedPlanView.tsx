@@ -29,12 +29,10 @@ interface Props {
 }
 
 /**
- * Public read-only view of a shared plan. Mounted from `/p/[shareToken]`.
- *
- * Distinct from PlannerShell: no auth/sync hooks, no mutation handlers, no
- * sidebar, no modals. Reuses the display primitives (Timeline + AuditPanel)
- * by adapting the loaded ServerPlan into a LocalPlan-shaped value, since
- * both downstream components already accept LocalPlan.
+ * Public read-only view of a shared plan, mounted from `/p/[shareToken]`.
+ * Unlike PlannerShell: no auth/sync hooks, mutation handlers, sidebar, or
+ * modals. Reuses Timeline + AuditPanel by adapting the ServerPlan to a
+ * LocalPlan-shaped value (both already accept LocalPlan).
  */
 export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   const router = useRouter();
@@ -42,9 +40,8 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   const { create } = usePlanList({ isAuthed });
   const [busy, setBusy] = useState(false);
 
-  // Adapter: ServerPlan → LocalPlan. The display tree expects LocalPlan;
-  // schemaVersion + stream defaulting are the only fields that differ in
-  // shape (server stream can be null; LocalPlan's enum doesn't include null).
+  // Adapter: ServerPlan → LocalPlan. Only schemaVersion + stream defaulting
+  // differ (server stream can be null; LocalPlan's enum can't).
   const localPlan = useMemo<LocalPlan>(
     () => ({
       schemaVersion: PLAN_SCHEMA_VERSION,
@@ -72,11 +69,9 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   const programName =
     programOptions.find((p) => p.id === localPlan.programId)?.name ?? "—";
 
-  // "Duplicate to my plans" — mirrors WelcomeFlow's build(): an authed visitor
-  // gets a server copy and is routed to it; an anon visitor seeds the single
-  // local demo plan and lands in the demo planner. Either way the source slot
-  // ids belong to the owner's rows, so mint fresh ones to avoid PK conflicts
-  // on the seeded insert (same reason duplicatePlan remaps them server-side).
+  // "Duplicate to my plans" (mirrors WelcomeFlow's build): authed → server copy
+  // and route to it; anon → seed the local demo plan. Mint fresh slot ids
+  // either way to avoid PK conflicts on the seeded insert.
   async function onDuplicate() {
     if (busy) return;
     setBusy(true);

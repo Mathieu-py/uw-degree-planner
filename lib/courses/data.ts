@@ -1,7 +1,6 @@
 /**
- * Server-only loader for the committed UWFlow snapshot. Wrapped in React's
- * cache() so a single request that hits multiple server components (page,
- * metadata, etc.) reads and parses the JSON only once.
+ * Server-only loader for the committed UWFlow snapshot. React's cache() so one
+ * request hitting multiple server components reads and parses the JSON once.
  */
 
 import "server-only";
@@ -14,9 +13,9 @@ import type { Course, CourseDetail } from "./types";
 import { validateCoursesFile, validateDescriptionsFile } from "./validation";
 
 /**
- * Raised when a snapshot file can't be read or parsed. Shape-validation
- * failures still throw CoursesFileError from ./validation; this just turns a
- * raw ENOENT/SyntaxError into a message that names the file.
+ * Raised when a snapshot file can't be read or parsed (turns raw
+ * ENOENT/SyntaxError into a file-named message). Shape-validation failures
+ * still throw CoursesFileError from ./validation.
  */
 export class CourseDataError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -51,10 +50,9 @@ export const loadTerm = cache(async (termId: TermId): Promise<Course[]> => {
 });
 
 /**
- * Course descriptions live in a sibling `descriptions.<term>.json` file rather
- * than the catalog so the ~3MB of calendar prose never enters the planner's
- * client payload. Only the /course/[code] route pulls it in: it reads the term's
- * descriptions once per request (cached), then indexes the one code it needs.
+ * Descriptions live in a sibling `descriptions.<term>.json` so the ~3MB of
+ * calendar prose never enters the planner's client payload. Only /course/[code]
+ * reads it — once per request (cached), then indexes the one code it needs.
  */
 const loadDescriptions = cache(
   async (termId: TermId): Promise<Record<string, string>> => {
