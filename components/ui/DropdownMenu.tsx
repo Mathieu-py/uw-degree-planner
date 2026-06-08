@@ -76,7 +76,7 @@ export function DropdownMenu({ label, icon, items }: Props) {
           name="chevronDown"
           size="xs"
           aria-hidden="true"
-          className="opacity-70"
+          className={`opacity-70 transition-transform ${open ? "" : "-rotate-90"}`}
         />
       </Button>
       {open ? (

@@ -326,7 +326,7 @@ function PlanToolbarAuthed({
               name="chevronDown"
               size="xs"
               aria-hidden="true"
-              className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70"
+              className={`absolute right-3 top-1/2 -translate-y-1/2 opacity-70 transition-transform ${pickerOpen ? "" : "-rotate-90"}`}
             />
           </button>
           {pickerOpen ? (
