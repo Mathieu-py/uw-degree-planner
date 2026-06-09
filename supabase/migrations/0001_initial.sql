@@ -6,6 +6,17 @@
 
 create extension if not exists "pgcrypto";
 
+-- True iff `j` is a JSON object whose every value is a string. Used by the
+-- `specialization_ids` CHECK below — CHECK constraints can't contain
+-- subqueries, so the per-value test lives in this immutable helper.
+create function public.jsonb_is_string_map(j jsonb) returns boolean
+  language sql immutable as $$
+    select jsonb_typeof(j) = 'object'
+      and not exists (
+        select 1 from jsonb_each(j) as e where jsonb_typeof(e.value) <> 'string'
+      );
+  $$;
+
 -- ---------------------------------------------------------------------------
 -- Tables
 -- ---------------------------------------------------------------------------
@@ -15,11 +26,14 @@ create table public.plans (
   owner_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
   -- Programs the plan audits against. Empty array = none; >1 = double degree.
-  program_ids text[] not null default '{}',
+  program_ids text[] not null default '{}'
+    constraint chk_program_ids_no_nulls
+      check (cardinality(program_ids) = cardinality(array_remove(program_ids, null::text))),
   -- Per-program specialization map: { programId: specialization-slug }. A UW
   -- specialization is scoped to one program, so each side of a double degree
   -- can carry its own. Missing key = no specialization for that program.
-  specialization_ids jsonb not null default '{}'::jsonb,
+  specialization_ids jsonb not null default '{}'::jsonb
+    constraint chk_specialization_ids_object_text check (public.jsonb_is_string_map(specialization_ids)),
   system_of_study text check (system_of_study in ('regular', 'stream4', 'stream8')),
   start_term_id integer,
   program_scrape_version text,

@@ -143,6 +143,11 @@ describe("parseProgramClause", () => {
     });
   });
 
+  // UW courses state exclusions as "Not open to <program/faculty> students" —
+  // e.g. CS 105 "Not open to Mathematics students.", CS 200 "Not open to
+  // Computer Science students" (Calendar CS course page,
+  // https://ucalendar.uwaterloo.ca/2021/COURSE/course-CS.html). The parser
+  // inverts these into a `negated` exclusion.
   it("reads a 'Not open to Faculty of <X> students' negation as an exclusion", () => {
     // CS 114's restriction. "Faculty of Math" must normalize to the math
     // faculty and land in `exclude`, with `negated` set so the meaning inverts.

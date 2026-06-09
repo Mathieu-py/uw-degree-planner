@@ -55,11 +55,28 @@ begin
       ),
       '{}'::text[]
     ),
-    specialization_ids = case
-      when jsonb_typeof(p_snapshot->'specializationIds') = 'object'
-        then p_snapshot->'specializationIds'
-      else '{}'::jsonb
-    end,
+    -- A specialization is scoped to one program, so drop any entry whose key
+    -- isn't among the plan's programIds (the `?` operator tests array
+    -- membership). Guards against stale specs lingering after a program is
+    -- removed from the plan.
+    specialization_ids = coalesce(
+      (
+        select jsonb_object_agg(key, value)
+        from jsonb_each(
+          case when jsonb_typeof(p_snapshot->'specializationIds') = 'object'
+            then p_snapshot->'specializationIds'
+            else '{}'::jsonb
+          end
+        )
+        where (
+          case when jsonb_typeof(p_snapshot->'programIds') = 'array'
+            then p_snapshot->'programIds'
+            else '[]'::jsonb
+          end
+        ) ? key
+      ),
+      '{}'::jsonb
+    ),
     system_of_study = nullif(p_snapshot->>'stream', ''),
     start_term_id = case
       when (p_snapshot->'startTermId') is null

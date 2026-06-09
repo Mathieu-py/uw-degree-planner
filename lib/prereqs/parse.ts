@@ -51,6 +51,11 @@ const RAW_RE = /^[^(),;/]+?(?=\s+(?:or|and)\b|[(),;/]|$)/i;
 // stripped by RAW_RE. Source: https://ucalendar.uwaterloo.ca/2223/COURSE/course-CS.html (CS 136).
 const GRADE_BEFORE_COURSE_RE =
   /^[a-z ]*?\b\d{1,3}\s*%\s+(?:or\s+(?:higher|more|greater|better)\s+)?in\s+(?=[A-Z]{2,7}\s?\d{3})/i;
+// Phrases that flag a clause as a program/faculty restriction. The negative
+// `not (open|available) to` branch matches UW's standard exclusion wording —
+// e.g. CS 105 is listed "Not open to Mathematics students." and CS 200 "Not
+// open to Computer Science students" on the Calendar's CS course page.
+// Source: https://ucalendar.uwaterloo.ca/2021/COURSE/course-CS.html
 const PROGRAM_TRIGGER =
   /students?\s+only|students?\.?\s*$|open only to|only open to|^not\s+(?:open|available)\s+to/i;
 const LEAD_LEVEL_RE = /^(?:level\s+)?\d[a-z](?:\s+or\s+\d[a-z])*\s+[a-z]/i;

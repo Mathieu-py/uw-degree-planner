@@ -765,8 +765,8 @@ body {
   border-color: var(--line-2);
 }
 
-/* wrapping grid of term + co-op cards — always exactly four per row, columns
-   shrink to fit (minmax 0) rather than wrapping to a different count */
+/* grid of term + co-op cards — always exactly three per row, columns shrink to
+   fit (minmax 0) rather than wrapping to a different count */
 .pw-tl-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

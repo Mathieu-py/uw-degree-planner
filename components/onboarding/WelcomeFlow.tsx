@@ -76,8 +76,8 @@ export function WelcomeFlow({
       const text = await extractTextFromPdf(file);
       const result = parseTranscript(text);
       setParseResult(result);
-      if (result.detectedProgramIds.length > 0)
-        setProgramIds(result.detectedProgramIds);
+      // Always sync — a re-upload that detects nothing must clear stale ids.
+      setProgramIds(result.detectedProgramIds);
       const detectedStream = detectStream(result);
       if (detectedStream) {
         setStream(detectedStream);

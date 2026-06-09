@@ -80,7 +80,8 @@ describe("AuditPanel", () => {
     const flexId = Object.entries(PROGRAMS).find(
       ([, p]) => p.kind === "flexible",
     )?.[0];
-    if (!engId || !flexId) return;
+    if (!engId) throw new Error("fixture: no engineering program in PROGRAMS");
+    if (!flexId) throw new Error("fixture: no flexible program in PROGRAMS");
     const { container } = render(
       <AuditPanel plan={mkPlan({ programIds: [engId, flexId] })} />,
     );
@@ -105,7 +106,8 @@ describe("AuditPanel", () => {
     const flexId = Object.entries(PROGRAMS).find(
       ([, p]) => p.kind === "flexible",
     )?.[0];
-    if (!engId || !flexId) return;
+    if (!engId) throw new Error("fixture: no engineering program in PROGRAMS");
+    if (!flexId) throw new Error("fixture: no flexible program in PROGRAMS");
     const { container } = render(
       <AuditPanel plan={mkPlan({ programIds: [engId, flexId] })} />,
     );

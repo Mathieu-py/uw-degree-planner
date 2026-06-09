@@ -647,9 +647,16 @@ async function main() {
   );
   console.log(`${list.length} entries (${majors.length} Majors)`);
 
-  process.stdout.write("Fetching subject codes... ");
-  const subjectCodeByDescription = await fetchSubjectCodeMap(catalogId);
-  console.log(`${subjectCodeByDescription.size} subjects`);
+  // Subject-code enrichment is optional polish — a fetch failure here must not
+  // abort the whole scrape, so fall back to an empty map and warn.
+  let subjectCodeByDescription = new Map<string, string>();
+  try {
+    process.stdout.write("Fetching subject codes... ");
+    subjectCodeByDescription = await fetchSubjectCodeMap(catalogId);
+    console.log(`${subjectCodeByDescription.size} subjects`);
+  } catch (err) {
+    console.warn("\nsubject-code enrichment skipped:", err);
+  }
 
   const conflictCounts = buildConflictCounts(majors.map((p) => p.code));
 

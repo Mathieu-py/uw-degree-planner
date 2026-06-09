@@ -27,6 +27,18 @@ export function snapshotSizeError(snapshot: PlanSnapshot): string | null {
 }
 
 /**
+ * jsonb from the DB isn't type-checked by PostgREST, so coerce it to a
+ * string→string map defensively (mirrors the `Array.isArray` guard on
+ * `program_ids`). Non-objects/arrays collapse to `{}`; values are stringified.
+ */
+function toStringRecord(v: unknown): Record<string, string> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v)) out[k] = String(val);
+  return out;
+}
+
+/**
  * Row shape from `select * from plans` (raw snake_case Postgres columns). The
  * selectors below pluck them into camelCase for the app.
  */
@@ -166,7 +178,7 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
     id: String(j.id),
     name: String(j.name),
     programIds: Array.isArray(j.program_ids) ? j.program_ids.map(String) : [],
-    specializationIds: (j.specialization_ids ?? {}) as Record<string, string>,
+    specializationIds: toStringRecord(j.specialization_ids),
     stream: (j.system_of_study ?? null) as Stream | null,
     startTermId: (j.start_term_id ?? null) as number | null,
     programScrapeVersion: (j.program_scrape_version ?? null) as string | null,

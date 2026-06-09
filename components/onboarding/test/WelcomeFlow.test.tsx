@@ -30,7 +30,9 @@ vi.mock("@/lib/transcript/parse", () => ({
   })),
 }));
 vi.mock("@/lib/plan/transcriptApply", () => ({
-  applyTranscriptToPlan: () => ({ plan: { specializationIds: {} } }),
+  applyTranscriptToPlan: () => ({
+    plan: { programIds: [], specializationIds: {} },
+  }),
   detectStream: () => null,
 }));
 vi.mock("@/lib/plan/derive", () => ({ completedCoursesFromPlan: () => [] }));

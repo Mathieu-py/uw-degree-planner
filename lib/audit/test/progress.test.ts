@@ -484,7 +484,12 @@ describe("computeDegreeProgress — optimal overlapping-pool matching", () => {
 
 describe("computeDegreeProgress — antireq conflict credits one member", () => {
   // "Choose one of aaa100 / bbb200" — they're antireqs, so both placed is a
-  // conflict. UW grants credit for one → the headline must credit 0.5, not 0.
+  // conflict. The UW Calendar Glossary defines an antirequisite as "Degree
+  // credit will not be granted for both the antirequisite course and a course
+  // naming it as such." — i.e. exactly one of the pair counts, so the headline
+  // must credit 0.5, not 0. Source: UW Undergraduate Calendar, Glossary of
+  // Terms (Antirequisite),
+  // https://academic-calendar-archive.uwaterloo.ca/undergraduate-studies/2020-2021/page/uWaterloo-Undergraduate-Calendar-Glossary-of-Terms.html
   const program: Program = {
     kind: "flexible",
     name: "Toy",
