@@ -6,8 +6,13 @@ import { expect, type Page, test } from "@playwright/test";
 // then "Build my plan", which saves the local plan and routes back to /plan.
 async function createDemoPlan(page: Page) {
   await page.goto("/plan");
-  // Step 1 (Set up): the manual-setup defaults — first program, Fall start,
-  // Regular stream — are valid out of the box, so advance straight through.
+  // Step 1 (Set up): the program picker is now a multi-select that starts
+  // empty (issue #32 double-degree), so Continue is gated until at least one
+  // program is chosen. Pick the first real option; Fall start and Regular
+  // stream defaults are fine, then advance.
+  await page
+    .getByLabel("Add a program")
+    .selectOption({ index: 1 });
   await page.getByRole("button", { name: "Continue" }).click();
   // Step 2 (Review): commit. Anon flow persists to localStorage and pushes /plan.
   await page.getByRole("button", { name: /build my plan/i }).click();
