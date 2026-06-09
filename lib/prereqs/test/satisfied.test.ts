@@ -19,6 +19,18 @@ const ANTHRO: ProgramIdentity = {
   faculty: "arts",
 };
 
+const MATH: ProgramIdentity = {
+  programId: "honours-mathematics",
+  names: ["honours mathematics", "mathematics"],
+  faculty: "mathematics",
+};
+
+const UNKNOWN_FAC: ProgramIdentity = {
+  programId: "mystery-program",
+  names: ["mystery program"],
+  faculty: null,
+};
+
 describe("evaluate", () => {
   it("satisfies an empty prereq", () => {
     const result = evaluate(parsePrereqs(""), user([]));
@@ -128,6 +140,56 @@ describe("evaluate", () => {
     });
     expect(result.satisfied).toBe(false);
     expect(result.blockedByProgram).toBe(true);
+  });
+
+  // Negated/exclusion clauses merge MOST-RESTRICTIVELY across a double degree:
+  // a student enrolled in the excluded faculty on *any* side is caught, even
+  // though their other degree wouldn't be (UW Kuali requisite wording + the
+  // "satisfy both faculties" double-degree rule). See satisfied.ts.
+  it("negated restriction — single excluded faculty blocks", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, { completed: new Set(), programs: [MATH] });
+    expect(result.satisfied).toBe(false);
+    expect(result.blockedByProgram).toBe(true);
+  });
+
+  it("negated restriction — non-excluded faculty is allowed", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, { completed: new Set(), programs: [SYDE] });
+    expect(result.satisfied).toBe(true);
+    expect(result.uncertain).toBe(false);
+  });
+
+  it("double degree — one excluded faculty blocks despite a non-excluded side", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    // Math + Engineering: the student IS a Faculty-of-Math student on one side,
+    // so the exclusion applies — most-permissive would have wrongly allowed it.
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [SYDE, MATH],
+    });
+    expect(result.satisfied).toBe(false);
+    expect(result.blockedByProgram).toBe(true);
+  });
+
+  it("double degree — neither side excluded is allowed", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [SYDE, ANTHRO],
+    });
+    expect(result.satisfied).toBe(true);
+    expect(result.uncertain).toBe(false);
+  });
+
+  it("negated restriction — unknown faculty stays a check, never a confident allow", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [UNKNOWN_FAC],
+    });
+    expect(result.uncertain).toBe(true);
+    expect(result.blockedByProgram).toBe(false);
   });
 
   it("suppressProgramBlock demotes a wrong-program block to an uncertain check", () => {

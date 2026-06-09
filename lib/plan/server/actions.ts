@@ -11,7 +11,6 @@ import {
   type PlanRow,
   type PlanSlotRow,
   planRowToSummary,
-  snapshotSizeError,
   toSnapshot,
 } from "./serialize";
 import type {
@@ -20,6 +19,7 @@ import type {
   PlanSummary,
   ServerPlan,
 } from "./types";
+import { snapshotError } from "./validate";
 
 const PLAN_COLUMNS =
   "id, name, program_ids, specialization_ids, system_of_study, start_term_id, program_scrape_version, share_token, updated_at";
@@ -232,8 +232,8 @@ async function savePlanStateWithClient(
   planId: string,
   snapshot: PlanSnapshot,
 ): Promise<ActionResult<void>> {
-  const sizeError = snapshotSizeError(snapshot);
-  if (sizeError) return { ok: false, error: sizeError };
+  const invalid = snapshotError(snapshot);
+  if (invalid) return { ok: false, error: invalid };
 
   const { error } = await client.rpc("save_plan_state", {
     p_plan_id: planId,

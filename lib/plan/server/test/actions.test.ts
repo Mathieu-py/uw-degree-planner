@@ -105,7 +105,8 @@ const SNAPSHOT: PlanSnapshot = {
   programScrapeVersion: null,
   slots: [
     {
-      id: "s1",
+      // Real slot ids are UUIDs (the server snapshot validation enforces it).
+      id: "00000000-0000-4000-8000-000000000001",
       termId: 1239,
       position: "1A",
       isCoop: false,

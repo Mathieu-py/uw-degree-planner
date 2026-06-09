@@ -13,8 +13,10 @@ export interface UserState {
   level?: string;
   /**
    * Student's program(s) — a double degree carries more than one. A restriction
-   * clause is judged against each, most-permissive wins (allow > unknown >
-   * block). Empty/omitted → judged with no identity (usually "check").
+   * clause is judged against each, then merged asymmetrically (see the
+   * "program" case in `walk`): allow-lists take the most-permissive verdict, a
+   * negated "Not open to …" exclusion takes the most-restrictive. Empty/omitted
+   * → judged with no identity (usually "check").
    */
   programs?: ProgramIdentity[];
   /**
@@ -108,17 +110,34 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
     }
     case "program": {
       const clause = parseProgramClause(node.clause);
-      // Most-permissive across the student's programs (allow > unknown > block):
-      // a double degree satisfies a restriction if *either* side does.
       const ids = state.programs ?? [];
       const verdicts = ids.length
         ? ids.map((p) => matchProgram(clause, p))
         : [matchProgram(clause, null)];
-      const verdict = verdicts.includes("allow")
-        ? "allow"
-        : verdicts.includes("unknown")
-          ? "unknown"
-          : "block";
+      // Merging the per-program verdicts is asymmetric, grounded in how UW
+      // writes enrolment restrictions for double-degree students:
+      //  - Allow-list ("… students only"): MOST-PERMISSIVE (allow > unknown >
+      //    block). A double degree is "enrolled in" each of its programs, so a
+      //    course open to one side is open to the student.
+      //  - Negated ("Not open to students enrolled in Faculty of X programs"):
+      //    MOST-RESTRICTIVE (block > unknown > allow). The student is enrolled
+      //    in a Faculty-of-X program on the excluded side, so the exclusion
+      //    catches them even though their other degree wouldn't be excluded.
+      // Source: UW Kuali-CM "How to build course requisites" (standard
+      // exclusion wording) + uwaterloo.ca New Math Students "Double Degree"
+      // (double-degree students must satisfy the requirements of *both*
+      // faculties). When unsure, matchProgram already returns "unknown" → check.
+      const verdict = clause.negated
+        ? verdicts.includes("block")
+          ? "block"
+          : verdicts.includes("unknown")
+            ? "unknown"
+            : "allow"
+        : verdicts.includes("allow")
+          ? "allow"
+          : verdicts.includes("unknown")
+            ? "unknown"
+            : "block";
       // block → hard fail (via raw, no missing course to point at); unknown →
       // "check"; allow → pass. suppressProgramBlock demotes a block to "check".
       if (verdict === "block") {

@@ -2,8 +2,9 @@ import type { TermId } from "@/lib/terms";
 
 /**
  * Schema version stamped on every persisted `LocalPlan`. Bump on a breaking
- * shape change; `loadPlan` rejects other values and stashes the raw blob under
- * `<key>.broken` so we can build a migrator before users lose data.
+ * shape change; `loadPlan` rejects other values, parks the raw blob under
+ * `<key>.broken`, and the user starts fresh — there is intentionally no legacy
+ * migrator.
  */
 export const PLAN_SCHEMA_VERSION = 3;
 
@@ -28,6 +29,30 @@ export type CoopLabel = `coop${1 | 2 | 3 | 4 | 5 | 6}`;
  * - "pre": synthetic pre-arrival slot for transfer credits.
  */
 export type SlotPosition = TermLetter | CoopLabel | "pre";
+
+/**
+ * Every `SlotPosition` value as a runtime tuple — the single source the
+ * localStorage schema (`storage.ts`) and the server snapshot schema
+ * (`server/validate.ts`) both build their `z.enum` from, so the two can't
+ * drift. Order is cosmetic; membership is what the schemas check.
+ */
+export const SLOT_POSITIONS = [
+  "1A",
+  "1B",
+  "2A",
+  "2B",
+  "3A",
+  "3B",
+  "4A",
+  "4B",
+  "coop1",
+  "coop2",
+  "coop3",
+  "coop4",
+  "coop5",
+  "coop6",
+  "pre",
+] as const satisfies readonly SlotPosition[];
 
 export interface SlotCourse {
   /** Lowercase course code, matches the catalog form (e.g. "cs246"). */

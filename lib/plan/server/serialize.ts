@@ -1,30 +1,11 @@
-import { z } from "zod";
 import type { PlanSlot, SlotCourse, SlotPosition, Stream } from "../types";
 import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 
-// Caps before the unbounded `save_plan_state` RPC (migrations/0002), guarding
-// against resource-exhaustion payloads. Well above any real plan.
+// Array-size caps before the unbounded `save_plan_state` RPC (migrations/0002),
+// guarding against resource-exhaustion payloads. Well above any real plan. The
+// full structural validation that consumes these lives in `./validate`.
 export const MAX_SLOTS = 50;
 export const MAX_COURSES_PER_SLOT = 100;
-
-const SnapshotSizeSchema = z.object({
-  slots: z
-    .array(
-      z.object({
-        courses: z.array(z.unknown()).max(MAX_COURSES_PER_SLOT),
-      }),
-    )
-    .max(MAX_SLOTS),
-});
-
-/**
- * Returns null if the snapshot is within the size caps, else an error string.
- * Only guards array sizes — per-field validation is left to the DB cast.
- */
-export function snapshotSizeError(snapshot: PlanSnapshot): string | null {
-  const result = SnapshotSizeSchema.safeParse(snapshot);
-  return result.success ? null : "snapshot_too_large";
-}
 
 /**
  * jsonb from the DB isn't type-checked by PostgREST, so coerce it to a
