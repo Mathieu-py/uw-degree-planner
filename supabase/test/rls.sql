@@ -120,8 +120,8 @@ begin
 
   begin
     perform public.save_plan_state(plan_a, jsonb_build_object(
-      'programId', null,
-      'specializationId', null,
+      'programIds', '[]'::jsonb,
+      'specializationIds', '{}'::jsonb,
       'stream', 'regular',
       'startTermId', null,
       'programScrapeVersion', null,
@@ -141,7 +141,7 @@ begin
 
   perform public.save_plan_state(plan_a, jsonb_build_object(
     'programId', 'h-software-engineering-beng',
-    'specializationId', null,
+    'specializationIds', '{}'::jsonb,
     'stream', 'stream8',
     'startTermId', 1239,
     'programScrapeVersion', null,

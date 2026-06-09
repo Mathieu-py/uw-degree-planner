@@ -22,7 +22,7 @@ import type {
 } from "./types";
 
 const PLAN_COLUMNS =
-  "id, name, program_id, specialization_id, system_of_study, start_term_id, program_scrape_version, share_token, updated_at";
+  "id, name, program_ids, specialization_ids, system_of_study, start_term_id, program_scrape_version, share_token, updated_at";
 
 const SLOT_COLUMNS = "id, plan_id, term_id, position, is_coop, ordinal";
 

@@ -36,9 +36,9 @@ function catalog(...courses: Course[]): Map<string, Course> {
 
 // pre + four academic terms (1A 1B 2A 2B) with a co-op work term interleaved.
 const PLAN: LocalPlan = {
-  schemaVersion: 1,
-  programId: "systems-design-engineering",
-  specializationId: null,
+  schemaVersion: 3,
+  programIds: ["systems-design-engineering"],
+  specializationIds: {},
   stream: "stream8",
   startTermId: 1239,
   slots: [
@@ -138,7 +138,7 @@ describe("eligibleSlotIdsForCourse", () => {
       PLAN,
       "anth101",
       catalog(makeCourse("anth101", "Anthropology students only")),
-      SYDE,
+      [SYDE],
     );
     expect(result.size).toBe(0);
   });
@@ -148,7 +148,7 @@ describe("eligibleSlotIdsForCourse", () => {
       PLAN,
       "msci261",
       catalog(makeCourse("msci261", "Consent of the department")),
-      SYDE,
+      [SYDE],
     );
     expect([...result].sort()).toEqual([...ACADEMIC].sort());
   });
@@ -158,13 +158,13 @@ describe("eligibleSlotIdsForCourse", () => {
       makeCourse("math119", "Open only to students in Software Engineering"),
     );
     // Not referenced → a wrong-program block greys every term.
-    expect(eligibleSlotIdsForCourse(PLAN, "math119", cat, SYDE).size).toBe(0);
+    expect(eligibleSlotIdsForCourse(PLAN, "math119", cat, [SYDE]).size).toBe(0);
     // Referenced → no longer greyed (the restriction is demoted to a check).
     const referenced = eligibleSlotIdsForCourse(
       PLAN,
       "math119",
       cat,
-      SYDE,
+      [SYDE],
       new Set(["math119"]),
     );
     expect([...referenced].sort()).toEqual([...ACADEMIC].sort());

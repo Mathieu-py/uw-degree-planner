@@ -8,7 +8,7 @@ import { completedSetFromPlan } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
 import {
   type ProgramIdentity,
-  programIdentity,
+  programIdentities,
   programReferencedCodes,
 } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
@@ -31,7 +31,7 @@ export interface TermOption {
 export function computeTermOptions(
   slots: PlanSlot[],
   course: Course,
-  program: ProgramIdentity | undefined,
+  programs: ProgramIdentity[],
   programReferenced: ReadonlySet<string>,
   placedAnywhere: ReadonlySet<string>,
 ): TermOption[] {
@@ -42,7 +42,7 @@ export function computeTermOptions(
         completed: completedSetFromPlan({ slots }, slot.termId ?? undefined),
         sameTerm: new Set(slot.courses.map((c) => c.code)),
         level: slot.position,
-        program,
+        programs,
         programReferenced,
         placedAnywhere,
       };
@@ -90,17 +90,34 @@ export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
 export function useTermOptions(
   course: Course,
   slots: PlanSlot[] | null | undefined,
-  plan?: { programId: string | null; specializationId: string | null } | null,
+  plan?: {
+    programIds: string[];
+    specializationIds: Record<string, string>;
+  } | null,
 ): { options: TermOption[]; alreadyIn: string | null } {
   const code = course.code.toLowerCase();
-  const program = useMemo(
-    () => programIdentity(plan?.programId, plan?.specializationId) ?? undefined,
-    [plan?.programId, plan?.specializationId],
+  // Identities + referenced-codes span every program (double degree), so a
+  // course relevant to — or restricted to — either degree resolves right.
+  // (`programIds` ref is stable across slot edits, so it's a sound memo dep.)
+  const programs = useMemo(
+    () => programIdentities(plan?.programIds, plan?.specializationIds),
+    [plan?.programIds, plan?.specializationIds],
   );
-  const programReferenced = useMemo(
-    () => programReferencedCodes(plan?.programId, plan?.specializationId),
-    [plan?.programId, plan?.specializationId],
-  );
+  const programReferenced = useMemo(() => {
+    const ids = plan?.programIds ?? [];
+    if (ids.length <= 1)
+      return programReferencedCodes(
+        ids[0],
+        ids[0] ? plan?.specializationIds?.[ids[0]] : null,
+      );
+    const out = new Set<string>();
+    ids.forEach((id) => {
+      // Each program contributes its own specialization's referenced codes.
+      const codes = programReferencedCodes(id, plan?.specializationIds?.[id]);
+      for (const c of codes) out.add(c);
+    });
+    return out;
+  }, [plan?.programIds, plan?.specializationIds]);
   const placedAnywhere = useMemo(
     () => new Set((slots ?? []).flatMap((s) => s.courses.map((c) => c.code))),
     [slots],
@@ -111,12 +128,12 @@ export function useTermOptions(
         ? computeTermOptions(
             slots,
             course,
-            program,
+            programs,
             programReferenced,
             placedAnywhere,
           )
         : [],
-    [slots, course, program, programReferenced, placedAnywhere],
+    [slots, course, programs, programReferenced, placedAnywhere],
   );
   const alreadyIn = slots ? alreadyInLabel(slots, code) : null;
   return { options, alreadyIn };

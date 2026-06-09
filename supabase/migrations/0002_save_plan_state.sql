@@ -13,8 +13,8 @@
 --
 -- Snapshot shape (matches what `lib/plan/server/serialize.ts` produces):
 --   {
---     programId: string | null,
---     specializationId: string | null,
+--     programIds: string[],
+--     specializationIds: { [programId]: specialization-slug },
 --     stream: 'regular' | 'stream4' | 'stream8',
 --     startTermId: number | null,
 --     programScrapeVersion: string | null,
@@ -43,8 +43,23 @@ begin
   end if;
 
   update public.plans set
-    program_id = nullif(p_snapshot->>'programId', ''),
-    specialization_id = nullif(p_snapshot->>'specializationId', ''),
+    program_ids = coalesce(
+      (
+        select array_agg(elem)
+        from jsonb_array_elements_text(
+          case when jsonb_typeof(p_snapshot->'programIds') = 'array'
+            then p_snapshot->'programIds'
+            else '[]'::jsonb
+          end
+        ) as elem
+      ),
+      '{}'::text[]
+    ),
+    specialization_ids = case
+      when jsonb_typeof(p_snapshot->'specializationIds') = 'object'
+        then p_snapshot->'specializationIds'
+      else '{}'::jsonb
+    end,
     system_of_study = nullif(p_snapshot->>'stream', ''),
     start_term_id = case
       when (p_snapshot->'startTermId') is null

@@ -15,8 +15,8 @@ import type { PlanSnapshot } from "../types";
 
 function snapshotWith(slots: PlanSnapshot["slots"]): PlanSnapshot {
   return {
-    programId: null,
-    specializationId: null,
+    programIds: [],
+    specializationIds: {},
     stream: null,
     startTermId: null,
     programScrapeVersion: null,
@@ -61,8 +61,8 @@ describe("snapshotSizeError", () => {
 const PLAN: PlanRow = {
   id: "plan-1",
   name: "My plan",
-  program_id: "h-software-engineering-beng",
-  specialization_id: null,
+  program_ids: ["h-software-engineering-beng"],
+  specialization_ids: {},
   system_of_study: "stream8",
   start_term_id: 1239,
   program_scrape_version: "2026-05-01",
@@ -75,8 +75,8 @@ describe("planRowToSummary", () => {
     expect(planRowToSummary(PLAN)).toEqual({
       id: "plan-1",
       name: "My plan",
-      programId: "h-software-engineering-beng",
-      specializationId: null,
+      programIds: ["h-software-engineering-beng"],
+      specializationIds: {},
       stream: "stream8",
       startTermId: 1239,
       shareToken: null,
@@ -238,8 +238,8 @@ describe("assembleServerPlan", () => {
 describe("toSnapshot", () => {
   it("strips server-managed fields (id, name, updatedAt)", () => {
     const snap = toSnapshot({
-      programId: "h-cs",
-      specializationId: null,
+      programIds: ["h-cs"],
+      specializationIds: {},
       stream: "regular",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",
@@ -254,8 +254,8 @@ describe("toSnapshot", () => {
       ],
     });
     expect(snap).toEqual({
-      programId: "h-cs",
-      specializationId: null,
+      programIds: ["h-cs"],
+      specializationIds: {},
       stream: "regular",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",
@@ -277,8 +277,8 @@ describe("toSnapshot", () => {
 
   it("defaults programScrapeVersion to null when absent on input", () => {
     const snap = toSnapshot({
-      programId: null,
-      specializationId: null,
+      programIds: [],
+      specializationIds: {},
       stream: "regular",
       startTermId: null,
       slots: [],
@@ -294,8 +294,8 @@ describe("mapSharedPlanJson", () => {
   const RPC_JSON = {
     id: "plan-1",
     name: "Shared plan",
-    program_id: "h-software-engineering-beng",
-    specialization_id: null,
+    program_ids: ["h-software-engineering-beng"],
+    specialization_ids: { "h-software-engineering-beng": "ai" },
     system_of_study: "stream8",
     start_term_id: 1239,
     program_scrape_version: "2026-05-01",
@@ -334,8 +334,8 @@ describe("mapSharedPlanJson", () => {
     expect(result).toMatchObject({
       id: "plan-1",
       name: "Shared plan",
-      programId: "h-software-engineering-beng",
-      specializationId: null,
+      programIds: ["h-software-engineering-beng"],
+      specializationIds: { "h-software-engineering-beng": "ai" },
       stream: "stream8",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",

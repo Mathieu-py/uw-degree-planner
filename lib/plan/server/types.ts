@@ -8,8 +8,8 @@ import type { PlanSlot, Stream } from "../types";
 export interface PlanSummary {
   id: string;
   name: string;
-  programId: string | null;
-  specializationId: string | null;
+  programIds: string[];
+  specializationIds: Record<string, string>;
   stream: Stream | null;
   startTermId: TermId | null;
   shareToken: string | null;
@@ -24,8 +24,8 @@ export interface PlanSummary {
 export interface ServerPlan {
   id: string;
   name: string;
-  programId: string | null;
-  specializationId: string | null;
+  programIds: string[];
+  specializationIds: Record<string, string>;
   stream: Stream | null;
   startTermId: TermId | null;
   programScrapeVersion: string | null;
@@ -39,8 +39,8 @@ export interface ServerPlan {
  * plan through save.
  */
 export interface PlanSnapshot {
-  programId: string | null;
-  specializationId: string | null;
+  programIds: string[];
+  specializationIds: Record<string, string>;
   stream: Stream | null;
   startTermId: TermId | null;
   programScrapeVersion: string | null;

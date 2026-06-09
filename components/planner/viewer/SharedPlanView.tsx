@@ -21,6 +21,7 @@ import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
+import { joinProgramNames } from "@/lib/programs";
 
 interface Props {
   plan: ServerPlan;
@@ -45,8 +46,8 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   const localPlan = useMemo<LocalPlan>(
     () => ({
       schemaVersion: PLAN_SCHEMA_VERSION,
-      programId: plan.programId,
-      specializationId: plan.specializationId,
+      programIds: plan.programIds,
+      specializationIds: plan.specializationIds,
       stream: plan.stream ?? "regular",
       startTermId: plan.startTermId,
       slots: plan.slots,
@@ -66,8 +67,11 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   );
   const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
 
-  const programName =
-    programOptions.find((p) => p.id === localPlan.programId)?.name ?? "—";
+  const programName = joinProgramNames(
+    localPlan.programIds,
+    (id) => programOptions.find((p) => p.id === id)?.name,
+    "—",
+  );
 
   // "Duplicate to my plans" (mirrors WelcomeFlow's build): authed → server copy
   // and route to it; anon → seed the local demo plan. Mint fresh slot ids

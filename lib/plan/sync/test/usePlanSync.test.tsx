@@ -30,8 +30,8 @@ const SAVE_DEBOUNCE_MS = 1500;
 function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: "h-cs",
-    specializationId: null,
+    programIds: ["h-cs"],
+    specializationIds: {},
     stream: "regular",
     startTermId: 1239,
     slots: [
@@ -51,8 +51,8 @@ function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
 const SERVER_PLAN = {
   id: "p1",
   name: "My plan",
-  programId: "h-cs",
-  specializationId: null,
+  programIds: ["h-cs"],
+  specializationIds: {},
   stream: "regular" as const,
   startTermId: 1239,
   programScrapeVersion: null,
@@ -152,8 +152,8 @@ describe("usePlanSync — signed-in, with planId (load)", () => {
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.plan).toEqual({
       schemaVersion: PLAN_SCHEMA_VERSION,
-      programId: "h-cs",
-      specializationId: null,
+      programIds: ["h-cs"],
+      specializationIds: {},
       stream: "regular",
       startTermId: 1239,
       slots: SERVER_PLAN.slots,
@@ -197,22 +197,22 @@ describe("usePlanSync — signed-in, with planId (load)", () => {
     );
 
     await waitFor(() => expect(result.current.hydrated).toBe(true));
-    expect(result.current.plan?.programId).toBe("h-cs");
+    expect(result.current.plan?.programIds).toEqual(["h-cs"]);
     expect(result.current.reloading).toBe(false);
 
     rerender({ planId: "p2" });
     await waitFor(() => expect(result.current.reloading).toBe(true));
     // The previous plan is still in state — that's what keeps the UI
     // populated while p2 loads.
-    expect(result.current.plan?.programId).toBe("h-cs");
+    expect(result.current.plan?.programIds).toEqual(["h-cs"]);
     expect(result.current.hydrated).toBe(false);
 
-    const second = { ...SERVER_PLAN, id: "p2", programId: "h-se" };
+    const second = { ...SERVER_PLAN, id: "p2", programIds: ["h-se"] };
     await act(async () => {
       resolveSecond({ ok: true, data: second });
       await Promise.resolve();
     });
-    expect(result.current.plan?.programId).toBe("h-se");
+    expect(result.current.plan?.programIds).toEqual(["h-se"]);
     expect(result.current.hydrated).toBe(true);
     expect(result.current.reloading).toBe(false);
   });
@@ -222,7 +222,7 @@ describe("usePlanSync — signed-in, with planId (load)", () => {
     loadServerPlanMock.mockImplementationOnce(
       () => new Promise((res) => (resolveFirst = res)),
     );
-    const second = { ...SERVER_PLAN, id: "p2", programId: "h-se" };
+    const second = { ...SERVER_PLAN, id: "p2", programIds: ["h-se"] };
     loadServerPlanMock.mockResolvedValueOnce({ ok: true, data: second });
 
     const { result, rerender } = renderHook(
@@ -232,14 +232,16 @@ describe("usePlanSync — signed-in, with planId (load)", () => {
     );
 
     rerender({ planId: "p2" });
-    await waitFor(() => expect(result.current.plan?.programId).toBe("h-se"));
+    await waitFor(() =>
+      expect(result.current.plan?.programIds).toEqual(["h-se"]),
+    );
 
     await act(async () => {
       resolveFirst({ ok: true, data: SERVER_PLAN });
       await Promise.resolve();
     });
 
-    expect(result.current.plan?.programId).toBe("h-se");
+    expect(result.current.plan?.programIds).toEqual(["h-se"]);
     expect(result.current.source).toEqual({ kind: "server", planId: "p2" });
   });
 });
@@ -267,7 +269,9 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
   it("setPlan flips saveStatus to 'saving' immediately, defers the wire call by 1500ms", async () => {
     const { result } = await setup();
 
-    act(() => result.current.setPlan(mkPlan({ specializationId: "ai" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "ai" } })),
+    );
     expect(result.current.saveStatus).toEqual({ kind: "saving" });
     expect(savePlanStateMock).not.toHaveBeenCalled();
 
@@ -287,15 +291,23 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
   it("coalesces rapid edits inside the debounce window into a single save with the latest snapshot", async () => {
     const { result } = await setup();
 
-    act(() => result.current.setPlan(mkPlan({ specializationId: "ai" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "ai" } })),
+    );
     await act(async () => {
       await vi.advanceTimersByTimeAsync(500);
     });
-    act(() => result.current.setPlan(mkPlan({ specializationId: "se" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "se" } })),
+    );
     await act(async () => {
       await vi.advanceTimersByTimeAsync(500);
     });
-    act(() => result.current.setPlan(mkPlan({ specializationId: "stats" })));
+    act(() =>
+      result.current.setPlan(
+        mkPlan({ specializationIds: { "h-cs": "stats" } }),
+      ),
+    );
     // Advance the full window from the last setPlan.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
@@ -303,7 +315,7 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
 
     expect(savePlanStateMock).toHaveBeenCalledTimes(1);
     expect(savePlanStateMock.mock.calls[0]?.[1]).toEqual(
-      expect.objectContaining({ specializationId: "stats" }),
+      expect.objectContaining({ specializationIds: { "h-cs": "stats" } }),
     );
   });
 
@@ -319,14 +331,18 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
 
     const { result } = await setup();
 
-    act(() => result.current.setPlan(mkPlan({ specializationId: "ai" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "ai" } })),
+    );
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
     });
     // First save is now in-flight (not yet resolved). Drop a new edit.
     expect(savePlanStateMock).toHaveBeenCalledTimes(1);
 
-    act(() => result.current.setPlan(mkPlan({ specializationId: "se" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "se" } })),
+    );
     // No new timer should have been queued — second save waits on in-flight.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
@@ -340,7 +356,7 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
     });
     expect(savePlanStateMock).toHaveBeenCalledTimes(2);
     expect(savePlanStateMock.mock.calls[1]?.[1]).toEqual(
-      expect.objectContaining({ specializationId: "se" }),
+      expect.objectContaining({ specializationIds: { "h-cs": "se" } }),
     );
   });
 
@@ -364,7 +380,9 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
   it("flushSave drains the queued save without waiting for the debounce window", async () => {
     const { result } = await setup();
 
-    act(() => result.current.setPlan(mkPlan({ specializationId: "ai" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "ai" } })),
+    );
     expect(savePlanStateMock).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -372,7 +390,7 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
     });
     expect(savePlanStateMock).toHaveBeenCalledTimes(1);
     expect(savePlanStateMock.mock.calls[0]?.[1]).toEqual(
-      expect.objectContaining({ specializationId: "ai" }),
+      expect.objectContaining({ specializationIds: { "h-cs": "ai" } }),
     );
   });
 
@@ -386,7 +404,9 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
       await vi.runAllTimersAsync();
     });
 
-    act(() => result.current.setPlan(mkPlan({ specializationId: "ai" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "ai" } })),
+    );
     expect(savePlanStateMock).not.toHaveBeenCalled();
 
     // Switch to p2 — cleanup should drain the pending p1 save.
@@ -398,7 +418,7 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
     // p1 received the save, not p2.
     expect(savePlanStateMock).toHaveBeenCalledWith(
       "p1",
-      expect.objectContaining({ specializationId: "ai" }),
+      expect.objectContaining({ specializationIds: { "h-cs": "ai" } }),
     );
   });
 
@@ -428,7 +448,9 @@ describe("usePlanSync — debounce + save lifecycle (fake timers)", () => {
     });
 
     // Edit on p1 → debounced save → in-flight (resolveFirstSave still held).
-    act(() => result.current.setPlan(mkPlan({ specializationId: "ai" })));
+    act(() =>
+      result.current.setPlan(mkPlan({ specializationIds: { "h-cs": "ai" } })),
+    );
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
     });

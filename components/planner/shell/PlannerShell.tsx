@@ -32,8 +32,9 @@ import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import {
+  joinProgramNames,
   type ProgramOption,
-  programIdentity,
+  programIdentities,
   programReferencedCodes,
 } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
@@ -193,11 +194,30 @@ function PlannerShellInner({
     [],
   );
   const handleAddDragEnd = useCallback(() => setDraggingAddCode(null), []);
-  // Codes the program references, so a stale restriction can't grey out a
-  // required course. Shared by the drag highlight and the picker.
-  const programReferenced = useMemo(
-    () => programReferencedCodes(plan?.programId, plan?.specializationId),
-    [plan?.programId, plan?.specializationId],
+  // Codes the program(s) reference, so a stale restriction can't grey out a
+  // required course. Shared by the drag highlight and the picker. Unions across
+  // every program on the plan (double degree), each with its own specialization.
+  // (The `programIds` array ref is stable across slot edits — `{...plan, slots}`
+  // carries it over — so it's a sound memo dependency.)
+  const programReferenced = useMemo(() => {
+    const ids = plan?.programIds ?? [];
+    if (ids.length <= 1)
+      return programReferencedCodes(
+        ids[0],
+        ids[0] ? plan?.specializationIds?.[ids[0]] : null,
+      );
+    const out = new Set<string>();
+    ids.forEach((id) => {
+      const codes = programReferencedCodes(id, plan?.specializationIds?.[id]);
+      for (const c of codes) out.add(c);
+    });
+    return out;
+  }, [plan?.programIds, plan?.specializationIds]);
+  // Identities for every program (double degree → more than one); a restriction
+  // is judged against each. Shared by the drag highlight and the picker.
+  const programs = useMemo(
+    () => programIdentities(plan?.programIds, plan?.specializationIds),
+    [plan?.programIds, plan?.specializationIds],
   );
   // Eligible terms for the dragged course, from the synchronous `plan` (the drop
   // surface), not `deferredPlan`. Null when idle so the timeline skips the work.
@@ -208,11 +228,11 @@ function PlannerShellInner({
             plan,
             draggingAddCode,
             catalogByCode,
-            programIdentity(plan.programId, plan.specializationId) ?? undefined,
+            programs,
             programReferenced,
           )
         : null,
-    [draggingAddCode, plan, catalogByCode, programReferenced],
+    [draggingAddCode, plan, catalogByCode, programs, programReferenced],
   );
   const auditDrag = useMemo(
     () => ({
@@ -242,9 +262,6 @@ function PlannerShellInner({
     // letting the picker resolve level-gated prereqs. Pre/co-op have no level.
     const level =
       !slot.isCoop && slot.position !== "pre" ? slot.position : undefined;
-    // The plan's program lets the picker resolve program-restriction prereqs.
-    const program =
-      programIdentity(plan.programId, plan.specializationId) ?? undefined;
     // Codes already in the target slot, so coreqs can resolve same-term.
     const sameTerm = new Set(slot.courses.map((c) => c.code));
     return {
@@ -253,7 +270,6 @@ function PlannerShellInner({
       placedCodes,
       termLabel,
       level,
-      program,
       sameTerm,
     };
   }, [plan, picker]);
@@ -327,7 +343,10 @@ function PlannerShellInner({
   }
 
   const programName =
-    programOptions.find((p) => p.id === plan.programId)?.name ?? "—";
+    joinProgramNames(
+      plan.programIds,
+      (id) => programOptions.find((p) => p.id === id)?.name,
+    ) ?? "—";
 
   // Tag the timeline's course links as plan-originated so the detail page hides
   // its redundant "Add to plan", and carry the plan id so "Back to planner"
@@ -351,7 +370,7 @@ function PlannerShellInner({
               placedCodes={pickerMeta.placedCodes}
               completedBefore={pickerMeta.completedBefore}
               level={pickerMeta.level}
-              program={pickerMeta.program}
+              programs={programs}
               programReferenced={programReferenced}
               sameTerm={pickerMeta.sameTerm}
               focusCodes={picker.focusCodes}

@@ -104,13 +104,16 @@ describe("attachEligibility", () => {
     const rows = makeRows([
       makeCourse({ code: "anth101", prereqs: "Anthropology students only" }),
     ]);
-    const out = attach(rows, { completed: new Set(["cs135"]), program: SYDE });
+    const out = attach(rows, {
+      completed: new Set(["cs135"]),
+      programs: [SYDE],
+    });
     expect(out[0].eligibility?.state).toBe("ineligible");
     expect(
       attach(rows, {
         completed: new Set(["cs135"]),
         hideUnmetPrereqs: true,
-        program: SYDE,
+        programs: [SYDE],
       }),
     ).toHaveLength(0);
   });
@@ -131,7 +134,7 @@ describe("attachEligibility", () => {
       placedAnywhere: new Set(["math117"]),
       hideUnmetPrereqs: true,
       level: "2A",
-      program: SYDE,
+      programs: [SYDE],
       programReferenced: new Set(["math119"]),
     });
     expect(out).toHaveLength(1); // not hidden

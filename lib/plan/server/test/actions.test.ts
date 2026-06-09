@@ -98,8 +98,8 @@ beforeEach(() => {
 });
 
 const SNAPSHOT: PlanSnapshot = {
-  programId: "h-cs",
-  specializationId: null,
+  programIds: ["h-cs"],
+  specializationIds: {},
   stream: "regular",
   startTermId: 1239,
   programScrapeVersion: null,
@@ -140,8 +140,8 @@ describe("listPlans", () => {
             {
               id: "p1",
               name: "A",
-              program_id: null,
-              specialization_id: null,
+              program_ids: [],
+              specialization_ids: {},
               system_of_study: "regular",
               start_term_id: 1239,
               program_scrape_version: null,
@@ -160,8 +160,8 @@ describe("listPlans", () => {
         {
           id: "p1",
           name: "A",
-          programId: null,
-          specializationId: null,
+          programIds: [],
+          specializationIds: {},
           stream: "regular",
           startTermId: 1239,
           shareToken: null,
@@ -304,8 +304,8 @@ describe("loadServerPlan", () => {
             data: {
               id: "p1",
               name: "My plan",
-              program_id: "h-cs",
-              specialization_id: null,
+              program_ids: ["h-cs"],
+              specialization_ids: {},
               system_of_study: "regular",
               start_term_id: 1239,
               program_scrape_version: null,
@@ -371,8 +371,8 @@ describe("loadServerPlan", () => {
             data: {
               id: "p1",
               name: "My plan",
-              program_id: null,
-              specialization_id: null,
+              program_ids: [],
+              specialization_ids: {},
               system_of_study: null,
               start_term_id: null,
               program_scrape_version: null,
@@ -396,8 +396,8 @@ describe("loadServerPlan", () => {
             data: {
               id: "p1",
               name: "My plan",
-              program_id: null,
-              specialization_id: null,
+              program_ids: [],
+              specialization_ids: {},
               system_of_study: null,
               start_term_id: null,
               program_scrape_version: null,
@@ -436,8 +436,8 @@ describe("loadServerPlan", () => {
             data: {
               id: "p1",
               name: "Empty",
-              program_id: null,
-              specialization_id: null,
+              program_ids: [],
+              specialization_ids: {},
               system_of_study: null,
               start_term_id: null,
               program_scrape_version: null,
@@ -471,8 +471,8 @@ describe("duplicatePlan", () => {
             data: {
               id: "src",
               name: opts.sourceName ?? "Source",
-              program_id: "h-cs",
-              specialization_id: null,
+              program_ids: ["h-cs"],
+              specialization_ids: { "h-cs": "ai" },
               system_of_study: "regular",
               start_term_id: 1239,
               program_scrape_version: "2026-05-01",
@@ -535,8 +535,8 @@ describe("duplicatePlan", () => {
     expect(client.rpc).toHaveBeenCalledWith("save_plan_state", {
       p_plan_id: "new-plan",
       p_snapshot: expect.objectContaining({
-        programId: "h-cs",
-        specializationId: null,
+        programIds: ["h-cs"],
+        specializationIds: { "h-cs": "ai" },
         stream: "regular",
         startTermId: 1239,
         programScrapeVersion: "2026-05-01",

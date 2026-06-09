@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSelect";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
@@ -20,7 +21,7 @@ import {
   detectStream,
 } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
-import type { ProgramOption } from "@/lib/programs";
+import { joinProgramNames, type ProgramOption } from "@/lib/programs";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
@@ -49,7 +50,7 @@ export function WelcomeFlow({
   );
 
   const [step, setStep] = useState(0);
-  const [programId, setProgramId] = useState(programOptions[0]?.id ?? "");
+  const [programIds, setProgramIds] = useState<string[]>([]);
   const [stream, setStream] = useState<Stream>("regular");
   const [startTermId, setStartTermId] = useState<number>(() => {
     const currentFall = makeTermId(new Date().getFullYear(), "Fall");
@@ -75,7 +76,8 @@ export function WelcomeFlow({
       const text = await extractTextFromPdf(file);
       const result = parseTranscript(text);
       setParseResult(result);
-      if (result.detectedProgramId) setProgramId(result.detectedProgramId);
+      if (result.detectedProgramIds.length > 0)
+        setProgramIds(result.detectedProgramIds);
       const detectedStream = detectStream(result);
       if (detectedStream) {
         setStream(detectedStream);
@@ -119,28 +121,32 @@ export function WelcomeFlow({
         includedUnrecognized: new Set<string>(),
         mintId,
       });
-      // Honour a program the user corrected in review; drop the detected
-      // specialization when it no longer matches.
+      // Honour programs the user corrected in review; keep only detected
+      // specializations whose program is still on the plan.
       return {
         ...plan,
-        programId,
-        specializationId:
-          programId === parseResult.detectedProgramId
-            ? plan.specializationId
-            : null,
+        programIds,
+        specializationIds: Object.fromEntries(
+          Object.entries(plan.specializationIds).filter(([pid]) =>
+            programIds.includes(pid),
+          ),
+        ),
       };
     }
     return {
       ...emptyPlan(),
-      programId,
+      programIds,
       stream,
       startTermId,
       slots: buildEmptySlots(startTermId, stream, mintId),
     };
-  }, [parseResult, programId, stream, startTermId]);
+  }, [parseResult, programIds, stream, startTermId]);
 
-  const programName =
-    programOptions.find((p) => p.id === programId)?.name ?? "your program";
+  const programName = joinProgramNames(
+    programIds,
+    (id) => programOptions.find((p) => p.id === id)?.name,
+    "your program",
+  );
   // Build once, reused for both the review preview and the save.
   const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
   const placedCount = parseResult
@@ -246,18 +252,12 @@ export function WelcomeFlow({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="Program">
-                    {(id) => (
-                      <Select
-                        id={id}
-                        value={programId}
-                        onChange={(e) => setProgramId(e.target.value)}
-                      >
-                        {programOptions.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </Select>
+                    {() => (
+                      <ProgramMultiSelect
+                        programOptions={programOptions}
+                        selected={programIds}
+                        onChange={setProgramIds}
+                      />
                     )}
                   </Field>
                   <Field label="Start term (1A)">
@@ -321,18 +321,12 @@ export function WelcomeFlow({
                 ) : null}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Program">
-                    {(id) => (
-                      <Select
-                        id={id}
-                        value={programId}
-                        onChange={(e) => setProgramId(e.target.value)}
-                      >
-                        {programOptions.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </Select>
+                    {() => (
+                      <ProgramMultiSelect
+                        programOptions={programOptions}
+                        selected={programIds}
+                        onChange={setProgramIds}
+                      />
                     )}
                   </Field>
                   <Field label="Co-op stream">
@@ -378,7 +372,8 @@ export function WelcomeFlow({
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}
-              className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover"
+              disabled={programIds.length === 0}
+              className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
               <Icon name="arrow" size="sm" aria-hidden="true" />
@@ -387,7 +382,7 @@ export function WelcomeFlow({
             <button
               type="button"
               onClick={build}
-              disabled={busy}
+              disabled={busy || programIds.length === 0}
               className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-accent-bg px-[18px] text-sm font-semibold text-accent-ink hover:brightness-105 disabled:opacity-50"
             >
               {busy ? "Building…" : "Build my plan"}

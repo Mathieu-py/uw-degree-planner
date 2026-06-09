@@ -65,8 +65,8 @@ const WINTER_2025 = makeTermId(2025, "Winter"); // → "Winter 2025"
 function makePlan(slots: PlanSlot[]): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: "se",
-    specializationId: null,
+    programIds: ["se"],
+    specializationIds: {},
     stream: "regular",
     startTermId: FALL_2025,
     slots,

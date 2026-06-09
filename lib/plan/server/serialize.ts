@@ -33,8 +33,9 @@ export function snapshotSizeError(snapshot: PlanSnapshot): string | null {
 export interface PlanRow {
   id: string;
   name: string;
-  program_id: string | null;
-  specialization_id: string | null;
+  program_ids: string[] | null;
+  /** jsonb column — PostgREST returns it already parsed (do not JSON.parse). */
+  specialization_ids: Record<string, string> | null;
   system_of_study: Stream | null;
   start_term_id: number | null;
   program_scrape_version: string | null;
@@ -67,8 +68,8 @@ export function planRowToSummary(row: PlanRow): PlanSummary {
   return {
     id: row.id,
     name: row.name,
-    programId: row.program_id,
-    specializationId: row.specialization_id,
+    programIds: row.program_ids ?? [],
+    specializationIds: row.specialization_ids ?? {},
     stream: row.system_of_study,
     startTermId: row.start_term_id,
     shareToken: row.share_token,
@@ -117,8 +118,8 @@ export function assembleServerPlan(
   return {
     id: plan.id,
     name: plan.name,
-    programId: plan.program_id,
-    specializationId: plan.specialization_id,
+    programIds: plan.program_ids ?? [],
+    specializationIds: plan.specialization_ids ?? {},
     stream: plan.system_of_study,
     startTermId: plan.start_term_id,
     programScrapeVersion: plan.program_scrape_version,
@@ -164,8 +165,8 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
   return {
     id: String(j.id),
     name: String(j.name),
-    programId: (j.program_id ?? null) as string | null,
-    specializationId: (j.specialization_id ?? null) as string | null,
+    programIds: Array.isArray(j.program_ids) ? j.program_ids.map(String) : [],
+    specializationIds: (j.specialization_ids ?? {}) as Record<string, string>,
     stream: (j.system_of_study ?? null) as Stream | null,
     startTermId: (j.start_term_id ?? null) as number | null,
     programScrapeVersion: (j.program_scrape_version ?? null) as string | null,
@@ -180,16 +181,16 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
  * updatedAt) owned by the plans row.
  */
 export function toSnapshot(plan: {
-  programId: string | null;
-  specializationId: string | null;
+  programIds: string[];
+  specializationIds: Record<string, string>;
   stream: Stream | null;
   startTermId: number | null;
   programScrapeVersion?: string | null;
   slots: PlanSlot[];
 }): PlanSnapshot {
   return {
-    programId: plan.programId,
-    specializationId: plan.specializationId,
+    programIds: plan.programIds,
+    specializationIds: plan.specializationIds,
     stream: plan.stream,
     startTermId: plan.startTermId,
     programScrapeVersion: plan.programScrapeVersion ?? null,

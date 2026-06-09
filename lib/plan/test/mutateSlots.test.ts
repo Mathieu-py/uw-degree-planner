@@ -3,9 +3,9 @@ import { addCourseToSlot, removeCourseFromSlot } from "../mutateSlots";
 import type { LocalPlan } from "../types";
 
 const PLAN: LocalPlan = {
-  schemaVersion: 1,
-  programId: "software-engineering",
-  specializationId: null,
+  schemaVersion: 3,
+  programIds: ["software-engineering"],
+  specializationIds: {},
   stream: "stream8",
   startTermId: 1239,
   slots: [
@@ -65,7 +65,7 @@ describe("addCourseToSlot", () => {
     const serverLike = {
       id: "plan-1",
       name: "My plan",
-      programId: "se",
+      programIds: ["se"],
       slots: PLAN.slots,
     };
     const next = addCourseToSlot(serverLike, "1B", { code: "cs246" });

@@ -6,9 +6,9 @@ import { deriveMacros } from "../deriveMacros";
 
 function makePlan(codes: string[]): LocalPlan {
   return {
-    schemaVersion: 1,
-    programId: "test",
-    specializationId: null,
+    schemaVersion: 3,
+    programIds: ["test"],
+    specializationIds: {},
     stream: "regular",
     startTermId: 1239,
     slots: [

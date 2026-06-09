@@ -11,6 +11,7 @@ import {
   type Program,
   programIdentity,
   programReferencedCodes,
+  programShortCode,
   programShortNames,
   type RuleNode,
   requiredCoursesIn,
@@ -539,5 +540,60 @@ describe("describeRule", () => {
         minLevel: 300,
       }),
     ).toBe("Complete 1 additional EARTH course at the 300-level");
+  });
+});
+
+describe("programShortCode", () => {
+  const make = (
+    name: string,
+    extra: Partial<Program> = {},
+    rules: RuleNode = { kind: "all", children: [] },
+  ): Program =>
+    ({
+      kind: "flexible",
+      name,
+      asOf: "2026-05-22",
+      rules,
+      ...extra,
+    }) as Program;
+
+  const allOf = (...courses: string[]): RuleNode => ({
+    kind: "all",
+    children: [{ kind: "courses", courses }],
+  });
+
+  it("returns the official subjectCode whole (not truncated to 4 chars)", () => {
+    const prog = make(
+      "Applied Mathematics (Bachelor of Mathematics - Honours)",
+      {
+        subjectCode: "AMATH",
+      },
+    );
+    expect(programShortCode(prog)).toBe("AMATH");
+  });
+
+  it("prefers a curated override over the stamped subjectCode", () => {
+    // Defensive: even if a wrong code were stamped, the override wins.
+    const prog = make("Computer Engineering", { subjectCode: "WRONG" });
+    expect(programShortCode(prog)).toBe("ECE");
+  });
+
+  it("returns a double-degree override", () => {
+    const prog = make("Business Administration and Mathematics Double Degree");
+    expect(programShortCode(prog)).toBe("BMATH");
+  });
+
+  it("falls back to the modal subject prefix of required courses", () => {
+    const prog = make(
+      "Applied Mathematics",
+      {},
+      allOf("amath231", "amath353", "amath242", "cs371"),
+    );
+    expect(programShortCode(prog)).toBe("AMATH");
+  });
+
+  it("falls back to initials when there are no required courses", () => {
+    const prog = make("Some New Program");
+    expect(programShortCode(prog)).toBe("SNP");
   });
 });

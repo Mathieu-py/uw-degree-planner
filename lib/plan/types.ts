@@ -5,7 +5,7 @@ import type { TermId } from "@/lib/terms";
  * shape change; `loadPlan` rejects other values and stashes the raw blob under
  * `<key>.broken` so we can build a migrator before users lose data.
  */
-export const PLAN_SCHEMA_VERSION = 1;
+export const PLAN_SCHEMA_VERSION = 3;
 
 /**
  * Co-op stream: the cadence of academic and work terms. Authoritative tables
@@ -48,8 +48,21 @@ export interface PlanSlot {
 
 export interface LocalPlan {
   schemaVersion: typeof PLAN_SCHEMA_VERSION;
-  programId: string | null;
-  specializationId: string | null;
+  /**
+   * Programs this plan audits against. Empty = none picked. Usually one; a
+   * double-degree student (two `Plan:` lines on their transcript) has two. The
+   * first is the "primary" for display purposes (it anchors faculty-wide
+   * eligibility lookups), but each program carries its own specialization.
+   */
+  programIds: string[];
+  /**
+   * Per-program specialization: `programId → specialization slug`. A UW
+   * specialization is scoped to one program, so a double-degree student can
+   * hold one on each side independently. A **missing key means no
+   * specialization** for that program — empty entries are omitted, never stored
+   * as null.
+   */
+  specializationIds: Record<string, string>;
   stream: Stream;
   /** Calendar term ID of the student's 1A. Null until set during onboarding. */
   startTermId: TermId | null;

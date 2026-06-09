@@ -14,8 +14,12 @@ create table public.plans (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
-  program_id text,
-  specialization_id text,
+  -- Programs the plan audits against. Empty array = none; >1 = double degree.
+  program_ids text[] not null default '{}',
+  -- Per-program specialization map: { programId: specialization-slug }. A UW
+  -- specialization is scoped to one program, so each side of a double degree
+  -- can carry its own. Missing key = no specialization for that program.
+  specialization_ids jsonb not null default '{}'::jsonb,
   system_of_study text check (system_of_study in ('regular', 'stream4', 'stream8')),
   start_term_id integer,
   program_scrape_version text,
@@ -146,8 +150,8 @@ begin
   select jsonb_build_object(
     'id', p.id,
     'name', p.name,
-    'program_id', p.program_id,
-    'specialization_id', p.specialization_id,
+    'program_ids', p.program_ids,
+    'specialization_ids', p.specialization_ids,
     'system_of_study', p.system_of_study,
     'start_term_id', p.start_term_id,
     'program_scrape_version', p.program_scrape_version,

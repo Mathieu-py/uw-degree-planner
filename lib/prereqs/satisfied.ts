@@ -11,14 +11,26 @@ import { matchProgram, parseProgramClause } from "./program";
 export interface UserState {
   completed: ReadonlySet<string>;
   level?: string;
-  /** Student's program, so program-restriction clauses resolve instead of "check". */
-  program?: ProgramIdentity;
+  /**
+   * Student's program(s) — a double degree carries more than one. A restriction
+   * clause is judged against each, most-permissive wins (allow > unknown >
+   * block). Empty/omitted → judged with no identity (usually "check").
+   */
+  programs?: ProgramIdentity[];
   /**
    * Demote a program-restriction "block" to a "check". Set when the student's
    * program references this course, so a stale prose restriction can't grey it
    * out. Other prereqs still gate normally.
    */
   suppressProgramBlock?: boolean;
+  /**
+   * Treat a not-yet-completed course as "uncertain" (completable) instead of a
+   * hard miss. Set only by `isProgramBlocked`, which asks whether a program/
+   * faculty restriction is an UNCONDITIONAL wall: a requirement the student
+   * could satisfy by taking a course isn't, so an OR'd course alternative
+   * ("X students only OR CS 135") must not be reported as blocked.
+   */
+  assumeCoursesUncertain?: boolean;
 }
 
 export interface EligibilityResult {
@@ -80,7 +92,11 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
   switch (node.kind) {
     case "course": {
       const ok = state.completed.has(node.code);
-      return ok ? res() : res({ satisfied: false, missing: [node.code] });
+      if (ok) return res();
+      // A completable course is "uncertain" rather than a hard miss when asked
+      // (isProgramBlocked) — so an OR'd course alternative isn't read as blocked.
+      if (state.assumeCoursesUncertain) return res({ uncertain: true });
+      return res({ satisfied: false, missing: [node.code] });
     }
     case "level": {
       const gate = `Level at least ${node.minLevel}`;
@@ -91,10 +107,18 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       return res({ satisfied: ok, raw: ok ? [] : [gate] });
     }
     case "program": {
-      const verdict = matchProgram(
-        parseProgramClause(node.clause),
-        state.program ?? null,
-      );
+      const clause = parseProgramClause(node.clause);
+      // Most-permissive across the student's programs (allow > unknown > block):
+      // a double degree satisfies a restriction if *either* side does.
+      const ids = state.programs ?? [];
+      const verdicts = ids.length
+        ? ids.map((p) => matchProgram(clause, p))
+        : [matchProgram(clause, null)];
+      const verdict = verdicts.includes("allow")
+        ? "allow"
+        : verdicts.includes("unknown")
+          ? "unknown"
+          : "block";
       // block → hard fail (via raw, no missing course to point at); unknown →
       // "check"; allow → pass. suppressProgramBlock demotes a block to "check".
       if (verdict === "block") {

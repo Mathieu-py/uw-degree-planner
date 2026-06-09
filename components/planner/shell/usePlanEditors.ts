@@ -126,8 +126,8 @@ export function usePlanEditors({
 
   const handleSaveSettings = useCallback(
     (next: {
-      programId: string | null;
-      specializationId: string | null;
+      programIds: string[];
+      specializationIds: Record<string, string>;
       stream: Stream;
     }) => {
       if (!plan) return;
@@ -144,8 +144,8 @@ export function usePlanEditors({
         );
         setPlan({
           ...plan,
-          programId: next.programId,
-          specializationId: next.specializationId,
+          programIds: next.programIds,
+          specializationIds: next.specializationIds,
           stream: next.stream,
           slots,
         });
@@ -158,8 +158,8 @@ export function usePlanEditors({
       }
       setPlan({
         ...plan,
-        programId: next.programId,
-        specializationId: next.specializationId,
+        programIds: next.programIds,
+        specializationIds: next.specializationIds,
         stream: next.stream,
       });
     },

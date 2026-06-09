@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import { PROGRAMS, type Program } from "../../programs";
-import { compileAudit } from "../compile";
+import { compileAudit, creditExclusionKeys } from "../compile";
 import { computeDegreeProgress } from "../progress";
 
 function makePlan(codes: string[]): LocalPlan {
   return {
-    schemaVersion: 1,
-    programId: "test",
-    specializationId: null,
+    schemaVersion: 3,
+    programIds: ["test"],
+    specializationIds: {},
     stream: "regular",
     startTermId: 1239,
     slots: [
@@ -479,6 +479,49 @@ describe("computeDegreeProgress — optimal overlapping-pool matching", () => {
     // Only A,B placed: the 2-pick takes both, the 1-pick {A,C} has nothing left.
     const p = progressOf(program, ["aaa100", "bbb100"]);
     expect(p.allComplete).toBe(false);
+  });
+});
+
+describe("computeDegreeProgress — antireq conflict credits one member", () => {
+  // "Choose one of aaa100 / bbb200" — they're antireqs, so both placed is a
+  // conflict. UW grants credit for one → the headline must credit 0.5, not 0.
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [{ kind: "courses", courses: ["aaa100", "bbb200"] }],
+    },
+    unitPlan: { totalUnits: 0.5 },
+  };
+
+  it("credits exactly one of an antireq pair (not zero, not both)", () => {
+    const issues = [
+      {
+        slotId: "s1",
+        courseCode: "aaa100",
+        kind: "antireq",
+        conflictsWith: ["bbb200"],
+      },
+      {
+        slotId: "s1",
+        courseCode: "bbb200",
+        kind: "antireq",
+        conflictsWith: ["aaa100"],
+      },
+    ];
+    const legality = creditExclusionKeys(issues, {
+      referenced: new Set(),
+      unitsOf: () => 0.5,
+    });
+    // Only one member excluded → the other is credited.
+    expect(legality.size).toBe(1);
+    const p = progressOf(program, ["aaa100", "bbb200"], () => 0.5, legality);
+    expect(p.creditedUnits).toBe(0.5);
+    expect(p.pct).toBe(100);
   });
 });
 

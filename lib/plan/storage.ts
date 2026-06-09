@@ -42,8 +42,8 @@ const PlanSlotSchema = z.object({
 
 const LocalPlanSchema = z.object({
   schemaVersion: z.literal(PLAN_SCHEMA_VERSION),
-  programId: z.string().nullable(),
-  specializationId: z.string().nullable(),
+  programIds: z.array(z.string()),
+  specializationIds: z.record(z.string(), z.string()),
   stream: StreamSchema,
   startTermId: z.number().nullable(),
   slots: z.array(PlanSlotSchema),
@@ -111,8 +111,8 @@ export function clearPlan(): void {
 export function emptyPlan(): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: null,
-    specializationId: null,
+    programIds: [],
+    specializationIds: {},
     stream: "regular",
     startTermId: null,
     slots: [],
