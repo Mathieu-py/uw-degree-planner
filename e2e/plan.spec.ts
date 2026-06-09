@@ -10,9 +10,7 @@ async function createDemoPlan(page: Page) {
   // empty (issue #32 double-degree), so Continue is gated until at least one
   // program is chosen. Pick the first real option; Fall start and Regular
   // stream defaults are fine, then advance.
-  await page
-    .getByLabel("Add a program")
-    .selectOption({ index: 1 });
+  await page.getByLabel("Add a program").selectOption({ index: 1 });
   await page.getByRole("button", { name: "Continue" }).click();
   // Step 2 (Review): commit. Anon flow persists to localStorage and pushes /plan.
   await page.getByRole("button", { name: /build my plan/i }).click();
