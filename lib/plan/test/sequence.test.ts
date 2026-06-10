@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEmptySlots, sequenceTerms } from "../sequence";
+import { buildEmptySlots, rebuildSlots, sequenceTerms } from "../sequence";
 
 const makeMint = () => {
   let n = 0;
@@ -24,6 +24,50 @@ describe("sequenceTerms — regular stream", () => {
     expect(seq[0].termId).toBe(1239);
     expect(seq[1].termId).toBe(1241); // Winter 2024
     expect(seq[2].termId).toBe(1245); // Spring 2024
+  });
+});
+
+describe("sequenceTerms — shorter spans (#105)", () => {
+  it("a 6-term span (Three-Year General) ends at 3B, no 4A/4B", () => {
+    const seq = sequenceTerms(1239, "regular", 6);
+    expect(seq.map((s) => s.position)).toEqual([
+      "1A",
+      "1B",
+      "2A",
+      "2B",
+      "3A",
+      "3B",
+    ]);
+  });
+
+  it("truncating a co-op stream to 6 drops the work terms queued after 3B", () => {
+    const seq = sequenceTerms(1239, "stream8", 6);
+    // 1A 1B WT1 2A WT2 2B WT3 3A WT4 3B — coop5/coop6 (which precede 4A) are gone.
+    expect(seq.map((s) => s.position)).toEqual([
+      "1A",
+      "1B",
+      "coop1",
+      "2A",
+      "coop2",
+      "2B",
+      "coop3",
+      "3A",
+      "coop4",
+      "3B",
+    ]);
+    expect(seq.filter((s) => !s.isCoop)).toHaveLength(6);
+  });
+
+  it("clamps to the full 8-term span (TermLetter ceiling) when asked for more", () => {
+    expect(
+      sequenceTerms(1239, "regular", 12).filter((s) => !s.isCoop),
+    ).toHaveLength(8);
+  });
+
+  it("defaults to the full 8 academic terms", () => {
+    expect(
+      sequenceTerms(1239, "regular").filter((s) => !s.isCoop),
+    ).toHaveLength(8);
   });
 });
 
@@ -129,5 +173,65 @@ describe("buildEmptySlots", () => {
       "slot-7",
       "slot-8",
     ]);
+  });
+
+  it("honours a shorter span (Three-Year General → 6 slots)", () => {
+    const slots = buildEmptySlots(1239, "regular", makeMint(), 6);
+    expect(slots.map((s) => s.position)).toEqual([
+      "1A",
+      "1B",
+      "2A",
+      "2B",
+      "3A",
+      "3B",
+    ]);
+  });
+});
+
+describe("rebuildSlots — span change (#105)", () => {
+  it("shrinking 8→6 returns courses placed in dropped terms as droppedCodes", () => {
+    const eight = buildEmptySlots(1239, "regular", makeMint());
+    // Place a course in 3A (kept) and one in 4B (dropped when shrinking to 6).
+    eight[4].courses.push({ code: "anth301" }); // 3A
+    eight[7].courses.push({ code: "anth401" }); // 4B
+
+    const { slots, droppedCodes } = rebuildSlots(
+      eight,
+      1239,
+      "regular",
+      makeMint(),
+      6,
+    );
+    expect(slots.map((s) => s.position)).toEqual([
+      "1A",
+      "1B",
+      "2A",
+      "2B",
+      "3A",
+      "3B",
+    ]);
+    expect(slots.find((s) => s.position === "3A")?.courses).toEqual([
+      { code: "anth301" },
+    ]);
+    expect(droppedCodes).toEqual(["anth401"]);
+  });
+
+  it("growing 6→8 appends empty 4A/4B and keeps existing placements", () => {
+    const six = buildEmptySlots(1239, "regular", makeMint(), 6);
+    six[0].courses.push({ code: "anth101" }); // 1A
+
+    const { slots, droppedCodes } = rebuildSlots(
+      six,
+      1239,
+      "regular",
+      makeMint(),
+      8,
+    );
+    expect(slots).toHaveLength(8);
+    expect(slots.at(-1)?.position).toBe("4B");
+    expect(slots.find((s) => s.position === "1A")?.courses).toEqual([
+      { code: "anth101" },
+    ]);
+    expect(droppedCodes).toEqual([]);
   });
 });

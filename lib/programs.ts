@@ -135,6 +135,13 @@ const TermsSchema = z.object({
   "4B": RuleNodeSchema,
 });
 
+/**
+ * Academic terms in the full-time sequence: 6 for a Three-Year General (1A–3B),
+ * 8 for a four-year degree (1A–4B). Absent ⇒ 8 (see {@link programTermSpan}).
+ * Capped at 8 — `TermLetter` stops at 4B.
+ */
+const NumberOfTermsSchema = z.number().int().min(2).max(8).optional();
+
 const ProgramSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("engineering"),
@@ -142,6 +149,7 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     asOf: z.string(),
     source: z.string().optional(),
     terms: TermsSchema,
+    numberOfTerms: NumberOfTermsSchema,
     electives: z.array(ElectiveCategorySchema).optional(),
     unitPlan: UnitPlanSchema.optional(),
     degreeRequirements: DegreeRequirementsSchema.optional(),
@@ -157,6 +165,7 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     asOf: z.string(),
     source: z.string().optional(),
     rules: RuleNodeSchema,
+    numberOfTerms: NumberOfTermsSchema,
     electives: z.array(ElectiveCategorySchema).optional(),
     unitPlan: UnitPlanSchema.optional(),
     degreeRequirements: DegreeRequirementsSchema.optional(),
@@ -430,6 +439,27 @@ export function isTermLetter(s: string | null | undefined): s is TermLetter {
 
 export function isKnownProgram(id: string): boolean {
   return Object.hasOwn(PROGRAMS, id);
+}
+
+/** Span when a program declares none, and the clamp ceiling (`TermLetter` ≤ 4B). */
+const DEFAULT_TERM_SPAN = 8;
+
+/** Academic terms a program spans, from `numberOfTerms` (engineering/absent ⇒ 8). */
+export function programTermSpan(program: Program): number {
+  return program.numberOfTerms ?? DEFAULT_TERM_SPAN;
+}
+
+/**
+ * Plan length for a set of programs: the longest known program's span (a double
+ * degree runs as long as its longer leg), or 8 when none/unknown.
+ */
+export function programIdsTermSpan(programIds: readonly string[]): number {
+  let span = 0;
+  for (const id of programIds) {
+    const program = PROGRAMS[id];
+    if (program) span = Math.max(span, programTermSpan(program));
+  }
+  return span || DEFAULT_TERM_SPAN;
 }
 
 export interface ProgramOption {

@@ -5,11 +5,17 @@ import type { FilterPreset } from "@/lib/courses/types";
 import { countNoun, pluralize } from "@/lib/format";
 import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
 import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
-import { rebuildSlotsForStream } from "@/lib/plan/sequence";
+import { rebuildSlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { PlanSnapshot } from "@/lib/plan/server/types";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
+import {
+  PROGRAMS,
+  programIdsTermSpan,
+  programShortName,
+  programTermSpan,
+} from "@/lib/programs";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import type { PickerContext } from "./usePlannerModals";
 
@@ -132,15 +138,18 @@ export function usePlanEditors({
     }) => {
       if (!plan) return;
       const streamChanged = next.stream !== plan.stream;
-      // Stream changes re-sequence the cadence; program/spec alone never touch
-      // slots. startTermId === null means no calendar anchor — update metadata,
-      // skip rebuild.
-      if (streamChanged && plan.startTermId !== null) {
-        const { slots, droppedCodes } = rebuildSlotsForStream(
+      // Re-sequence when the stream OR the program span changes (a shorter
+      // program trims 4A/4B, #105); otherwise just update metadata. No rebuild
+      // without a calendar anchor (startTermId === null).
+      const newSpan = programIdsTermSpan(next.programIds);
+      const spanChanged = newSpan !== programIdsTermSpan(plan.programIds);
+      if ((streamChanged || spanChanged) && plan.startTermId !== null) {
+        const { slots, droppedCodes } = rebuildSlots(
           plan.slots,
           plan.startTermId,
           next.stream,
           () => crypto.randomUUID(),
+          newSpan,
         );
         setPlan({
           ...plan,
@@ -150,8 +159,16 @@ export function usePlanEditors({
           slots,
         });
         if (droppedCodes.length > 0) {
+          // Name the program that now caps the plan (its span equals the new,
+          // shorter max), so the user knows why terms disappeared.
+          const driver = next.programIds
+            .map((id) => PROGRAMS[id])
+            .find((p) => p && programTermSpan(p) === newSpan);
+          const lead = streamChanged
+            ? `Switched stream to ${next.stream}.`
+            : `${driver ? programShortName(driver) : "Your plan"} spans ${newSpan} terms.`;
           setImportBanner(
-            `Switched stream to ${next.stream}. ${countNoun(droppedCodes.length, "course")} no longer fit and ${pluralize(droppedCodes.length, "was", "were")} removed: ${droppedCodes.join(", ")}.`,
+            `${lead} ${countNoun(droppedCodes.length, "course")} no longer fit and ${pluralize(droppedCodes.length, "was", "were")} removed: ${droppedCodes.join(", ")}.`,
           );
         }
         return;

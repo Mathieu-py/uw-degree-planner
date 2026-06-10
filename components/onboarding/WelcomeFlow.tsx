@@ -22,7 +22,11 @@ import {
   detectStream,
 } from "@/lib/plan/transcriptApply";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
-import { joinProgramNames, type ProgramOption } from "@/lib/programs";
+import {
+  joinProgramNames,
+  type ProgramOption,
+  programIdsTermSpan,
+} from "@/lib/programs";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
@@ -110,11 +114,15 @@ export function WelcomeFlow({
 
   const buildPlan = useCallback((): LocalPlan => {
     const mintId = () => crypto.randomUUID();
+    // Plan length follows the longest selected program (6 for Three-Year
+    // General, else 8; empty ⇒ 8). See #105.
+    const numAcademicTerms = programIdsTermSpan(programIds);
     if (parseResult) {
       const { plan } = applyTranscriptToPlan(parseResult, {
         stream,
         includedUnrecognized: new Set<string>(),
         mintId,
+        numAcademicTerms,
       });
       // Honour programs the user corrected in review; keep only detected
       // specializations whose program is still on the plan.
@@ -133,7 +141,7 @@ export function WelcomeFlow({
       programIds,
       stream,
       startTermId,
-      slots: buildEmptySlots(startTermId, stream, mintId),
+      slots: buildEmptySlots(startTermId, stream, mintId, numAcademicTerms),
     };
   }, [parseResult, programIds, stream, startTermId]);
 

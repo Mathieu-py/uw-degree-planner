@@ -99,7 +99,7 @@ describe("real programs — headline invariants on empty plans", () => {
   const cases: Array<[string, number]> = [
     ["3g-anthropology", 15],
     ["3g-classical-studies", 15],
-    ["3g-communication-studies", 6],
+    ["3g-communication-studies", 15],
   ];
 
   for (const [id, total] of cases) {
