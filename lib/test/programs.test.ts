@@ -15,6 +15,7 @@ import {
   programShortNames,
   type RuleNode,
   requiredCoursesIn,
+  splitProgramName,
   TERM_LETTERS,
   walkRule,
 } from "../programs";
@@ -540,6 +541,32 @@ describe("describeRule", () => {
         minLevel: 300,
       }),
     ).toBe("Complete 1 additional EARTH course at the 300-level");
+  });
+});
+
+describe("splitProgramName", () => {
+  it("splits a simple 'Title (Degree)' name", () => {
+    expect(splitProgramName("Applied Mathematics (Joint Honours)")).toEqual({
+      title: "Applied Mathematics",
+      degree: "Joint Honours",
+    });
+  });
+
+  it("keeps nested parentheses inside the degree (double-degree names)", () => {
+    expect(
+      splitProgramName(
+        "Computer Science (Bachelor of Computer Science (Co-op) - Joint Honours)",
+      ),
+    ).toEqual({
+      title: "Computer Science",
+      degree: "Bachelor of Computer Science (Co-op) - Joint Honours",
+    });
+  });
+
+  it("returns just the title when there is no parenthetical", () => {
+    expect(splitProgramName("Architectural Studies")).toEqual({
+      title: "Architectural Studies",
+    });
   });
 });
 

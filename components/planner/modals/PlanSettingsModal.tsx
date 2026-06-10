@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import type { ProgramOption } from "@/components/planner/shell/PlannerShell";
 import { Button } from "@/components/ui/Button";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
+import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
 import { Select } from "@/components/ui/Select";
 import { useModalExit } from "@/lib/hooks/useModalExit";
-import type { LocalPlan, Stream } from "@/lib/plan/types";
+import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { termInfo } from "@/lib/terms";
 import { ProgramMultiSelect } from "./ProgramMultiSelect";
 
@@ -27,12 +28,6 @@ interface Props {
     stream: Stream;
   }) => void;
 }
-
-const STREAM_LABELS: Record<Stream, string> = {
-  regular: "Regular (no co-op)",
-  stream4: "Stream 4 co-op",
-  stream8: "Stream 8 co-op",
-};
 
 /**
  * Modal to change a plan's program, specialization, and stream. Stream changes
@@ -160,20 +155,16 @@ export function PlanSettingsModal({
           ))
         )}
 
-        <label className="flex flex-col gap-1.5 text-xs">
+        <div className="flex flex-col gap-1.5 text-xs">
           <span className="text-[12.5px] font-semibold text-ink-2">
             Co-op stream
           </span>
-          <Select
+          <SegmentedRadio
+            options={STREAM_OPTIONS}
             value={stream}
-            onChange={(e) => setStream(e.target.value as Stream)}
-          >
-            {(Object.keys(STREAM_LABELS) as Stream[]).map((s) => (
-              <option key={s} value={s}>
-                {STREAM_LABELS[s]}
-              </option>
-            ))}
-          </Select>
+            onChange={setStream}
+            ariaLabel="Co-op stream"
+          />
           {streamDirty ? (
             <span className="text-partial mt-0.5">
               Saving will re-sequence terms — your courses stay on the same
@@ -181,7 +172,7 @@ export function PlanSettingsModal({
               months.
             </span>
           ) : null}
-        </label>
+        </div>
 
         <div className="rounded-[9px] border border-accent-line bg-accent-soft px-3 py-2.5 text-xs text-ink-2 flex flex-col gap-1.5">
           <div className="flex justify-between">

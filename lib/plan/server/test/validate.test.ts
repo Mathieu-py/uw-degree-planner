@@ -79,7 +79,7 @@ describe("snapshotError — structural validation", () => {
     const bad = {
       ...slot(UUID_A),
       position: "5C",
-    } as PlanSnapshot["slots"][number];
+    } as unknown as PlanSnapshot["slots"][number];
     expect(snapshotError(snapshot({ slots: [bad] }))).toBe("invalid_snapshot");
   });
 

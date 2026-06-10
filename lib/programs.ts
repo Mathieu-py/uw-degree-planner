@@ -448,6 +448,21 @@ export function getProgramOptions(): ProgramOption[] {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Program names are "Title (Degree)", e.g. "Applied Mathematics (Joint
+ * Honours)". Split off the trailing parenthetical so callers can render the
+ * title and degree separately. The nested-paren allowance handles double-degree
+ * names that contain a second set of parentheses inside the degree. Names with
+ * no parenthetical return `{ title }` with `degree` undefined.
+ */
+export function splitProgramName(name: string): {
+  title: string;
+  degree?: string;
+} {
+  const m = name.match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
+  return m ? { title: m[1], degree: m[2] } : { title: name };
+}
+
 /** A flat `id → name` lookup for labelling plan cards client-side. */
 export function programNameMap(): Record<string, string> {
   return Object.fromEntries(

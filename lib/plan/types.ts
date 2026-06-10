@@ -17,6 +17,18 @@ export const PLAN_SCHEMA_VERSION = 3;
  */
 export type Stream = "regular" | "stream4" | "stream8";
 
+/**
+ * The three streams as `{ value, label }`, ordered for display. Shared by the
+ * onboarding setup/review screens and Plan Settings so the segmented co-op
+ * control reads the same everywhere. Labels are kept short to fit the three
+ * side-by-side segments.
+ */
+export const STREAM_OPTIONS: ReadonlyArray<{ value: Stream; label: string }> = [
+  { value: "regular", label: "Regular" },
+  { value: "stream4", label: "Stream 4 co-op" },
+  { value: "stream8", label: "Stream 8 co-op" },
+];
+
 export type TermLetter = "1A" | "1B" | "2A" | "2B" | "3A" | "3B" | "4A" | "4B";
 
 export type CoopLabel = `coop${1 | 2 | 3 | 4 | 5 | 6}`;

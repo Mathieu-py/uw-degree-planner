@@ -22,8 +22,8 @@ test("planner front door redirects to the WelcomeFlow set-up stepper", async ({
   page,
 }) => {
   // Empty localStorage on a fresh Playwright context → /plan has no demo plan,
-  // so PlannerShell redirects to /plan/new. The stepper's headings + the
-  // "Or set up manually" divider are the durable front-door anchors.
+  // so PlannerShell redirects to /plan/new. The stepper heading + the split
+  // card's two column headings are the durable front-door anchors.
   await page.goto("/plan");
   await expect(page).toHaveURL(/\/plan\/new/);
 
@@ -32,10 +32,11 @@ test("planner front door redirects to the WelcomeFlow set-up stepper", async ({
   ).toBeVisible();
 
   await expect(
-    page.getByRole("heading", { name: "Start from your transcript" }),
+    page.getByRole("heading", { name: "Upload your transcript" }),
   ).toBeVisible();
-
-  await expect(page.getByText("Or set up manually")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Set up manually" }),
+  ).toBeVisible();
 });
 
 test("building an empty plan via manual setup renders the timeline", async ({
