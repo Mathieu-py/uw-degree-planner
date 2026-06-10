@@ -65,9 +65,7 @@ describe("deriveNumberOfTerms", () => {
     ).toBe(8);
     // A joint honours' total is only its half of the degree (12.75 ⇒ 6 by units
     // alone); the clause overrides it.
-    expect(
-      deriveNumberOfTerms(flex("Physics (Joint Honours)", 12.75)),
-    ).toBe(8);
+    expect(deriveNumberOfTerms(flex("Physics (Joint Honours)", 12.75))).toBe(8);
   });
 
   it("falls back to 8 when, with no credential clause, units are missing or artifact-low", () => {

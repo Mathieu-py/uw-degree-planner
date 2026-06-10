@@ -44,9 +44,14 @@ describe("resolveDegreeTotalUnits", () => {
   it("still propagates the degree total to a Joint Honours that states none", () => {
     // e.g. Math joint honours, whose 20.0 lives only on the BMath degree page.
     expect(
-      resolveDegreeTotalUnits("jh-statistics", "Statistics (Joint Honours)", undefined, {
-        honoursTotal: 20,
-      }),
+      resolveDegreeTotalUnits(
+        "jh-statistics",
+        "Statistics (Joint Honours)",
+        undefined,
+        {
+          honoursTotal: 20,
+        },
+      ),
     ).toBe(20);
   });
 
@@ -68,6 +73,8 @@ describe("resolveDegreeTotalUnits", () => {
   });
 
   it("returns null when no degree total was parsed", () => {
-    expect(resolveDegreeTotalUnits("h-x", "X (BA - Honours)", 8, {})).toBe(null);
+    expect(resolveDegreeTotalUnits("h-x", "X (BA - Honours)", 8, {})).toBe(
+      null,
+    );
   });
 });
