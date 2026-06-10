@@ -35,7 +35,7 @@ function placed(slots: PlanSlot[]): ReadonlySet<string> {
 }
 
 function options(slots: PlanSlot[], c: Course) {
-  return computeTermOptions(slots, c, [], EMPTY, placed(slots));
+  return computeTermOptions(slots, c, undefined, EMPTY, placed(slots));
 }
 
 describe("computeTermOptions", () => {

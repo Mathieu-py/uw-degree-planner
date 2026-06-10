@@ -72,8 +72,8 @@ function makePlan(overrides: Partial<ServerPlan> = {}): ServerPlan {
   return {
     id: "plan-1",
     name: "My shared plan",
-    programIds: ["h-cs"],
-    specializationIds: {},
+    programId: "h-cs",
+    specializationId: null,
     stream: "regular",
     startTermId: 1239,
     programScrapeVersion: null,

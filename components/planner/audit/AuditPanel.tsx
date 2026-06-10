@@ -1,21 +1,19 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
-import { Ring } from "@/components/ui/Ring";
-import { countPlacementIssues } from "@/lib/audit/compile";
+import { memo, useMemo } from "react";
+import {
+  compileAudit,
+  legalityKeySet,
+  placementLegalityKey,
+} from "@/lib/audit/compile";
+import { computeDegreeProgress } from "@/lib/audit/progress";
 import type { Course } from "@/lib/courses/types";
+import { countNoun, fmtUnits } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import { validatePlan } from "@/lib/plan/validate";
-import {
-  programCredential,
-  programShortCode,
-  programShortName,
-} from "@/lib/programs";
-import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
-import { AuditMacroList } from "./AuditMacroList";
-import type { ProgramAuditData } from "./buildProgramAudit";
-import { buildProgramAudit } from "./buildProgramAudit";
-import { ProgramAuditCard } from "./ProgramAuditCard";
+import { PROGRAMS } from "@/lib/programs";
+import { deriveMacros } from "./deriveMacros";
+import { MacroSection } from "./sections/MacroSection";
 import type { DragWiring, DrillFn } from "./types";
 
 interface Props {
@@ -34,200 +32,157 @@ interface Props {
   drag?: DragWiring;
 }
 
-/**
- * Program identity tones, assigned by index (primary degree first). A minor —
- * not yet modelled — would use `var(--ink-3)`.
- */
-const PROGRAM_TONES = [
-  "var(--accent-bg)",
-  "var(--met)",
-  "#5b6bb5",
-  "#b5795b",
-] as const;
-
 export const AuditPanel = memo(function AuditPanel({
   plan,
   catalog,
   onDrillToRequirement,
   drag,
 }: Props) {
+  const program = plan.programId ? (PROGRAMS[plan.programId] ?? null) : null;
+
   const catalogByCode = useMemo(
     () => new Map((catalog ?? []).map((c) => [c.code, c])),
     [catalog],
   );
 
-  // Plan-wide validation issues drive the per-program credit-exclusion overlay
-  // (built inside buildProgramAudit, since the antireq keeper is program-
-  // specific) and the header count. Needs the catalog for requisite strings.
-  // The count is one per prereq-misplaced course + one per antireq conflict SET.
-  const { issues, blockingIssueCount } = useMemo(() => {
+  // Legality overlay: a satisfier placed before its prereqs (or in antireq
+  // conflict) still counts but is flagged. Needs the catalog for requisite
+  // strings; empty without it. `blockingIssueCount` is the header rollup.
+  const { legality, blockingIssueCount } = useMemo(() => {
     if (catalogByCode.size === 0)
-      return {
-        issues: [] as ReturnType<typeof validatePlan>,
-        blockingIssueCount: 0,
-      };
-    const found = validatePlan(plan, catalogByCode);
-    return { issues: found, blockingIssueCount: countPlacementIssues(found) };
+      return { legality: new Set<string>(), blockingIssueCount: 0 };
+    const issues = validatePlan(plan, catalogByCode);
+    const keys = legalityKeySet(issues);
+    return { legality: keys, blockingIssueCount: keys.size };
   }, [plan, catalogByCode]);
 
-  const isMulti = plan.programIds.length > 1;
+  const audit = useMemo(
+    () => compileAudit(program, plan, plan.specializationId, legality),
+    [plan, program, legality],
+  );
 
-  // For a double degree, build every program's audit once (the rail needs all
-  // their `pct`s, the detail needs the selected one's macros). Skipped for the
-  // common single-program case, where the card computes its own audit.
-  const programData = useMemo(() => {
-    if (plan.programIds.length <= 1) return null;
-    const map = new Map<string, ProgramAuditData>();
-    for (const id of plan.programIds)
-      map.set(id, buildProgramAudit(plan, id, catalogByCode, issues));
-    return map;
-  }, [plan, catalogByCode, issues]);
+  const progress = useMemo(
+    () =>
+      computeDegreeProgress(
+        audit,
+        program,
+        (code) => catalogByCode.get(code)?.units ?? 0.5,
+        legality,
+      ),
+    [audit, program, catalogByCode, legality],
+  );
 
-  const [selectedId, setSelectedId] = useState(plan.programIds[0]);
+  const unitsOf = useMemo(
+    () => (code: string) => catalogByCode.get(code)?.units ?? 0.5,
+    [catalogByCode],
+  );
 
-  if (plan.programIds.length === 0) {
+  const { macros, unverifiedCount } = useMemo(
+    () =>
+      deriveMacros(
+        audit,
+        program,
+        progress.freeUnits,
+        progress.breadthRequirements,
+        progress.levelFloors,
+        unitsOf,
+        legality,
+      ),
+    [
+      audit,
+      program,
+      progress.freeUnits,
+      progress.breadthRequirements,
+      progress.levelFloors,
+      unitsOf,
+      legality,
+    ],
+  );
+
+  if (!plan.programId) {
     return (
-      <aside className="w-full lg:w-[28.75rem] shrink-0 card-2 border-dashed px-4 py-6 text-sm text-ink-3">
+      <aside className="w-full lg:w-80 shrink-0 card-2 border-dashed px-4 py-6 text-sm text-ink-3">
         Pick a program to see your degree audit.
       </aside>
     );
   }
-
-  // Single program → the plain full-width card, exactly as before. Nothing to
-  // switch between, so no rail and no plan-level rollup header.
-  if (!isMulti || !programData) {
+  if (!program) {
     return (
-      <aside className="w-full lg:w-[28.75rem] shrink-0 lg:h-full lg:flex lg:flex-col">
-        <ProgramAuditCard
-          plan={plan}
-          programId={plan.programIds[0]}
-          catalog={catalog}
-          catalogByCode={catalogByCode}
-          issues={issues}
-          blockingIssueCount={blockingIssueCount}
-          onDrillToRequirement={onDrillToRequirement}
-          drag={drag}
-        />
+      <aside className="w-full lg:w-80 shrink-0 card px-4 py-6 text-sm text-partial">
+        Unknown program: {plan.programId}
       </aside>
     );
   }
 
-  // Two+ programs → master·detail. The selection falls back to the primary if
-  // the chosen program is no longer on the plan.
-  const activeId = programData.has(selectedId)
-    ? selectedId
-    : plan.programIds[0];
-  const detail = programData.get(activeId);
-  const activeIdx = plan.programIds.indexOf(activeId);
-  // activeId is always a key of programData (it falls back to programIds[0],
-  // which is inserted above), so this guard is defensive — it narrows the type
-  // without a non-null assertion.
-  if (!detail) return null;
+  // One honest headline: how much of the whole degree the plan accounts for,
+  // not a sum of overlapping slots. See computeDegreeProgress.
+  const headlinePct = progress.pct;
+  // No calendar total (e.g. Joint Honours, units split across plans) → fall back
+  // to the sum of structured requirements. Mark it so it's not read as exact.
+  const estimatedDenom = progress.totalUnits == null;
+  const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${estimatedDenom ? "~" : ""}${fmtUnits(progress.denom)} units`;
+
+  const placedCodes = new Set(audit.placement.keys());
+  // Illegally-placed codes: still in `placedCodes` (shown on their row) but
+  // flagged and excluded from ring counts + headline.
+  const illegalCodes = new Set<string>();
+  for (const [code, p] of audit.placement)
+    if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
 
   return (
-    <aside className="w-full lg:w-[28.75rem] shrink-0 lg:h-full">
-      <div className="card pw-audit overflow-hidden lg:h-full lg:flex lg:flex-col">
-        {/*
-         * No combined %: hand-picked programs have no authoritative joint
-         * denominator, so each is audited on its own (rail + detail). UW's
-         * packaged double degrees (e.g. `bba-and-bmath-double-degree`) are single
-         * programs picked directly. Suggesting that swap is tracked in #103.
-         */}
+    <aside className="w-full lg:w-80 shrink-0 lg:h-full lg:flex lg:flex-col">
+      <div className="card overflow-hidden lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
         <div className="pw-audit-top">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="u-eyebrow">Plan audit</span>
-            <span className="u-mono u-small">
-              {plan.programIds.length} programs
+            <span className="u-eyebrow">Degree audit</span>
+            <span className="u-mono u-small">{headlineFraction}</span>
+          </div>
+          <div className="flex items-baseline gap-1.5 mt-2">
+            <span className="text-[30px] font-bold tracking-tight leading-none">
+              {headlinePct}%
             </span>
+            <span className="u-small">of degree planned</span>
           </div>
-          <div className="av-note mt-2">
-            Each program is audited on its own — hand-picked programs
-            aren&apos;t combined into a single score.
+          <div className="mp-bar mt-2">
+            <span style={{ width: `${headlinePct}%` }} />
           </div>
+          <div className="av-note">
+            Whole degree, measured in units. The rings below track each
+            requirement on its own.
+          </div>
+          {estimatedDenom ? (
+            <div className="av-note">
+              This program's calendar entry states no total unit count, so the
+              denominator is estimated from its listed requirements.
+            </div>
+          ) : null}
+          {unverifiedCount > 0 ? (
+            <div className="av-note">
+              {countNoun(unverifiedCount, "requirement")} couldn't be
+              auto-verified — check with your advisor.
+            </div>
+          ) : null}
+          {blockingIssueCount > 0 ? (
+            <div className="av-note text-partial">
+              ⚠ {countNoun(blockingIssueCount, "placement issue")}{" "}
+              (prereq/antireq) — those courses are excluded from the bar until
+              fixed.
+            </div>
+          ) : null}
         </div>
-
-        <div className="mp-split lg:flex-1 lg:min-h-0">
-          {/* Slim program rail (master). */}
-          <div className="mp-rail">
-            {[...programData].map(([id, d], idx) => {
-              const active = id === activeId;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={`mp-pip${active ? " is-active" : ""}`}
-                  title={d.program?.name ?? id}
-                  aria-pressed={active}
-                  onClick={() => setSelectedId(id)}
-                >
-                  {active ? (
-                    <span
-                      className="mp-pip-mark"
-                      style={{
-                        background: PROGRAM_TONES[idx % PROGRAM_TONES.length],
-                      }}
-                    />
-                  ) : null}
-                  <span className="av-ring-wrap">
-                    <Ring pct={d.progress.pct} size={38} stroke={3.5} />
-                    <span className="av-ring-num" style={{ fontSize: "9.5px" }}>
-                      {d.progress.pct}
-                    </span>
-                  </span>
-                  <span className="mp-pip-abbr">
-                    {d.program ? programShortCode(d.program) : "?"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Detail pane (selected program's full audit). */}
-          <div className="mp-detail">
-            <div className="mp-detail-head">
-              <span
-                className="mp-tone"
-                style={{
-                  background: PROGRAM_TONES[activeIdx % PROGRAM_TONES.length],
-                }}
-              />
-              <div className="mp-detail-grow">
-                <span className="mp-detail-kicker">
-                  {activeIdx === 0 ? "Primary degree" : "Degree"}
-                </span>
-                <span className="mp-detail-name">
-                  {detail.program ? programShortName(detail.program) : activeId}
-                </span>
-                <span className="u-small mp-detail-clip">
-                  {detail.program ? programCredential(detail.program) : ""}
-                </span>
-              </div>
-              <div className="mp-detail-pct">
-                <span className="text-[26px] font-bold tracking-tight leading-none">
-                  {detail.progress.pct}%
-                </span>
-                <span className="u-small">{detail.headlineFraction}</span>
-              </div>
-            </div>
-            <div className="mp-bar" style={{ margin: "2px 0 4px" }}>
-              <span style={{ width: `${detail.progress.pct}%` }} />
-            </div>
-            <AuditAdvisoryNotes
-              estimatedDenom={detail.estimatedDenom}
-              unverifiedCount={detail.unverifiedCount}
-              blockingIssueCount={blockingIssueCount}
-            />
-            <AuditMacroList
-              macros={detail.macros}
-              placedCodes={detail.placedCodes}
-              illegalCodes={detail.illegalCodes}
+        <div className="pw-audit-list lg:flex-1 lg:min-h-0 [scrollbar-width:thin]">
+          {macros.map((macro) => (
+            <MacroSection
+              key={macro.key}
+              macro={macro}
+              placedCodes={placedCodes}
+              illegalCodes={illegalCodes}
               catalog={catalog}
               catalogByCode={catalogByCode}
               onDrill={onDrillToRequirement}
               drag={drag}
-              className="mp-detail-body [scrollbar-width:thin]"
             />
-          </div>
+          ))}
         </div>
       </div>
     </aside>

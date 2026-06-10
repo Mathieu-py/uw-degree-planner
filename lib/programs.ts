@@ -149,7 +149,6 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     specializations: z.array(SpecializationSchema).optional(),
     unverifiedRequirements: z.array(z.string()).optional(),
     catalog: CatalogProvenanceSchema.optional(),
-    subjectCode: z.string().optional(),
   }),
   z.object({
     kind: z.literal("flexible"),
@@ -164,7 +163,6 @@ const ProgramSchema = z.discriminatedUnion("kind", [
     specializations: z.array(SpecializationSchema).optional(),
     unverifiedRequirements: z.array(z.string()).optional(),
     catalog: CatalogProvenanceSchema.optional(),
-    subjectCode: z.string().optional(),
   }),
 ]);
 
@@ -204,16 +202,11 @@ export interface ProgramIdentity {
 }
 
 /**
- * Alternate names per program short name (lowercased) — the vocabulary that
- * resolves prereq program-restrictions to a student's plan, matching the
- * phrasings upstream prose uses ("Architecture students", "BBA/BMath"). Consumed
- * by `programIdentity` + `programShortNames`, NOT by abbreviations (rail/pip
- * codes come from `subjectCode` + `PROGRAM_CODE_OVERRIDES`). Because these are
- * prose tokens, multi-word and slashed forms belong here; they have no subject-
- * code equivalent. A miss only narrows coverage (falls back to "check"), never
- * correctness.
+ * Curated aliases keyed by program short name (lowercased), for the
+ * abbreviations UWFlow uses ("CS", "SE", "BBA/BMath"). A miss only narrows
+ * coverage (falls back to "check"), never correctness.
  */
-const PROGRAM_RESTRICTION_ALIASES: Record<string, string[]> = {
+const PROGRAM_ALIASES: Record<string, string[]> = {
   "computer science": ["cs"],
   "software engineering": ["se"],
   "systems design engineering": ["syde"],
@@ -256,90 +249,6 @@ function shortName(name: string): string {
   return (paren === -1 ? name : name.slice(0, paren)).trim();
 }
 
-/** A program's short name (e.g. "Computer Science"), for compact headers. */
-export function programShortName(program: Program): string {
-  return shortName(program.name);
-}
-
-/**
- * Display-code overrides keyed by lowercased short name, consulted *first* by
- * `programShortCode`. Distinct from `PROGRAM_RESTRICTION_ALIASES` (the eligibility
- * restriction-matching vocabulary): this map exists only to pick a rail/pip
- * code for the cases the official `subjectCode` can't cover —
- *  - name-mismatches: the program's `fieldOfStudy` name doesn't equal any
- *    subject description, but a real subject code exists (ECE, ARCH, …);
- *  - double degrees / interdisciplinary majors that span two subjects, where we
- *    pick one representative code rather than let the heuristic guess.
- */
-const PROGRAM_CODE_OVERRIDES: Record<string, string> = {
-  "computer engineering": "ECE",
-  "electrical engineering": "ECE",
-  "architectural studies": "ARCH",
-  "architectural engineering": "AE",
-  biostatistics: "STAT",
-  french: "FR",
-  "business administration and mathematics double degree": "BMATH",
-  "business administration and computer science double degree": "BCS",
-};
-
-/** Most common subject prefix among a program's required courses, or "". */
-function modalSubjectCode(program: Program): string {
-  const counts = new Map<string, number>();
-  for (const code of getRequiredCourses(program)) {
-    const m = code.match(/^[A-Za-z]+/);
-    if (!m) continue;
-    const subj = m[0].toUpperCase();
-    counts.set(subj, (counts.get(subj) ?? 0) + 1);
-  }
-  let best = "";
-  let bestN = 0;
-  for (const [subj, n] of counts) {
-    if (n > bestN) {
-      best = subj;
-      bestN = n;
-    }
-  }
-  return best;
-}
-
-/**
- * A terse rail/pip code for a program — "AMATH", "CS", "AFM". Resolution order:
- *   1. a curated `PROGRAM_CODE_OVERRIDES` entry (name-mismatches, double degrees);
- *   2. the official `subjectCode` stamped at scrape time;
- *   3. the most common subject prefix of the program's required courses;
- *   4. initials of the short name ("Systems Design Engineering" → "SDE").
- * Only the initials fallback is length-capped (real subject codes like "AMATH"
- * are returned whole). Always uppercase.
- */
-export function programShortCode(program: Program): string {
-  const short = shortName(program.name);
-
-  const override = PROGRAM_CODE_OVERRIDES[short.toLowerCase()];
-  if (override) return override.toUpperCase();
-
-  if (program.subjectCode) return program.subjectCode.toUpperCase();
-
-  const modal = modalSubjectCode(program);
-  if (modal) return modal;
-
-  const initials = short
-    .split(/\s+/)
-    .filter((w) => /^[A-Za-z]/.test(w))
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
-  return (initials || short.slice(0, 3)).slice(0, 4).toUpperCase();
-}
-
-/**
- * The credential clause inside a program name's parentheses, normalized for
- * display: "Computer Science (Bachelor of Computer Science - Honours)" →
- * "Bachelor of Computer Science · Honours". Empty string when there's no clause.
- */
-export function programCredential(program: Program): string {
-  const m = program.name.match(/\(([^)]*)\)/);
-  return m ? m[1].replace(/\s-\s/g, " · ").trim() : "";
-}
-
 /** Faculty from the degree-type clause inside the name, or null if ambiguous. */
 function facultyFromName(name: string): Faculty | null {
   const lower = name.toLowerCase();
@@ -362,10 +271,7 @@ export function programIdentity(
   const program = PROGRAMS[programId];
   if (!program) return null;
   const short = shortName(program.name).toLowerCase();
-  const names = new Set<string>([
-    short,
-    ...(PROGRAM_RESTRICTION_ALIASES[short] ?? []),
-  ]);
+  const names = new Set<string>([short, ...(PROGRAM_ALIASES[short] ?? [])]);
   if (specializationId) {
     const spec = getSpecialization(programId, specializationId);
     if (spec) names.add(spec.name.toLowerCase());
@@ -375,34 +281,6 @@ export function programIdentity(
     names: [...names],
     faculty: facultyFromName(program.name),
   };
-}
-
-/**
- * Identities for every program on a plan (double degrees carry more than one),
- * each with its own specialization; unknown ids drop out. Lets eligibility judge
- * a restriction against *all* the student's programs, not just the primary.
- */
-export function programIdentities(
-  programIds: readonly string[] | null | undefined,
-  specializationIds: Record<string, string> = {},
-): ProgramIdentity[] {
-  return (programIds ?? [])
-    .map((id) => programIdentity(id, specializationIds[id] ?? null))
-    .filter((p): p is ProgramIdentity => p !== null);
-}
-
-/**
- * Join a plan's program names for display — "A + B" for a double degree.
- * `resolve` supplies each name (e.g. `PROGRAMS[id]?.name`); unresolved ids drop,
- * and `fallback` covers the empty result. Centralizes the " + " convention.
- */
-export function joinProgramNames(
-  programIds: readonly string[],
-  resolve: (id: string) => string | null | undefined,
-  fallback: string | null = null,
-): string | null {
-  const joined = programIds.map(resolve).filter(Boolean).join(" + ");
-  return joined || fallback;
 }
 
 /**
@@ -417,8 +295,7 @@ export function programShortNames(): ReadonlySet<string> {
   for (const id of Object.keys(PROGRAMS)) {
     const short = shortName(PROGRAMS[id].name).toLowerCase();
     out.add(short);
-    for (const alias of PROGRAM_RESTRICTION_ALIASES[short] ?? [])
-      out.add(alias);
+    for (const alias of PROGRAM_ALIASES[short] ?? []) out.add(alias);
   }
   shortNamesCache = out;
   return out;
@@ -446,21 +323,6 @@ export function getProgramOptions(): ProgramOption[] {
   return Object.entries(PROGRAMS)
     .map(([id, p]) => ({ id, name: p.name, kind: p.kind }))
     .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/**
- * Program names are "Title (Degree)", e.g. "Applied Mathematics (Joint
- * Honours)". Split off the trailing parenthetical so callers can render the
- * title and degree separately. The nested-paren allowance handles double-degree
- * names that contain a second set of parentheses inside the degree. Names with
- * no parenthetical return `{ title }` with `degree` undefined.
- */
-export function splitProgramName(name: string): {
-  title: string;
-  degree?: string;
-} {
-  const m = name.match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
-  return m ? { title: m[1], degree: m[2] } : { title: name };
 }
 
 /** A flat `id → name` lookup for labelling plan cards client-side. */

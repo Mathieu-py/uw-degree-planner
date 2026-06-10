@@ -13,8 +13,8 @@ import { HandoffModal } from "../HandoffModal";
 function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programIds: ["h-cs"],
-    specializationIds: {},
+    programId: "h-cs",
+    specializationId: null,
     stream: "regular",
     startTermId: 1239,
     slots: [

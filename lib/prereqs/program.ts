@@ -18,11 +18,6 @@ export interface ProgramConstraint {
   allow: string[];
   /** Tokens explicitly carved out of `allow` ("… excluding students in …"). */
   exclude: string[];
-  /**
-   * "Not open to X" — open to *everyone except* the programs/faculties in
-   * `exclude` (`allow` is empty); the student is blocked when they *match* a token.
-   */
-  negated: boolean;
 }
 
 export type ProgramVerdict = "allow" | "block" | "unknown";
@@ -51,7 +46,6 @@ function normalizeToken(raw: string): string {
     .replace(/^the following faculties:\s*/, "")
     .replace(/^students? in\s+/, "")
     .replace(/^in\s+/, "")
-    .replace(/^(?:the\s+)?faculty of\s+/, "")
     .replace(/^(?:joint\s+)?honou?rs\s+/, "");
   t = t
     .replace(/\s+students?$/, "")
@@ -84,21 +78,6 @@ export function parseProgramClause(clause: string): ProgramConstraint {
     .replace(/\.$/, "")
     .replace(/\s*&\s*/g, " and ");
 
-  // Negation: "Not open to [students in] X" — open to everyone *except* X, so
-  // the named programs/faculties become the exclude set.
-  const negMatch = s.match(
-    /^not\s+(?:open|available)\s+to\s+(?:students?\s+in\s+)?(.+)/,
-  );
-  if (negMatch) {
-    const negBody = negMatch[1]
-      .replace(/\s+students?$/, "")
-      .replace(
-        /^(?:level\s+)?(?:at least\s+)?\d[a-z](?:\s+or\s+\d[a-z])*\s+/,
-        "",
-      );
-    return { allow: [], exclude: tokenize(negBody), negated: true };
-  }
-
   // Extract the body: the part naming the allowed programs/faculties.
   let body: string | null = null;
   const openMatch =
@@ -113,10 +92,11 @@ export function parseProgramClause(clause: string): ProgramConstraint {
     // Bare level-prefixed restriction, no "students" ("1A Civil Engineering").
     else if (/^(?:level\s+)?\d[a-z]/i.test(s)) body = s;
   }
-  if (body === null) return { allow: [], exclude: [], negated: false };
+  if (body === null) return { allow: [], exclude: [] };
 
   // Peel a leading level/year qualifier so it doesn't pollute program tokens
-  // (and a "2A or 3A …" prefix isn't split on its own "or").
+  // (and a "2A or 3A …" prefix isn't split on its own "or"). The inline case
+  // where a level directly prefixes the program list.
   body = body
     .replace(/^(?:level\s+)?(?:at least\s+)?\d[a-z](?:\s+or\s+\d[a-z])*\s+/, "")
     .replace(/^(?:first|second|third|fourth)-year\s+/, "");
@@ -132,11 +112,7 @@ export function parseProgramClause(clause: string): ProgramConstraint {
     excludePart = exMatch[2];
   }
 
-  return {
-    allow: tokenize(allowPart),
-    exclude: tokenize(excludePart),
-    negated: false,
-  };
+  return { allow: tokenize(allowPart), exclude: tokenize(excludePart) };
 }
 
 /** Does the student's identity match this single allow/exclude token? */
@@ -165,24 +141,10 @@ export function matchProgram(
   identity: ProgramIdentity | null,
 ): ProgramVerdict {
   if (!identity) return "unknown";
-  const { allow, exclude, negated } = constraint;
-  const vocab = programShortNames();
-
-  // "Not open to X": open to everyone except the excluded programs/faculties.
-  if (negated) {
-    if (exclude.length === 0) return "unknown";
-    // A faculty exclusion is only decidable when we know the student's faculty;
-    // otherwise stay "unknown" rather than wrongly allow or block.
-    if (identity.faculty === null && exclude.some((t) => t in FACULTY_WORDS)) {
-      return "unknown";
-    }
-    if (exclude.some((t) => identityMatchesToken(identity, t))) return "block";
-    // Student isn't excluded — confidently "allow" only when ≥1 exclude token is
-    // recognized (proving we understood a real restriction); else "unknown".
-    return exclude.some((t) => tokenRecognized(t, vocab)) ? "allow" : "unknown";
-  }
-
+  const { allow, exclude } = constraint;
   if (allow.length === 0) return "unknown";
+
+  const vocab = programShortNames();
 
   // Excluded outright. Tests the student's identity directly, so an
   // unrecognized synonym in the exclude list can't hide them.
@@ -190,14 +152,16 @@ export function matchProgram(
 
   if (allow.some((t) => identityMatchesToken(identity, t))) return "allow";
 
-  // Student matches nothing — but a named-faculty clause is only decidable when
-  // we know the student's faculty, so stay "unknown" rather than wrongly block.
+  // Student matches nothing — but a faculty token is only decidable when we
+  // know the student's faculty. If the clause names a faculty and we couldn't
+  // derive the student's, stay "unknown" rather than wrongly block.
   if (identity.faculty === null && allow.some((t) => t in FACULTY_WORDS)) {
     return "unknown";
   }
 
-  // Block when ≥1 allowed token is a recognized program/faculty (proving a real
-  // restriction). If NONE is recognized it may be universal prose → "unknown".
+  // Block when ≥1 allowed token is a recognized program/faculty (proving this
+  // is a real restriction; other tokens are just programs the student isn't
+  // in). If NONE is recognized it may be universal prose, so stay "unknown".
   if (allow.some((t) => tokenRecognized(t, vocab))) return "block";
   return "unknown";
 }

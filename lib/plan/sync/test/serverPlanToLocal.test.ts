@@ -7,8 +7,8 @@ import { serverPlanToLocal } from "../serverPlanToLocal";
 const SERVER_PLAN: ServerPlan = {
   id: "plan-1",
   name: "My plan",
-  programIds: ["h-cs"],
-  specializationIds: { "h-cs": "ai" },
+  programId: "h-cs",
+  specializationId: "ai",
   stream: "stream8",
   startTermId: 1239,
   programScrapeVersion: "2026-05-01",
@@ -29,8 +29,8 @@ describe("serverPlanToLocal", () => {
     const local = serverPlanToLocal(SERVER_PLAN);
     expect(local).toEqual({
       schemaVersion: PLAN_SCHEMA_VERSION,
-      programIds: ["h-cs"],
-      specializationIds: { "h-cs": "ai" },
+      programId: "h-cs",
+      specializationId: "ai",
       stream: "stream8",
       startTermId: 1239,
       slots: SERVER_PLAN.slots,
@@ -55,8 +55,8 @@ describe("serverPlanToLocal", () => {
     const local = serverPlanToLocal(SERVER_PLAN);
     const snap = toSnapshot(local);
     expect(snap.slots).toEqual(SERVER_PLAN.slots);
-    expect(snap.programIds).toEqual(SERVER_PLAN.programIds);
-    expect(snap.specializationIds).toEqual(SERVER_PLAN.specializationIds);
+    expect(snap.programId).toBe(SERVER_PLAN.programId);
+    expect(snap.specializationId).toBe(SERVER_PLAN.specializationId);
     expect(snap.stream).toBe(SERVER_PLAN.stream);
     expect(snap.startTermId).toBe(SERVER_PLAN.startTermId);
   });

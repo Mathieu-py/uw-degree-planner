@@ -1,22 +1,29 @@
+import { z } from "zod";
 import type { PlanSlot, SlotCourse, SlotPosition, Stream } from "../types";
 import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 
-// Array-size caps before the unbounded `save_plan_state` RPC (migrations/0002),
-// guarding against resource-exhaustion payloads. Well above any real plan. The
-// full structural validation that consumes these lives in `./validate`.
+// Caps before the unbounded `save_plan_state` RPC (migrations/0002), guarding
+// against resource-exhaustion payloads. Well above any real plan.
 export const MAX_SLOTS = 50;
 export const MAX_COURSES_PER_SLOT = 100;
 
+const SnapshotSizeSchema = z.object({
+  slots: z
+    .array(
+      z.object({
+        courses: z.array(z.unknown()).max(MAX_COURSES_PER_SLOT),
+      }),
+    )
+    .max(MAX_SLOTS),
+});
+
 /**
- * jsonb from the DB isn't type-checked by PostgREST, so coerce it to a
- * string→string map defensively (mirrors the `Array.isArray` guard on
- * `program_ids`). Non-objects/arrays collapse to `{}`; values are stringified.
+ * Returns null if the snapshot is within the size caps, else an error string.
+ * Only guards array sizes — per-field validation is left to the DB cast.
  */
-function toStringRecord(v: unknown): Record<string, string> {
-  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
-  const out: Record<string, string> = {};
-  for (const [k, val] of Object.entries(v)) out[k] = String(val);
-  return out;
+export function snapshotSizeError(snapshot: PlanSnapshot): string | null {
+  const result = SnapshotSizeSchema.safeParse(snapshot);
+  return result.success ? null : "snapshot_too_large";
 }
 
 /**
@@ -26,9 +33,8 @@ function toStringRecord(v: unknown): Record<string, string> {
 export interface PlanRow {
   id: string;
   name: string;
-  program_ids: string[] | null;
-  /** jsonb column — PostgREST returns it already parsed (do not JSON.parse). */
-  specialization_ids: Record<string, string> | null;
+  program_id: string | null;
+  specialization_id: string | null;
   system_of_study: Stream | null;
   start_term_id: number | null;
   program_scrape_version: string | null;
@@ -61,8 +67,8 @@ export function planRowToSummary(row: PlanRow): PlanSummary {
   return {
     id: row.id,
     name: row.name,
-    programIds: row.program_ids ?? [],
-    specializationIds: row.specialization_ids ?? {},
+    programId: row.program_id,
+    specializationId: row.specialization_id,
     stream: row.system_of_study,
     startTermId: row.start_term_id,
     shareToken: row.share_token,
@@ -111,8 +117,8 @@ export function assembleServerPlan(
   return {
     id: plan.id,
     name: plan.name,
-    programIds: plan.program_ids ?? [],
-    specializationIds: plan.specialization_ids ?? {},
+    programId: plan.program_id,
+    specializationId: plan.specialization_id,
     stream: plan.system_of_study,
     startTermId: plan.start_term_id,
     programScrapeVersion: plan.program_scrape_version,
@@ -158,8 +164,8 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
   return {
     id: String(j.id),
     name: String(j.name),
-    programIds: Array.isArray(j.program_ids) ? j.program_ids.map(String) : [],
-    specializationIds: toStringRecord(j.specialization_ids),
+    programId: (j.program_id ?? null) as string | null,
+    specializationId: (j.specialization_id ?? null) as string | null,
     stream: (j.system_of_study ?? null) as Stream | null,
     startTermId: (j.start_term_id ?? null) as number | null,
     programScrapeVersion: (j.program_scrape_version ?? null) as string | null,
@@ -174,16 +180,16 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
  * updatedAt) owned by the plans row.
  */
 export function toSnapshot(plan: {
-  programIds: string[];
-  specializationIds: Record<string, string>;
+  programId: string | null;
+  specializationId: string | null;
   stream: Stream | null;
   startTermId: number | null;
   programScrapeVersion?: string | null;
   slots: PlanSlot[];
 }): PlanSnapshot {
   return {
-    programIds: plan.programIds,
-    specializationIds: plan.specializationIds,
+    programId: plan.programId,
+    specializationId: plan.specializationId,
     stream: plan.stream,
     startTermId: plan.startTermId,
     programScrapeVersion: plan.programScrapeVersion ?? null,

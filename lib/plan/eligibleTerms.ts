@@ -42,7 +42,7 @@ export function eligibleSlotIdsForCourse(
   plan: LocalPlan,
   code: string,
   catalogByCode: ReadonlyMap<string, Course>,
-  programs: ProgramIdentity[] = [],
+  program?: ProgramIdentity,
   referenced: ReadonlySet<string> = new Set(),
 ): Set<string> {
   const course = catalogByCode.get(code) ?? fallbackCourse(code);
@@ -59,7 +59,7 @@ export function eligibleSlotIdsForCourse(
       sameTerm: new Set(slot.courses.map((c) => c.code)),
       // The slot's position is the student's level in this term ("1A".."4B").
       level: slot.position,
-      programs,
+      program,
       programReferenced: referenced,
       placedAnywhere,
     };

@@ -30,7 +30,6 @@ describe("parseProgramClause", () => {
     expect(parseProgramClause("Anthropology students only")).toEqual({
       allow: ["anthropology"],
       exclude: [],
-      negated: false,
     });
   });
 
@@ -39,18 +38,13 @@ describe("parseProgramClause", () => {
       parseProgramClause(
         "Honours Mathematics or Software Engineering students only",
       ),
-    ).toEqual({
-      allow: ["mathematics", "software engineering"],
-      exclude: [],
-      negated: false,
-    });
+    ).toEqual({ allow: ["mathematics", "software engineering"], exclude: [] });
   });
 
   it("reads 'Open only to students in <X>'", () => {
     expect(parseProgramClause("Open only to students in Engineering")).toEqual({
       allow: ["engineering"],
       exclude: [],
-      negated: false,
     });
   });
 
@@ -75,7 +69,6 @@ describe("parseProgramClause", () => {
         "computing and financial management",
       ],
       exclude: [],
-      negated: false,
     });
   });
 
@@ -83,11 +76,7 @@ describe("parseProgramClause", () => {
     // UWFlow's dominant AFM/ACTSC phrasing omits "only".
     expect(
       parseProgramClause("Accounting and Financial Management students"),
-    ).toEqual({
-      allow: ["accounting and financial management"],
-      exclude: [],
-      negated: false,
-    });
+    ).toEqual({ allow: ["accounting and financial management"], exclude: [] });
     expect(
       parseProgramClause(
         "Accounting and Financial Management, Biotechnology students.",
@@ -95,7 +84,6 @@ describe("parseProgramClause", () => {
     ).toEqual({
       allow: ["accounting and financial management", "biotechnology"],
       exclude: [],
-      negated: false,
     });
   });
 
@@ -104,20 +92,12 @@ describe("parseProgramClause", () => {
       parseProgramClause(
         "Level 2A or 3A Accounting and Financial Management students",
       ),
-    ).toEqual({
-      allow: ["accounting and financial management"],
-      exclude: [],
-      negated: false,
-    });
+    ).toEqual({ allow: ["accounting and financial management"], exclude: [] });
     expect(
       parseProgramClause(
         "First-year Accounting and Financial Management students",
       ),
-    ).toEqual({
-      allow: ["accounting and financial management"],
-      exclude: [],
-      negated: false,
-    });
+    ).toEqual({ allow: ["accounting and financial management"], exclude: [] });
   });
 
   it("reads a bare level + program with no 'students' word", () => {
@@ -126,12 +106,10 @@ describe("parseProgramClause", () => {
     expect(parseProgramClause("1A Civil Engineering")).toEqual({
       allow: ["civil engineering"],
       exclude: [],
-      negated: false,
     });
     expect(parseProgramClause("Level 1A Biomedical Engineering")).toEqual({
       allow: ["biomedical engineering"],
       exclude: [],
-      negated: false,
     });
   });
 
@@ -139,27 +117,7 @@ describe("parseProgramClause", () => {
     expect(parseProgramClause("Recommendation of the department")).toEqual({
       allow: [],
       exclude: [],
-      negated: false,
     });
-  });
-
-  // UW courses state exclusions as "Not open to <program/faculty> students" —
-  // e.g. CS 105 "Not open to Mathematics students.", CS 200 "Not open to
-  // Computer Science students" (Calendar CS course page,
-  // https://ucalendar.uwaterloo.ca/2021/COURSE/course-CS.html). The parser
-  // inverts these into a `negated` exclusion.
-  it("reads a 'Not open to Faculty of <X> students' negation as an exclusion", () => {
-    // CS 114's restriction. "Faculty of Math" must normalize to the math
-    // faculty and land in `exclude`, with `negated` set so the meaning inverts.
-    expect(parseProgramClause("Not open to Faculty of Math students.")).toEqual(
-      { allow: [], exclude: ["math"], negated: true },
-    );
-  });
-
-  it("reads a 'Not open to students in <X>' negation", () => {
-    expect(
-      parseProgramClause("Not open to Faculty of Environment students"),
-    ).toEqual({ allow: [], exclude: ["environment"], negated: true });
   });
 });
 
@@ -270,35 +228,5 @@ describe("matchProgram", () => {
         SYDE,
       ),
     ).toBe("allow");
-  });
-
-  it("blocks a Math-faculty student under 'Not open to Faculty of Math students'", () => {
-    // CS 114's restriction. A Math-faculty student is excluded → block.
-    expect(
-      matchProgram(
-        parseProgramClause("Not open to Faculty of Math students."),
-        CS,
-      ),
-    ).toBe("block");
-  });
-
-  it("allows a non-excluded faculty under a 'Not open to …' negation", () => {
-    // SYDE is in Engineering, not the excluded Math faculty → open to them.
-    expect(
-      matchProgram(
-        parseProgramClause("Not open to Faculty of Math students."),
-        SYDE,
-      ),
-    ).toBe("allow");
-  });
-
-  it("stays unknown on a faculty negation when the student's faculty is unknown", () => {
-    // We can't confirm a null-faculty student is NOT in Math, so don't block.
-    expect(
-      matchProgram(
-        parseProgramClause("Not open to Faculty of Math students."),
-        MED_SCI,
-      ),
-    ).toBe("unknown");
   });
 });

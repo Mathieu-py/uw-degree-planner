@@ -38,7 +38,7 @@ describe("parseTranscript — typical undergrad", () => {
   });
 
   it("matches the plan to the SYDE program slug", () => {
-    expect(result.detectedProgramIds).toEqual(["systems-design-engineering"]);
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
   });
 
   it("includes passed courses", () => {
@@ -217,37 +217,16 @@ CS 135    Functional Programs   0.50 0.50 78
 });
 
 describe("parseTranscript — double-degree (multiple Plan lines)", () => {
-  it("collects every resolvable Plan line, in order, deduped", () => {
+  it("uses the first Plan line listed", () => {
     const sample = `
-Plan: Systems Design Engineering
-Plan: Software Engineering
+Plan: Computer Science
+Plan: Business Administration
 
 Fall 2023
 CS 135    Functional Programs    0.50 0.50 85
 `;
     const result = parseTranscript(sample);
-    expect(result.detectedProgramIds).toEqual([
-      "systems-design-engineering",
-      "software-engineering",
-    ]);
-    // rawPlanText shows the primary (first resolved) program.
-    expect(result.rawPlanText).toBe("Systems Design Engineering");
-  });
-
-  it("yields one program for a single degree (faculty header + repeated per-term lines)", () => {
-    // Quest emits a generic faculty header (resolves to nothing) plus the major
-    // repeated per term — these must collapse to a single slug, not a phantom
-    // second program.
-    const sample = `
-Program: Engineering
-Plan: Systems Design Engineering
-
-Fall 2023
-Program: Systems Design Engineering, Honours, Co-operative Program
-SYDE 101    Intro    0.50 0.50 85
-`;
-    const result = parseTranscript(sample);
-    expect(result.detectedProgramIds).toEqual(["systems-design-engineering"]);
+    expect(result.rawPlanText).toBe("Computer Science");
   });
 });
 
@@ -255,7 +234,7 @@ describe("parseTranscript — malformed / empty", () => {
   it("returns empty result for empty input", () => {
     const result = parseTranscript("");
     expect(result.courses).toEqual([]);
-    expect(result.detectedProgramIds).toEqual([]);
+    expect(result.detectedProgramId).toBeNull();
     expect(result.detectedCurrentTerm).toBeNull();
     expect(result.warnings).toEqual([]);
   });
@@ -292,11 +271,11 @@ describe("parseTranscript — past-4B overflow", () => {
 });
 
 describe("parseTranscript — unknown plan text", () => {
-  it("returns no detected programs when plan can't be matched to a program", () => {
+  it("returns detectedProgramId = null when plan can't be matched to a program", () => {
     const result = parseTranscript(
       `Plan: Some Made Up Program That Doesn't Exist\n\nFall 2023\nCS 135    Functional    0.50 0.50 85\n`,
     );
-    expect(result.detectedProgramIds).toEqual([]);
+    expect(result.detectedProgramId).toBeNull();
     expect(result.rawPlanText).toBe("Some Made Up Program That Doesn't Exist");
   });
 });
@@ -322,7 +301,7 @@ Level: 1A
 SYDE 101 Communications 0.50 0.50 93
 `,
     );
-    expect(result.detectedProgramIds).toEqual(["systems-design-engineering"]);
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
     expect(result.rawPlanText).toBe("Systems Design Engineering");
   });
 
@@ -338,7 +317,7 @@ Program: Systems Design Engineering, Honours, Co-operative Program
 SYDE 101 Communications 0.50 0.50 93
 `,
     );
-    expect(result.detectedProgramIds).toEqual(["systems-design-engineering"]);
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
     expect(result.rawPlanText).toBe("Systems Design Engineering");
   });
 
@@ -351,7 +330,7 @@ Fall 2025
 SYDE 101 Communications 0.50 0.50 93
 `,
     );
-    expect(result.detectedProgramIds).toEqual(["systems-design-engineering"]);
+    expect(result.detectedProgramId).toBe("systems-design-engineering");
   });
 
   it("falls back to the first candidate string when nothing matches a slug", () => {
@@ -360,7 +339,7 @@ SYDE 101 Communications 0.50 0.50 93
 SYDE 101 Communications 0.50 0.50 93
 `,
     );
-    expect(result.detectedProgramIds).toEqual([]);
+    expect(result.detectedProgramId).toBeNull();
     expect(result.rawPlanText).toBe("Hogwarts Wizardry");
   });
 });
@@ -568,15 +547,15 @@ describe("matchSpecializationFromPlan", () => {
   );
 
   it.runIf(hasSydeSpecs)(
-    "parseTranscript exposes detectedSpecializationsByProgramId end-to-end",
+    "parseTranscript exposes detectedSpecializationSlug end-to-end",
     () => {
       const r = parseTranscript(
         "Plan: Systems Design Engineering — Human Factors and Interfaces Specialization\n\nFall 2024\nSYDE 101    Foo    0.50 0.50 85\n",
       );
-      expect(r.detectedProgramIds).toEqual(["systems-design-engineering"]);
-      expect(r.detectedSpecializationsByProgramId).toEqual({
-        "systems-design-engineering": "syde-human-factors-and-interfaces",
-      });
+      expect(r.detectedProgramId).toBe("systems-design-engineering");
+      expect(r.detectedSpecializationSlug).toBe(
+        "syde-human-factors-and-interfaces",
+      );
     },
   );
 
@@ -584,8 +563,8 @@ describe("matchSpecializationFromPlan", () => {
     const r = parseTranscript(
       "Plan: Systems Design Engineering\n\nFall 2023\nSYDE 101    Foo    0.50 0.50 85\n",
     );
-    expect(r.detectedProgramIds).toEqual(["systems-design-engineering"]);
-    expect(r.detectedSpecializationsByProgramId).toEqual({});
+    expect(r.detectedProgramId).toBe("systems-design-engineering");
+    expect(r.detectedSpecializationSlug).toBeNull();
   });
 
   it.runIf(hasSydeSpecs)(

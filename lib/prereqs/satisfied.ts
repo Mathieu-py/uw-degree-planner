@@ -11,28 +11,14 @@ import { matchProgram, parseProgramClause } from "./program";
 export interface UserState {
   completed: ReadonlySet<string>;
   level?: string;
-  /**
-   * Student's program(s) — a double degree carries more than one. A restriction
-   * clause is judged against each, then merged asymmetrically (see the
-   * "program" case in `walk`): allow-lists take the most-permissive verdict, a
-   * negated "Not open to …" exclusion takes the most-restrictive. Empty/omitted
-   * → judged with no identity (usually "check").
-   */
-  programs?: ProgramIdentity[];
+  /** Student's program, so program-restriction clauses resolve instead of "check". */
+  program?: ProgramIdentity;
   /**
    * Demote a program-restriction "block" to a "check". Set when the student's
    * program references this course, so a stale prose restriction can't grey it
    * out. Other prereqs still gate normally.
    */
   suppressProgramBlock?: boolean;
-  /**
-   * Treat a not-yet-completed course as "uncertain" (completable) instead of a
-   * hard miss. Set only by `isProgramBlocked`, which asks whether a program/
-   * faculty restriction is an UNCONDITIONAL wall: a requirement the student
-   * could satisfy by taking a course isn't, so an OR'd course alternative
-   * ("X students only OR CS 135") must not be reported as blocked.
-   */
-  assumeCoursesUncertain?: boolean;
 }
 
 export interface EligibilityResult {
@@ -94,11 +80,7 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
   switch (node.kind) {
     case "course": {
       const ok = state.completed.has(node.code);
-      if (ok) return res();
-      // A completable course is "uncertain" rather than a hard miss when asked
-      // (isProgramBlocked) — so an OR'd course alternative isn't read as blocked.
-      if (state.assumeCoursesUncertain) return res({ uncertain: true });
-      return res({ satisfied: false, missing: [node.code] });
+      return ok ? res() : res({ satisfied: false, missing: [node.code] });
     }
     case "level": {
       const gate = `Level at least ${node.minLevel}`;
@@ -109,35 +91,10 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       return res({ satisfied: ok, raw: ok ? [] : [gate] });
     }
     case "program": {
-      const clause = parseProgramClause(node.clause);
-      const ids = state.programs ?? [];
-      const verdicts = ids.length
-        ? ids.map((p) => matchProgram(clause, p))
-        : [matchProgram(clause, null)];
-      // Merging the per-program verdicts is asymmetric, grounded in how UW
-      // writes enrolment restrictions for double-degree students:
-      //  - Allow-list ("… students only"): MOST-PERMISSIVE (allow > unknown >
-      //    block). A double degree is "enrolled in" each of its programs, so a
-      //    course open to one side is open to the student.
-      //  - Negated ("Not open to students enrolled in Faculty of X programs"):
-      //    MOST-RESTRICTIVE (block > unknown > allow). The student is enrolled
-      //    in a Faculty-of-X program on the excluded side, so the exclusion
-      //    catches them even though their other degree wouldn't be excluded.
-      // Source: UW Kuali-CM "How to build course requisites" (standard
-      // exclusion wording) + uwaterloo.ca New Math Students "Double Degree"
-      // (double-degree students must satisfy the requirements of *both*
-      // faculties). When unsure, matchProgram already returns "unknown" → check.
-      const verdict = clause.negated
-        ? verdicts.includes("block")
-          ? "block"
-          : verdicts.includes("unknown")
-            ? "unknown"
-            : "allow"
-        : verdicts.includes("allow")
-          ? "allow"
-          : verdicts.includes("unknown")
-            ? "unknown"
-            : "block";
+      const verdict = matchProgram(
+        parseProgramClause(node.clause),
+        state.program ?? null,
+      );
       // block → hard fail (via raw, no missing course to point at); unknown →
       // "check"; allow → pass. suppressProgramBlock demotes a block to "check".
       if (verdict === "block") {

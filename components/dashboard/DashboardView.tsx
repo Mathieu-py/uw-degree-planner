@@ -13,7 +13,6 @@ import { useAuthState } from "@/lib/auth/store";
 import { countNoun } from "@/lib/format";
 import type { PlanSummary } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
-import { joinProgramNames } from "@/lib/programs";
 
 type ViewMode = "grid" | "list";
 
@@ -89,7 +88,8 @@ export function DashboardView({
 
   const list = plans ?? [];
   const sharedCount = list.filter((p) => p.shareToken).length;
-  const programCount = new Set(list.flatMap((p) => p.programIds)).size;
+  const programCount = new Set(list.map((p) => p.programId).filter(Boolean))
+    .size;
   const lastUpdated =
     list.length > 0
       ? formatUpdated(
@@ -188,10 +188,7 @@ export function DashboardView({
             <PlanCard
               key={p.id}
               plan={p}
-              programName={joinProgramNames(
-                p.programIds,
-                (id) => programNames[id] ?? id,
-              )}
+              programName={p.programId ? programNames[p.programId] : null}
               view={view}
               confirming={confirmId === p.id}
               pending={pendingIds.has(p.id)}

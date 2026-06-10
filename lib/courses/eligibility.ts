@@ -32,12 +32,10 @@ export interface AttachEligibilityOptions {
   hideUnmetPrereqs: boolean;
   /** Target term's level ("2A") for level-gated prereqs. */
   level?: string;
-  /** Student's program(s) for program-restriction prereqs (double degree → more than one). */
-  programs?: ProgramIdentity[];
+  /** Student's program for program-restriction prereqs. */
+  program?: ProgramIdentity;
   /** Codes co-scheduled in the target term (lets coreqs resolve same-term). */
   sameTerm?: ReadonlySet<string>;
-  /** Reverse antireqs: code → placed courses naming it (symmetric flagging). */
-  placedAntireqNamers?: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -56,9 +54,8 @@ export function attachEligibility(
     programReferenced = EMPTY_SET,
     hideUnmetPrereqs,
     level,
-    programs,
+    program,
     sameTerm,
-    placedAntireqNamers,
   } = opts;
   const canAssessPrereqs = completed.size > 0;
   return rows
@@ -67,20 +64,15 @@ export function attachEligibility(
         completed,
         sameTerm,
         level,
-        programs,
+        program,
         programReferenced,
         placedAnywhere,
-        placedAntireqNamers,
       });
-      // Without a completed set, only term-independent verdicts are trustworthy;
-      // suppress prereq-based chips/filtering. Antireq and program/faculty
-      // blocks don't depend on completed courses, so they always stand. (The
-      // duplicate verdict never fires here — candidates are pre-filtered in
-      // useFilteredCourses.)
+      // Without a completed set, only the antireq verdict is trustworthy;
+      // suppress prereq-based chips/filtering. (The duplicate verdict never
+      // fires here — candidates are pre-filtered in useFilteredCourses.)
       const trustworthy =
-        canAssessPrereqs ||
-        verdict.antireqConflicts.length > 0 ||
-        verdict.blockedByProgram;
+        canAssessPrereqs || verdict.antireqConflicts.length > 0;
       return { course: r.course, eligibility: trustworthy ? verdict : null };
     })
     .filter(

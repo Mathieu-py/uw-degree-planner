@@ -20,8 +20,8 @@ vi.mock("@/lib/plan/sync/usePlanList", () => ({
 vi.mock("@/lib/transcript/pdfText", () => ({ extractTextFromPdf: vi.fn() }));
 vi.mock("@/lib/transcript/parse", () => ({
   parseTranscript: vi.fn(() => ({
-    detectedProgramIds: [],
-    detectedSpecializationsByProgramId: {},
+    detectedProgramId: null,
+    detectedSpecializationSlug: null,
     detectedCurrentTerm: null,
     detectedSystemOfStudy: "regular",
     rawPlanText: null,
@@ -30,9 +30,7 @@ vi.mock("@/lib/transcript/parse", () => ({
   })),
 }));
 vi.mock("@/lib/plan/transcriptApply", () => ({
-  applyTranscriptToPlan: () => ({
-    plan: { programIds: [], specializationIds: {} },
-  }),
+  applyTranscriptToPlan: () => ({ plan: {} }),
   detectStream: () => null,
 }));
 vi.mock("@/lib/plan/derive", () => ({ completedCoursesFromPlan: () => [] }));

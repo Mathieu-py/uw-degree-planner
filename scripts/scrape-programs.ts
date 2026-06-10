@@ -321,43 +321,6 @@ export async function discoverCatalogId(
   return (await discoverCatalog(now)).id;
 }
 
-/**
- * Strip a trailing subject-code parenthetical from a Kuali subject description:
- * "Applied Mathematics (AMATH)" → "Applied Mathematics". Returns the trimmed
- * description unchanged when there's no parenthetical.
- */
-export function stripSubjectCodeSuffix(description: string): string {
-  return description.replace(/\s*\([^)]*\)\s*$/, "").trim();
-}
-
-interface CourseListEntry {
-  subjectCode?: { name?: string; description?: string };
-}
-
-/**
- * Build a `subject description (lowercased) → subject code` map from the Kuali
- * course list — the same endpoint the catalog uses for unit weights. Each course
- * carries `subjectCode: {name:"AMATH", description:"Applied Mathematics (AMATH)"}`;
- * stripping the `(CODE)` suffix yields a description that matches a program's
- * `fieldOfStudy.name`, letting us stamp each program with its official code.
- */
-export async function fetchSubjectCodeMap(
-  catalogId: string,
-): Promise<Map<string, string>> {
-  const courses = await fetchJson<CourseListEntry[]>(
-    `${API_BASE}/courses/${catalogId}`,
-  );
-  const byDescription = new Map<string, string>();
-  for (const c of courses) {
-    const name = c.subjectCode?.name;
-    const description = c.subjectCode?.description;
-    if (!name || !description) continue;
-    const key = stripSubjectCodeSuffix(description).toLowerCase();
-    if (key) byDescription.set(key, name);
-  }
-  return byDescription;
-}
-
 interface PhaseAResult {
   programs: Record<string, Program>;
   specRefsByParent: Map<string, SpecializationRef[]>;
@@ -380,7 +343,6 @@ async function runPhaseA(
   conflictCounts: ReadonlyMap<string, number>,
   today: string,
   catalog: CatalogProvenance,
-  subjectCodeByDescription: ReadonlyMap<string, string>,
 ): Promise<PhaseAResult> {
   const programs: Record<string, Program> = {};
   const specRefsByParent = new Map<string, SpecializationRef[]>();
@@ -428,17 +390,11 @@ async function runPhaseA(
       const unverified = [...new Set(result.unverified)];
       const unverifiedField =
         unverified.length > 0 ? { unverifiedRequirements: unverified } : {};
-      // Stamp the official subject code when the program's field-of-study name
-      // matches a Kuali subject description (e.g. "Applied Mathematics" → AMATH).
-      const subjectCode = p.fieldOfStudy?.name
-        ? subjectCodeByDescription.get(p.fieldOfStudy.name.toLowerCase())
-        : undefined;
       const base = {
         name: p.title,
         asOf: today,
         source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
         catalog,
-        ...(subjectCode ? { subjectCode } : {}),
       };
       programs[slug] =
         result.kind === "engineering"
@@ -647,17 +603,6 @@ async function main() {
   );
   console.log(`${list.length} entries (${majors.length} Majors)`);
 
-  // Subject-code enrichment is optional polish — a fetch failure here must not
-  // abort the whole scrape, so fall back to an empty map and warn.
-  let subjectCodeByDescription = new Map<string, string>();
-  try {
-    process.stdout.write("Fetching subject codes... ");
-    subjectCodeByDescription = await fetchSubjectCodeMap(catalogId);
-    console.log(`${subjectCodeByDescription.size} subjects`);
-  } catch (err) {
-    console.warn("\nsubject-code enrichment skipped:", err);
-  }
-
   const conflictCounts = buildConflictCounts(majors.map((p) => p.code));
 
   const phaseA = await runPhaseA(
@@ -666,7 +611,6 @@ async function main() {
     conflictCounts,
     today,
     catalog,
-    subjectCodeByDescription,
   );
   const phaseB = await runPhaseB(catalogId, phaseA.specRefsByParent);
   const { parentsAttached, specsAttached } = attachSpecsToParents(

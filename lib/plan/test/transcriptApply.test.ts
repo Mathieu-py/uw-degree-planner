@@ -23,8 +23,8 @@ function mkParse(
   overrides: Partial<TranscriptParseResult> = {},
 ): TranscriptParseResult {
   return {
-    detectedProgramIds: ["software-engineering"],
-    detectedSpecializationsByProgramId: {},
+    detectedProgramId: "software-engineering",
+    detectedSpecializationSlug: null,
     detectedCurrentTerm: null,
     detectedSystemOfStudy: "coop",
     rawPlanText: null,
@@ -318,15 +318,15 @@ describe("applyTranscriptToPlan — empty / degenerate cases", () => {
 
   it("propagates detected program and specialization onto the plan", () => {
     const parse = mkParse([mkCourse("cs115", "Fall 2023")], {
-      detectedProgramIds: ["software-engineering"],
-      detectedSpecializationsByProgramId: { "software-engineering": "ai" },
+      detectedProgramId: "software-engineering",
+      detectedSpecializationSlug: "ai",
     });
     const { plan } = applyTranscriptToPlan(parse, {
       stream: "stream8",
       includedUnrecognized: new Set(),
       mintId: makeMint(),
     });
-    expect(plan.programIds).toEqual(["software-engineering"]);
-    expect(plan.specializationIds).toEqual({ "software-engineering": "ai" });
+    expect(plan.programId).toBe("software-engineering");
+    expect(plan.specializationId).toBe("ai");
   });
 });

@@ -2,14 +2,13 @@
   "3g-anthropology": {
     "kind": "flexible",
     "name": "Anthropology (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkfxyRCo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ANTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -124,14 +123,13 @@
   "3g-ba-sds-and-h-bsw-double-degree": {
     "kind": "flexible",
     "name": "Social Development Studies and Social Work Double Degree (Bachelor of Arts - Three-Year General and Bachelor of Social Work - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkYHQNcq1g",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -658,14 +656,13 @@
   "3g-classical-studies": {
     "kind": "flexible",
     "name": "Classical Studies (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkZfxJ0Co3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CLAS",
     "rules": {
       "kind": "all",
       "children": [
@@ -796,14 +793,13 @@
   "3g-communication-studies": {
     "kind": "flexible",
     "name": "Communication Studies (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkGgy0Rj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "COMMST",
     "rules": {
       "kind": "all",
       "children": [
@@ -928,14 +924,13 @@
   "3g-english-creative-and-professional-writing": {
     "kind": "flexible",
     "name": "English - Creative and Professional Writing (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkzGgkCCsn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -1441,14 +1436,13 @@
   "3g-english-literature-and-rhetoric": {
     "kind": "flexible",
     "name": "English - Literature and Rhetoric (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1MNlyACo3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -1996,14 +1990,13 @@
   "3g-english-rhetoric-media-and-professional-communication": {
     "kind": "flexible",
     "name": "English - Rhetoric, Media, and Professional Communication (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ByNgk00o3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -2573,7 +2566,7 @@
   "3g-french": {
     "kind": "flexible",
     "name": "French (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1xNg1R0on",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -2737,14 +2730,13 @@
   "3g-gender-and-social-justice": {
     "kind": "flexible",
     "name": "Gender and Social Justice (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1NekACj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GSJ",
     "rules": {
       "kind": "all",
       "children": [
@@ -2899,14 +2891,13 @@
   "3g-geography-and-environmental-management": {
     "kind": "flexible",
     "name": "Geography and Environmental Management (Bachelor of Environmental Studies - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJsJJACo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GEOG",
     "rules": {
       "kind": "all",
       "children": [
@@ -3065,14 +3056,13 @@
   "3g-german": {
     "kind": "flexible",
     "name": "German (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ByVg1CCo3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GER",
     "rules": {
       "kind": "all",
       "children": [
@@ -3188,14 +3178,13 @@
   "3g-history": {
     "kind": "flexible",
     "name": "History (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryb4xy0Rin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "HIST",
     "rules": {
       "kind": "all",
       "children": [
@@ -3511,14 +3500,13 @@
   "3g-mathematics": {
     "kind": "flexible",
     "name": "Mathematics (Bachelor of Mathematics, Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B17AJkCCi2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -3719,14 +3707,13 @@
   "3g-medieval-studies": {
     "kind": "flexible",
     "name": "Medieval Studies (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyHgJCRj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MEDVL",
     "rules": {
       "kind": "all",
       "children": [
@@ -3974,14 +3961,13 @@
   "3g-music": {
     "kind": "flexible",
     "name": "Music (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyGLlJ00jh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MUSIC",
     "rules": {
       "kind": "all",
       "children": [
@@ -4390,14 +4376,13 @@
   "3g-peace-and-conflict-studies": {
     "kind": "flexible",
     "name": "Peace and Conflict Studies (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1L9sKnWT",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PACS",
     "rules": {
       "kind": "all",
       "children": [
@@ -4799,14 +4784,13 @@
   "3g-philosophy": {
     "kind": "flexible",
     "name": "Philosophy (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJWreJA0j2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PHIL",
     "rules": {
       "kind": "all",
       "children": [
@@ -4906,14 +4890,13 @@
   "3g-political-science": {
     "kind": "flexible",
     "name": "Political Science (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJUxyCRi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSCI",
     "rules": {
       "kind": "all",
       "children": [
@@ -5090,14 +5073,13 @@
   "3g-psychology": {
     "kind": "flexible",
     "name": "Psychology (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkVPxkCCjn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSYCH",
     "rules": {
       "kind": "all",
       "children": [
@@ -5229,14 +5211,13 @@
   "3g-religion-culture-and-spirituality": {
     "kind": "flexible",
     "name": "Religion, Culture, and Spirituality (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1NwekRCo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "RCS",
     "rules": {
       "kind": "all",
       "children": [
@@ -5327,14 +5308,13 @@
   "3g-science": {
     "kind": "flexible",
     "name": "Science (Bachelor of Science - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJxlkC0j3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCI",
     "rules": {
       "kind": "all",
       "children": [
@@ -5504,14 +5484,13 @@
   "3g-social-development-studies": {
     "kind": "flexible",
     "name": "Social Development Studies (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1ZDlk00sh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -6016,14 +5995,13 @@
   "3g-sociology": {
     "kind": "flexible",
     "name": "Sociology (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkWwe1CAoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SOC",
     "rules": {
       "kind": "all",
       "children": [
@@ -6170,14 +6148,13 @@
   "3g-spanish": {
     "kind": "flexible",
     "name": "Spanish (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hk7wxJR0o2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SPAN",
     "rules": {
       "kind": "all",
       "children": [
@@ -6257,14 +6234,13 @@
   "3g-visual-culture": {
     "kind": "flexible",
     "name": "Visual Culture (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkgvxyC0i2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "VCULT",
     "rules": {
       "kind": "all",
       "children": [
@@ -6401,14 +6377,13 @@
   "4g-anthropology": {
     "kind": "flexible",
     "name": "Anthropology (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJ-eey0Cin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ANTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -6531,14 +6506,13 @@
   "4g-ba-sds-and-h-bsw-double-degree": {
     "kind": "flexible",
     "name": "Social Development Studies and Social Work Double Degree (Bachelor of Arts - Four-Year General and Bachelor of Social Work - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJFz0aX9Je",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -7060,14 +7034,13 @@
   "4g-classical-studies": {
     "kind": "flexible",
     "name": "Classical Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkMGlk0Co2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CLAS",
     "rules": {
       "kind": "all",
       "children": [
@@ -7201,14 +7174,13 @@
   "4g-communication-studies": {
     "kind": "flexible",
     "name": "Communication Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ByLGlk00sh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "COMMST",
     "rules": {
       "kind": "all",
       "children": [
@@ -7541,14 +7513,13 @@
   "4g-economics": {
     "kind": "flexible",
     "name": "Economics (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryMlJ0Ajh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ECON",
     "rules": {
       "kind": "all",
       "children": [
@@ -7801,14 +7772,13 @@
   "4g-english-creative-and-professional-writing": {
     "kind": "flexible",
     "name": "English - Creative and Professional Writing (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1MgyCRo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -8347,14 +8317,13 @@
   "4g-english-literature": {
     "kind": "flexible",
     "name": "English - Literature (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1lEekA0oh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -8868,14 +8837,13 @@
   "4g-english-literature-and-rhetoric": {
     "kind": "flexible",
     "name": "English - Literature and Rhetoric (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HklVe1ARoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -9441,14 +9409,13 @@
   "4g-english-rhetoric-media-and-professional-communication": {
     "kind": "flexible",
     "name": "English - Rhetoric, Media, and Professional Communication (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1EgyACih",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -10020,7 +9987,7 @@
   "4g-french": {
     "kind": "flexible",
     "name": "French (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkE4xkR0s3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -10173,14 +10140,13 @@
   "4g-gender-and-social-justice": {
     "kind": "flexible",
     "name": "Gender and Social Justice (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkeNlJCAj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GSJ",
     "rules": {
       "kind": "all",
       "children": [
@@ -10347,14 +10313,13 @@
   "4g-history": {
     "kind": "flexible",
     "name": "History (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SymNlkCAoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "HIST",
     "rules": {
       "kind": "all",
       "children": [
@@ -10683,14 +10648,13 @@
   "4g-kinesiology": {
     "kind": "flexible",
     "name": "Kinesiology (Bachelor of Science - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1EsJyRCj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "KIN",
     "rules": {
       "kind": "all",
       "children": [
@@ -10816,14 +10780,13 @@
   "4g-legal-studies": {
     "kind": "flexible",
     "name": "Legal Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJgHx1ARo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "LS",
     "rules": {
       "kind": "all",
       "children": [
@@ -10989,14 +10952,13 @@
   "4g-medieval-studies": {
     "kind": "flexible",
     "name": "Medieval Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkAJCvHMp",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MEDVL",
     "rules": {
       "kind": "all",
       "children": [
@@ -11244,14 +11206,13 @@
   "4g-music": {
     "kind": "flexible",
     "name": "Music (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1ZIlyRRj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MUSIC",
     "rules": {
       "kind": "all",
       "children": [
@@ -11667,14 +11628,13 @@
   "4g-peace-and-conflict-studies": {
     "kind": "flexible",
     "name": "Peace and Conflict Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SycZx52ZT",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PACS",
     "rules": {
       "kind": "all",
       "children": [
@@ -12108,14 +12068,13 @@
   "4g-philosophy": {
     "kind": "flexible",
     "name": "Philosophy (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rke8gy0Ajh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PHIL",
     "rules": {
       "kind": "all",
       "children": [
@@ -12224,14 +12183,13 @@
   "4g-political-science": {
     "kind": "flexible",
     "name": "Political Science (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJIxkCCi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSCI",
     "rules": {
       "kind": "all",
       "children": [
@@ -12430,14 +12388,13 @@
   "4g-psychology": {
     "kind": "flexible",
     "name": "Psychology (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkwlJCCj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSYCH",
     "rules": {
       "kind": "all",
       "children": [
@@ -12591,14 +12548,13 @@
   "4g-religion-culture-and-spirituality": {
     "kind": "flexible",
     "name": "Religion, Culture, and Spirituality (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Bkgwg10Cj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "RCS",
     "rules": {
       "kind": "all",
       "children": [
@@ -12689,14 +12645,13 @@
   "4g-sexualities-relationships-and-families": {
     "kind": "flexible",
     "name": "Sexualities, Relationships, and Families (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1QvxJ00o3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SRF",
     "rules": {
       "kind": "all",
       "children": [
@@ -12891,14 +12846,13 @@
   "4g-social-development-studies": {
     "kind": "flexible",
     "name": "Social Development Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1veyAAs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -13395,14 +13349,13 @@
   "4g-sociology": {
     "kind": "flexible",
     "name": "Sociology (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Bkbvlk0Cs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SOC",
     "rules": {
       "kind": "all",
       "children": [
@@ -13596,14 +13549,13 @@
   "4g-spanish": {
     "kind": "flexible",
     "name": "Spanish (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rywe1R0sh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SPAN",
     "rules": {
       "kind": "all",
       "children": [
@@ -13683,14 +13635,13 @@
   "accounting-and-financial-management": {
     "kind": "flexible",
     "name": "Accounting and Financial Management (Bachelor of Accounting and Financial Management - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkZgeyACi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "AFM",
     "rules": {
       "kind": "all",
       "children": [
@@ -14019,14 +13970,13 @@
   "applied-mathematics-with-scientific-computing-and-scientific-machine-learning": {
     "kind": "flexible",
     "name": "Applied Mathematics with Scientific Computing and Scientific Machine Learning (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ByBkJCRs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "AMATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -14191,14 +14141,13 @@
   "architectural-engineering": {
     "kind": "engineering",
     "name": "Architectural Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJry1RAs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "AE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -14609,7 +14558,7 @@
   "architectural-studies": {
     "kind": "engineering",
     "name": "Architectural Studies (Bachelor of Architectural Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SklSyJRRoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -14745,14 +14694,13 @@
   "arts-and-business": {
     "kind": "flexible",
     "name": "Arts and Business",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BylMeJR0jh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ARBUS",
     "rules": {
       "kind": "all",
       "children": [
@@ -14943,14 +14891,13 @@
   "bba-and-bcs-double-degree": {
     "kind": "flexible",
     "name": "Business Administration and Computer Science Double Degree (Bachelor of Business Administration and Bachelor of Computer Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r17w1JR0sh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CS",
     "rules": {
       "kind": "all",
       "children": [
@@ -15897,7 +15844,7 @@
   "bba-and-bmath-double-degree": {
     "kind": "flexible",
     "name": "Business Administration and Mathematics Double Degree (Bachelor of Business Administration and Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJbRkyC0j3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -16018,7 +15965,7 @@
   "biochemistry": {
     "kind": "flexible",
     "name": "Biochemistry (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryWSykCCj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -16229,7 +16176,7 @@
   "biochemistry-biotechnology-specialization": {
     "kind": "flexible",
     "name": "Biochemistry - Biotechnology Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJZByyR0oh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -16433,7 +16380,7 @@
   "biological-and-medical-physics": {
     "kind": "flexible",
     "name": "Biological and Medical Physics (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyerJJRRjn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -16551,14 +16498,13 @@
   "biomedical-engineering": {
     "kind": "engineering",
     "name": "Biomedical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyrkyRRi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "BME",
     "terms": {
       "1A": {
         "kind": "all",
@@ -17354,7 +17300,7 @@
   "biomedical-sciences": {
     "kind": "flexible",
     "name": "Biomedical Sciences (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1ZSyyCAo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -17462,7 +17408,7 @@
   "biostatistics": {
     "kind": "flexible",
     "name": "Biostatistics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkUkJR0oh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -17602,14 +17548,13 @@
   "chemical-engineering": {
     "kind": "engineering",
     "name": "Chemical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkMSJ1AAin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CHE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -18039,14 +17984,13 @@
   "chemistry-computational-specialization": {
     "kind": "flexible",
     "name": "Chemistry - Computational Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJrk10Ro2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CHEM",
     "rules": {
       "kind": "all",
       "children": [
@@ -18312,14 +18256,13 @@
   "civil-engineering": {
     "kind": "engineering",
     "name": "Civil Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1bSkJRAjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CIVE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -19003,7 +18946,7 @@
   "classics": {
     "kind": "flexible",
     "name": "Classics (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJzeJRCj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -19181,7 +19124,7 @@
   "climate-and-environmental-change": {
     "kind": "flexible",
     "name": "Climate and Environmental Change (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1zHkkCAo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -19597,7 +19540,7 @@
   "communication-arts-and-design-practice": {
     "kind": "flexible",
     "name": "Communication Arts and Design Practice (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJeGlkCAi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -19808,7 +19751,7 @@
   "computational-mathematics": {
     "kind": "flexible",
     "name": "Computational Mathematics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkDkJCAj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -20059,7 +20002,7 @@
   "computer-engineering": {
     "kind": "engineering",
     "name": "Computer Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BybwJ10Ri3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -20655,14 +20598,13 @@
   "computing-and-financial-management": {
     "kind": "flexible",
     "name": "Computing and Financial Management (Bachelor of Computing and Financial Management - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1gPkyRAo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CFM",
     "rules": {
       "kind": "all",
       "children": [
@@ -21025,14 +20967,13 @@
   "data-science-bcs": {
     "kind": "flexible",
     "name": "Data Science (Bachelor of Computer Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkgPyyC0o2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "DATSC",
     "rules": {
       "kind": "all",
       "children": [
@@ -21447,14 +21388,13 @@
   "data-science-bmath": {
     "kind": "flexible",
     "name": "Data Science (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HymD11R0j3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "DATSC",
     "rules": {
       "kind": "all",
       "children": [
@@ -21687,14 +21627,13 @@
   "earth-sciences": {
     "kind": "flexible",
     "name": "Earth Sciences (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJR4ZzeEp",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "EARTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -21835,14 +21774,13 @@
   "earth-sciences-geology-specialization": {
     "kind": "flexible",
     "name": "Earth Sciences - Geology Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyP1kRCs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "EARTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -22040,14 +21978,13 @@
   "earth-sciences-geophysics-specialization": {
     "kind": "flexible",
     "name": "Earth Sciences - Geophysics Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkxDyJRRi2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "EARTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -22276,14 +22213,13 @@
   "earth-sciences-hydrogeology": {
     "kind": "flexible",
     "name": "Earth Sciences - Hydrogeology Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ry-PkJRCjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "EARTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -22514,7 +22450,7 @@
   "electrical-engineering": {
     "kind": "engineering",
     "name": "Electrical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rkgD1yRAjn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -23131,14 +23067,13 @@
   "english-language-and-literature": {
     "kind": "flexible",
     "name": "English - Language and Literature (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkXEly0Rin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -23623,14 +23558,13 @@
   "environment-and-business": {
     "kind": "flexible",
     "name": "Environment and Business (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1zDkkCCs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENBUS",
     "rules": {
       "kind": "all",
       "children": [
@@ -23826,14 +23760,13 @@
   "environmental-engineering": {
     "kind": "engineering",
     "name": "Environmental Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1lv11RCsh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENVE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -24625,7 +24558,7 @@
   "environmental-sciences-ecology-specialization": {
     "kind": "flexible",
     "name": "Environmental Sciences - Ecology Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJeD1k0Co2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -24823,7 +24756,7 @@
   "environmental-sciences-geoscience-specialization": {
     "kind": "flexible",
     "name": "Environmental Sciences - Geoscience Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkMvkJCCsn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -25012,7 +24945,7 @@
   "environmental-sciences-water-science-specialization": {
     "kind": "flexible",
     "name": "Environmental Sciences - Water Science Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1ZjykCAon",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -25196,14 +25129,13 @@
   "fine-arts-general-studio-art": {
     "kind": "flexible",
     "name": "Fine Arts - General Studio Art (Bachelor of Arts - Three-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hyz4e1ACo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "FINE",
     "rules": {
       "kind": "all",
       "children": [
@@ -25460,14 +25392,13 @@
   "fine-arts-studio-practice": {
     "kind": "flexible",
     "name": "Fine Arts - Studio Practice (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1x4e1ACjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "FINE",
     "rules": {
       "kind": "all",
       "children": [
@@ -25777,7 +25708,7 @@
   "geography-and-aviation": {
     "kind": "flexible",
     "name": "Geography and Aviation (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Bys11CRih",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -26225,14 +26156,13 @@
   "geological-engineering": {
     "kind": "engineering",
     "name": "Geological Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1jJ1C0s2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GEOE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -26787,14 +26717,13 @@
   "global-business-and-digital-arts": {
     "kind": "flexible",
     "name": "Global Business and Digital Arts (Bachelor of Global Business and Digital Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyEeyRAs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GBDA",
     "rules": {
       "kind": "all",
       "children": [
@@ -26847,14 +26776,13 @@
   "h-actuarial-science": {
     "kind": "flexible",
     "name": "Actuarial Science (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkeH1JRCjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ACTSC",
     "rules": {
       "kind": "all",
       "children": [
@@ -27112,14 +27040,13 @@
   "h-anthropology": {
     "kind": "flexible",
     "name": "Anthropology (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r17xeJ00oh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ANTH",
     "rules": {
       "kind": "all",
       "children": [
@@ -27241,14 +27168,13 @@
   "h-applied-mathematics": {
     "kind": "flexible",
     "name": "Applied Mathematics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1lByy00sh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "AMATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -27756,14 +27682,13 @@
   "h-ba-sds-and-h-bsw-double-degree": {
     "kind": "flexible",
     "name": "Social Development Studies and Social Work Double Degree (Bachelor of Arts - Honours and Bachelor of Social Work - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkOfSTmckg",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -28285,14 +28210,13 @@
   "h-biology": {
     "kind": "flexible",
     "name": "Biology (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJS1JCCi2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "BIOL",
     "rules": {
       "kind": "all",
       "children": [
@@ -28390,14 +28314,13 @@
   "h-chemistry": {
     "kind": "flexible",
     "name": "Chemistry (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJZHJJCAs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CHEM",
     "rules": {
       "kind": "all",
       "children": [
@@ -28653,14 +28576,13 @@
   "h-classical-studies": {
     "kind": "flexible",
     "name": "Classical Studies (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1Mek0Rs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CLAS",
     "rules": {
       "kind": "all",
       "children": [
@@ -28794,14 +28716,13 @@
   "h-combinatorics-and-optimization": {
     "kind": "flexible",
     "name": "Combinatorics and Optimization (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyeD110Co2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CO",
     "rules": {
       "kind": "all",
       "children": [
@@ -29110,14 +29031,13 @@
   "h-communication-studies": {
     "kind": "flexible",
     "name": "Communication Studies (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJZMxkRRo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "COMMST",
     "rules": {
       "kind": "all",
       "children": [
@@ -29450,14 +29370,13 @@
   "h-computer-science-bcs": {
     "kind": "flexible",
     "name": "Computer Science (Bachelor of Computer Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJPJkCAih",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CS",
     "rules": {
       "kind": "all",
       "children": [
@@ -30443,14 +30362,13 @@
   "h-computer-science-bmath": {
     "kind": "flexible",
     "name": "Computer Science (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkxPJk0Cj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CS",
     "rules": {
       "kind": "all",
       "children": [
@@ -31377,14 +31295,13 @@
   "h-economics": {
     "kind": "flexible",
     "name": "Economics (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1Gx1CRsn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ECON",
     "rules": {
       "kind": "all",
       "children": [
@@ -31658,14 +31575,13 @@
   "h-english-creative-and-professional-writing": {
     "kind": "flexible",
     "name": "English - Creative and Professional Writing (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1bflkACin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -32216,14 +32132,13 @@
   "h-english-literature": {
     "kind": "flexible",
     "name": "English - Literature (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJGVekRAi2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -32749,14 +32664,13 @@
   "h-english-literature-and-rhetoric": {
     "kind": "flexible",
     "name": "English - Literature and Rhetoric (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryWEgkRCo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -33334,14 +33248,13 @@
   "h-english-rhetoric-media-and-professional-communication": {
     "kind": "flexible",
     "name": "English - Rhetoric, Media, and Professional Communication (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJ-Ee1CCo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ENGL",
     "rules": {
       "kind": "all",
       "children": [
@@ -33925,14 +33838,13 @@
   "h-environment-resources-and-sustainability": {
     "kind": "flexible",
     "name": "Environment, Resources and Sustainability (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BkWD1JAAo3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ERS",
     "rules": {
       "kind": "all",
       "children": [
@@ -34037,7 +33949,7 @@
   "h-french": {
     "kind": "flexible",
     "name": "French (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJbNlyCAin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -34318,14 +34230,13 @@
   "h-gender-and-social-justice": {
     "kind": "flexible",
     "name": "Gender and Social Justice (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyV4g1CRo3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GSJ",
     "rules": {
       "kind": "all",
       "children": [
@@ -34492,14 +34403,13 @@
   "h-geography-and-environmental-management": {
     "kind": "flexible",
     "name": "Geography and Environmental Management (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJ-o11RAin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GEOG",
     "rules": {
       "kind": "all",
       "children": [
@@ -34964,14 +34874,13 @@
   "h-geospatial-data-science": {
     "kind": "flexible",
     "name": "Geospatial Data Science (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1Qs1kA0s2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -35451,14 +35360,13 @@
   "h-german": {
     "kind": "flexible",
     "name": "German (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJeVeyC0jh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GER",
     "rules": {
       "kind": "all",
       "children": [
@@ -35571,14 +35479,13 @@
   "h-history": {
     "kind": "flexible",
     "name": "History (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1MVgkCRi2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "HIST",
     "rules": {
       "kind": "all",
       "children": [
@@ -35907,14 +35814,13 @@
   "h-kinesiology": {
     "kind": "flexible",
     "name": "Kinesiology (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B14jyJC0jn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "KIN",
     "rules": {
       "kind": "all",
       "children": [
@@ -36053,14 +35959,13 @@
   "h-legal-studies": {
     "kind": "flexible",
     "name": "Legal Studies (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJgrlyARoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "LS",
     "rules": {
       "kind": "all",
       "children": [
@@ -36226,14 +36131,13 @@
   "h-medieval-studies": {
     "kind": "flexible",
     "name": "Medieval Studies (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1iUJOBM6",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MEDVL",
     "rules": {
       "kind": "all",
       "children": [
@@ -36481,14 +36385,13 @@
   "h-music": {
     "kind": "flexible",
     "name": "Music (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyIlJ0Csh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MUSIC",
     "rules": {
       "kind": "all",
       "children": [
@@ -36916,14 +36819,13 @@
   "h-peace-and-conflict-studies": {
     "kind": "flexible",
     "name": "Peace and Conflict Studies (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJWn-chWa",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PACS",
     "rules": {
       "kind": "all",
       "children": [
@@ -37357,14 +37259,13 @@
   "h-philosophy": {
     "kind": "flexible",
     "name": "Philosophy (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1BeyR0on",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PHIL",
     "rules": {
       "kind": "all",
       "children": [
@@ -37473,14 +37374,13 @@
   "h-physics": {
     "kind": "flexible",
     "name": "Physics (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1-0kyACi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PHYS",
     "rules": {
       "kind": "all",
       "children": [
@@ -37648,14 +37548,13 @@
   "h-political-science": {
     "kind": "flexible",
     "name": "Political Science (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkIxyRRi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSCI",
     "rules": {
       "kind": "all",
       "children": [
@@ -37853,14 +37752,13 @@
   "h-pure-mathematics": {
     "kind": "flexible",
     "name": "Pure Mathematics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1eexkCAo2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PMATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -37968,7 +37866,7 @@
   "h-recreation-leadership-and-health": {
     "kind": "flexible",
     "name": "Recreation, Leadership, and Health (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJ-gekRCo3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -38107,14 +38005,13 @@
   "h-religion-culture-and-spirituality": {
     "kind": "flexible",
     "name": "Religion, Culture, and Spirituality (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkPxJRAon",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "RCS",
     "rules": {
       "kind": "all",
       "children": [
@@ -38205,14 +38102,13 @@
   "h-science": {
     "kind": "flexible",
     "name": "Science (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Sygle1R0oh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCI",
     "rules": {
       "kind": "all",
       "children": [
@@ -38386,14 +38282,13 @@
   "h-sexualities-relationships-and-families": {
     "kind": "flexible",
     "name": "Sexualities, Relationships, and Families (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJgDxJA0s2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SRF",
     "rules": {
       "kind": "all",
       "children": [
@@ -38678,14 +38573,13 @@
   "h-social-development-studies": {
     "kind": "flexible",
     "name": "Social Development Studies (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Bkl_gJCAin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -39182,14 +39076,13 @@
   "h-sociology": {
     "kind": "flexible",
     "name": "Sociology (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1zPlJR0jh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SOC",
     "rules": {
       "kind": "all",
       "children": [
@@ -39383,14 +39276,13 @@
   "h-spanish": {
     "kind": "flexible",
     "name": "Spanish (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Syxwgk0Rs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SPAN",
     "rules": {
       "kind": "all",
       "children": [
@@ -39470,7 +39362,7 @@
   "h-sport-and-recreation-management": {
     "kind": "flexible",
     "name": "Sport and Recreation Management (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hyxl1RAsh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -39671,14 +39563,13 @@
   "h-statistics": {
     "kind": "flexible",
     "name": "Statistics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1XegyCAin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "STAT",
     "rules": {
       "kind": "all",
       "children": [
@@ -39832,7 +39723,7 @@
   "h-therapeutic-recreation": {
     "kind": "flexible",
     "name": "Therapeutic Recreation (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Bkfxx1ARj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -39928,14 +39819,13 @@
   "h-visual-culture": {
     "kind": "flexible",
     "name": "Visual Culture (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rywx1CAoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "VCULT",
     "rules": {
       "kind": "all",
       "children": [
@@ -40083,7 +39973,7 @@
   "health-sciences": {
     "kind": "flexible",
     "name": "Health Sciences (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BkEjyyCCsh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -40527,7 +40417,7 @@
   "information-technology-management": {
     "kind": "flexible",
     "name": "Information Technology Management (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJx01yRCin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -40698,14 +40588,13 @@
   "international-development": {
     "kind": "flexible",
     "name": "International Development (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyfjJJR0o3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "INDEV",
     "rules": {
       "kind": "all",
       "children": [
@@ -40864,14 +40753,13 @@
   "jh-actuarial-science": {
     "kind": "flexible",
     "name": "Actuarial Science (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryHykRAi3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ACTSC",
     "rules": {
       "kind": "all",
       "children": [
@@ -40943,14 +40831,13 @@
   "jh-applied-mathematics": {
     "kind": "flexible",
     "name": "Applied Mathematics (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJgSyJC0s2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "AMATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -41117,14 +41004,13 @@
   "jh-biology": {
     "kind": "flexible",
     "name": "Biology (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1Ol3-eEp",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "BIOL",
     "rules": {
       "kind": "all",
       "children": [
@@ -41213,14 +41099,13 @@
   "jh-chemistry": {
     "kind": "flexible",
     "name": "Chemistry (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BkGLyMeV6",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CHEM",
     "rules": {
       "kind": "all",
       "children": [
@@ -41315,14 +41200,13 @@
   "jh-combinatorics-and-optimization": {
     "kind": "flexible",
     "name": "Combinatorics and Optimization (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJmwyyA0o2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CO",
     "rules": {
       "kind": "all",
       "children": [
@@ -41540,14 +41424,13 @@
   "jh-computer-science-bcs": {
     "kind": "flexible",
     "name": "Computer Science (Bachelor of Computer Science - Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Sk7D1yRAs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CS",
     "rules": {
       "kind": "all",
       "children": [
@@ -41806,14 +41689,13 @@
   "jh-computer-science-bmath": {
     "kind": "flexible",
     "name": "Computer Science (Bachelor of Mathematics - Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyZwkJ0Ajh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "CS",
     "rules": {
       "kind": "all",
       "children": [
@@ -41971,14 +41853,13 @@
   "jh-environment-resources-and-sustainability": {
     "kind": "flexible",
     "name": "Environment, Resources and Sustainability (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkMwJkCRs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ERS",
     "rules": {
       "kind": "all",
       "children": [
@@ -42054,14 +41935,13 @@
   "jh-geography-and-environmental-management": {
     "kind": "flexible",
     "name": "Geography and Environmental Management (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1ikJ0Rs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GEOG",
     "rules": {
       "kind": "all",
       "children": [
@@ -42520,14 +42400,13 @@
   "jh-geospatial-data-science": {
     "kind": "flexible",
     "name": "Geospatial Data Science (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1bjkyCRs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "GDS",
     "rules": {
       "kind": "all",
       "children": [
@@ -42656,14 +42535,13 @@
   "jh-mathematics": {
     "kind": "flexible",
     "name": "Mathematics (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyzRyy0Rih",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -42850,14 +42728,13 @@
   "jh-physics": {
     "kind": "flexible",
     "name": "Physics (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJdZ4MlET",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PHYS",
     "rules": {
       "kind": "all",
       "children": [
@@ -42943,14 +42820,13 @@
   "jh-pure-mathematics": {
     "kind": "flexible",
     "name": "Pure Mathematics (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1fxe1ACi2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PMATH",
     "rules": {
       "kind": "all",
       "children": [
@@ -43091,7 +42967,7 @@
   "jh-recreation-leadership-and-health": {
     "kind": "flexible",
     "name": "Recreation, Leadership, and Health (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJegyCAjn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -43206,7 +43082,7 @@
   "jh-sport-and-recreation-management": {
     "kind": "flexible",
     "name": "Sport and Recreation Management (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1fTaZIZp",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -43383,14 +43259,13 @@
   "jh-statistics": {
     "kind": "flexible",
     "name": "Statistics (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BybggJARoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "STAT",
     "rules": {
       "kind": "all",
       "children": [
@@ -43463,7 +43338,7 @@
   "jh-therapeutic-recreation": {
     "kind": "flexible",
     "name": "Therapeutic Recreation (Joint Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Sy9USGIZ6",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -43535,14 +43410,13 @@
   "knowledge-integration": {
     "kind": "flexible",
     "name": "Knowledge Integration (Bachelor of Knowledge Integration - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJNjJJCAjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "INTEG",
     "rules": {
       "kind": "all",
       "children": [
@@ -44085,7 +43959,7 @@
   "management-engineering": {
     "kind": "engineering",
     "name": "Management Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkzsJ1CRsh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -44415,7 +44289,7 @@
   "materials-and-nanosciences": {
     "kind": "flexible",
     "name": "Materials and Nanosciences (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rylCky0Rih",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -44582,7 +44456,7 @@
   "math-farm-chartered-financial-analyst-spec": {
     "kind": "flexible",
     "name": "Mathematics/Financial Analysis and Risk Management - Chartered Financial Analyst Specialization (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkgAy1R0jh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -44771,7 +44645,7 @@
   "math-farm-professional-risk-management-spec": {
     "kind": "flexible",
     "name": "Mathematics/Financial Analysis and Risk Management - Professional Risk Management Specialization (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1QRJ1C0i2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -44960,7 +44834,7 @@
   "mathematical-economics-ba": {
     "kind": "flexible",
     "name": "Mathematical Economics (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SySxyRAj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -45426,7 +45300,7 @@
   "mathematical-economics-bmath": {
     "kind": "flexible",
     "name": "Mathematical Economics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1gAJJ0Cin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -45585,7 +45459,7 @@
   "mathematical-finance": {
     "kind": "flexible",
     "name": "Mathematical Finance (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryAkJARjn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -45844,7 +45718,7 @@
   "mathematical-optimization-business-specialization": {
     "kind": "flexible",
     "name": "Mathematical Optimization - Business Specialization (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1gRk1ARih",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -45988,7 +45862,7 @@
   "mathematical-optimization-operations-research-specialization": {
     "kind": "flexible",
     "name": "Mathematical Optimization - Operations Research Specialization (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Sy0ky0Rsn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -46132,7 +46006,7 @@
   "mathematical-physics-bmath": {
     "kind": "flexible",
     "name": "Mathematical Physics (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ByzRyy0Rj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -46295,7 +46169,7 @@
   "mathematical-physics-bsc": {
     "kind": "flexible",
     "name": "Mathematical Physics (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1gR1k00i2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -46455,7 +46329,7 @@
   "mathematical-studies": {
     "kind": "flexible",
     "name": "Mathematical Studies (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1z0kJR0in",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -46829,7 +46703,7 @@
   "mathematics-business-administration": {
     "kind": "flexible",
     "name": "Mathematics/Business Administration (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJ4CkJ0Cs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -47049,7 +46923,7 @@
   "mathematics-chartered-professional-accountancy": {
     "kind": "flexible",
     "name": "Mathematics/Chartered Professional Accountancy (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BybCJk0Ri2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -47477,7 +47351,7 @@
   "mathematics-teaching": {
     "kind": "flexible",
     "name": "Mathematics/Teaching (Bachelor of Mathematics - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Byl0k1ACin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -47726,14 +47600,13 @@
   "mechanical-engineering": {
     "kind": "engineering",
     "name": "Mechanical Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ryAk10Rin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "ME",
     "terms": {
       "1A": {
         "kind": "all",
@@ -48093,14 +47966,13 @@
   "mechatronics-engineering": {
     "kind": "engineering",
     "name": "Mechatronics Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hk-A1y0Cj2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "MTE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -48336,7 +48208,7 @@
   "medical-sciences": {
     "kind": "engineering",
     "name": "Medical Sciences (Bachelor of Medical Sciences - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1IJxeamkg",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -48488,7 +48360,7 @@
   "medicinal-chemistry": {
     "kind": "flexible",
     "name": "Medicinal Chemistry (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HyCk1CAjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -48638,14 +48510,13 @@
   "nanotechnology-engineering": {
     "kind": "engineering",
     "name": "Nanotechnology Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkW0yyA0s3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "NE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -49343,14 +49214,13 @@
   "optometry": {
     "kind": "flexible",
     "name": "Optometry (Doctor of Optometry)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1W0y10Ajh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "OPTOM",
     "rules": {
       "kind": "all",
       "children": [
@@ -49482,14 +49352,13 @@
   "pharmacy": {
     "kind": "flexible",
     "name": "Pharmacy (Doctor of Pharmacy)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Syx0kyRAin",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PHARM",
     "rules": {
       "kind": "all",
       "children": [
@@ -49589,7 +49458,7 @@
   "physics-and-astronomy": {
     "kind": "flexible",
     "name": "Physics and Astronomy (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1zAykCRs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -49766,14 +49635,13 @@
   "planning": {
     "kind": "flexible",
     "name": "Planning (Bachelor of Environmental Studies - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJlg10As2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PLAN",
     "rules": {
       "kind": "all",
       "children": [
@@ -50103,14 +49971,13 @@
   "psychology-ba": {
     "kind": "flexible",
     "name": "Psychology (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJdgJCRsh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSYCH",
     "rules": {
       "kind": "all",
       "children": [
@@ -50286,14 +50153,13 @@
   "psychology-bsc": {
     "kind": "flexible",
     "name": "Psychology (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Syeg1RAsn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "PSYCH",
     "rules": {
       "kind": "all",
       "children": [
@@ -50488,7 +50354,7 @@
   "public-health": {
     "kind": "flexible",
     "name": "Public Health (Bachelor of Public Health - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJblg10Rs2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -50833,14 +50699,13 @@
   "recreation-and-leisure-studies": {
     "kind": "flexible",
     "name": "Recreation and Leisure Studies (Bachelor of Arts - Four-Year General)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJmeeyRCjh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "REC",
     "rules": {
       "kind": "all",
       "children": [
@@ -51065,7 +50930,7 @@
   "science-and-aviation": {
     "kind": "flexible",
     "name": "Science and Aviation (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJflxJ00s3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -51269,14 +51134,13 @@
   "science-and-business": {
     "kind": "flexible",
     "name": "Science and Business (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hk-eekCCj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCBUS",
     "rules": {
       "kind": "all",
       "children": [
@@ -51502,14 +51366,13 @@
   "science-and-business-biochemistry-specialization": {
     "kind": "flexible",
     "name": "Science and Business - Biochemistry Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJxel100jh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCBUS",
     "rules": {
       "kind": "all",
       "children": [
@@ -51721,14 +51584,13 @@
   "science-and-business-biology-specialization": {
     "kind": "flexible",
     "name": "Science and Business - Biology Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HJWllJ0As2",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCBUS",
     "rules": {
       "kind": "all",
       "children": [
@@ -51883,14 +51745,13 @@
   "science-and-business-biotechnology-specialization": {
     "kind": "flexible",
     "name": "Science and Business - Biotechnology Specialization (Bachelor of Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJelxyCAj3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCBUS",
     "rules": {
       "kind": "all",
       "children": [
@@ -52081,7 +51942,7 @@
   "science-and-financial-management": {
     "kind": "flexible",
     "name": "Science and Financial Management (Bachelor of Science and Financial Management - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S1X89hVVyg",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
@@ -52453,14 +52314,13 @@
   "science-with-arts-major": {
     "kind": "flexible",
     "name": "Science (Joint Honours with Arts Major)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/Hk2E1-g4T",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SCI",
     "rules": {
       "kind": "all",
       "children": [
@@ -52570,14 +52430,13 @@
   "social-work": {
     "kind": "flexible",
     "name": "Social Work (Bachelor of Social Work - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkxvxyRCjn",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SOCWK",
     "rules": {
       "kind": "all",
       "children": [
@@ -52626,14 +52485,13 @@
   "software-engineering": {
     "kind": "engineering",
     "name": "Software Engineering (Bachelor of Software Engineering - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/H1zle10Cs3",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -53528,14 +53386,13 @@
   "sustainability-and-financial-management": {
     "kind": "flexible",
     "name": "Sustainability and Financial Management (Bachelor of Sustainability and Financial Management - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyleJRAoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SFM",
     "rules": {
       "kind": "all",
       "children": [
@@ -53758,14 +53615,13 @@
   "systems-design-engineering": {
     "kind": "engineering",
     "name": "Systems Design Engineering (Bachelor of Applied Science - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SJgggJRRoh",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "SYDE",
     "terms": {
       "1A": {
         "kind": "all",
@@ -54188,14 +54044,13 @@
   "theatre-and-performance": {
     "kind": "flexible",
     "name": "Theatre and Performance (Bachelor of Arts - Honours)",
-    "asOf": "2026-06-09",
+    "asOf": "2026-06-08",
     "source": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyulJ0Aon",
     "catalog": {
       "id": "67e557ed6ed2fe2bd3a38956",
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
-    "subjectCode": "THPERF",
     "rules": {
       "kind": "all",
       "children": [

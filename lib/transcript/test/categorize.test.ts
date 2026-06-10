@@ -22,8 +22,8 @@ function result(
   overrides: Partial<TranscriptParseResult> = {},
 ): TranscriptParseResult {
   return {
-    detectedProgramIds: [],
-    detectedSpecializationsByProgramId: {},
+    detectedProgramId: null,
+    detectedSpecializationSlug: null,
     detectedCurrentTerm: null,
     detectedSystemOfStudy: null,
     rawPlanText: null,

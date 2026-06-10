@@ -24,8 +24,8 @@ import { useAnonHandoff } from "../useAnonHandoff";
 function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programIds: ["h-cs"],
-    specializationIds: {},
+    programId: "h-cs",
+    specializationId: null,
     stream: "regular",
     startTermId: 1239,
     slots: [],
@@ -71,7 +71,7 @@ describe("useAnonHandoff — silent import (zero server plans)", () => {
     await waitFor(() => expect(onImported).toHaveBeenCalledWith("new-id"));
     expect(create).toHaveBeenCalledWith(
       "Imported plan",
-      expect.objectContaining({ programIds: ["h-cs"] }),
+      expect.objectContaining({ programId: "h-cs" }),
     );
     expect(clearPlanMock).toHaveBeenCalled();
     expect(result.current.conflict).toBeNull();
@@ -124,7 +124,7 @@ describe("useAnonHandoff — silent import (zero server plans)", () => {
 
 describe("useAnonHandoff — conflict (≥1 server plan)", () => {
   it("exposes the local plan via the conflict state without auto-importing", async () => {
-    const local = mkPlan({ programIds: ["h-se"] });
+    const local = mkPlan({ programId: "h-se" });
     loadPlanMock.mockReturnValue(local);
     listPlansMock.mockResolvedValue({
       ok: true,
@@ -132,8 +132,8 @@ describe("useAnonHandoff — conflict (≥1 server plan)", () => {
         {
           id: "existing",
           name: "existing",
-          programIds: [],
-          specializationIds: {},
+          programId: null,
+          specializationId: null,
           stream: null,
           startTermId: null,
           updatedAt: "2026-05-25T00:00:00.000Z",
@@ -169,8 +169,8 @@ describe("useAnonHandoff — resolveConflict", () => {
         {
           id: "p1",
           name: "p1",
-          programIds: [],
-          specializationIds: {},
+          programId: null,
+          specializationId: null,
           stream: null,
           startTermId: null,
           updatedAt: "2026-05-25T00:00:00.000Z",

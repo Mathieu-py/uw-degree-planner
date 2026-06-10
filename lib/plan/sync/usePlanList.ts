@@ -129,8 +129,8 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
       const optimistic: PlanSummary = {
         id: result.data.id,
         name: normalizedName,
-        programIds: seed?.programIds ?? [],
-        specializationIds: seed?.specializationIds ?? {},
+        programId: seed?.programId ?? null,
+        specializationId: seed?.specializationId ?? null,
         stream: seed?.stream ?? null,
         startTermId: seed?.startTermId ?? null,
         shareToken: null,
@@ -206,8 +206,8 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
     const optimistic: PlanSummary = {
       id: result.data.id,
       name: name ?? source.name,
-      programIds: source.programIds,
-      specializationIds: source.specializationIds,
+      programId: source.programId,
+      specializationId: source.specializationId,
       stream: source.stream,
       startTermId: source.startTermId,
       shareToken: null,

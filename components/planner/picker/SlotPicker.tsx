@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
-import {
-  type CourseEligibilityVerdict,
-  isProgramBlocked,
-} from "@/lib/courses/courseEligibility";
+import type { CourseEligibilityVerdict } from "@/lib/courses/courseEligibility";
 import type { SortDir, SortKey } from "@/lib/courses/courseSort";
 import type { EligibilityRow } from "@/lib/courses/eligibility";
 import { seatsAvailable } from "@/lib/courses/filters";
@@ -35,8 +32,8 @@ interface Props {
   completedBefore: Set<string>;
   /** Target term's level (e.g. "2A") so level-gated prereqs resolve instead of showing "check". */
   level?: string;
-  /** Student's program(s) so program-restriction prereqs resolve instead of "check". */
-  programs?: ProgramIdentity[];
+  /** Student's program so program-restriction prereqs resolve instead of "check". */
+  program?: ProgramIdentity;
   /** Codes the student's program references (suppresses stale program blocks). */
   programReferenced?: ReadonlySet<string>;
   /** Codes already in the target slot (lets coreqs resolve same-term). */
@@ -60,7 +57,7 @@ export function SlotPicker({
   placedCodes,
   completedBefore,
   level,
-  programs,
+  program,
   programReferenced,
   sameTerm,
   focusCodes,
@@ -86,7 +83,7 @@ export function SlotPicker({
     placedCodes,
     completedBefore,
     level,
-    programs,
+    program,
     programReferenced,
     sameTerm,
     focusCodes,
@@ -98,17 +95,10 @@ export function SlotPicker({
   // in flight), so pick-during-close and rapid double-pick are deduped.
   const handlePick = useCallback(
     async (code: string) => {
-      // Hard gate: a course closed to the student's faculty/program can never
-      // be added (rows are also rendered non-interactive). Belt-and-suspenders
-      // so no add path slips a wrong-faculty course into the plan.
-      const course = catalog.find((c) => c.code === code);
-      if (course && isProgramBlocked(course, { programs, programReferenced })) {
-        return;
-      }
       await animateOut();
       onPick(code);
     },
-    [animateOut, onPick, catalog, programs, programReferenced],
+    [animateOut, onPick],
   );
 
   return (
@@ -308,47 +298,26 @@ function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
   const { course, eligibility } = row;
   const reviews = course.rating?.filled_count ?? 0;
   const seats = seatsAvailable(course);
-  // A course closed to the student's faculty/program can't be added — render
-  // its add affordances inert (the "Wrong program" chip explains why).
-  const blocked = !!eligibility?.blockedByProgram;
   return (
     <tr className="border-b border-line hover:bg-bg-2">
       <td className="px-2 py-2 font-mono text-xs whitespace-nowrap">
-        {blocked ? (
-          <span className="text-ink-3 cursor-not-allowed" aria-disabled="true">
-            {formatCourseCode(course.code)}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={onPick}
-            className="text-ink hover:underline"
-          >
-            {formatCourseCode(course.code)}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onPick}
+          className="text-ink hover:underline"
+        >
+          {formatCourseCode(course.code)}
+        </button>
       </td>
       <td className="px-2 py-2">
-        {blocked ? (
-          <span
-            className="text-left flex items-center gap-2 min-w-0 w-full cursor-not-allowed"
-            aria-disabled="true"
-          >
-            <span className="text-ink-3 line-clamp-2 min-w-0">
-              {course.name}
-            </span>
-            {eligibility ? <EligibilityChip verdict={eligibility} /> : null}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={onPick}
-            className="text-left flex items-center gap-2 min-w-0 w-full"
-          >
-            <span className="text-ink line-clamp-2 min-w-0">{course.name}</span>
-            {eligibility ? <EligibilityChip verdict={eligibility} /> : null}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onPick}
+          className="text-left flex items-center gap-2 min-w-0 w-full"
+        >
+          <span className="text-ink line-clamp-2 min-w-0">{course.name}</span>
+          {eligibility ? <EligibilityChip verdict={eligibility} /> : null}
+        </button>
       </td>
       <RatingCell value={course.rating?.useful} />
       <RatingCell value={course.rating?.easy} />

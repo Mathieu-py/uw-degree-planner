@@ -27,11 +27,9 @@ function emptyPlan(
   specializationId: string | null,
 ): LocalPlan {
   return {
-    schemaVersion: 3,
-    programIds: [programId],
-    specializationIds: specializationId
-      ? { [programId]: specializationId }
-      : {},
+    schemaVersion: 1,
+    programId,
+    specializationId,
     stream: "regular",
     startTermId: 1239,
     slots: [],

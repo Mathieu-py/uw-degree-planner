@@ -1,19 +1,68 @@
 import { describe, expect, it } from "vitest";
 import {
   assembleServerPlan,
+  MAX_COURSES_PER_SLOT,
+  MAX_SLOTS,
   mapSharedPlanJson,
   type PlanCourseRow,
   type PlanRow,
   type PlanSlotRow,
   planRowToSummary,
+  snapshotSizeError,
   toSnapshot,
 } from "../serialize";
+import type { PlanSnapshot } from "../types";
+
+function snapshotWith(slots: PlanSnapshot["slots"]): PlanSnapshot {
+  return {
+    programId: null,
+    specializationId: null,
+    stream: null,
+    startTermId: null,
+    programScrapeVersion: null,
+    slots,
+  };
+}
+
+function slot(courseCount: number): PlanSnapshot["slots"][number] {
+  return {
+    id: "s",
+    termId: null,
+    position: "pre",
+    isCoop: false,
+    courses: Array.from({ length: courseCount }, (_, i) => ({ code: `c${i}` })),
+  };
+}
+
+describe("snapshotSizeError", () => {
+  it("accepts a normal-sized plan", () => {
+    expect(snapshotSizeError(snapshotWith([slot(6), slot(6)]))).toBeNull();
+  });
+
+  it("accepts exactly the caps", () => {
+    const slots = Array.from({ length: MAX_SLOTS }, () =>
+      slot(MAX_COURSES_PER_SLOT),
+    );
+    expect(snapshotSizeError(snapshotWith(slots))).toBeNull();
+  });
+
+  it("rejects too many slots", () => {
+    const slots = Array.from({ length: MAX_SLOTS + 1 }, () => slot(0));
+    expect(snapshotSizeError(snapshotWith(slots))).toBe("snapshot_too_large");
+  });
+
+  it("rejects too many courses in a single slot", () => {
+    expect(
+      snapshotSizeError(snapshotWith([slot(MAX_COURSES_PER_SLOT + 1)])),
+    ).toBe("snapshot_too_large");
+  });
+});
 
 const PLAN: PlanRow = {
   id: "plan-1",
   name: "My plan",
-  program_ids: ["h-software-engineering-beng"],
-  specialization_ids: {},
+  program_id: "h-software-engineering-beng",
+  specialization_id: null,
   system_of_study: "stream8",
   start_term_id: 1239,
   program_scrape_version: "2026-05-01",
@@ -26,8 +75,8 @@ describe("planRowToSummary", () => {
     expect(planRowToSummary(PLAN)).toEqual({
       id: "plan-1",
       name: "My plan",
-      programIds: ["h-software-engineering-beng"],
-      specializationIds: {},
+      programId: "h-software-engineering-beng",
+      specializationId: null,
       stream: "stream8",
       startTermId: 1239,
       shareToken: null,
@@ -189,8 +238,8 @@ describe("assembleServerPlan", () => {
 describe("toSnapshot", () => {
   it("strips server-managed fields (id, name, updatedAt)", () => {
     const snap = toSnapshot({
-      programIds: ["h-cs"],
-      specializationIds: {},
+      programId: "h-cs",
+      specializationId: null,
       stream: "regular",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",
@@ -205,8 +254,8 @@ describe("toSnapshot", () => {
       ],
     });
     expect(snap).toEqual({
-      programIds: ["h-cs"],
-      specializationIds: {},
+      programId: "h-cs",
+      specializationId: null,
       stream: "regular",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",
@@ -228,8 +277,8 @@ describe("toSnapshot", () => {
 
   it("defaults programScrapeVersion to null when absent on input", () => {
     const snap = toSnapshot({
-      programIds: [],
-      specializationIds: {},
+      programId: null,
+      specializationId: null,
       stream: "regular",
       startTermId: null,
       slots: [],
@@ -245,8 +294,8 @@ describe("mapSharedPlanJson", () => {
   const RPC_JSON = {
     id: "plan-1",
     name: "Shared plan",
-    program_ids: ["h-software-engineering-beng"],
-    specialization_ids: { "h-software-engineering-beng": "ai" },
+    program_id: "h-software-engineering-beng",
+    specialization_id: null,
     system_of_study: "stream8",
     start_term_id: 1239,
     program_scrape_version: "2026-05-01",
@@ -285,8 +334,8 @@ describe("mapSharedPlanJson", () => {
     expect(result).toMatchObject({
       id: "plan-1",
       name: "Shared plan",
-      programIds: ["h-software-engineering-beng"],
-      specializationIds: { "h-software-engineering-beng": "ai" },
+      programId: "h-software-engineering-beng",
+      specializationId: null,
       stream: "stream8",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",
@@ -340,15 +389,5 @@ describe("mapSharedPlanJson", () => {
   it("throws on non-object input so callers see the shape mismatch early", () => {
     expect(() => mapSharedPlanJson("not json")).toThrow();
     expect(() => mapSharedPlanJson(42)).toThrow();
-  });
-
-  it("preserves multi-program order on the shared-plan round trip", () => {
-    // Selected program order is meaningful (programIds[0] is the display
-    // primary), so the snake_case→camelCase map must not re-order it.
-    const result = mapSharedPlanJson({
-      ...RPC_JSON,
-      program_ids: ["h-cs", "h-stats", "h-math-econ"],
-    });
-    expect(result?.programIds).toEqual(["h-cs", "h-stats", "h-math-econ"]);
   });
 });

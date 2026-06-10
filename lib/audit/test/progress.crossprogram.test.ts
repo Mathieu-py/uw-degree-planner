@@ -21,9 +21,9 @@ const ALL_CODES = catalog.map((c) => c.code);
 
 function planOf(codes: string[]): LocalPlan {
   return {
-    schemaVersion: 3,
-    programIds: ["x"],
-    specializationIds: {},
+    schemaVersion: 1,
+    programId: "x",
+    specializationId: null,
     stream: "regular",
     startTermId: 1239,
     slots: [

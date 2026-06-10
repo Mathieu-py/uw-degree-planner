@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { placedAntireqNamers } from "@/lib/courses/courseEligibility";
 import {
   compareCourses,
   DEFAULT_SORT_DIR,
@@ -47,8 +46,8 @@ export interface UseFilteredCoursesArgs {
   completedBefore: Set<string>;
   /** Target term's level (e.g. "2A") for resolving level-gated prereqs. */
   level?: string;
-  /** Student's program(s) for resolving program-restriction prereqs (double degree → more than one). */
-  programs?: ProgramIdentity[];
+  /** Student's program for resolving program-restriction prereqs. */
+  program?: ProgramIdentity;
   /** Codes the student's program references (suppresses stale program blocks). */
   programReferenced?: ReadonlySet<string>;
   /** Codes already in the target slot (lets coreqs resolve same-term). */
@@ -83,7 +82,7 @@ export function useFilteredCourses({
   placedCodes,
   completedBefore,
   level,
-  programs,
+  program,
   programReferenced,
   sameTerm,
   focusCodes,
@@ -102,13 +101,6 @@ export function useFilteredCourses({
   const knownPrefixes = useMemo(
     () => [...new Set(catalog.map((c) => c.prefix))].sort(),
     [catalog],
-  );
-
-  // Reverse-antireq index over the placed courses, so a candidate is flagged
-  // when a placed course names it even if its own list doesn't reciprocate.
-  const antireqNamers = useMemo(
-    () => placedAntireqNamers(catalog.filter((c) => placedCodes.has(c.code))),
-    [catalog, placedCodes],
   );
 
   const candidates = useMemo<Course[]>(() => {
@@ -164,9 +156,8 @@ export function useFilteredCourses({
         programReferenced,
         hideUnmetPrereqs: true,
         level,
-        programs,
+        program,
         sameTerm,
-        placedAntireqNamers: antireqNamers,
       });
       return [...annotated].sort((a, b) =>
         compareCourses(a.course, b.course, sortKey, sortDir),
@@ -186,8 +177,7 @@ export function useFilteredCourses({
     programReferenced,
     sameTerm,
     level,
-    programs,
-    antireqNamers,
+    program,
     filters.hideUnmetPrereqs,
     sortKey,
     sortDir,
@@ -204,9 +194,8 @@ export function useFilteredCourses({
       programReferenced,
       hideUnmetPrereqs: false,
       level,
-      programs,
+      program,
       sameTerm,
-      placedAntireqNamers: antireqNamers,
     });
   }, [
     sortedCourses,
@@ -216,8 +205,7 @@ export function useFilteredCourses({
     programReferenced,
     sameTerm,
     level,
-    programs,
-    antireqNamers,
+    program,
     filters.hideUnmetPrereqs,
   ]);
 

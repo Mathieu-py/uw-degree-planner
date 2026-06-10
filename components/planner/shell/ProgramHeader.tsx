@@ -1,7 +1,6 @@
 "use client";
 
 import type { LocalPlan } from "@/lib/plan/types";
-import { splitProgramName } from "@/lib/programs";
 
 interface Props {
   programName: string;
@@ -15,13 +14,22 @@ function streamLabel(stream: LocalPlan["stream"]): string {
   return "Regular (no co-op)";
 }
 
+// Program names in data/programs.json are "Short Name (Long Degree Title)".
+// Split so the short name reads as the context eyebrow and the degree title
+// goes in the subtitle; non-parenthesized names fall through unchanged.
+function splitProgramName(name: string): [string, string | null] {
+  const m = name.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (!m) return [name, null];
+  return [m[1], m[2]];
+}
+
 /**
  * Top header of the planner workspace: the program as a mono eyebrow, the plan
  * name as the page heading, and the degree title + stream beneath. Workspace +
  * plan-level actions render in the row below in PlannerShell, not here.
  */
 export function ProgramHeader({ programName, planName, plan }: Props) {
-  const { title: program, degree } = splitProgramName(programName);
+  const [program, degree] = splitProgramName(programName);
   const stream = streamLabel(plan.stream);
   const parts = degree ? [...degree.split(/\s+-\s+/), stream] : [stream];
   const subtitle = parts.join(" · ");

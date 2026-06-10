@@ -17,6 +17,7 @@ import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
 import type { LocalPlan } from "@/lib/plan/types";
 import {
   describeRule,
+  getSpecialization,
   type Program,
   type RuleNode,
   type Specialization,
@@ -210,10 +211,6 @@ function compilePick(
       ),
     ];
     const { satisfiers, missing } = partitionByPlacement(options, placement);
-    // No `satisfiers > 0` guard here (unlike the nested branch below): a flat
-    // courses pool has no vacuously-met children to discount, and a min-0 pool
-    // that is genuinely optional is correctly "met" at 0 — consumers that need
-    // "actually decided" call `isSatisfied`.
     return withIllegal(
       {
         ruleNode: node,
@@ -307,142 +304,21 @@ function compileSubjectPool(
   );
 }
 
-/** The fields the credit-exclusion helpers read off a plan validation issue. */
-export interface PlacementIssue {
-  slotId: string;
-  courseCode: string;
-  kind: string;
-  /** Antireq only: the placed codes this course conflicts with (lowercased). */
-  conflictsWith?: readonly string[];
-}
-
-interface ConflictMember {
-  code: string;
-  slotId: string;
-}
-
 /**
- * Group antireq issues into conflict sets — connected components over the
- * (symmetric) `conflictsWith` edges, so a pair that names each other collapses
- * to one set. Each set lists its placements. Used both to credit one member per
- * conflict and to count a conflict once.
+ * Slot-scoped keys (`slotId::code`) of illegally-placed courses (unmet prereq /
+ * antireq; coreqs are advisory). Per-slot so the same course in two slots is
+ * judged independently. {@link compileAudit} flags satisfiers against it.
  */
-export function antireqConflictGroups(
-  issues: readonly PlacementIssue[],
-): ConflictMember[][] {
-  // First occurrence of a code wins, mirroring buildPlacementMap (which keeps
-  // the first slot for a duplicated code; issues arrive in slot order). If the
-  // two disagreed, an exclusion key `slotId::code` could name a slot the
-  // placement map never recorded, so the legality overlay would silently miss
-  // that satisfier.
-  const slotOf = new Map<string, string>();
-  for (const i of issues) {
-    if (
-      i.kind === "antireq" &&
-      i.courseCode !== "" &&
-      !slotOf.has(i.courseCode)
-    )
-      slotOf.set(i.courseCode, i.slotId);
-  }
-  const adj = new Map<string, Set<string>>();
-  const ensure = (c: string) => {
-    let s = adj.get(c);
-    if (!s) {
-      s = new Set();
-      adj.set(c, s);
-    }
-    return s;
-  };
-  for (const i of issues) {
-    if (i.kind !== "antireq" || !slotOf.has(i.courseCode)) continue;
-    for (const other of i.conflictsWith ?? []) {
-      if (!slotOf.has(other) || other === i.courseCode) continue;
-      ensure(i.courseCode).add(other);
-      ensure(other).add(i.courseCode);
-    }
-  }
-  const seen = new Set<string>();
-  const groups: ConflictMember[][] = [];
-  for (const start of slotOf.keys()) {
-    if (seen.has(start)) continue;
-    const comp: string[] = [];
-    const stack = [start];
-    seen.add(start);
-    while (stack.length > 0) {
-      const cur = stack.pop() as string;
-      comp.push(cur);
-      for (const nb of adj.get(cur) ?? []) {
-        if (!seen.has(nb)) {
-          seen.add(nb);
-          stack.push(nb);
-        }
-      }
-    }
-    groups.push(
-      comp.map((code) => ({ code, slotId: slotOf.get(code) as string })),
-    );
-  }
-  return groups;
-}
-
-/** Pick the member to KEEP: program-referenced > higher units > code ascending. */
-function pickKeeper(
-  group: ConflictMember[],
-  referenced: ReadonlySet<string>,
-  unitsOf: (code: string) => number,
-): ConflictMember {
-  return [...group].sort((a, b) => {
-    const ra = referenced.has(a.code) ? 1 : 0;
-    const rb = referenced.has(b.code) ? 1 : 0;
-    if (ra !== rb) return rb - ra;
-    const ua = unitsOf(a.code);
-    const ub = unitsOf(b.code);
-    if (ua !== ub) return ub - ua;
-    return a.code < b.code ? -1 : a.code > b.code ? 1 : 0;
-  })[0];
-}
-
-/**
- * Slot-scoped keys (`slotId::code`) to EXCLUDE from degree credit. Per-program,
- * because the antireq keeper depends on what the program requires:
- *  - every prereq-misplaced course (held out, as before);
- *  - every antireq conflict member EXCEPT the keeper — UW grants credit for one
- *    of an antireq pair, never both, never zero.
- * {@link compileAudit} / {@link computeDegreeProgress} take this set unchanged.
- */
-export function creditExclusionKeys(
-  issues: readonly PlacementIssue[],
-  opts: { referenced: ReadonlySet<string>; unitsOf: (code: string) => number },
+export function legalityKeySet(
+  issues: readonly { slotId: string; courseCode: string; kind: string }[],
 ): Set<string> {
   const out = new Set<string>();
   for (const i of issues) {
     if (i.courseCode === "") continue; // slot-level (overload) — not a placement
-    if (i.kind === "prereq") out.add(`${i.slotId}::${i.courseCode}`);
-  }
-  for (const group of antireqConflictGroups(issues)) {
-    if (group.length <= 1) continue;
-    const keeper = pickKeeper(group, opts.referenced, opts.unitsOf);
-    for (const m of group) {
-      if (m.code === keeper.code && m.slotId === keeper.slotId) continue;
-      out.add(`${m.slotId}::${m.code}`);
-    }
+    if (i.kind === "prereq" || i.kind === "antireq")
+      out.add(`${i.slotId}::${i.courseCode}`);
   }
   return out;
-}
-
-/**
- * Plan-wide count of blocking placement issues for the header: one per
- * prereq-misplaced course plus one per antireq conflict SET (not per course).
- * Program-agnostic — group cardinality doesn't depend on which member is kept.
- */
-export function countPlacementIssues(
-  issues: readonly PlacementIssue[],
-): number {
-  let prereqs = 0;
-  for (const i of issues) {
-    if (i.courseCode !== "" && i.kind === "prereq") prereqs++;
-  }
-  return prereqs + antireqConflictGroups(issues).length;
 }
 
 export function compileAudit(
@@ -450,18 +326,13 @@ export function compileAudit(
   plan: LocalPlan,
   specializationId: string | null = null,
   /**
-   * Slot-scoped keys from {@link creditExclusionKeys}. Matching satisfiers are
+   * Slot-scoped keys from {@link legalityKeySet}. Matching satisfiers are
    * flagged (met-but-flagged). Empty/omitted → no legality overlay.
    */
   legality: ReadonlySet<string> = new Set(),
-  /**
-   * Id of `program`, stamped onto the result. A plan can carry several programs
-   * (double degree), so the caller passes the one being compiled rather than
-   * reading a single id off the plan.
-   */
-  programId: string | null = null,
 ): AuditRoot {
   const placement = buildPlacementMap(plan);
+  const programId = plan.programId;
   if (!program) {
     return {
       programId,
@@ -486,8 +357,12 @@ export function compileAudit(
   }
   let specializationRoot: AuditNode | null = null;
   if (specializationId) {
+    const localSpec = program.specializations?.find(
+      (s) => s.slug === specializationId,
+    );
     const spec: Specialization | null =
-      program.specializations?.find((s) => s.slug === specializationId) ?? null;
+      localSpec ??
+      (programId ? getSpecialization(programId, specializationId) : null);
     if (spec?.rules) {
       specializationRoot = compile(spec.rules, placement, legality);
     }

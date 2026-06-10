@@ -67,8 +67,8 @@ function makeServerPlan(
   return {
     id: "plan-1",
     name: "My plan",
-    programIds: ["se"],
-    specializationIds: {},
+    programId: "se",
+    specializationId: null,
     stream: "regular",
     startTermId: FALL_2025,
     programScrapeVersion: null,
@@ -82,8 +82,8 @@ function mkSummary(over: Partial<PlanSummary> = {}): PlanSummary {
   return {
     id: "plan-1",
     name: "My plan",
-    programIds: ["se"],
-    specializationIds: {},
+    programId: "se",
+    specializationId: null,
     stream: "regular",
     startTermId: FALL_2025,
     shareToken: null,

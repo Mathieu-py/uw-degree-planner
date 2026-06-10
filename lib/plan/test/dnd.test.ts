@@ -12,9 +12,9 @@ import type { LocalPlan } from "../types";
 import { fakeDataTransfer } from "./fakeDataTransfer";
 
 const PLAN: LocalPlan = {
-  schemaVersion: 3,
-  programIds: ["software-engineering"],
-  specializationIds: {},
+  schemaVersion: 1,
+  programId: "software-engineering",
+  specializationId: null,
   stream: "stream8",
   startTermId: 1239,
   slots: [

@@ -213,29 +213,28 @@ export function parseTranscript(text: string): TranscriptParseResult {
     }
   }
 
-  // Each distinct program resolving to a real slug, in order of appearance — a
-  // double-degree student has two Plan lines (#32). Ambiguous or generic lines
-  // ("Computer Science"; "Program: Engineering") resolve to null and are skipped
-  // (#27), so a single-degree transcript yields one slug. The first is primary.
-  const detectedProgramIds: string[] = [];
-  const seen = new Set<string>();
-  // Per-program specialization (first spec-bearing line per id wins).
-  const detectedSpecializationsByProgramId: Record<string, string> = {};
+  // First candidate resolving to a real slug wins; fall back to the first raw
+  // string so the UI can still show what we saw. A spec match (program + spec)
+  // outranks a parent-only match, so a parent-only hit doesn't stop the scan —
+  // a later spec-bearing candidate can still upgrade it.
+  let detectedProgramId: string | null = null;
+  let detectedSpecializationSlug: string | null = null;
   let rawPlanText: string | null = planCandidates[0] ?? null;
   for (const cand of planCandidates) {
     const spec = matchSpecializationFromPlan(cand);
-    const slug = spec ? spec.programId : matchProgramSlug(cand);
-    if (!slug) continue;
-    const isNew = !seen.has(slug);
-    if (isNew) {
-      seen.add(slug);
-      detectedProgramIds.push(slug);
+    if (spec) {
+      detectedProgramId = spec.programId;
+      detectedSpecializationSlug = spec.specializationSlug;
+      rawPlanText = cand;
+      break;
     }
-    if (spec && !(slug in detectedSpecializationsByProgramId)) {
-      detectedSpecializationsByProgramId[slug] = spec.specializationSlug;
+    if (detectedProgramId === null) {
+      const slug = matchProgramSlug(cand);
+      if (slug) {
+        detectedProgramId = slug;
+        rawPlanText = cand;
+      }
     }
-    // Primary (first) program anchors the raw display text.
-    if (slug === detectedProgramIds[0] && (isNew || spec)) rawPlanText = cand;
   }
 
   // Any Plan/Program line mentioning "Co-operative Program" → co-op; a Plan
@@ -249,8 +248,8 @@ export function parseTranscript(text: string): TranscriptParseResult {
   }
 
   return {
-    detectedProgramIds,
-    detectedSpecializationsByProgramId,
+    detectedProgramId,
+    detectedSpecializationSlug,
     detectedCurrentTerm,
     detectedSystemOfStudy,
     rawPlanText,
