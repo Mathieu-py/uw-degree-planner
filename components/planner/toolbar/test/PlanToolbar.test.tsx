@@ -9,14 +9,12 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanSummary } from "@/lib/plan/server/types";
 
-const { routerReplaceMock, routerPushMock, paramsRef } = vi.hoisted(() => ({
+const { routerReplaceMock, routerPushMock } = vi.hoisted(() => ({
   routerReplaceMock: vi.fn(),
   routerPushMock: vi.fn(),
-  paramsRef: { current: {} as { planId?: string } },
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: routerReplaceMock, push: routerPushMock }),
-  useParams: () => paramsRef.current,
 }));
 
 const { usePlanListMock } = vi.hoisted(() => ({
@@ -52,9 +50,6 @@ function mount(opts: {
   share?: ReturnType<typeof vi.fn>;
   isAuthed?: boolean;
 }) {
-  paramsRef.current = opts.currentPlanId
-    ? { planId: opts.currentPlanId }
-    : {};
   // Preserve a caller-passed `null` (loading state); only fall back to []
   // when the caller didn't specify plans at all.
   const plans = "plans" in opts ? opts.plans : [];
@@ -70,12 +65,16 @@ function mount(opts: {
     share: opts.share ?? vi.fn(),
   });
 
-  return render(<PlanToolbar isAuthed={opts.isAuthed ?? true} />);
+  return render(
+    <PlanToolbar
+      isAuthed={opts.isAuthed ?? true}
+      planId={opts.currentPlanId ?? null}
+    />,
+  );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  paramsRef.current = {};
 });
 
 afterEach(() => {
@@ -84,7 +83,9 @@ afterEach(() => {
 
 describe("PlanToolbar — visibility", () => {
   it("renders nothing when isAuthed is false", () => {
-    const { container } = render(<PlanToolbar isAuthed={false} />);
+    const { container } = render(
+      <PlanToolbar isAuthed={false} planId={null} />,
+    );
     expect(container.textContent).toBe("");
   });
 

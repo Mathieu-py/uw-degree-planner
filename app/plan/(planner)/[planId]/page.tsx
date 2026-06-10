@@ -1,4 +1,4 @@
-import { PlannerPageContent } from "../page";
+import { PlannerPageContent } from "../PlannerPageContent";
 
 export default async function PlanPage(props: {
   params: Promise<{ planId: string }>;

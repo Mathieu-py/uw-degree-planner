@@ -90,4 +90,21 @@ describe("PlannerShell — demo first-run routing", () => {
       expect(routerReplaceMock).toHaveBeenCalledWith("/plan/new");
     });
   });
+
+  it("strips a path planId for a signed-out user back to bare /plan", async () => {
+    // A signed-out visitor has no server plans, so `/plan/<id>` can't resolve —
+    // redirect to bare /plan rather than stick on an empty skeleton.
+    render(
+      <PlannerShell
+        planId="some-foreign-id"
+        programOptions={PROGRAM_OPTIONS}
+        specializationsByProgram={{}}
+        catalog={[]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(routerReplaceMock).toHaveBeenCalledWith("/plan");
+    });
+  });
 });
