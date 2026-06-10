@@ -8,10 +8,15 @@ import type { DegreeProgress } from "@/lib/audit/progress";
 import { computeDegreeProgress } from "@/lib/audit/progress";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits } from "@/lib/format";
-import type { LocalPlan } from "@/lib/plan/types";
+import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import type { Program } from "@/lib/programs";
-import { PROGRAMS, programReferencedCodes } from "@/lib/programs";
+import {
+  PROGRAMS,
+  programReferencedCodes,
+  programTermSpan,
+  TERM_LETTERS,
+} from "@/lib/programs";
 import { deriveMacros } from "./deriveMacros";
 import type { Macro } from "./types";
 
@@ -33,6 +38,22 @@ export interface ProgramAuditData {
   estimatedDenom: boolean;
   /** e.g. "8.0/40.0 units" (a "~" prefixes the denominator when estimated). */
   headlineFraction: string;
+}
+
+/**
+ * Restrict a plan to the slots within a program's span, so a short leg of a
+ * multi-program plan doesn't credit courses placed past its end (3-year ignores
+ * 4A/4B). Keeps "pre" and everything up to the span's last academic term. No-op
+ * when that term isn't in the plan (span ≥ plan length), e.g. single-program plans.
+ */
+function scopePlanToSpan(plan: LocalPlan, span: number): LocalPlan {
+  const endTerm = TERM_LETTERS[span - 1];
+  const endIdx = plan.slots.findIndex((s) => s.position === endTerm);
+  if (endIdx === -1) return plan;
+  const slots: PlanSlot[] = plan.slots.filter(
+    (s, i) => i <= endIdx || s.position === "pre",
+  );
+  return { ...plan, slots };
 }
 
 /**
@@ -64,9 +85,15 @@ export function buildProgramAudit(
   );
   const legality = creditExclusionKeys(issues, { referenced, unitsOf });
 
+  // Audit only the terms within this program's span, so the short leg of a
+  // mixed double degree doesn't credit courses placed in 4A/4B (#105).
+  const scopedPlan = program
+    ? scopePlanToSpan(plan, programTermSpan(program))
+    : plan;
+
   const audit = compileAudit(
     program,
-    plan,
+    scopedPlan,
     plan.specializationIds[programId] ?? null,
     legality,
     programId,

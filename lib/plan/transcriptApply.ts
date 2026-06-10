@@ -31,6 +31,11 @@ export interface TranscriptToPlanOptions {
   includedUnrecognized: ReadonlySet<string>;
   /** Function to mint unique slot IDs (e.g. `crypto.randomUUID`). */
   mintId: () => string;
+  /**
+   * Academic terms to generate (6 for a Three-Year General, 8 default). Courses
+   * past the span land in `unsortedCodes`, so history is never silently dropped.
+   */
+  numAcademicTerms?: number;
 }
 
 export interface TranscriptToPlanResult {
@@ -54,7 +59,7 @@ export function applyTranscriptToPlan(
   parseResult: TranscriptParseResult,
   opts: TranscriptToPlanOptions,
 ): TranscriptToPlanResult {
-  const { stream, includedUnrecognized, mintId } = opts;
+  const { stream, includedUnrecognized, mintId, numAcademicTerms } = opts;
 
   // Step 1: start term = earliest course with a recognizable term-label. If
   // none, return an empty plan rather than throw, so the caller can prompt.
@@ -68,7 +73,7 @@ export function applyTranscriptToPlan(
   }
 
   // Step 2: build the canonical sequence.
-  const sequence = sequenceTerms(startTermId, stream);
+  const sequence = sequenceTerms(startTermId, stream, numAcademicTerms);
 
   // Step 3: pre-arrival slot for transfer credits.
   const preSlot: PlanSlot = {

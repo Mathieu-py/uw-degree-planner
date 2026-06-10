@@ -1,3 +1,4 @@
+import { TERM_LETTERS } from "@/lib/programs";
 import { nextTerm, type TermId, type TermInfo, termInfo } from "@/lib/terms";
 import type {
   CoopLabel,
@@ -7,16 +8,9 @@ import type {
   TermLetter,
 } from "./types";
 
-const ACADEMIC_TERMS: TermLetter[] = [
-  "1A",
-  "1B",
-  "2A",
-  "2B",
-  "3A",
-  "3B",
-  "4A",
-  "4B",
-];
+// 1A–4B, the single source of truth shared with the audit (#105). The annotation
+// makes membership drift between the two `TermLetter` unions a compile error.
+const ACADEMIC_TERMS: readonly TermLetter[] = TERM_LETTERS;
 
 /**
  * Cadence per stream: a sequence of slot kinds, each the next academic term
@@ -74,20 +68,46 @@ export interface SequencedSlot {
   isCoop: boolean;
 }
 
+/** The full academic span; also the ceiling, since `TermLetter` stops at 4B. */
+const FULL_TERM_SPAN = ACADEMIC_TERMS.length;
+
+/**
+ * Truncate a stream's cadence to its first `numAcademicTerms` academic terms,
+ * dropping work terms queued after the last one. A 6-term plan ends at 3B.
+ */
+function cadenceForSpan(
+  stream: Stream,
+  numAcademicTerms: number,
+): Array<TermLetter | "coop"> {
+  const cadence = CADENCE[stream];
+  const out: Array<TermLetter | "coop"> = [];
+  let academic = 0;
+  for (const entry of cadence) {
+    out.push(entry);
+    if (entry !== "coop") {
+      academic += 1;
+      if (academic >= numAcademicTerms) break;
+    }
+  }
+  return out;
+}
+
 /**
  * Slot sequence for a student starting in `startTermId` on `stream`. Calendar
- * terms advance monotonically (Winter → Spring → Fall → …); positions follow
- * the cadence table.
+ * terms advance monotonically (Winter → Spring → Fall → …); positions follow the
+ * cadence, truncated to `numAcademicTerms` (clamped to `[1, FULL_TERM_SPAN]`).
  */
 export function sequenceTerms(
   startTermId: TermId,
   stream: Stream,
+  numAcademicTerms: number = FULL_TERM_SPAN,
 ): SequencedSlot[] {
   const start = termInfo(startTermId);
   if (!start) {
     throw new Error(`Cannot sequence from invalid term id: ${startTermId}`);
   }
-  const cadence = CADENCE[stream];
+  const span = Math.min(FULL_TERM_SPAN, Math.max(1, numAcademicTerms));
+  const cadence = cadenceForSpan(stream, span);
   const out: SequencedSlot[] = [];
   let cursor: TermInfo = start;
   let coopNum = 0;
@@ -112,8 +132,9 @@ export function buildEmptySlots(
   startTermId: TermId,
   stream: Stream,
   mintId: () => string,
+  numAcademicTerms: number = FULL_TERM_SPAN,
 ): PlanSlot[] {
-  return sequenceTerms(startTermId, stream).map((s) => ({
+  return sequenceTerms(startTermId, stream, numAcademicTerms).map((s) => ({
     id: mintId(),
     termId: s.termId,
     position: s.position,
@@ -123,19 +144,18 @@ export function buildEmptySlots(
 }
 
 /**
- * Re-sequence a plan's slots for a new stream, preserving placements by slot
- * position. Used when the student changes stream in PlanSettingsModal.
- *
- * Matches each new slot to the old slot with the same `position` ("1A"→"1A",
- * "coop1"→"coop1") and copies its courses. Positions in the old cadence but
- * not the new (e.g. coop slots → "regular") return their courses as
- * `droppedCodes` for a banner. The "pre" slot passes through untouched.
+ * Re-sequence a plan's slots for a new stream and/or span, carrying courses by
+ * `position`. Used when the student changes stream or program(s) in
+ * PlanSettingsModal. Positions in the old cadence but not the new (coop slots
+ * dropped by "regular", 4A/4B dropped when shrinking 8→6) return their courses
+ * as `droppedCodes` for a banner; "pre" passes through untouched.
  */
-export function rebuildSlotsForStream(
+export function rebuildSlots(
   oldSlots: PlanSlot[],
   startTermId: TermId,
   newStream: Stream,
   mintId: () => string,
+  numAcademicTerms: number = FULL_TERM_SPAN,
 ): { slots: PlanSlot[]; droppedCodes: string[] } {
   const preSlot = oldSlots.find((s) => s.position === "pre");
   const coursesByPosition = new Map<string, PlanSlot["courses"]>();
@@ -144,7 +164,7 @@ export function rebuildSlotsForStream(
     coursesByPosition.set(slot.position, slot.courses);
   }
 
-  const sequenced = sequenceTerms(startTermId, newStream);
+  const sequenced = sequenceTerms(startTermId, newStream, numAcademicTerms);
   const newSlots: PlanSlot[] = [];
   if (preSlot) newSlots.push(preSlot);
 

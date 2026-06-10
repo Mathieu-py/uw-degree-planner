@@ -10,9 +10,11 @@ import {
   PROGRAMS,
   type Program,
   programIdentity,
+  programIdsTermSpan,
   programReferencedCodes,
   programShortCode,
   programShortNames,
+  programTermSpan,
   type RuleNode,
   requiredCoursesIn,
   splitProgramName,
@@ -59,6 +61,46 @@ describe("programReferencedCodes", () => {
     const a = programReferencedCodes("systems-design-engineering");
     const b = programReferencedCodes("systems-design-engineering");
     expect(a).toBe(b);
+  });
+});
+
+describe("term span (#105)", () => {
+  it("programTermSpan reads numberOfTerms, defaulting to 8", () => {
+    expect(programTermSpan(PROGRAMS["3g-anthropology"])).toBe(6);
+    expect(programTermSpan(PROGRAMS["systems-design-engineering"])).toBe(8);
+    const noField = {
+      ...PROGRAMS["3g-anthropology"],
+      numberOfTerms: undefined,
+    };
+    expect(programTermSpan(noField)).toBe(8);
+  });
+
+  it("programIdsTermSpan takes the max across programs, 8 when empty/unknown", () => {
+    expect(programIdsTermSpan([])).toBe(8);
+    expect(programIdsTermSpan(["not-a-real-program"])).toBe(8);
+    expect(programIdsTermSpan(["3g-anthropology"])).toBe(6);
+    // A 3-year + 4-year double major runs as long as the longer leg.
+    expect(
+      programIdsTermSpan(["3g-anthropology", "systems-design-engineering"]),
+    ).toBe(8);
+  });
+
+  it("every Three-Year General program is 6 terms; honours/four-year are 8", () => {
+    for (const [id, prog] of Object.entries(PROGRAMS)) {
+      const isThreeYearSingle =
+        /three-year/i.test(prog.name) && !/double degree/i.test(prog.name);
+      // An Honours / Four-Year clause is the full 8 even when a joint honours'
+      // unit total is only its half of the degree (regression: jh-physics).
+      const isFullDegree =
+        /honours|four-year/i.test(prog.name) && !/three-year/i.test(prog.name);
+      if (isThreeYearSingle) {
+        expect(prog.numberOfTerms, `${id} should span 6 terms`).toBe(6);
+      } else if (isFullDegree) {
+        expect(prog.numberOfTerms, `${id} should span 8 terms`).toBe(8);
+      }
+    }
+    expect(PROGRAMS["jh-physics"].numberOfTerms).toBe(8);
+    expect(PROGRAMS["systems-design-engineering"].numberOfTerms).toBe(8);
   });
 });
 

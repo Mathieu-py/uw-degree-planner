@@ -29,6 +29,7 @@ import {
   type Specialization,
   validatePrograms,
 } from "../lib/programs";
+import { deriveNumberOfTerms } from "./scrape/termSpan";
 import { applyRuleOverrides } from "./scrape-programs.overrides";
 import {
   buildConflictCounts,
@@ -681,6 +682,11 @@ async function main() {
     phaseA.degreeRefBySlug,
     degreesByPid,
   );
+
+  // Stamp the term span now that `totalUnits` is final (#105).
+  for (const program of Object.values(phaseA.programs)) {
+    program.numberOfTerms = deriveNumberOfTerms(program);
+  }
 
   const outPath = await writeOutput(phaseA.programs);
 
