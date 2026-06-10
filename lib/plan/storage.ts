@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { logWarn } from "@/lib/log";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
-import { type LocalPlan, PLAN_SCHEMA_VERSION, SLOT_POSITIONS } from "./types";
+import {
+  type LocalPlan,
+  PLAN_SCHEMA_VERSION,
+  SLOT_POSITIONS,
+  STREAM_VALUES,
+} from "./types";
 
 // Stable namespace for the single persisted plan slot. The `.v1` is the
 // storage-slot *name*, not the schema version — shape versioning lives in the
@@ -15,7 +20,7 @@ export const PLAN_STORAGE_KEY = "uwfinder.plan.v1";
  */
 export const PLAN_BROKEN_BACKUP_KEY = `${PLAN_STORAGE_KEY}.broken`;
 
-const StreamSchema = z.enum(["regular", "stream4", "stream8"]);
+const StreamSchema = z.enum(STREAM_VALUES);
 
 const SlotPositionSchema = z.enum(SLOT_POSITIONS);
 

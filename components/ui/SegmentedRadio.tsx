@@ -35,6 +35,12 @@ export function SegmentedRadio<T extends string>({
 }: SegmentedRadioProps<T>) {
   const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  // Roving tabindex needs exactly one focusable target. If `value` matches no
+  // option (e.g. a stale/cleared value), fall back to the first segment so the
+  // group stays keyboard-reachable instead of every button going tabIndex={-1}.
+  const selectedIndex = options.findIndex((opt) => opt.value === value);
+  const focusIndex = selectedIndex === -1 ? 0 : selectedIndex;
+
   function move(from: number, delta: number) {
     const next = (from + delta + options.length) % options.length;
     onChange(options[next].value);
@@ -60,7 +66,7 @@ export function SegmentedRadio<T extends string>({
             role="radio"
             aria-checked={active}
             aria-label={opt.ariaLabel}
-            tabIndex={active ? 0 : -1}
+            tabIndex={i === focusIndex ? 0 : -1}
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => {
               if (e.key === "ArrowRight" || e.key === "ArrowDown") {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SLOT_POSITIONS } from "../types";
+import { SLOT_POSITIONS, STREAM_VALUES } from "../types";
 import { MAX_COURSES_PER_SLOT, MAX_SLOTS } from "./serialize";
 import type { PlanSnapshot } from "./types";
 
@@ -63,7 +63,7 @@ const PlanSnapshotSchema = z
       .refine((m) => Object.keys(m).length <= MAX_SPECIALIZATIONS, {
         message: "too many specializations",
       }),
-    stream: z.enum(["regular", "stream4", "stream8"]).nullable(),
+    stream: z.enum(STREAM_VALUES).nullable(),
     startTermId: z.number().int().nullable(),
     programScrapeVersion: z.string().max(MAX_SCRAPE_VERSION_LEN).nullable(),
     slots: z.array(PlanSlotSchema).max(MAX_SLOTS),
