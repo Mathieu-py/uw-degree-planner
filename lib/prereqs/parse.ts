@@ -40,9 +40,24 @@ const LEVEL_RE = /^level at least (\d[a-z])/i;
 const ONE_OF_RE = /^one of\b/i;
 const OR_RE = /^or\b/i;
 const AND_RE = /^and\b/i;
-const RAW_RE = /^[^(),;/]+/;
+// Unmatched prose. Stop the run at the next "or"/"and" boundary (as well as
+// brackets/`;`/`/`) so a grade qualifier like "with a minimum grade of 80%"
+// can't swallow a following "or MATH145" alternative into the blob.
+const RAW_RE = /^[^(),;/]+?(?=\s+(?:or|and)\b|[(),;/]|$)/i;
+// A grade qualifier PRECEDING the course it gates, e.g. CS 136's "At least 90%
+// in CS 115 …". The app tracks no grades, so we consume it with no token (the
+// lookahead requires a following code) and the COURSE tokenizes normally rather
+// than being swallowed into a RAW blob. Grades written AFTER the code are
+// stripped by RAW_RE. Source: https://ucalendar.uwaterloo.ca/2223/COURSE/course-CS.html (CS 136).
+const GRADE_BEFORE_COURSE_RE =
+  /^[a-z ]*?\b\d{1,3}\s*%\s+(?:or\s+(?:higher|more|greater|better)\s+)?in\s+(?=[A-Z]{2,7}\s?\d{3})/i;
+// Phrases that flag a clause as a program/faculty restriction. The negative
+// `not (open|available) to` branch matches UW's standard exclusion wording —
+// e.g. CS 105 is listed "Not open to Mathematics students." and CS 200 "Not
+// open to Computer Science students" on the Calendar's CS course page.
+// Source: https://ucalendar.uwaterloo.ca/2021/COURSE/course-CS.html
 const PROGRAM_TRIGGER =
-  /students?\s+only|students?\.?\s*$|open only to|only open to/i;
+  /students?\s+only|students?\.?\s*$|open only to|only open to|^not\s+(?:open|available)\s+to/i;
 const LEAD_LEVEL_RE = /^(?:level\s+)?\d[a-z](?:\s+or\s+\d[a-z])*\s+[a-z]/i;
 
 function tokenize(input: string): Token[] {
@@ -108,11 +123,10 @@ function tokenize(input: string): Token[] {
       continue;
     }
 
-    // A program/faculty restriction (course/level tried first, so this is
-    // trailing restriction prose). Grab up to the next ";" as one token — its
-    // internal "or"/commas/slashes belong to the clause, not boolean structure.
-    // A leading "or"/"and" is the connective to what precedes it, so skip this
-    // branch and let it tokenize as OR/AND (restriction starts next iteration).
+    // A program/faculty restriction (course/level already tried). Grab up to the
+    // next ";" as one token — its internal "or"/commas/slashes belong to the
+    // clause, not boolean structure. Skip when it leads with "or"/"and": that's a
+    // connective to what precedes, so let it tokenize as OR/AND instead.
     const semiIdx = rest.indexOf(";");
     const segment = semiIdx === -1 ? rest : rest.slice(0, semiIdx);
     if (
@@ -136,6 +150,15 @@ function tokenize(input: string): Token[] {
     if (andMatch) {
       tokens.push({ kind: "AND" });
       i += andMatch[0].length;
+      continue;
+    }
+
+    // Grade-before-course qualifier ("At least 90% in CS 115"): consume it with
+    // no token so the following COURSE tokenizes next pass. Tried after or/and
+    // so a leading connective stays the connective, not part of the qualifier.
+    const gradeMatch = rest.match(GRADE_BEFORE_COURSE_RE);
+    if (gradeMatch) {
+      i += gradeMatch[0].length;
       continue;
     }
 
@@ -171,6 +194,17 @@ class Parser {
     return false;
   }
 
+  /**
+   * Drop stray RAW tokens at a clause boundary. Grade qualifiers ("with a minimum
+   * grade of 60%") tokenize to RAW with no structural role; left unconsumed before
+   * a ")", ",", ";", "or", or conjunct they strand that delimiter and silently
+   * truncate the rest. A RAW that is a whole primary ("permission of instructor")
+   * is still parsed by parsePrimary and surfaced as "check".
+   */
+  private skipRaw(): void {
+    while (this.peek().kind === "RAW") this.consume();
+  }
+
   parseExpression(): PrereqNode {
     const clauses: PrereqNode[] = [this.parseAndClause()];
     while (this.match("SEMI")) {
@@ -182,10 +216,9 @@ class Parser {
   parseAndClause(): PrereqNode {
     const parts: PrereqNode[] = [this.parseOrClause()];
     // Explicit "and" plus implicit conjunction: UWFlow often juxtaposes two
-    // structured requirements with no connective ("Level at least 4A
-    // Mathematics … students only"), so treat an adjacent structured primary as
-    // AND. RAW is excluded so trailing prose ("with a grade of 60%") stays
-    // ignored rather than making the clause uncertain.
+    // structured requirements with no connective ("Level at least 4A … students
+    // only"), so an adjacent structured primary counts as AND. Trailing RAW is
+    // already skipped, so a grade qualifier can't pose as an implicit conjunct.
     while (this.match("AND") || this.atStructuredPrimary()) {
       parts.push(this.parseOrClause());
     }
@@ -205,8 +238,10 @@ class Parser {
 
   parseOrClause(): PrereqNode {
     const parts: PrereqNode[] = [this.parsePrimary()];
+    this.skipRaw();
     while (this.match("OR")) {
       parts.push(this.parsePrimary());
+      this.skipRaw();
     }
     return parts.length === 1 ? parts[0] : flatten("or", parts);
   }
@@ -230,9 +265,11 @@ class Parser {
       const list: PrereqNode[] = [];
       const first = this.parseOneOfItem();
       if (first) list.push(first);
+      this.skipRaw();
       while (this.match("COMMA")) {
         const next = this.parseOneOfItem();
         if (next) list.push(next);
+        this.skipRaw();
       }
       if (list.length === 0) return { kind: "raw", text: "one of (empty)" };
       if (list.length === 1) return list[0];

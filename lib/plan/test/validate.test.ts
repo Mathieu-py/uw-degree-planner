@@ -41,9 +41,9 @@ function mkPlan(
   }>,
 ): LocalPlan {
   return {
-    schemaVersion: 1,
-    programId: null,
-    specializationId: null,
+    schemaVersion: 3,
+    programIds: [],
+    specializationIds: {},
     stream: "stream8",
     startTermId: 1239,
     slots: slots.map((s) => ({
@@ -134,6 +134,35 @@ describe("validatePlan — antireq", () => {
     expect(issues.map((i) => i.kind)).toEqual(["antireq", "antireq"]);
     const m115 = issues.find((i) => i.courseCode === "math115");
     expect(m115?.message).toContain("MATH 117");
+  });
+
+  it("flags BOTH courses symmetrically when only one names the other", () => {
+    // UW credit rule: "credit will not be granted for both the antirequisite
+    // course and a course naming it as such." CS 115 names ECE 150 but ECE 150
+    // does not name CS 115 — both must still be flagged.
+    const cat = catalog(
+      mkCourse("cs115", { antireqs: "ECE 150" }),
+      mkCourse("ece150", { antireqs: "CIVE 121" }),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["cs115"] },
+      { id: "s2", termId: 1241, courses: ["ece150"] },
+    ]);
+    const issues = validatePlan(plan, cat);
+    expect(issues.map((i) => i.kind)).toEqual(["antireq", "antireq"]);
+    expect(issues.find((i) => i.courseCode === "cs115")?.message).toContain(
+      "ECE 150",
+    );
+    expect(issues.find((i) => i.courseCode === "ece150")?.message).toContain(
+      "CS 115",
+    );
+    // Structured conflict members let the audit group the pair into one set.
+    expect(issues.find((i) => i.courseCode === "cs115")?.conflictsWith).toEqual(
+      ["ece150"],
+    );
+    expect(
+      issues.find((i) => i.courseCode === "ece150")?.conflictsWith,
+    ).toEqual(["cs115"]);
   });
 
   it("does not flag a course's antireq list against itself", () => {

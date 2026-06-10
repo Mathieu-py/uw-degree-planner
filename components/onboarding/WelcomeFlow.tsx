@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
+import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSelect";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
+import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
 import { Select } from "@/components/ui/Select";
 import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
@@ -19,18 +21,12 @@ import {
   applyTranscriptToPlan,
   detectStream,
 } from "@/lib/plan/transcriptApply";
-import type { LocalPlan, Stream } from "@/lib/plan/types";
-import type { ProgramOption } from "@/lib/programs";
+import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
+import { joinProgramNames, type ProgramOption } from "@/lib/programs";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
-
-const STREAMS: Array<{ value: Stream; label: string }> = [
-  { value: "regular", label: "Regular" },
-  { value: "stream4", label: "Stream 4 co-op" },
-  { value: "stream8", label: "Stream 8 co-op" },
-];
 
 const STEPS = ["Set up", "Review"] as const;
 
@@ -49,7 +45,7 @@ export function WelcomeFlow({
   );
 
   const [step, setStep] = useState(0);
-  const [programId, setProgramId] = useState(programOptions[0]?.id ?? "");
+  const [programIds, setProgramIds] = useState<string[]>([]);
   const [stream, setStream] = useState<Stream>("regular");
   const [startTermId, setStartTermId] = useState<number>(() => {
     const currentFall = makeTermId(new Date().getFullYear(), "Fall");
@@ -75,7 +71,8 @@ export function WelcomeFlow({
       const text = await extractTextFromPdf(file);
       const result = parseTranscript(text);
       setParseResult(result);
-      if (result.detectedProgramId) setProgramId(result.detectedProgramId);
+      // Always sync — a re-upload that detects nothing must clear stale ids.
+      setProgramIds(result.detectedProgramIds);
       const detectedStream = detectStream(result);
       if (detectedStream) {
         setStream(detectedStream);
@@ -119,28 +116,32 @@ export function WelcomeFlow({
         includedUnrecognized: new Set<string>(),
         mintId,
       });
-      // Honour a program the user corrected in review; drop the detected
-      // specialization when it no longer matches.
+      // Honour programs the user corrected in review; keep only detected
+      // specializations whose program is still on the plan.
       return {
         ...plan,
-        programId,
-        specializationId:
-          programId === parseResult.detectedProgramId
-            ? plan.specializationId
-            : null,
+        programIds,
+        specializationIds: Object.fromEntries(
+          Object.entries(plan.specializationIds).filter(([pid]) =>
+            programIds.includes(pid),
+          ),
+        ),
       };
     }
     return {
       ...emptyPlan(),
-      programId,
+      programIds,
       stream,
       startTermId,
       slots: buildEmptySlots(startTermId, stream, mintId),
     };
-  }, [parseResult, programId, stream, startTermId]);
+  }, [parseResult, programIds, stream, startTermId]);
 
-  const programName =
-    programOptions.find((p) => p.id === programId)?.name ?? "your program";
+  const programName = joinProgramNames(
+    programIds,
+    (id) => programOptions.find((p) => p.id === id)?.name,
+    "your program",
+  );
   // Build once, reused for both the review preview and the save.
   const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
   const placedCount = parseResult
@@ -172,127 +173,131 @@ export function WelcomeFlow({
   }
 
   return (
-    <div className="section">
-      <div className="mx-auto w-full max-w-[880px] flex flex-col gap-8">
+    <div className="px-7 py-8">
+      <div className="mx-auto w-full max-w-[880px] flex flex-col gap-5">
         <div className="flex flex-col gap-1 text-center">
           <h1 className="u-h1">Let's set up your plan</h1>
           <p className="u-body">
-            Upload your Quest transcript — or pick your program to start from
-            scratch.
+            {step === 0
+              ? "Start the fast way with your transcript, or set things up by hand."
+              : "Upload your Quest transcript — or pick your program to start from scratch."}
           </p>
         </div>
 
         <Stepper step={step} />
 
         {step === 0 ? (
-          <div className="card p-6 flex flex-col gap-5">
-            <div className="flex flex-col gap-1">
-              <h2 className="u-h3">Start from your transcript</h2>
-              <p className="u-body text-[14px]">
-                Upload your Quest transcript PDF — we'll detect your program,
-                term, and co-op stream and auto-place every past course. Parsed
-                in your browser; it never leaves your device.
-              </p>
+          <div className="card grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]">
+            {/* Left — fast path: transcript */}
+            <div className="flex flex-col gap-4 p-[26px]">
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-3">
+                  Fastest
+                </span>
+                <h2 className="u-h3">Upload your transcript</h2>
+                <p className="u-body text-[14px]">
+                  We'll detect your program, term, and co-op stream and
+                  auto-place every past course.
+                </p>
+              </div>
+
+              <label
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed bg-bg-2 px-6 py-9 text-center cursor-pointer transition-colors hover:border-accent-bg hover:bg-accent-soft ${
+                  dragActive
+                    ? "border-accent-bg bg-accent-soft"
+                    : "border-line-2"
+                }`}
+              >
+                <Icon name="upload" size="lg" className="text-ink-3" />
+                <span className="text-sm font-medium text-ink">
+                  {parsing ? "Reading…" : "Choose a PDF or drop it here"}
+                </span>
+                <small className="text-[12.5px] text-ink-3">
+                  Parsed in your browser — never uploaded
+                </small>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => onFile(e.target.files?.[0])}
+                />
+              </label>
+
+              {parseError ? <Alert>{parseError}</Alert> : null}
+
+              {parseResult ? (
+                <div className="flex items-center justify-between gap-3 rounded-[10px] bg-met-soft px-3 py-2.5 text-sm text-met">
+                  <span>
+                    Detected <b>{programName}</b> · {streamText(stream)}
+                    {parseResult.detectedCurrentTerm
+                      ? ` · through ${parseResult.detectedCurrentTerm}`
+                      : ""}{" "}
+                    · {countNoun(parseResult.courses.length, "course")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setParseResult(null);
+                      setStreamConfident(true);
+                    }}
+                    className="shrink-0 text-ink-2 underline hover:text-ink"
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
             </div>
 
-            <label
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              className={`flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed bg-bg-2 px-6 py-10 text-center cursor-pointer transition-colors hover:border-accent-bg hover:bg-accent-soft ${
-                dragActive ? "border-accent-bg bg-accent-soft" : "border-line-2"
-              }`}
-            >
-              <Icon name="upload" size="lg" className="text-ink-3" />
-              <span className="text-sm font-medium text-ink">
-                {parsing ? "Reading…" : "Choose a PDF or drop it here"}
-              </span>
-              <input
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-                onChange={(e) => onFile(e.target.files?.[0])}
-              />
-            </label>
+            {/* 1px column rule — hidden when the card collapses to one column */}
+            <div className="hidden bg-line md:block" />
 
-            {parseError ? <Alert>{parseError}</Alert> : null}
-
-            {parseResult ? (
-              <div className="flex items-center justify-between gap-3 rounded-[10px] bg-met-soft px-3 py-2.5 text-sm text-met">
-                <span>
-                  Detected <b>{programName}</b> · {streamText(stream)}
-                  {parseResult.detectedCurrentTerm
-                    ? ` · through ${parseResult.detectedCurrentTerm}`
-                    : ""}{" "}
-                  · {countNoun(parseResult.courses.length, "course")}
+            {/* Right — manual setup */}
+            <div className="flex flex-col gap-4 p-[26px]">
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-3">
+                  Or by hand
                 </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setParseResult(null);
-                    setStreamConfident(true);
-                  }}
-                  className="shrink-0 text-ink-2 underline hover:text-ink"
-                >
-                  Clear
-                </button>
+                <h2 className="u-h3">Set up manually</h2>
               </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-ink-3">
-                  <span className="h-px flex-1 bg-line" />
-                  Or set up manually
-                  <span className="h-px flex-1 bg-line" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Field label="Program">
-                    {(id) => (
-                      <Select
-                        id={id}
-                        value={programId}
-                        onChange={(e) => setProgramId(e.target.value)}
-                      >
-                        {programOptions.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
-                  <Field label="Start term (1A)">
-                    {(id) => (
-                      <Select
-                        id={id}
-                        value={startTermId}
-                        onChange={(e) => setStartTermId(Number(e.target.value))}
-                      >
-                        {fallTerms.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.label}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
-                  <Field label="Co-op stream">
-                    {(id) => (
-                      <Select
-                        id={id}
-                        value={stream}
-                        onChange={(e) => setStream(e.target.value as Stream)}
-                      >
-                        {STREAMS.map((s) => (
-                          <option key={s.value} value={s.value}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
-                </div>
-              </>
-            )}
+
+              <Field label="Program">
+                {() => (
+                  <ProgramMultiSelect
+                    programOptions={programOptions}
+                    selected={programIds}
+                    onChange={setProgramIds}
+                  />
+                )}
+              </Field>
+              <Field label="Start term (1A)">
+                {(id) => (
+                  <Select
+                    id={id}
+                    value={startTermId}
+                    onChange={(e) => setStartTermId(Number(e.target.value))}
+                  >
+                    {fallTerms.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              <Field label="Co-op stream">
+                {() => (
+                  <SegmentedRadio
+                    options={STREAM_OPTIONS}
+                    value={stream}
+                    onChange={setStream}
+                    ariaLabel="Co-op stream"
+                  />
+                )}
+              </Field>
+            </div>
           </div>
         ) : null}
 
@@ -321,33 +326,22 @@ export function WelcomeFlow({
                 ) : null}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Program">
-                    {(id) => (
-                      <Select
-                        id={id}
-                        value={programId}
-                        onChange={(e) => setProgramId(e.target.value)}
-                      >
-                        {programOptions.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </Select>
+                    {() => (
+                      <ProgramMultiSelect
+                        programOptions={programOptions}
+                        selected={programIds}
+                        onChange={setProgramIds}
+                      />
                     )}
                   </Field>
                   <Field label="Co-op stream">
-                    {(id) => (
-                      <Select
-                        id={id}
+                    {() => (
+                      <SegmentedRadio
+                        options={STREAM_OPTIONS}
                         value={stream}
-                        onChange={(e) => setStream(e.target.value as Stream)}
-                      >
-                        {STREAMS.map((s) => (
-                          <option key={s.value} value={s.value}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </Select>
+                        onChange={setStream}
+                        ariaLabel="Co-op stream"
+                      />
                     )}
                   </Field>
                 </div>
@@ -378,7 +372,8 @@ export function WelcomeFlow({
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}
-              className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover"
+              disabled={programIds.length === 0}
+              className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
               <Icon name="arrow" size="sm" aria-hidden="true" />
@@ -387,7 +382,7 @@ export function WelcomeFlow({
             <button
               type="button"
               onClick={build}
-              disabled={busy}
+              disabled={busy || programIds.length === 0}
               className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-accent-bg px-[18px] text-sm font-semibold text-accent-ink hover:brightness-105 disabled:opacity-50"
             >
               {busy ? "Building…" : "Build my plan"}
@@ -400,43 +395,55 @@ export function WelcomeFlow({
 }
 
 function streamText(stream: Stream): string {
-  return STREAMS.find((s) => s.value === stream)?.label ?? stream;
+  return STREAM_OPTIONS.find((s) => s.value === stream)?.label ?? stream;
 }
 
 function Stepper({ step }: { step: number }) {
   return (
-    <div className="flex items-center justify-center gap-3">
+    // 1fr auto 1fr grid: the connector is the middle (auto) column between two
+    // equal-width side columns, so it sits dead-centre on the page no matter
+    // how wide each step's label is. mx-auto centres the whole grid.
+    <div className="mx-auto grid w-full max-w-[300px] grid-cols-[1fr_auto_1fr] items-center">
       {STEPS.map((label, i) => {
         const done = i < step;
         const active = i === step;
+        // Labels flank the outside (first step's label left, last step's right)
+        // so the connector runs centered between the two circles.
+        const labelFirst = i === 0;
+        const circle = (
+          <span
+            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+              done
+                ? "bg-met text-bg"
+                : active
+                  ? "bg-primary text-primary-ink"
+                  : "border border-line-2 text-ink-3"
+            }`}
+          >
+            {done ? <Icon name="check" size="xs" aria-hidden="true" /> : i + 1}
+          </span>
+        );
+        const text = (
+          <span
+            className={`text-sm font-medium ${active ? "text-ink" : "text-ink-3"}`}
+          >
+            {label}
+          </span>
+        );
         return (
-          <div key={label} className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span
-                className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
-                  done
-                    ? "bg-met text-bg"
-                    : active
-                      ? "bg-primary text-primary-ink"
-                      : "border border-line-2 text-ink-3"
-                }`}
-              >
-                {done ? (
-                  <Icon name="check" size="xs" aria-hidden="true" />
-                ) : (
-                  i + 1
-                )}
-              </span>
-              <span
-                className={`text-sm font-medium ${active ? "text-ink" : "text-ink-3"}`}
-              >
-                {label}
-              </span>
+          <Fragment key={label}>
+            <div
+              className={`flex items-center gap-2 ${
+                labelFirst ? "justify-end" : "justify-start"
+              }`}
+            >
+              {labelFirst ? text : circle}
+              {labelFirst ? circle : text}
             </div>
             {i < STEPS.length - 1 ? (
-              <span className="h-px w-8 bg-line-2" />
+              <span className="mx-3 h-px w-10 bg-line-2" />
             ) : null}
-          </div>
+          </Fragment>
         );
       })}
     </div>

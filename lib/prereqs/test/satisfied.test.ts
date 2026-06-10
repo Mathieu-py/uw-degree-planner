@@ -13,6 +13,24 @@ const SYDE: ProgramIdentity = {
   faculty: "engineering",
 };
 
+const ANTHRO: ProgramIdentity = {
+  programId: "anthropology",
+  names: ["anthropology"],
+  faculty: "arts",
+};
+
+const MATH: ProgramIdentity = {
+  programId: "honours-mathematics",
+  names: ["honours mathematics", "mathematics"],
+  faculty: "mathematics",
+};
+
+const UNKNOWN_FAC: ProgramIdentity = {
+  programId: "mystery-program",
+  names: ["mystery program"],
+  faculty: null,
+};
+
 describe("evaluate", () => {
   it("satisfies an empty prereq", () => {
     const result = evaluate(parsePrereqs(""), user([]));
@@ -85,7 +103,7 @@ describe("evaluate", () => {
 
   it("program restriction is a hard fail for the wrong program", () => {
     const node = parsePrereqs("Anthropology students only");
-    const result = evaluate(node, { completed: new Set(), program: SYDE });
+    const result = evaluate(node, { completed: new Set(), programs: [SYDE] });
     expect(result.satisfied).toBe(false);
     expect(result.uncertain).toBe(false);
     expect(result.missingCourses).toEqual([]);
@@ -94,22 +112,97 @@ describe("evaluate", () => {
 
   it("program restriction passes for an allowed faculty", () => {
     const node = parsePrereqs("Open only to students in Engineering");
-    const result = evaluate(node, { completed: new Set(), program: SYDE });
+    const result = evaluate(node, { completed: new Set(), programs: [SYDE] });
     expect(result.satisfied).toBe(true);
     expect(result.uncertain).toBe(false);
+  });
+
+  it("double degree — passes if either program is allowed (most-permissive)", () => {
+    const node = parsePrereqs("Anthropology students only");
+    // SYDE alone blocks; with ANTHRO on the other side, the restriction passes.
+    expect(
+      evaluate(node, { completed: new Set(), programs: [SYDE] }).satisfied,
+    ).toBe(false);
+    const both = evaluate(node, {
+      completed: new Set(),
+      programs: [SYDE, ANTHRO],
+    });
+    expect(both.satisfied).toBe(true);
+    expect(both.uncertain).toBe(false);
+    expect(both.blockedByProgram).toBe(false);
+  });
+
+  it("double degree — blocks only when every program is blocked", () => {
+    const node = parsePrereqs("Anthropology students only");
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [SYDE, SYDE],
+    });
+    expect(result.satisfied).toBe(false);
+    expect(result.blockedByProgram).toBe(true);
+  });
+
+  // Negated/exclusion clauses merge MOST-RESTRICTIVELY across a double degree:
+  // a student enrolled in the excluded faculty on *any* side is caught, even
+  // though their other degree wouldn't be (UW Kuali requisite wording + the
+  // "satisfy both faculties" double-degree rule). See satisfied.ts.
+  it("negated restriction — single excluded faculty blocks", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, { completed: new Set(), programs: [MATH] });
+    expect(result.satisfied).toBe(false);
+    expect(result.blockedByProgram).toBe(true);
+  });
+
+  it("negated restriction — non-excluded faculty is allowed", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, { completed: new Set(), programs: [SYDE] });
+    expect(result.satisfied).toBe(true);
+    expect(result.uncertain).toBe(false);
+  });
+
+  it("double degree — one excluded faculty blocks despite a non-excluded side", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    // Math + Engineering: the student IS a Faculty-of-Math student on one side,
+    // so the exclusion applies — most-permissive would have wrongly allowed it.
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [SYDE, MATH],
+    });
+    expect(result.satisfied).toBe(false);
+    expect(result.blockedByProgram).toBe(true);
+  });
+
+  it("double degree — neither side excluded is allowed", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [SYDE, ANTHRO],
+    });
+    expect(result.satisfied).toBe(true);
+    expect(result.uncertain).toBe(false);
+  });
+
+  it("negated restriction — unknown faculty stays a check, never a confident allow", () => {
+    const node = parsePrereqs("Not open to Faculty of Math students");
+    const result = evaluate(node, {
+      completed: new Set(),
+      programs: [UNKNOWN_FAC],
+    });
+    expect(result.uncertain).toBe(true);
+    expect(result.blockedByProgram).toBe(false);
   });
 
   it("suppressProgramBlock demotes a wrong-program block to an uncertain check", () => {
     const node = parsePrereqs("Anthropology students only");
     // Without suppression: a hard fail.
-    const hard = evaluate(node, { completed: new Set(), program: SYDE });
+    const hard = evaluate(node, { completed: new Set(), programs: [SYDE] });
     expect(hard.satisfied).toBe(false);
     expect(hard.blockedByProgram).toBe(true);
     // With suppression (course is program-referenced): satisfied + uncertain,
     // and no longer attributed to a program block.
     const soft = evaluate(node, {
       completed: new Set(),
-      program: SYDE,
+      programs: [SYDE],
       suppressProgramBlock: true,
     });
     expect(soft.satisfied).toBe(true);
@@ -129,7 +222,7 @@ describe("evaluate", () => {
     // Course satisfied but wrong program → overall missing.
     const result = evaluate(node, {
       completed: new Set(["math116"]),
-      program: SYDE,
+      programs: [SYDE],
     });
     expect(result.satisfied).toBe(false);
   });
@@ -137,7 +230,7 @@ describe("evaluate", () => {
   it("flags blockedByProgram only for a confirmed program restriction", () => {
     const blocked = evaluate(parsePrereqs("Anthropology students only"), {
       completed: new Set(),
-      program: SYDE,
+      programs: [SYDE],
     });
     expect(blocked.blockedByProgram).toBe(true);
 

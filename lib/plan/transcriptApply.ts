@@ -135,8 +135,8 @@ export function applyTranscriptToPlan(
 
   const plan: LocalPlan = {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: parseResult.detectedProgramId,
-    specializationId: parseResult.detectedSpecializationSlug,
+    programIds: parseResult.detectedProgramIds,
+    specializationIds: parseResult.detectedSpecializationsByProgramId,
     stream,
     startTermId,
     slots,
@@ -209,8 +209,8 @@ function bareplan(
 ): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: parseResult.detectedProgramId,
-    specializationId: parseResult.detectedSpecializationSlug,
+    programIds: parseResult.detectedProgramIds,
+    specializationIds: parseResult.detectedSpecializationsByProgramId,
     stream,
     startTermId: null,
     slots,

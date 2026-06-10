@@ -3,9 +3,8 @@
  * badges on courses (prereq/antireq/coreq) and on the term header (overload).
  *
  * Per validation:
- *  - Prereq: evaluate the course's parsed prereqs against everything completed
- *    STRICTLY before this slot's term. "uncertain" results (raw text / level
- *    expressions) are surfaced as hints elsewhere, not flagged here.
+ *  - Prereq: evaluate parsed prereqs against everything completed STRICTLY
+ *    before this slot's term. "uncertain" results (raw/level) aren't flagged here.
  *  - Antireq: extract codes from the antireq string; if any appears elsewhere
  *    in the plan, flag both (UW's "one of {X,Y} bars the other" convention).
  *  - Coreq: like prereqs, but evaluated against completed-before ∪ same-slot
@@ -18,6 +17,7 @@
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { cachedParsePrereqs } from "@/lib/prereqs/cache";
+import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
 import { completedSetFromPlan } from "./derive";
 import type { LocalPlan } from "./types";
@@ -30,6 +30,11 @@ export interface ValidationIssue {
   courseCode: string;
   kind: ValidationKind;
   message: string;
+  /**
+   * Antireq issues only: the placed codes this course conflicts with (lowercased),
+   * so the audit can group a conflict and credit one member without re-parsing.
+   */
+  conflictsWith?: readonly string[];
 }
 
 export const ACADEMIC_TERM_CAP = 6;
@@ -43,11 +48,27 @@ export function validatePlan(
     plan.slots.flatMap((s) => s.courses.map((c) => c.code)),
   );
 
+  // Antireqs bar *degree credit* for both courses when EITHER names the other:
+  // "Degree credit will not be granted for both the antirequisite course and a
+  // course naming it as such" (UW calendar glossary). Raw lists are often
+  // one-directional, so we flag symmetrically — precompute, per placed code, the
+  // other placed codes that name it (the reverse direction its own list omits).
+  const namedAsAntireqBy = new Map<string, Set<string>>();
+  for (const code of allPlacedCodes) {
+    const data = catalogByCode.get(code);
+    if (!data?.antireqs) continue;
+    for (const named of cachedExtractCourseCodes(data.antireqs)) {
+      if (named === code || !allPlacedCodes.has(named)) continue;
+      const set = namedAsAntireqBy.get(named) ?? new Set<string>();
+      set.add(code);
+      namedAsAntireqBy.set(named, set);
+    }
+  }
+
   for (const slot of plan.slots) {
     if (slot.isCoop) continue;
-    // Pre-arrival transfer slots aren't real academic terms (often from
-    // another institution where our prereq/antireq strings don't apply). Skip,
-    // so we don't flag e.g. a transfer "MATH 137" against UW's antireq list.
+    // Pre-arrival transfer slots aren't real academic terms (often another
+    // institution, where UW's prereq/antireq strings don't apply) — skip them.
     if (slot.position === "pre") continue;
 
     if (slot.courses.length > ACADEMIC_TERM_CAP) {
@@ -80,12 +101,8 @@ export function validatePlan(
         const result = evaluate(ast, { completed: completedBeforeSet });
         if (!result.satisfied) {
           const missing =
-            result.missingCourses.length > 0
-              ? result.missingCourses
-                  .slice(0, 3)
-                  .map(formatCourseCode)
-                  .join(", ")
-              : "prereqs not met";
+            describeMissingPrereqs(ast, completedBeforeSet) ??
+            "prereqs not met";
           issues.push({
             slotId: slot.id,
             courseCode: c.code,
@@ -95,20 +112,23 @@ export function validatePlan(
         }
       }
 
-      // ---- Antireq ----
-      if (courseData.antireqs) {
-        const antiCodes = cachedExtractCourseCodes(courseData.antireqs).filter(
-          (a) => a !== c.code,
-        );
-        const collisions = antiCodes.filter((a) => allPlacedCodes.has(a));
-        if (collisions.length > 0) {
-          issues.push({
-            slotId: slot.id,
-            courseCode: c.code,
-            kind: "antireq",
-            message: `Antireq conflict: ${collisions.map(formatCourseCode).join(", ")}`,
-          });
-        }
+      // ---- Antireq (symmetric: this course names a placed one, OR a placed
+      //      one names this course) ----
+      const forwardAnti = courseData.antireqs
+        ? cachedExtractCourseCodes(courseData.antireqs).filter(
+            (a) => a !== c.code && allPlacedCodes.has(a),
+          )
+        : [];
+      const reverseAnti = namedAsAntireqBy.get(c.code);
+      const collisions = [...new Set([...forwardAnti, ...(reverseAnti ?? [])])];
+      if (collisions.length > 0) {
+        issues.push({
+          slotId: slot.id,
+          courseCode: c.code,
+          kind: "antireq",
+          message: `Antireq conflict: ${collisions.map(formatCourseCode).join(", ")}`,
+          conflictsWith: collisions,
+        });
       }
 
       // ---- Coreq ----
@@ -117,12 +137,7 @@ export function validatePlan(
         const result = evaluate(ast, { completed: coreqContext });
         if (!result.satisfied) {
           const missing =
-            result.missingCourses.length > 0
-              ? result.missingCourses
-                  .slice(0, 3)
-                  .map(formatCourseCode)
-                  .join(", ")
-              : "coreqs not met";
+            describeMissingPrereqs(ast, coreqContext) ?? "coreqs not met";
           issues.push({
             slotId: slot.id,
             courseCode: c.code,

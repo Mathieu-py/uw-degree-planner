@@ -32,6 +32,7 @@ declare
   shared_token text := 'share-token-a';
   shared_result jsonb;
   visible_count integer;
+  spec_after jsonb;
 begin
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
   values
@@ -120,8 +121,8 @@ begin
 
   begin
     perform public.save_plan_state(plan_a, jsonb_build_object(
-      'programId', null,
-      'specializationId', null,
+      'programIds', '[]'::jsonb,
+      'specializationIds', '{}'::jsonb,
       'stream', 'regular',
       'startTermId', null,
       'programScrapeVersion', null,
@@ -140,8 +141,8 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', user_a, 'role', 'authenticated')::text, true);
 
   perform public.save_plan_state(plan_a, jsonb_build_object(
-    'programId', 'h-software-engineering-beng',
-    'specializationId', null,
+    'programIds', jsonb_build_array('h-software-engineering-beng'),
+    'specializationIds', '{}'::jsonb,
     'stream', 'stream8',
     'startTermId', 1239,
     'programScrapeVersion', null,
@@ -177,6 +178,28 @@ begin
   where s.plan_id = plan_a;
   if visible_count <> 2 then
     raise exception 'RPC fail: save_plan_state wrote % courses, expected 2', visible_count;
+  end if;
+
+  -- -------------------------------------------------------------------------
+  -- Assert 6: save_plan_state drops specialization entries whose key isn't in
+  -- programIds (a specialization is scoped to a single program). Push a spec
+  -- map with an extra "B" key absent from programIds; it must not persist.
+  -- -------------------------------------------------------------------------
+  perform public.save_plan_state(plan_a, jsonb_build_object(
+    'programIds', jsonb_build_array('A'),
+    'specializationIds', jsonb_build_object('A', 'spec-a', 'B', 'spec-b'),
+    'stream', 'stream8',
+    'startTermId', 1239,
+    'programScrapeVersion', null,
+    'slots', '[]'::jsonb
+  ));
+
+  select specialization_ids into spec_after from public.plans where id = plan_a;
+  if spec_after ? 'B' then
+    raise exception 'RPC fail: save_plan_state kept specialization key B not in programIds (got %)', spec_after;
+  end if;
+  if not (spec_after ? 'A') then
+    raise exception 'RPC fail: save_plan_state dropped specialization key A present in programIds (got %)', spec_after;
   end if;
 
   raise notice 'RLS test passed';

@@ -9,8 +9,8 @@ import { type LocalPlan, PLAN_SCHEMA_VERSION } from "../types";
 export function serverPlanToLocal(plan: ServerPlan): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: plan.programId,
-    specializationId: plan.specializationId,
+    programIds: plan.programIds,
+    specializationIds: plan.specializationIds,
     stream: plan.stream ?? "regular",
     startTermId: plan.startTermId,
     slots: plan.slots,

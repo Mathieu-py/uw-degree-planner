@@ -34,8 +34,8 @@ function mkSummary(overrides: Partial<PlanSummary> = {}): PlanSummary {
   return {
     id: "p1",
     name: "Plan one",
-    programId: null,
-    specializationId: null,
+    programIds: [],
+    specializationIds: {},
     stream: null,
     startTermId: null,
     shareToken: null,

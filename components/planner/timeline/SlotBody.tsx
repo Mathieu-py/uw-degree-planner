@@ -125,7 +125,7 @@ export const SlotBody = memo(function SlotBody({
             {status === "warn" && courseIssues.length > 0 ? (
               <ul className="font-sans text-[10px] font-medium leading-snug text-partial space-y-0.5">
                 {courseIssues.map((i) => (
-                  <li key={i.kind} className="truncate" title={i.message}>
+                  <li key={i.kind} className="break-words" title={i.message}>
                     {i.message}
                   </li>
                 ))}

@@ -6,7 +6,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { countNoun, pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
-import { PROGRAMS, type TermLetter } from "@/lib/programs";
+import { joinProgramNames, PROGRAMS, type TermLetter } from "@/lib/programs";
 import {
   type Categorized,
   categorize,
@@ -86,9 +86,10 @@ export function TranscriptImportModal({
     categorized.transfer.length +
     includedFromUnrecognized;
 
-  const detectedProgramName = parseResult.detectedProgramId
-    ? PROGRAMS[parseResult.detectedProgramId]?.name
-    : null;
+  const detectedProgramName = joinProgramNames(
+    parseResult.detectedProgramIds,
+    (id) => PROGRAMS[id]?.name,
+  );
 
   // Recognized total drives the headline ("N courses found …"); the unrecognized
   // bucket is opt-in and shown on its own line.

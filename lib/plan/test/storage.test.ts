@@ -10,9 +10,9 @@ import {
 import type { LocalPlan } from "../types";
 
 const VALID_PLAN: LocalPlan = {
-  schemaVersion: 1,
-  programId: "h-software-engineering-beng",
-  specializationId: null,
+  schemaVersion: 3,
+  programIds: ["h-software-engineering-beng"],
+  specializationIds: {},
   stream: "stream8",
   startTermId: 1239,
   slots: [
@@ -60,7 +60,7 @@ describe("savePlan + loadPlan", () => {
     const loaded = loadPlan();
     expect(loaded).not.toBeNull();
     if (!loaded) return;
-    expect(loaded.programId).toBe("h-software-engineering-beng");
+    expect(loaded.programIds).toEqual(["h-software-engineering-beng"]);
     expect(loaded.slots).toHaveLength(1);
     expect(loaded.slots[0].courses[1].grade).toBe("87");
     // updatedAt was overwritten with a fresh timestamp.
@@ -82,13 +82,13 @@ describe("savePlan + loadPlan", () => {
     // persisting the caller's stale value.
     const stale = {
       ...VALID_PLAN,
-      schemaVersion: 999 as unknown as 1,
+      schemaVersion: 999 as unknown as 3,
     } as LocalPlan;
     expect(savePlan(stale)).toBe(true);
     const raw = store.getItem(PLAN_STORAGE_KEY);
     expect(raw).not.toBeNull();
     if (!raw) return;
-    expect(JSON.parse(raw).schemaVersion).toBe(1);
+    expect(JSON.parse(raw).schemaVersion).toBe(3);
   });
 
   it("dedupes identical course codes within a single slot on save (first wins)", () => {
@@ -139,7 +139,7 @@ describe("loadPlan — broken-backup behavior", () => {
   it("returns null and writes .broken backup when payload is shape-incompatible", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     // Missing required fields entirely.
-    const garbage = JSON.stringify({ schemaVersion: 1, slots: "not an array" });
+    const garbage = JSON.stringify({ schemaVersion: 2, slots: "not an array" });
     store.setItem(PLAN_STORAGE_KEY, garbage);
     expect(loadPlan()).toBeNull();
     expect(store.getItem(PLAN_BROKEN_BACKUP_KEY)).toBe(garbage);

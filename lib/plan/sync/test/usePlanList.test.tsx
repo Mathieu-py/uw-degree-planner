@@ -31,8 +31,8 @@ function mkSummary(overrides: Partial<PlanSummary> = {}): PlanSummary {
   return {
     id: "p1",
     name: "Plan one",
-    programId: "h-cs",
-    specializationId: null,
+    programIds: ["h-cs"],
+    specializationIds: {},
     stream: "regular",
     startTermId: 1239,
     shareToken: null,
@@ -226,8 +226,8 @@ describe("usePlanList — duplicate", () => {
         mkSummary({
           id: "src",
           name: "Original",
-          programId: "h-cs",
-          specializationId: "ai",
+          programIds: ["h-cs"],
+          specializationIds: { "h-cs": "ai" },
           stream: "stream8",
           startTermId: 1239,
         }),
@@ -251,8 +251,8 @@ describe("usePlanList — duplicate", () => {
       expect.objectContaining({
         id: "copy-1",
         name: "Original (copy)",
-        programId: "h-cs",
-        specializationId: "ai",
+        programIds: ["h-cs"],
+        specializationIds: { "h-cs": "ai" },
         stream: "stream8",
         startTermId: 1239,
       }),

@@ -7,7 +7,26 @@ import {
   type ProgramDetail,
   resolveSpecSlug,
   type SpecializationRef,
+  stripSubjectCodeSuffix,
 } from "../scrape-programs";
+
+describe("stripSubjectCodeSuffix", () => {
+  it("strips a trailing subject-code parenthetical", () => {
+    expect(stripSubjectCodeSuffix("Applied Mathematics (AMATH)")).toBe(
+      "Applied Mathematics",
+    );
+  });
+
+  it("returns the trimmed description unchanged when there's no parenthetical", () => {
+    expect(stripSubjectCodeSuffix("  Statistics  ")).toBe("Statistics");
+  });
+
+  it("only strips the trailing parenthetical, not an interior one", () => {
+    expect(stripSubjectCodeSuffix("French (Studies) (FR)")).toBe(
+      "French (Studies)",
+    );
+  });
+});
 
 const fakeDetail = (overrides: Partial<ProgramDetail> = {}): ProgramDetail => ({
   pid: "spec-pid",

@@ -1,31 +1,23 @@
 import { z } from "zod";
 import { logWarn } from "@/lib/log";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
-import { type LocalPlan, PLAN_SCHEMA_VERSION } from "./types";
+import { type LocalPlan, PLAN_SCHEMA_VERSION, SLOT_POSITIONS } from "./types";
 
+// Stable namespace for the single persisted plan slot. The `.v1` is the
+// storage-slot *name*, not the schema version — shape versioning lives in the
+// `schemaVersion` field. Renaming this key would orphan every user's plan, so
+// it stays put across schema bumps.
 export const PLAN_STORAGE_KEY = "uwfinder.plan.v1";
-/** Sibling key where unreadable plans get parked so we can build a migrator. */
+/**
+ * Sibling key where an unreadable / wrong-`schemaVersion` plan is parked before
+ * the user starts fresh. Kept for debugging only — there is intentionally no
+ * legacy migrator (old shapes are not upgraded).
+ */
 export const PLAN_BROKEN_BACKUP_KEY = `${PLAN_STORAGE_KEY}.broken`;
 
 const StreamSchema = z.enum(["regular", "stream4", "stream8"]);
 
-const SlotPositionSchema = z.enum([
-  "1A",
-  "1B",
-  "2A",
-  "2B",
-  "3A",
-  "3B",
-  "4A",
-  "4B",
-  "coop1",
-  "coop2",
-  "coop3",
-  "coop4",
-  "coop5",
-  "coop6",
-  "pre",
-]);
+const SlotPositionSchema = z.enum(SLOT_POSITIONS);
 
 const SlotCourseSchema = z.object({
   code: z.string(),
@@ -42,8 +34,8 @@ const PlanSlotSchema = z.object({
 
 const LocalPlanSchema = z.object({
   schemaVersion: z.literal(PLAN_SCHEMA_VERSION),
-  programId: z.string().nullable(),
-  specializationId: z.string().nullable(),
+  programIds: z.array(z.string()),
+  specializationIds: z.record(z.string(), z.string()),
   stream: StreamSchema,
   startTermId: z.number().nullable(),
   slots: z.array(PlanSlotSchema),
@@ -53,8 +45,9 @@ const LocalPlanSchema = z.object({
 /**
  * Read a `LocalPlan` from localStorage. Returns `null` when nothing is stored
  * or the value can't be parsed (malformed JSON, shape drift, wrong
- * `schemaVersion`). On failure the raw blob is stashed under `<key>.broken` so
- * future code can build a migrator before the user loses data.
+ * `schemaVersion`) — the caller then starts a fresh plan. The raw blob is
+ * parked under `<key>.broken` for debugging; older shapes are intentionally
+ * not migrated.
  */
 export function loadPlan(): LocalPlan | null {
   const raw = safeGetItem(PLAN_STORAGE_KEY);
@@ -111,8 +104,8 @@ export function clearPlan(): void {
 export function emptyPlan(): LocalPlan {
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    programId: null,
-    specializationId: null,
+    programIds: [],
+    specializationIds: {},
     stream: "regular",
     startTermId: null,
     slots: [],
