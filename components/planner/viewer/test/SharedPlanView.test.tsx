@@ -180,6 +180,6 @@ describe("SharedPlanView", () => {
         expect.anything(),
       );
     });
-    expect(routerPushMock).toHaveBeenCalledWith("/plan?planId=new-plan-id");
+    expect(routerPushMock).toHaveBeenCalledWith("/plan/new-plan-id");
   });
 });

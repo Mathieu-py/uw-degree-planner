@@ -3,13 +3,12 @@ import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramOption } from "../PlannerShell";
 
-const { routerReplaceMock, searchParamsRef } = vi.hoisted(() => ({
+const { routerReplaceMock } = vi.hoisted(() => ({
   routerReplaceMock: vi.fn(),
-  searchParamsRef: { current: new URLSearchParams() },
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: routerReplaceMock }),
-  useSearchParams: () => searchParamsRef.current,
+  useParams: () => ({}),
 }));
 
 const { usePlanSyncMock } = vi.hoisted(() => {
@@ -67,7 +66,6 @@ const PROGRAM_OPTIONS: ProgramOption[] = [
 
 beforeEach(() => {
   vi.clearAllMocks();
-  searchParamsRef.current = new URLSearchParams();
 });
 
 afterEach(() => {
@@ -81,6 +79,7 @@ describe("PlannerShell — demo first-run routing", () => {
     // ?planId should be redirected there.
     render(
       <PlannerShell
+        planId={null}
         programOptions={PROGRAM_OPTIONS}
         specializationsByProgram={{}}
         catalog={[]}

@@ -33,7 +33,7 @@ export function usePlannerRedirect({
         router.replace("/plan/new");
         return;
       }
-      router.replace(`/plan?planId=${plans[0].id}`);
+      router.replace(`/plan/${plans[0].id}`);
       return;
     }
     // Signed out: redirect to the create flow only once we know there's no

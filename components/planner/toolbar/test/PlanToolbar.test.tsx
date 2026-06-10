@@ -9,16 +9,14 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanSummary } from "@/lib/plan/server/types";
 
-const { routerReplaceMock, routerPushMock, searchParamsRef } = vi.hoisted(
-  () => ({
-    routerReplaceMock: vi.fn(),
-    routerPushMock: vi.fn(),
-    searchParamsRef: { current: new URLSearchParams() },
-  }),
-);
+const { routerReplaceMock, routerPushMock, paramsRef } = vi.hoisted(() => ({
+  routerReplaceMock: vi.fn(),
+  routerPushMock: vi.fn(),
+  paramsRef: { current: {} as { planId?: string } },
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: routerReplaceMock, push: routerPushMock }),
-  useSearchParams: () => searchParamsRef.current,
+  useParams: () => paramsRef.current,
 }));
 
 const { usePlanListMock } = vi.hoisted(() => ({
@@ -54,9 +52,9 @@ function mount(opts: {
   share?: ReturnType<typeof vi.fn>;
   isAuthed?: boolean;
 }) {
-  searchParamsRef.current = new URLSearchParams(
-    opts.currentPlanId ? `planId=${opts.currentPlanId}` : "",
-  );
+  paramsRef.current = opts.currentPlanId
+    ? { planId: opts.currentPlanId }
+    : {};
   // Preserve a caller-passed `null` (loading state); only fall back to []
   // when the caller didn't specify plans at all.
   const plans = "plans" in opts ? opts.plans : [];
@@ -77,7 +75,7 @@ function mount(opts: {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  searchParamsRef.current = new URLSearchParams();
+  paramsRef.current = {};
 });
 
 afterEach(() => {
@@ -158,7 +156,7 @@ describe("PlanToolbar — list + switch", () => {
     await act(async () => {
       fireEvent.click(planBOption);
     });
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan?planId=b");
+    expect(routerReplaceMock).toHaveBeenCalledWith("/plan/b");
   });
 });
 
@@ -220,10 +218,10 @@ describe("PlanToolbar — delete", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     });
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan?planId=b");
+    expect(routerReplaceMock).toHaveBeenCalledWith("/plan/b");
   });
 
-  it("strips ?planId when the last plan is deleted", async () => {
+  it("routes to bare /plan when the last plan is deleted", async () => {
     const removeMock = vi.fn().mockResolvedValue(true);
     mount({
       plans: [mkSummary({ id: "a", name: "Only" })],
@@ -255,7 +253,7 @@ describe("PlanToolbar — duplicate", () => {
       fireEvent.click(screen.getByRole("button", { name: /duplicate/i }));
     });
     expect(duplicateMock).toHaveBeenCalledWith("a");
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan?planId=copy-1");
+    expect(routerReplaceMock).toHaveBeenCalledWith("/plan/copy-1");
   });
 
   it("does not navigate when duplicate fails (returns null)", async () => {

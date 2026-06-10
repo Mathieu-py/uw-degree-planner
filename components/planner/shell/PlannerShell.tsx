@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useDeferredValue,
@@ -46,6 +46,8 @@ import { usePlannerRedirect } from "./usePlannerRedirect";
 export type { ProgramOption };
 
 interface Props {
+  /** Active plan id from the `/plan/[planId]` route param; null at bare `/plan`. */
+  planId: string | null;
   programOptions: ProgramOption[];
   specializationsByProgram: Record<
     string,
@@ -57,8 +59,8 @@ interface Props {
 /**
  * Client root for the planner. Branches on auth: signed-out plans live in
  * localStorage (usePlanSync's local path); signed-in plans live on Supabase,
- * keyed by `?planId=uuid`. The mutation surface is identical across both —
- * usePlanSync routes the writes.
+ * keyed by the `/plan/[planId]` route param. The mutation surface is identical
+ * across both — usePlanSync routes the writes.
  *
  * Mounting the inner shell is gated on `ready` from the auth store: without it,
  * a returning user briefly renders the anon branch (and stale local plan)
@@ -79,14 +81,13 @@ interface InnerProps extends Props {
 }
 
 function PlannerShellInner({
+  planId,
   programOptions,
   specializationsByProgram,
   catalog,
   isAuthed,
 }: InnerProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const planId = searchParams.get("planId");
 
   const {
     plan,
@@ -108,7 +109,7 @@ function PlannerShellInner({
     isAuthed,
     createPlanWithSeed: create,
     onImported: (newPlanId) => {
-      router.replace(`/plan?planId=${newPlanId}`);
+      router.replace(`/plan/${newPlanId}`);
       setImportBanner("Plan imported to your account.");
     },
   });

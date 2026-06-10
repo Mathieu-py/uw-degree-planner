@@ -68,7 +68,7 @@ export function usePlanEditors({
       if (isAuthed && planId === null) {
         const newId = await create(name, toSnapshot(next));
         if (!newId) return false;
-        router.replace(`/plan?planId=${newId}`);
+        router.replace(`/plan/${newId}`);
         return true;
       }
       setPlan(next);

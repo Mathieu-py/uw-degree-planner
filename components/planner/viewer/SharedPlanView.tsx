@@ -87,7 +87,7 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
           slots: snapshot.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
         };
         const id = await create(`${plan.name} (copy)`, fresh);
-        if (id) router.push(`/plan?planId=${id}`);
+        if (id) router.push(`/plan/${id}`);
         else setBusy(false);
       } else {
         savePlan({

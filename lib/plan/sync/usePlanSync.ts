@@ -14,7 +14,7 @@ const SAVED_DECAY_MS = 3000;
 
 export interface UsePlanSyncArgs {
   isAuthed: boolean;
-  /** From `useSearchParams().get("planId")`. Null = no plan selected. */
+  /** From the `/plan/[planId]` route param. Null = no plan selected. */
   planId: string | null;
 }
 

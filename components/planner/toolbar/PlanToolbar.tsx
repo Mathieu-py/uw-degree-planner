@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   type FormEvent,
   type ReactNode,
@@ -84,8 +84,11 @@ function PlanToolbarAuthed({
   extraItems?: MenuItem[];
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentPlanId = searchParams.get("planId");
+  // Active plan id from the `/plan/[planId]` route param; undefined at bare
+  // `/plan`. Normalized to null so the `=== currentPlanId` checks below match
+  // the old `searchParams.get()` shape.
+  const { planId: routePlanId } = useParams<{ planId?: string }>();
+  const currentPlanId = routePlanId ?? null;
   const { plans, rename, remove, duplicate, share } = usePlanList({
     isAuthed: true,
   });
@@ -151,13 +154,9 @@ function PlanToolbarAuthed({
 
   const navigateToPlan = useCallback(
     (planId: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (planId) params.set("planId", planId);
-      else params.delete("planId");
-      const query = params.toString();
-      router.replace(query ? `/plan?${query}` : "/plan");
+      router.replace(planId ? `/plan/${planId}` : "/plan");
     },
-    [router, searchParams],
+    [router],
   );
 
   function handleSwitch(planId: string) {
