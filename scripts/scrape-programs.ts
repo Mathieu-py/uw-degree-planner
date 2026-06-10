@@ -29,6 +29,7 @@ import {
   type Specialization,
   validatePrograms,
 } from "../lib/programs";
+import { resolveDegreeTotalUnits } from "./scrape/degreeTotal";
 import { deriveNumberOfTerms } from "./scrape/termSpan";
 import { applyRuleOverrides } from "./scrape-programs.overrides";
 import {
@@ -539,21 +540,19 @@ function attachDegreeRequirements(
     const degree: DegreeRequirements = parsed.degree;
     program.degreeRequirements = degree;
 
-    // Propagate the degree-page total to a program that doesn't state its own
-    // (e.g. Math majors whose total lives only on the degree page). Pick the
-    // total matching the program's degree type — three-year (`3g-`), four-year
-    // (`4g-`), and honours can each differ (15.0 vs 20.0 vs 20.0).
-    const degreeTotal = /^3g-/.test(slug)
-      ? (parsed.generalTotal ?? parsed.honoursTotal)
-      : /^4g-/.test(slug)
-        ? (parsed.fourYearTotal ?? parsed.generalTotal ?? parsed.honoursTotal)
-        : parsed.honoursTotal;
-    // The degree-level total is a faculty minimum; adopt it as the program's
-    // total only when the program doesn't already state its own.
-    if (degreeTotal != null && program.unitPlan?.totalUnits == null) {
+    // Propagate the degree-page total to a program that states none of its own
+    // (e.g. Math majors), or that states a major *subtotal* shadowing the real
+    // whole-degree total (e.g. `h-sociology` lists 8.0 while the BA is 20.0).
+    const newTotal = resolveDegreeTotalUnits(
+      slug,
+      program.name,
+      program.unitPlan?.totalUnits,
+      parsed,
+    );
+    if (newTotal != null) {
       program.unitPlan = {
         ...(program.unitPlan ?? {}),
-        totalUnits: degreeTotal,
+        totalUnits: newTotal,
       };
     }
     attached++;
