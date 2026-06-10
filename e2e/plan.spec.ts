@@ -119,10 +119,10 @@ test("double degree — both programs show, removing one prunes it, and the sele
   await expect(removeButtons).toHaveCount(2);
 
   // Remember the program we keep (chip 2) so we can confirm it survives the
-  // reload. The remove button's accessible name is `Remove <program name>`.
-  const keptLabel = await removeButtons.nth(1).getAttribute("aria-label");
-  const keptName = (keptLabel ?? "").replace(/^Remove /, "");
-  expect(keptName.length).toBeGreaterThan(0);
+  // reload. Read the stable `data-program-id` rather than parsing the
+  // human-readable aria-label.
+  const keptId = await removeButtons.nth(1).getAttribute("data-program-id");
+  expect(keptId).toBeTruthy();
 
   // Remove the primary program; the staged chip count drops to one and its
   // specialization is pruned (patchPrograms drops keys not in the new list).
@@ -144,7 +144,7 @@ test("double degree — both programs show, removing one prunes it, and the sele
     1,
   );
   await expect(
-    reopened.getByRole("button", { name: `Remove ${keptName}` }),
+    reopened.locator(`button[data-program-id="${keptId}"]`),
   ).toBeVisible();
 });
 

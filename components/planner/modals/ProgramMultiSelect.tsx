@@ -70,6 +70,7 @@ export function ProgramMultiSelect({
                   type="button"
                   onClick={() => remove(id)}
                   aria-label={`Remove ${name}`}
+                  data-program-id={id}
                   className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-danger-soft hover:text-danger"
                 >
                   <Icon name="close" size="xs" />

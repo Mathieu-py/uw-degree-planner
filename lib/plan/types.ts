@@ -15,7 +15,15 @@ export const PLAN_SCHEMA_VERSION = 3;
  * - "stream4": a work term between every academic term through 3B.
  * - "stream8": six work terms, two back-to-back before 4A.
  */
-export type Stream = "regular" | "stream4" | "stream8";
+/**
+ * The stream slugs as a runtime tuple — single source of truth shared by the
+ * `Stream` type (derived below) and the zod `z.enum(...)` validators in
+ * `lib/plan/storage.ts` and `lib/plan/server/validate.ts`, so the compile-time
+ * union and the runtime enum can't drift apart.
+ */
+export const STREAM_VALUES = ["regular", "stream4", "stream8"] as const;
+
+export type Stream = (typeof STREAM_VALUES)[number];
 
 /**
  * The three streams as `{ value, label }`, ordered for display. Shared by the
