@@ -122,7 +122,7 @@ export function DashboardView({
     markPending(id, true);
     try {
       const newId = await duplicate(id);
-      if (newId) router.push(`/plan?planId=${newId}`);
+      if (newId) router.push(`/plan/${newId}`);
     } finally {
       markPending(id, false);
     }
@@ -252,7 +252,7 @@ function PlanCard({
       <div className="min-w-0 flex-1 flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <Link
-            href={`/plan?planId=${plan.id}`}
+            href={`/plan/${plan.id}`}
             className="u-h3 text-[16px] truncate hover:text-accent"
           >
             {plan.name}
@@ -282,7 +282,7 @@ function PlanCard({
         ) : (
           <>
             <Link
-              href={`/plan?planId=${plan.id}`}
+              href={`/plan/${plan.id}`}
               className="inline-flex h-[34px] items-center rounded-[8px] bg-primary px-3 text-[13px] font-semibold text-primary-ink hover:bg-primary-hover"
             >
               Open

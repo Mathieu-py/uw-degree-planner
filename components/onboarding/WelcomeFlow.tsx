@@ -156,7 +156,7 @@ export function WelcomeFlow({
       if (isAuthed) {
         const id = await create(NEW_PLAN_NAME, toSnapshot(draftPlan));
         if (id) {
-          router.push(`/plan?planId=${id}`);
+          router.push(`/plan/${id}`);
         } else {
           setBuildError("Couldn't save your plan. Please try again.");
           setBusy(false);

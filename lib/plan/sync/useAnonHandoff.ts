@@ -24,7 +24,7 @@ export interface UseAnonHandoffArgs {
   ) => Promise<string | null>;
   /**
    * Called after a successful import (silent or via the modal). The caller
-   * navigates to `?planId=newId` and shows the toast.
+   * navigates to `/plan/<newId>` and shows the toast.
    */
   onImported: (newPlanId: string) => void;
 }

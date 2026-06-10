@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AddInPlannerButton } from "@/components/course/AddInPlannerButton";
 import { Icon } from "@/components/ui/Icon";
 import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
 import { countNoun, formatCourseCode, formatPercent } from "@/lib/format";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
-import { AddInPlannerButton } from "./AddInPlannerButton";
 
-interface PageParams {
-  code: string;
-}
-
-export async function generateMetadata(props: { params: Promise<PageParams> }) {
+export async function generateMetadata(props: {
+  params: Promise<{ code: string }>;
+}) {
   const { code } = await props.params;
   const course = await loadCourseByCode(TERM, code);
   if (!course) return { title: "Course not found" };
@@ -23,7 +21,7 @@ export async function generateMetadata(props: { params: Promise<PageParams> }) {
 }
 
 export default async function CoursePage(props: {
-  params: Promise<PageParams>;
+  params: Promise<{ code: string }>;
   searchParams: Promise<{ from?: string; planId?: string }>;
 }) {
   const { code } = await props.params;
@@ -34,7 +32,7 @@ export default async function CoursePage(props: {
   // Return to the exact plan the user came from when one was passed; otherwise
   // fall back to the generic planner (signed-out local plan, or direct visit).
   const backToPlannerHref = planId
-    ? `/plan?planId=${encodeURIComponent(planId)}`
+    ? `/plan/${encodeURIComponent(planId)}`
     : "/plan";
 
   const rating = course.rating;

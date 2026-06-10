@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   type FormEvent,
   type ReactNode,
@@ -20,6 +20,12 @@ import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
 interface Props {
   /** Anon users get no bar — they have a single local plan. */
   isAuthed: boolean;
+  /**
+   * Active plan id from the `/plan/[planId]` route param; null at bare `/plan`.
+   * Threaded from PlannerShell (which gets it server-side) rather than read from
+   * the router here, so the toolbar and the shell share one source of truth.
+   */
+  planId: string | null;
   /**
    * Inline flex content (no border/bg) to sit in the toolbar's left group, vs.
    * a self-contained bordered card for branches without a toolbar (EmptyState,
@@ -55,6 +61,7 @@ function focusOnMount(el: HTMLInputElement | null) {
  */
 export function PlanToolbar({
   isAuthed,
+  planId,
   inline = false,
   children,
   trailing,
@@ -63,6 +70,7 @@ export function PlanToolbar({
   if (!isAuthed) return null;
   return (
     <PlanToolbarAuthed
+      currentPlanId={planId}
       inline={inline}
       trailing={trailing}
       extraItems={extraItems}
@@ -73,19 +81,19 @@ export function PlanToolbar({
 }
 
 function PlanToolbarAuthed({
+  currentPlanId,
   inline,
   children,
   trailing,
   extraItems,
 }: {
+  currentPlanId: string | null;
   inline: boolean;
   children?: ReactNode;
   trailing?: ReactNode;
   extraItems?: MenuItem[];
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentPlanId = searchParams.get("planId");
   const { plans, rename, remove, duplicate, share } = usePlanList({
     isAuthed: true,
   });
@@ -151,13 +159,9 @@ function PlanToolbarAuthed({
 
   const navigateToPlan = useCallback(
     (planId: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (planId) params.set("planId", planId);
-      else params.delete("planId");
-      const query = params.toString();
-      router.replace(query ? `/plan?${query}` : "/plan");
+      router.replace(planId ? `/plan/${planId}` : "/plan");
     },
-    [router, searchParams],
+    [router],
   );
 
   function handleSwitch(planId: string) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useDeferredValue,
@@ -46,6 +46,8 @@ import { usePlannerRedirect } from "./usePlannerRedirect";
 export type { ProgramOption };
 
 interface Props {
+  /** Active plan id from the `/plan/[planId]` route param; null at bare `/plan`. */
+  planId: string | null;
   programOptions: ProgramOption[];
   specializationsByProgram: Record<
     string,
@@ -57,8 +59,8 @@ interface Props {
 /**
  * Client root for the planner. Branches on auth: signed-out plans live in
  * localStorage (usePlanSync's local path); signed-in plans live on Supabase,
- * keyed by `?planId=uuid`. The mutation surface is identical across both —
- * usePlanSync routes the writes.
+ * keyed by the `/plan/[planId]` route param. The mutation surface is identical
+ * across both — usePlanSync routes the writes.
  *
  * Mounting the inner shell is gated on `ready` from the auth store: without it,
  * a returning user briefly renders the anon branch (and stale local plan)
@@ -79,14 +81,13 @@ interface InnerProps extends Props {
 }
 
 function PlannerShellInner({
+  planId,
   programOptions,
   specializationsByProgram,
   catalog,
   isAuthed,
 }: InnerProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const planId = searchParams.get("planId");
 
   const {
     plan,
@@ -108,7 +109,7 @@ function PlannerShellInner({
     isAuthed,
     createPlanWithSeed: create,
     onImported: (newPlanId) => {
-      router.replace(`/plan?planId=${newPlanId}`);
+      router.replace(`/plan/${newPlanId}`);
       setImportBanner("Plan imported to your account.");
     },
   });
@@ -288,6 +289,7 @@ function PlannerShellInner({
     return (
       <PlannerLayout
         isAuthed={isAuthed}
+        planId={planId}
         toolbar={null}
         overlays={handoffElement}
       >
@@ -307,7 +309,11 @@ function PlannerShellInner({
 
   if (planLoadFailed) {
     return (
-      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+      <PlannerLayout
+        isAuthed={isAuthed}
+        planId={planId}
+        overlays={handoffElement}
+      >
         <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
           <p className="font-medium">We couldn't load this plan.</p>
           <p className="mt-1 text-xs opacity-80">{loadError}</p>
@@ -321,7 +327,11 @@ function PlannerShellInner({
 
   if (planNotFound) {
     return (
-      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+      <PlannerLayout
+        isAuthed={isAuthed}
+        planId={planId}
+        overlays={handoffElement}
+      >
         <div className="rounded-[10px] border border-partial bg-partial-soft px-4 py-6 text-sm text-ink">
           <p>
             We couldn't find a plan with that id. Pick a different plan from the
@@ -336,7 +346,11 @@ function PlannerShellInner({
   // recent plan). Render a skeleton so the planner never flashes empty.
   if (!plan) {
     return (
-      <PlannerLayout isAuthed={isAuthed} overlays={handoffElement}>
+      <PlannerLayout
+        isAuthed={isAuthed}
+        planId={planId}
+        overlays={handoffElement}
+      >
         <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
       </PlannerLayout>
     );
@@ -358,6 +372,7 @@ function PlannerShellInner({
   return (
     <PlannerLayout
       isAuthed={isAuthed}
+      planId={planId}
       // null suppresses the fallback PlanToolbar — the loaded branch handles its
       // own header inside the layout below so the audit panel aligns to the top.
       toolbar={null}
@@ -467,6 +482,7 @@ function PlannerShellInner({
         {isAuthed ? (
           <PlanToolbar
             isAuthed
+            planId={planId}
             inline
             extraItems={[
               {
@@ -573,11 +589,14 @@ function PlannerShellInner({
  */
 function PlannerLayout({
   isAuthed,
+  planId,
   children,
   toolbar,
   overlays,
 }: {
   isAuthed: boolean;
+  /** Current route plan id, forwarded to the fallback toolbar's switcher. */
+  planId: string | null;
   children: React.ReactNode;
   /**
    * `undefined` → render the fallback standalone PlanToolbar above content
@@ -592,7 +611,11 @@ function PlannerLayout({
     <>
       <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
         {!isAuthed ? <DemoModeBanner /> : null}
-        {toolbar === undefined ? <PlanToolbar isAuthed={isAuthed} /> : toolbar}
+        {toolbar === undefined ? (
+          <PlanToolbar isAuthed={isAuthed} planId={planId} />
+        ) : (
+          toolbar
+        )}
         <div className="flex flex-col gap-5 lg:flex-1 lg:min-h-0">
           {children}
         </div>

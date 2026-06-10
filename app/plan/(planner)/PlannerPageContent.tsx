@@ -1,15 +1,23 @@
-import { Suspense } from "react";
 import { PlannerShell } from "@/components/planner/shell/PlannerShell";
-import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { loadTerm } from "@/lib/courses/data";
 import { getProgramOptions, PROGRAMS } from "@/lib/programs";
 import { PINNED_TERM } from "@/lib/terms";
 
-export const metadata = {
-  title: "Plan your degree",
-};
-
-export default async function PlanPage() {
+/**
+ * Server-rendered planner body, shared by bare `/plan` (no id → local plan or
+ * redirect) and `/plan/[planId]` (server-resolved route param). The active plan
+ * is a path segment, so no `useSearchParams` / `Suspense` boundary is needed —
+ * `planId` threads straight through as a prop. The page wrapper lives in the
+ * route-group layout.
+ *
+ * Lives in its own module (not a `page.tsx`) so both route entry points import
+ * it without one page depending on another page's internals.
+ */
+export async function PlannerPageContent({
+  planId,
+}: {
+  planId: string | null;
+}) {
   // Sorted program list passed to the client so it doesn't re-ship
   // programs.json. The (id, name, kind) digest is all the UI needs pre-picker.
   const programOptions = getProgramOptions();
@@ -33,16 +41,11 @@ export default async function PlanPage() {
   const catalog = await loadTerm(PINNED_TERM);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 lg:pb-0 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
-      {/* Next 16 requires a Suspense boundary around any useSearchParams subtree
-          (PlannerShell reads `?planId=…`), else the route goes CSR-only. */}
-      <Suspense fallback={<PlannerSkeleton />}>
-        <PlannerShell
-          programOptions={programOptions}
-          specializationsByProgram={specializationsByProgram}
-          catalog={catalog}
-        />
-      </Suspense>
-    </div>
+    <PlannerShell
+      planId={planId}
+      programOptions={programOptions}
+      specializationsByProgram={specializationsByProgram}
+      catalog={catalog}
+    />
   );
 }

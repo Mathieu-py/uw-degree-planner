@@ -3,8 +3,9 @@ import { Skeleton } from "@/components/ui/Skeleton";
 /**
  * Loading placeholder shaped like the loaded planner: a full-width header row,
  * a wrapping grid of term cards (label + a few slot bars each), and the sticky
- * audit panel on the side. Used by `app/plan/loading.tsx` and the in-page
- * Suspense fallback so the layout doesn't jump when real data arrives.
+ * audit panel on the side. Rendered by the planner route's
+ * `app/plan/(planner)/loading.tsx` so the layout doesn't jump when real data
+ * arrives.
  */
 export function PlannerSkeleton() {
   return (
