@@ -36,6 +36,21 @@ export type CatalogCourse = Omit<UWFlowCourse, "description"> & {
    * unknown — the audit counts the course rather than misreport units.
    */
   units?: number;
+  /**
+   * Cross-listed equivalents — the same course offered under another code, from
+   * Kuali's authoritative `crossListedCourses` field (lowercased codes). UW's
+   * source for course equivalence: a student who took one member has effectively
+   * taken the others (GitHub #21). `undefined`/absent when the course has none.
+   */
+  crossListed?: string[];
+  /**
+   * Antirequisite course codes from Kuali's structured `antirequisites` rule
+   * tree (lowercased) — the authoritative replacement for parsing UWFlow's
+   * free-text `antireqs`. When present, the validator/eligibility prefer this
+   * over the regex (see `resolveAntireqCodes`). `undefined` when Kuali has no
+   * structured antireqs for the course → callers fall back to the prose.
+   */
+  antireqCodes?: string[];
 };
 
 /** Course enriched with derived fields used by filters and UI. */

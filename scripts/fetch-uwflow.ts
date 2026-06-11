@@ -19,6 +19,7 @@ import {
   validateDescriptionsFile,
 } from "../lib/courses/validation";
 import { PINNED_TERM } from "../lib/terms";
+import { parseKualiAntireqCodes } from "./scrape/kualiRequisites";
 import { discoverCatalogId } from "./scrape-programs";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
@@ -87,8 +88,37 @@ async function fetchTerm(termId: number): Promise<FetchedCourse[]> {
   return json.data.course;
 }
 
-/** Fetch per-course unit weights keyed by lowercased course code from Kuali. */
-async function fetchKualiUnits(): Promise<Record<string, number>> {
+/** Normalize a Kuali course code ("AMATH 242" → "amath242"); null on empty. */
+function normalizeKualiCode(raw: string | undefined | null): string | null {
+  const code = raw?.replace(/\s+/g, "").toLowerCase();
+  return code && code.length > 0 ? code : null;
+}
+
+/** Authoritative per-course data Kuali supplies that UWFlow lacks. */
+interface KualiCourseData {
+  /** Unit weight: 0.5 standard, 0.25 lab, 1.0+ full-year. Undefined if unknown. */
+  units?: number;
+  /**
+   * Cross-listed equivalents — the same course offered under another code
+   * (Kuali's structured `crossListedCourses`). Authoritative source for course
+   * equivalence (GitHub #21). Lowercased codes; omitted when there are none.
+   */
+  crossListed?: string[];
+  /**
+   * Antirequisite course codes, parsed from Kuali's structured `antirequisites`
+   * rule tree (GitHub #21). Authoritative replacement for the regex over UWFlow's
+   * free-text antireqs. Lowercased; omitted when there are none.
+   */
+  antireqCodes?: string[];
+}
+
+/**
+ * Fetch authoritative per-course data from UW's Kuali catalog, keyed by
+ * lowercased course code. One list call for codes+pids, then a detail call per
+ * course. The detail object also carries unit weight (`credits.value`) and the
+ * structured `crossListedCourses` equivalence list.
+ */
+async function fetchKualiData(): Promise<Record<string, KualiCourseData>> {
   const getJson = async <T>(url: string): Promise<T> => {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -107,48 +137,70 @@ async function fetchKualiUnits(): Promise<Record<string, number>> {
     Array<{ __catalogCourseId?: string; pid: string }>
   >(`${KUALI_BASE}/courses/${catalogId}`);
 
-  const units: Record<string, number> = {};
+  const data: Record<string, KualiCourseData> = {};
   let next = 0;
   const worker = async () => {
     while (true) {
       const i = next++;
       if (i >= list.length) return;
       const entry = list[i];
-      const code = entry.__catalogCourseId?.replace(/\s+/g, "").toLowerCase();
+      const code = normalizeKualiCode(entry.__catalogCourseId);
       if (!code) continue;
       try {
-        const detail = await getJson<{ credits?: { value?: string } | null }>(
+        const detail = await getJson<{
+          credits?: { value?: string } | null;
+          crossListedCourses?: Array<{ __catalogCourseId?: string }> | null;
+          antirequisites?: string | null;
+        }>(
           `${KUALI_BASE}/course/${catalogId}/${encodeURIComponent(entry.pid)}`,
         );
+        const record: KualiCourseData = {};
         const value = Number(detail.credits?.value);
-        if (Number.isFinite(value)) units[code] = value;
+        if (Number.isFinite(value)) record.units = value;
+        const crossListed = (detail.crossListedCourses ?? [])
+          .map((x) => normalizeKualiCode(x.__catalogCourseId))
+          .filter((c): c is string => c !== null && c !== code);
+        if (crossListed.length > 0)
+          record.crossListed = [...new Set(crossListed)];
+        const antireqCodes = parseKualiAntireqCodes(
+          detail.antirequisites,
+        ).filter((a) => a !== code);
+        if (antireqCodes.length > 0) record.antireqCodes = antireqCodes;
+        if (record.units != null || record.crossListed || record.antireqCodes)
+          data[code] = record;
       } catch {
-        // skip; the course loads without a weight (audit counts it)
+        // skip; the course loads without Kuali enrichment (audit still counts it)
       }
     }
   };
   await Promise.all(
     Array.from({ length: Math.min(UNITS_CONCURRENCY, list.length) }, worker),
   );
-  return units;
+  return data;
 }
 
 async function writeSnapshot(
   termId: number,
   courses: FetchedCourse[],
-  units: Record<string, number>,
+  kuali: Record<string, KualiCourseData>,
 ) {
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
   const fetchedAt = new Date().toISOString();
 
   // Split each fetched course into the lean catalog record and the keyed
-  // description, then write them to sibling files.
+  // description, then write them to sibling files. Kuali enrichment (units,
+  // cross-listings) is joined by lowercased code.
   const lean: CatalogCourse[] = [];
   const descriptions: Record<string, string> = {};
   for (const { description, ...rest } of courses) {
-    const u = units[rest.code];
-    lean.push(u != null ? { ...rest, units: u } : rest);
+    const enrich = kuali[rest.code];
+    lean.push({
+      ...rest,
+      ...(enrich?.units != null ? { units: enrich.units } : {}),
+      ...(enrich?.crossListed ? { crossListed: enrich.crossListed } : {}),
+      ...(enrich?.antireqCodes ? { antireqCodes: enrich.antireqCodes } : {}),
+    });
     if (description && description.trim() !== "") {
       descriptions[rest.code] = description;
     }
@@ -186,9 +238,20 @@ async function main() {
   const args = process.argv.slice(2);
   const terms =
     args.length > 0 ? args.map((a) => parseInt(a, 10)) : [PINNED_TERM];
-  process.stdout.write("Fetching unit weights from Kuali... ");
-  const units = await fetchKualiUnits();
-  console.log(`${Object.keys(units).length} courses`);
+  process.stdout.write("Fetching course data from Kuali... ");
+  const kuali = await fetchKualiData();
+  const withUnitsTotal = Object.values(kuali).filter(
+    (k) => k.units != null,
+  ).length;
+  const withCrossListed = Object.values(kuali).filter(
+    (k) => k.crossListed,
+  ).length;
+  const withAntireqs = Object.values(kuali).filter(
+    (k) => k.antireqCodes,
+  ).length;
+  console.log(
+    `${Object.keys(kuali).length} courses (${withUnitsTotal} with units, ${withCrossListed} cross-listed, ${withAntireqs} with antireqs)`,
+  );
 
   for (const term of terms) {
     if (!Number.isInteger(term)) {
@@ -201,9 +264,11 @@ async function main() {
     const { coursesPath, descriptionsPath } = await writeSnapshot(
       term,
       courses,
-      units,
+      kuali,
     );
-    const withUnits = courses.filter((c) => units[c.code] != null).length;
+    const withUnits = courses.filter(
+      (c) => kuali[c.code]?.units != null,
+    ).length;
     console.log(
       `${courses.length} courses (${withUnits} with units) → ${path.relative(process.cwd(), coursesPath)} + ${path.relative(process.cwd(), descriptionsPath)}`,
     );

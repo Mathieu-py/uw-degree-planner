@@ -6,6 +6,7 @@ import {
 } from "@/lib/audit/compile";
 import type { DegreeProgress } from "@/lib/audit/progress";
 import { computeDegreeProgress } from "@/lib/audit/progress";
+import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits } from "@/lib/format";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
@@ -97,6 +98,7 @@ export function buildProgramAudit(
     plan.specializationIds[programId] ?? null,
     legality,
     programId,
+    equivalenceForCatalog(catalogByCode),
   );
   const progress = computeDegreeProgress(audit, program, unitsOf, legality);
   const { macros, unverifiedCount } = deriveMacros(

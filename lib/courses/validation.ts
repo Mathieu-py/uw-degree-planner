@@ -31,6 +31,8 @@ export const CourseSchema = z.object({
   rating: RatingSchema,
   sections: z.array(SectionSchema),
   units: z.number().min(0).max(3).optional(),
+  crossListed: z.array(z.string().min(1)).optional(),
+  antireqCodes: z.array(z.string().min(1)).optional(),
 });
 
 const CoursesFileSchema = z.object({

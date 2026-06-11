@@ -5,12 +5,18 @@ import {
   ACADEMIC_TERM_CAP,
   extractCourseCodes,
   issuesByCourseInSlot,
+  resolveAntireqCodes,
   validatePlan,
 } from "../validate";
 
 function mkCourse(
   code: string,
-  opts: { prereqs?: string; coreqs?: string; antireqs?: string } = {},
+  opts: {
+    prereqs?: string;
+    coreqs?: string;
+    antireqs?: string;
+    antireqCodes?: string[];
+  } = {},
 ): Course {
   return {
     id: 0,
@@ -19,6 +25,7 @@ function mkCourse(
     prereqs: opts.prereqs ?? null,
     coreqs: opts.coreqs ?? null,
     antireqs: opts.antireqs ?? null,
+    ...(opts.antireqCodes ? { antireqCodes: opts.antireqCodes } : {}),
     rating: null,
     sections: [],
     prefix: code.replace(/\d.*$/, "").toUpperCase(),
@@ -57,6 +64,39 @@ function mkPlan(
     updatedAt: "2026-05-23T12:00:00.000Z",
   };
 }
+
+describe("resolveAntireqCodes", () => {
+  it("prefers structured antireqCodes over the free-text antireqs", () => {
+    const c = mkCourse("cs246", {
+      antireqs: "CS 247", // stale prose
+      antireqCodes: ["cs246e"], // authoritative Kuali
+    });
+    expect(resolveAntireqCodes(c)).toEqual(["cs246e"]);
+  });
+  it("falls back to the prose regex when no structured codes", () => {
+    const c = mkCourse("cs246", { antireqs: "CS 247, CS 248" });
+    expect(resolveAntireqCodes(c)).toEqual(["cs247", "cs248"]);
+  });
+  it("returns [] when the course has neither", () => {
+    expect(resolveAntireqCodes(mkCourse("cs246"))).toEqual([]);
+  });
+});
+
+describe("validatePlan — antireq sourced from Kuali codes", () => {
+  it("flags a conflict from structured antireqCodes even with no prose", () => {
+    const cat = catalog(
+      mkCourse("cs246", { antireqCodes: ["cs246e"] }), // no antireqs string
+      mkCourse("cs246e"),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["cs246", "cs246e"] },
+    ]);
+    const issues = validatePlan(plan, cat);
+    const antireq = issues.filter((i) => i.kind === "antireq");
+    expect(antireq.length).toBeGreaterThan(0);
+    expect(antireq.some((i) => i.conflictsWith?.includes("cs246e"))).toBe(true);
+  });
+});
 
 describe("extractCourseCodes", () => {
   it("pulls codes from comma-separated lists", () => {

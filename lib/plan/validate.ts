@@ -14,6 +14,7 @@
  * Co-op slots are skipped entirely (they hold no courses).
  */
 
+import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { cachedParsePrereqs } from "@/lib/prereqs/cache";
@@ -44,6 +45,7 @@ export function validatePlan(
   catalogByCode: ReadonlyMap<string, Course>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  const equiv = equivalenceForCatalog(catalogByCode);
   const allPlacedCodes = new Set(
     plan.slots.flatMap((s) => s.courses.map((c) => c.code)),
   );
@@ -56,8 +58,8 @@ export function validatePlan(
   const namedAsAntireqBy = new Map<string, Set<string>>();
   for (const code of allPlacedCodes) {
     const data = catalogByCode.get(code);
-    if (!data?.antireqs) continue;
-    for (const named of cachedExtractCourseCodes(data.antireqs)) {
+    if (!data) continue;
+    for (const named of resolveAntireqCodes(data)) {
       if (named === code || !allPlacedCodes.has(named)) continue;
       const set = namedAsAntireqBy.get(named) ?? new Set<string>();
       set.add(code);
@@ -82,8 +84,8 @@ export function validatePlan(
 
     const completedBefore =
       slot.termId !== null
-        ? completedSetFromPlan(plan, slot.termId)
-        : completedSetFromPlan(plan);
+        ? completedSetFromPlan(plan, slot.termId, equiv)
+        : completedSetFromPlan(plan, undefined, equiv);
     const completedBeforeSet = new Set(completedBefore);
     const sameSlotCodes = new Set(slot.courses.map((c) => c.code));
     const coreqContext = new Set<string>([
@@ -114,13 +116,15 @@ export function validatePlan(
 
       // ---- Antireq (symmetric: this course names a placed one, OR a placed
       //      one names this course) ----
-      const forwardAnti = courseData.antireqs
-        ? cachedExtractCourseCodes(courseData.antireqs).filter(
-            (a) => a !== c.code && allPlacedCodes.has(a),
-          )
-        : [];
+      const forwardAnti = resolveAntireqCodes(courseData).filter(
+        (a) => a !== c.code && allPlacedCodes.has(a),
+      );
       const reverseAnti = namedAsAntireqBy.get(c.code);
-      const collisions = [...new Set([...forwardAnti, ...(reverseAnti ?? [])])];
+      // A course never conflicts with its own cross-listed twin — they're the
+      // same course, not two that can't both earn credit (GitHub #21).
+      const collisions = [
+        ...new Set([...forwardAnti, ...(reverseAnti ?? [])]),
+      ].filter((other) => !equiv.areEquivalent(other, c.code));
       if (collisions.length > 0) {
         issues.push({
           slotId: slot.id,
@@ -172,7 +176,7 @@ const extractCache = new Map<string, readonly string[]>();
  * re-checks antireqs for many rows on every picker keystroke, so this avoids
  * re-running the regex over thousands of strings.
  */
-export function cachedExtractCourseCodes(
+function cachedExtractCourseCodes(
   text: string | null | undefined,
 ): readonly string[] {
   const key = text ?? "";
@@ -181,6 +185,19 @@ export function cachedExtractCourseCodes(
   const out = text ? extractCourseCodes(text) : [];
   extractCache.set(key, out);
   return out;
+}
+
+/**
+ * A course's antirequisite codes, preferring Kuali's structured `antireqCodes`
+ * (authoritative) over the regex parse of UWFlow's free-text `antireqs`
+ * (fallback for courses Kuali lacks). The single switch point for antireq
+ * sourcing — both the validator and the eligibility checker route through it.
+ */
+export function resolveAntireqCodes(course: {
+  antireqCodes?: string[];
+  antireqs: string | null;
+}): readonly string[] {
+  return course.antireqCodes ?? cachedExtractCourseCodes(course.antireqs);
 }
 
 /** Group issues by `slotId` for O(1) UI lookup. */

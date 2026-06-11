@@ -9,6 +9,7 @@ import {
   type CourseEligibilityContext,
   evaluateCourseEligibility,
 } from "@/lib/courses/courseEligibility";
+import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import type { Course } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
 import { completedSetFromPlan } from "./derive";
@@ -46,7 +47,8 @@ export function eligibleSlotIdsForCourse(
   referenced: ReadonlySet<string> = new Set(),
 ): Set<string> {
   const course = catalogByCode.get(code) ?? fallbackCourse(code);
-  const placedAnywhere = completedSetFromPlan(plan);
+  const equiv = equivalenceForCatalog(catalogByCode);
+  const placedAnywhere = completedSetFromPlan(plan, undefined, equiv);
   const out = new Set<string>();
   for (const slot of plan.slots) {
     // Only academic term columns accept drops — never co-op or pre-arrival.
@@ -54,8 +56,8 @@ export function eligibleSlotIdsForCourse(
     const ctx: CourseEligibilityContext = {
       completed:
         slot.termId !== null
-          ? completedSetFromPlan(plan, slot.termId)
-          : completedSetFromPlan(plan),
+          ? completedSetFromPlan(plan, slot.termId, equiv)
+          : completedSetFromPlan(plan, undefined, equiv),
       sameTerm: new Set(slot.courses.map((c) => c.code)),
       // The slot's position is the student's level in this term ("1A".."4B").
       level: slot.position,

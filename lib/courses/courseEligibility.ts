@@ -11,7 +11,7 @@
  */
 
 import { formatCourseCode } from "@/lib/format";
-import { cachedExtractCourseCodes } from "@/lib/plan/validate";
+import { resolveAntireqCodes } from "@/lib/plan/validate";
 import { cachedParsePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
@@ -124,7 +124,7 @@ export function evaluateCourseEligibility(
 
   // 3. Antireq already placed — can't hold both credit, in any term. Symmetric:
   //    this course names a placed one, OR a placed one names this course.
-  const forwardAnti = cachedExtractCourseCodes(course.antireqs).filter(
+  const forwardAnti = resolveAntireqCodes(course).filter(
     (a) => a !== code && ctx.placedAnywhere.has(a),
   );
   const reverseAnti = ctx.placedAntireqNamers?.get(code) ?? [];
@@ -231,9 +231,8 @@ export function placedAntireqNamers(
 ): Map<string, readonly string[]> {
   const map = new Map<string, string[]>();
   for (const data of placedCourses) {
-    if (!data.antireqs) continue;
     const namer = data.code.toLowerCase();
-    for (const named of cachedExtractCourseCodes(data.antireqs)) {
+    for (const named of resolveAntireqCodes(data)) {
       if (named === namer) continue;
       const list = map.get(named);
       if (list) list.push(namer);

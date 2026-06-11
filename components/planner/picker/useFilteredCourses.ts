@@ -13,6 +13,7 @@ import {
   attachEligibility,
   type EligibilityRow,
 } from "@/lib/courses/eligibility";
+import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import { applyFilters } from "@/lib/courses/filters";
 import type { Course, FilterPreset } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
@@ -106,20 +107,34 @@ export function useFilteredCourses({
 
   // Reverse-antireq index over the placed courses, so a candidate is flagged
   // when a placed course names it even if its own list doesn't reciprocate.
+  // Built over the REAL placed courses (not equivalents, which aren't placed).
   const antireqNamers = useMemo(
     () => placedAntireqNamers(catalog.filter((c) => placedCodes.has(c.code))),
     [catalog, placedCodes],
+  );
+
+  // Course equivalence (GitHub #21): a cross-listed twin of a placed/completed
+  // course counts as that course. Expand the placed and completed sets so the
+  // twin is filtered out as a candidate and treated as already-taken.
+  const equiv = useMemo(() => equivalenceForCatalog(catalog), [catalog]);
+  const placedExpanded = useMemo(
+    () => equiv.expand(placedCodes),
+    [equiv, placedCodes],
+  );
+  const completedExpanded = useMemo(
+    () => equiv.expand(completedBefore),
+    [equiv, completedBefore],
   );
 
   const candidates = useMemo<Course[]>(() => {
     if (focusCodes && focusCodes.length > 0) {
       const want = new Set(focusCodes.map((c) => c.toLowerCase()));
       return catalog.filter(
-        (c) => want.has(c.code) && !placedCodes.has(c.code),
+        (c) => want.has(c.code) && !placedExpanded.has(c.code),
       );
     }
-    return catalog.filter((c) => !placedCodes.has(c.code));
-  }, [catalog, focusCodes, placedCodes]);
+    return catalog.filter((c) => !placedExpanded.has(c.code));
+  }, [catalog, focusCodes, placedExpanded]);
 
   const userFiltered = useMemo<Course[]>(
     () =>
@@ -159,8 +174,8 @@ export function useFilteredCourses({
         eligibility: null,
       }));
       const annotated = attachEligibility(baseRows, {
-        completed: completedBefore,
-        placedAnywhere: placedCodes,
+        completed: completedExpanded,
+        placedAnywhere: placedExpanded,
         programReferenced,
         hideUnmetPrereqs: true,
         level,
@@ -181,8 +196,8 @@ export function useFilteredCourses({
     );
   }, [
     searched,
-    completedBefore,
-    placedCodes,
+    completedExpanded,
+    placedExpanded,
     programReferenced,
     sameTerm,
     level,
@@ -199,8 +214,8 @@ export function useFilteredCourses({
     // pre-pagination pass — re-annotating would be wasted work.
     if (filters.hideUnmetPrereqs) return slice;
     return attachEligibility(slice, {
-      completed: completedBefore,
-      placedAnywhere: placedCodes,
+      completed: completedExpanded,
+      placedAnywhere: placedExpanded,
       programReferenced,
       hideUnmetPrereqs: false,
       level,
@@ -211,8 +226,8 @@ export function useFilteredCourses({
   }, [
     sortedCourses,
     limit,
-    completedBefore,
-    placedCodes,
+    completedExpanded,
+    placedExpanded,
     programReferenced,
     sameTerm,
     level,

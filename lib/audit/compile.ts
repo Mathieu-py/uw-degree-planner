@@ -14,6 +14,10 @@
  */
 
 import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
+import {
+  EMPTY_EQUIVALENCE,
+  type EquivalenceIndex,
+} from "@/lib/courses/equivalence";
 import type { LocalPlan } from "@/lib/plan/types";
 import {
   describeRule,
@@ -107,15 +111,30 @@ function withIllegal(node: AuditNode, illegal: Placement[]): AuditNode {
   return illegal.length > 0 ? { ...node, illegalSatisfiers: illegal } : node;
 }
 
-/** Split codes into the placements that satisfy them and the codes still missing. */
+/**
+ * Split codes into the placements that satisfy them and the codes still missing.
+ * A required code is satisfied by a placement of that exact code OR of any
+ * cross-listed equivalent (GitHub #21) — the equivalent's placement is credited
+ * directly, never duplicated into the placement map, so units count once.
+ */
 function partitionByPlacement(
   codes: Iterable<string>,
   placement: PlacementMap,
+  equiv: EquivalenceIndex,
 ): { satisfiers: Placement[]; missing: string[] } {
   const satisfiers: Placement[] = [];
   const missing: string[] = [];
   for (const code of codes) {
-    const p = placement.get(code);
+    let p = placement.get(code);
+    if (!p) {
+      for (const member of equiv.classOf(code)) {
+        const mp = placement.get(member);
+        if (mp) {
+          p = mp;
+          break;
+        }
+      }
+    }
     if (p) satisfiers.push(p);
     else missing.push(code);
   }
@@ -126,6 +145,7 @@ function compile(
   node: RuleNode,
   placement: PlacementMap,
   legality: ReadonlySet<string>,
+  equiv: EquivalenceIndex,
 ): AuditNode {
   switch (node.kind) {
     case "courses": {
@@ -133,6 +153,7 @@ function compile(
       const { satisfiers, missing } = partitionByPlacement(
         node.courses,
         placement,
+        equiv,
       );
       const status: AuditStatus =
         satisfiers.length === node.courses.length
@@ -153,7 +174,7 @@ function compile(
     }
     case "all": {
       const children = node.children.map((c) =>
-        compile(c, placement, legality),
+        compile(c, placement, legality, equiv),
       );
       return withIllegal(
         {
@@ -168,13 +189,14 @@ function compile(
       );
     }
     case "pick":
-      return compilePick(node, placement, legality);
+      return compilePick(node, placement, legality, equiv);
     case "subjectPool":
       return compileSubjectPool(node, placement, legality);
     case "excluded": {
       const { satisfiers: violations } = partitionByPlacement(
         node.courses,
         placement,
+        equiv,
       );
       return {
         ruleNode: node,
@@ -199,6 +221,7 @@ function compilePick(
   node: Extract<RuleNode, { kind: "pick" }>,
   placement: PlacementMap,
   legality: ReadonlySet<string>,
+  equiv: EquivalenceIndex,
 ): AuditNode {
   const allCoursesLeaves =
     node.children.length > 0 &&
@@ -209,7 +232,11 @@ function compilePick(
         node.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
       ),
     ];
-    const { satisfiers, missing } = partitionByPlacement(options, placement);
+    const { satisfiers, missing } = partitionByPlacement(
+      options,
+      placement,
+      equiv,
+    );
     // No `satisfiers > 0` guard here (unlike the nested branch below): a flat
     // courses pool has no vacuously-met children to discount, and a min-0 pool
     // that is genuinely optional is correctly "met" at 0 — consumers that need
@@ -235,7 +262,9 @@ function compilePick(
     );
   }
   // Mixed/nested children: each must be independently met to count as 1.
-  const children = node.children.map((c) => compile(c, placement, legality));
+  const children = node.children.map((c) =>
+    compile(c, placement, legality, equiv),
+  );
   // Require ≥1 satisfier: an optional child (selectMin 0/undefined) is
   // vacuously "met" with nothing placed, which would inflate the parent on an
   // empty plan (issue #95).
@@ -460,6 +489,11 @@ export function compileAudit(
    * reading a single id off the plan.
    */
   programId: string | null = null,
+  /**
+   * Course-equivalence index (GitHub #21). A required code is also satisfied by a
+   * placed cross-listed equivalent. Omitted → exact-code matching only.
+   */
+  equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
 ): AuditRoot {
   const placement = buildPlacementMap(plan);
   if (!program) {
@@ -478,18 +512,18 @@ export function compileAudit(
     byTerm = Object.fromEntries(
       TERM_LETTERS.map((t) => [
         t,
-        compile(program.terms[t], placement, legality),
+        compile(program.terms[t], placement, legality, equiv),
       ]),
     ) as Record<TermLetter, AuditNode>;
   } else {
-    flexibleRoot = compile(program.rules, placement, legality);
+    flexibleRoot = compile(program.rules, placement, legality, equiv);
   }
   let specializationRoot: AuditNode | null = null;
   if (specializationId) {
     const spec: Specialization | null =
       program.specializations?.find((s) => s.slug === specializationId) ?? null;
     if (spec?.rules) {
-      specializationRoot = compile(spec.rules, placement, legality);
+      specializationRoot = compile(spec.rules, placement, legality, equiv);
     }
   }
   return {
