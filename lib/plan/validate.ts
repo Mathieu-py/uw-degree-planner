@@ -17,7 +17,7 @@
 import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
-import { cachedParsePrereqs } from "@/lib/prereqs/cache";
+import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
 import { completedSetFromPlan } from "./derive";
@@ -98,8 +98,9 @@ export function validatePlan(
       if (!courseData) continue;
 
       // ---- Prereq ----
-      if (courseData.prereqs) {
-        const ast = cachedParsePrereqs(courseData.prereqs);
+      const prereqAst = resolvePrereqs(courseData);
+      if (prereqAst) {
+        const ast = prereqAst;
         const result = evaluate(ast, { completed: completedBeforeSet });
         if (!result.satisfied) {
           const missing =
@@ -136,8 +137,9 @@ export function validatePlan(
       }
 
       // ---- Coreq ----
-      if (courseData.coreqs) {
-        const ast = cachedParsePrereqs(courseData.coreqs);
+      const coreqAst = resolveCoreqs(courseData);
+      if (coreqAst) {
+        const ast = coreqAst;
         const result = evaluate(ast, { completed: coreqContext });
         if (!result.satisfied) {
           const missing =
@@ -160,7 +162,7 @@ export function validatePlan(
  * "CS 246A"): letters + optional space + digits + optional trailing letter.
  * Returns lowercase, whitespace-stripped, deduped codes. Case-insensitive.
  */
-export function extractCourseCodes(text: string): string[] {
+function extractCourseCodes(text: string): string[] {
   const re = /\b([A-Za-z]+)\s*(\d+[A-Z]*)\b/gi;
   const out = new Set<string>();
   for (const m of text.matchAll(re)) {

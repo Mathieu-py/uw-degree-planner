@@ -19,6 +19,8 @@ function describeNode(node: PrereqNode): string {
       return node.children.map(describeNode).join(" or ");
     case "and":
       return node.children.map(describeNode).join(" and ");
+    case "countOf":
+      return `${node.n} of ${node.children.map(describeNode).join(", ")}`;
     case "level":
       return `Level at least ${node.minLevel}`;
     case "program":
@@ -61,6 +63,9 @@ function unmet(node: PrereqNode, state: UserState): string | null {
     case "or":
       // Unsatisfied OR ⇒ no branch met and none uncertain ⇒ list every option.
       return `one of ${node.children.map(describeNode).join(", ")}`;
+    case "countOf":
+      // Unsatisfied countOf ⇒ can't yet reach n ⇒ list every option.
+      return `${node.n} of ${node.children.map(describeNode).join(", ")}`;
     case "and": {
       const parts = node.children
         .map((c) => unmet(c, state))

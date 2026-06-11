@@ -3,7 +3,6 @@ import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "../types";
 import {
   ACADEMIC_TERM_CAP,
-  extractCourseCodes,
   issuesByCourseInSlot,
   resolveAntireqCodes,
   validatePlan,
@@ -95,27 +94,6 @@ describe("validatePlan — antireq sourced from Kuali codes", () => {
     const antireq = issues.filter((i) => i.kind === "antireq");
     expect(antireq.length).toBeGreaterThan(0);
     expect(antireq.some((i) => i.conflictsWith?.includes("cs246e"))).toBe(true);
-  });
-});
-
-describe("extractCourseCodes", () => {
-  it("pulls codes from comma-separated lists", () => {
-    expect(extractCourseCodes("ANTH 201, CLAS 221")).toEqual([
-      "anth201",
-      "clas221",
-    ]);
-  });
-  it("handles codes with trailing letters", () => {
-    expect(extractCourseCodes("CS 246A or SYDE 101L")).toEqual([
-      "cs246a",
-      "syde101l",
-    ]);
-  });
-  it("deduplicates", () => {
-    expect(extractCourseCodes("MATH 137; MATH 137")).toEqual(["math137"]);
-  });
-  it("ignores non-code prose", () => {
-    expect(extractCourseCodes("Permission of instructor")).toEqual([]);
   });
 });
 

@@ -187,6 +187,27 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
           !anyUncertain && child.some((c) => c.blockedByProgram),
       });
     }
+    case "countOf": {
+      // "N of the following". Definite passes are children satisfied without
+      // uncertainty. If ≥ n are definite, met. Otherwise, if the definite passes
+      // plus the uncertain children could still reach n, bias to satisfied +
+      // uncertain (same "completable via an unseen route" logic as `or`). Only a
+      // shortfall with no uncertain top-up is a hard miss.
+      const child = node.children.map((c) => walk(c, state));
+      const definite = child.filter((c) => c.satisfied && !c.uncertain).length;
+      if (definite >= node.n) return res();
+      const uncertainCount = child.filter((c) => c.uncertain).length;
+      const reachable = definite + uncertainCount >= node.n;
+      return res({
+        satisfied: reachable,
+        uncertain: reachable,
+        // On a hard shortfall, surface the unmet children's missing courses so
+        // the student sees concrete options; otherwise nothing is owed yet.
+        missing: reachable ? [] : child.flatMap((c) => c.missing),
+        raw: child.flatMap((c) => c.raw),
+        blockedByProgram: !reachable && child.some((c) => c.blockedByProgram),
+      });
+    }
   }
 }
 

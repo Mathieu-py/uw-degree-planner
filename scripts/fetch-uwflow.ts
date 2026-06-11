@@ -1,6 +1,9 @@
 /**
- * Fetches the UWaterloo course catalog from UWFlow's GraphQL endpoint
- * and writes a per-term JSON snapshot under data/.
+ * Fetches the UWaterloo course catalog from UWFlow's GraphQL endpoint (the
+ * primary source: name, ratings, sections, description), joins UW's Kuali
+ * catalog enrichment onto it by code (units, cross-listings, structured
+ * requisites — see `./scrape/kualiCourses`), and writes a per-term JSON
+ * snapshot under data/.
  *
  * Usage:
  *   pnpm tsx scripts/fetch-uwflow.ts              # default term = PINNED_TERM
@@ -19,15 +22,9 @@ import {
   validateDescriptionsFile,
 } from "../lib/courses/validation";
 import { PINNED_TERM } from "../lib/terms";
-import { parseKualiAntireqCodes } from "./scrape/kualiRequisites";
-import { discoverCatalogId } from "./scrape-programs";
+import { fetchKualiData, type KualiCourseData } from "./scrape/kualiCourses";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
-
-// UWFlow exposes no unit weights, so enrich from UW's keyless Kuali catalog:
-// one list call for codes+pids, then a detail call per course for credits.value.
-const KUALI_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";
-const UNITS_CONCURRENCY = 12;
 
 // UWFlow returns the calendar description; we split it into a sibling
 // descriptions file so the committed catalog (and client payload) stays lean.
@@ -88,97 +85,6 @@ async function fetchTerm(termId: number): Promise<FetchedCourse[]> {
   return json.data.course;
 }
 
-/** Normalize a Kuali course code ("AMATH 242" → "amath242"); null on empty. */
-function normalizeKualiCode(raw: string | undefined | null): string | null {
-  const code = raw?.replace(/\s+/g, "").toLowerCase();
-  return code && code.length > 0 ? code : null;
-}
-
-/** Authoritative per-course data Kuali supplies that UWFlow lacks. */
-interface KualiCourseData {
-  /** Unit weight: 0.5 standard, 0.25 lab, 1.0+ full-year. Undefined if unknown. */
-  units?: number;
-  /**
-   * Cross-listed equivalents — the same course offered under another code
-   * (Kuali's structured `crossListedCourses`). Authoritative source for course
-   * equivalence (GitHub #21). Lowercased codes; omitted when there are none.
-   */
-  crossListed?: string[];
-  /**
-   * Antirequisite course codes, parsed from Kuali's structured `antirequisites`
-   * rule tree (GitHub #21). Authoritative replacement for the regex over UWFlow's
-   * free-text antireqs. Lowercased; omitted when there are none.
-   */
-  antireqCodes?: string[];
-}
-
-/**
- * Fetch authoritative per-course data from UW's Kuali catalog, keyed by
- * lowercased course code. One list call for codes+pids, then a detail call per
- * course. The detail object also carries unit weight (`credits.value`) and the
- * structured `crossListedCourses` equivalence list.
- */
-async function fetchKualiData(): Promise<Record<string, KualiCourseData>> {
-  const getJson = async <T>(url: string): Promise<T> => {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as T;
-      } catch (err) {
-        if (attempt === 2) throw err;
-      }
-    }
-    throw new Error("unreachable");
-  };
-
-  const catalogId = await discoverCatalogId();
-  const list = await getJson<
-    Array<{ __catalogCourseId?: string; pid: string }>
-  >(`${KUALI_BASE}/courses/${catalogId}`);
-
-  const data: Record<string, KualiCourseData> = {};
-  let next = 0;
-  const worker = async () => {
-    while (true) {
-      const i = next++;
-      if (i >= list.length) return;
-      const entry = list[i];
-      const code = normalizeKualiCode(entry.__catalogCourseId);
-      if (!code) continue;
-      try {
-        const detail = await getJson<{
-          credits?: { value?: string } | null;
-          crossListedCourses?: Array<{ __catalogCourseId?: string }> | null;
-          antirequisites?: string | null;
-        }>(
-          `${KUALI_BASE}/course/${catalogId}/${encodeURIComponent(entry.pid)}`,
-        );
-        const record: KualiCourseData = {};
-        const value = Number(detail.credits?.value);
-        if (Number.isFinite(value)) record.units = value;
-        const crossListed = (detail.crossListedCourses ?? [])
-          .map((x) => normalizeKualiCode(x.__catalogCourseId))
-          .filter((c): c is string => c !== null && c !== code);
-        if (crossListed.length > 0)
-          record.crossListed = [...new Set(crossListed)];
-        const antireqCodes = parseKualiAntireqCodes(
-          detail.antirequisites,
-        ).filter((a) => a !== code);
-        if (antireqCodes.length > 0) record.antireqCodes = antireqCodes;
-        if (record.units != null || record.crossListed || record.antireqCodes)
-          data[code] = record;
-      } catch {
-        // skip; the course loads without Kuali enrichment (audit still counts it)
-      }
-    }
-  };
-  await Promise.all(
-    Array.from({ length: Math.min(UNITS_CONCURRENCY, list.length) }, worker),
-  );
-  return data;
-}
-
 async function writeSnapshot(
   termId: number,
   courses: FetchedCourse[],
@@ -200,6 +106,8 @@ async function writeSnapshot(
       ...(enrich?.units != null ? { units: enrich.units } : {}),
       ...(enrich?.crossListed ? { crossListed: enrich.crossListed } : {}),
       ...(enrich?.antireqCodes ? { antireqCodes: enrich.antireqCodes } : {}),
+      ...(enrich?.prereqAst ? { prereqAst: enrich.prereqAst } : {}),
+      ...(enrich?.coreqAst ? { coreqAst: enrich.coreqAst } : {}),
     });
     if (description && description.trim() !== "") {
       descriptions[rest.code] = description;
@@ -249,8 +157,9 @@ async function main() {
   const withAntireqs = Object.values(kuali).filter(
     (k) => k.antireqCodes,
   ).length;
+  const withPrereqAst = Object.values(kuali).filter((k) => k.prereqAst).length;
   console.log(
-    `${Object.keys(kuali).length} courses (${withUnitsTotal} with units, ${withCrossListed} cross-listed, ${withAntireqs} with antireqs)`,
+    `${Object.keys(kuali).length} courses (${withUnitsTotal} units, ${withCrossListed} cross-listed, ${withAntireqs} antireqs, ${withPrereqAst} prereq-ASTs)`,
   );
 
   for (const term of terms) {

@@ -1,3 +1,5 @@
+import type { PrereqNode } from "@/lib/prereqs/parse";
+
 /** A course from UWFlow's GraphQL endpoint (upstream snake_case schema). */
 export interface UWFlowRating {
   easy: number | null;
@@ -51,6 +53,16 @@ export type CatalogCourse = Omit<UWFlowCourse, "description"> & {
    * structured antireqs for the course → callers fall back to the prose.
    */
   antireqCodes?: string[];
+  /**
+   * Prerequisite AST parsed from Kuali's structured `prerequisites` rule tree at
+   * build time — the authoritative replacement for parsing UWFlow's free-text
+   * `prereqs` at runtime. When present, callers prefer it (see `resolvePrereqs`);
+   * `undefined`/absent → fall back to the prose parser. Stored only when Kuali
+   * yields a non-empty tree.
+   */
+  prereqAst?: PrereqNode | null;
+  /** Corequisite AST, same contract as {@link prereqAst} (see `resolveCoreqs`). */
+  coreqAst?: PrereqNode | null;
 };
 
 /** Course enriched with derived fields used by filters and UI. */

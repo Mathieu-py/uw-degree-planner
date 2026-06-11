@@ -32,7 +32,7 @@ export interface EquivalenceIndex {
  * Build an equivalence index from pairwise cross-listing links. Each pair unions
  * the two codes; the closure groups transitively-linked codes into one class.
  */
-export function buildEquivalenceIndex(
+function buildEquivalenceIndex(
   pairs: Iterable<readonly [string, string]>,
 ): EquivalenceIndex {
   const parent = new Map<string, string>();
@@ -117,7 +117,7 @@ interface CrossListedCourse {
 }
 
 /** Build an equivalence index from a catalog's `crossListed` links. */
-export function buildEquivalenceFromCourses(
+function buildEquivalenceFromCourses(
   courses: Iterable<CrossListedCourse>,
 ): EquivalenceIndex {
   const pairs: Array<[string, string]> = [];

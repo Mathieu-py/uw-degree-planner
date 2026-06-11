@@ -12,7 +12,7 @@
 
 import { formatCourseCode } from "@/lib/format";
 import { resolveAntireqCodes } from "@/lib/plan/validate";
-import { cachedParsePrereqs } from "@/lib/prereqs/cache";
+import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
 import type { ProgramIdentity } from "@/lib/programs";
@@ -90,7 +90,7 @@ export function evaluateCourseEligibility(
   //    hard "wrong program") outranks an antireq conflict; a block demotes to
   //    "check" when the program references this course (suppressProgramBlock).
   const suppressProgramBlock = ctx.programReferenced.has(code);
-  const prereqAst = cachedParsePrereqs(course.prereqs);
+  const prereqAst = resolvePrereqs(course);
   const pre = evaluate(prereqAst, {
     completed: ctx.completed,
     level: ctx.level,
@@ -160,12 +160,13 @@ export function evaluateCourseEligibility(
   //    "check", never a hard block (it may be added to this term later).
   let coreqUnmet = false;
   const coreqReasons: string[] = [];
-  if (course.coreqs) {
+  const coreqAst = resolveCoreqs(course);
+  if (coreqAst) {
     const completedWithSame =
       ctx.sameTerm && ctx.sameTerm.size > 0
         ? new Set([...ctx.completed, ...ctx.sameTerm])
         : ctx.completed;
-    const co = evaluate(cachedParsePrereqs(course.coreqs), {
+    const co = evaluate(coreqAst, {
       completed: completedWithSame,
       level: ctx.level,
       programs: ctx.programs,
@@ -212,7 +213,7 @@ export function isProgramBlocked(
   // the prereqs would otherwise look failed and let an OR'd restriction ("X
   // students only OR CS 135") report blocked. Treating courses as completable
   // keeps this to the UNCONDITIONAL program walls it's meant to detect.
-  const pre = evaluate(cachedParsePrereqs(course.prereqs), {
+  const pre = evaluate(resolvePrereqs(course), {
     completed: EMPTY_SET,
     programs: opts.programs,
     suppressProgramBlock,

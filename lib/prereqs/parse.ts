@@ -17,6 +17,7 @@ export type PrereqNode =
   | { kind: "course"; code: string }
   | { kind: "and"; children: PrereqNode[] }
   | { kind: "or"; children: PrereqNode[] }
+  | { kind: "countOf"; n: number; children: PrereqNode[] }
   | { kind: "level"; minLevel: string }
   | { kind: "program"; clause: string }
   | { kind: "raw"; text: string };

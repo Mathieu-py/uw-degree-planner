@@ -5,6 +5,28 @@
  */
 
 import { z } from "zod";
+import type { PrereqNode } from "@/lib/prereqs/parse";
+
+/**
+ * Recursive validator for a stored prereq/coreq AST (Kuali-derived; see
+ * {@link PrereqNode}). The AST now lives in the committed snapshot, so it's
+ * shape-checked at both build (fetch script) and load like every other field.
+ */
+const PrereqNodeSchema: z.ZodType<PrereqNode> = z.lazy(() =>
+  z.union([
+    z.object({ kind: z.literal("course"), code: z.string().min(1) }),
+    z.object({ kind: z.literal("and"), children: z.array(PrereqNodeSchema) }),
+    z.object({ kind: z.literal("or"), children: z.array(PrereqNodeSchema) }),
+    z.object({
+      kind: z.literal("countOf"),
+      n: z.number().int().positive(),
+      children: z.array(PrereqNodeSchema),
+    }),
+    z.object({ kind: z.literal("level"), minLevel: z.string().min(1) }),
+    z.object({ kind: z.literal("program"), clause: z.string() }),
+    z.object({ kind: z.literal("raw"), text: z.string() }),
+  ]),
+);
 
 const RatingSchema = z
   .object({
@@ -33,6 +55,8 @@ export const CourseSchema = z.object({
   units: z.number().min(0).max(3).optional(),
   crossListed: z.array(z.string().min(1)).optional(),
   antireqCodes: z.array(z.string().min(1)).optional(),
+  prereqAst: PrereqNodeSchema.nullable().optional(),
+  coreqAst: PrereqNodeSchema.nullable().optional(),
 });
 
 const CoursesFileSchema = z.object({

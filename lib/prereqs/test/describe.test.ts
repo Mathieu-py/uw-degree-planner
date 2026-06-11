@@ -82,3 +82,26 @@ describe("describeMissingPrereqs", () => {
     ).toBeNull();
   });
 });
+
+describe("describeMissingPrereqs — countOf", () => {
+  const countOf = (n: number, ...codes: string[]) => ({
+    kind: "countOf" as const,
+    n,
+    children: codes.map((code) => ({ kind: "course" as const, code })),
+  });
+
+  it("lists 'N of <options>' for an unmet countOf", () => {
+    expect(
+      describeMissingPrereqs(countOf(2, "cs136", "cs138", "cs146"), has()),
+    ).toBe("2 of CS 136, CS 138, CS 146");
+  });
+
+  it("returns null once n options are met", () => {
+    expect(
+      describeMissingPrereqs(
+        countOf(2, "cs136", "cs138", "cs146"),
+        has("cs136", "cs138"),
+      ),
+    ).toBeNull();
+  });
+});

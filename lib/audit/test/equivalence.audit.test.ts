@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEquivalenceFromCourses } from "../../courses/equivalence";
+import { equivalenceForCatalog } from "../../courses/equivalence";
 import type { LocalPlan } from "../../plan/types";
 import type { Program } from "../../programs";
 import { compileAudit } from "../compile";
@@ -25,7 +25,7 @@ function makePlan(codes: string[]): LocalPlan {
 }
 
 // AMATH242 and CS371 are the same course, cross-listed (GitHub #21).
-const equiv = buildEquivalenceFromCourses([
+const equiv = equivalenceForCatalog([
   { code: "amath242", crossListed: ["cs371"] },
   { code: "cs371", crossListed: ["amath242"] },
 ]);
