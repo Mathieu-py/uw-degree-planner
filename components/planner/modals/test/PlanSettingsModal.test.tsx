@@ -69,10 +69,11 @@ describe("PlanSettingsModal — min-one-program guard", () => {
     });
     expect(save.disabled).toBe(true);
 
-    // Add a different program via the "add" select.
-    fireEvent.change(screen.getByLabelText(/add a program/i), {
-      target: { value: "h-math" },
-    });
+    // Add a different program via the search palette: open it, pick Mathematics,
+    // then close it so the Save button underneath is reachable again.
+    fireEvent.click(screen.getByRole("button", { name: /add a program/i }));
+    fireEvent.click(screen.getByRole("option", { name: /mathematics/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^done$/i }));
 
     expect(save.disabled).toBe(false);
     fireEvent.click(save);

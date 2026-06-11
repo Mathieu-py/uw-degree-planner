@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { Button } from "./Button";
 import { Icon } from "./Icon";
@@ -25,6 +26,13 @@ interface ModalProps {
    * autoFocus element (e.g. SlotPicker's search box).
    */
   backdropTabIndex?: number;
+  /**
+   * Render into `document.body` instead of inline. Needed when the modal opens
+   * from inside another modal: the parent dialog box is `transform`-animated,
+   * which makes it the containing block for a `position:fixed` overlay and would
+   * otherwise trap/clip this one (e.g. the program search over Plan Settings).
+   */
+  portal?: boolean;
   children: ReactNode;
 }
 
@@ -41,11 +49,12 @@ export function Modal({
   titleId,
   className,
   backdropTabIndex,
+  portal,
   children,
 }: ModalProps) {
   useEscape(onClose);
 
-  return (
+  const shell = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
@@ -64,6 +73,12 @@ export function Modal({
       </div>
     </div>
   );
+
+  if (portal) {
+    if (typeof document === "undefined") return null;
+    return createPortal(shell, document.body);
+  }
+  return shell;
 }
 
 /**
@@ -81,7 +96,7 @@ export function ModalHeader({
 }) {
   if (!onClose) {
     return (
-      <header className="border-b border-line px-4 py-3.5">
+      <header className="border-b border-line px-4 py-2.5">
         <h2 id={titleId} className="text-[15px] font-bold tracking-tight">
           {children}
         </h2>
@@ -89,15 +104,20 @@ export function ModalHeader({
     );
   }
   return (
-    <header className="border-b border-line px-4 py-3.5 flex items-center justify-between gap-3">
+    <header className="border-b border-line px-4 py-2.5 flex items-center justify-between gap-3">
       <h2
         id={titleId}
         className="text-[15px] font-bold tracking-tight truncate flex-1 min-w-0"
       >
         {children}
       </h2>
-      <Button variant="icon" onClick={onClose} aria-label="Close">
-        <Icon name="close" size="md" aria-hidden="true" />
+      <Button
+        variant="icon"
+        onClick={onClose}
+        aria-label="Close"
+        className="-mr-1"
+      >
+        <Icon name="close" size="sm" aria-hidden="true" />
       </Button>
     </header>
   );

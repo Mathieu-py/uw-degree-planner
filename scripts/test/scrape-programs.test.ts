@@ -4,6 +4,7 @@ import {
   attachSpecsToParents,
   buildSpecialization,
   collectUniqueSpecIds,
+  normalizeFaculty,
   type ProgramDetail,
   resolveSpecSlug,
   type SpecializationRef,
@@ -25,6 +26,42 @@ describe("stripSubjectCodeSuffix", () => {
     expect(stripSubjectCodeSuffix("French (Studies) (FR)")).toBe(
       "French (Studies)",
     );
+  });
+});
+
+describe("normalizeFaculty", () => {
+  it("maps the six plain faculty labels", () => {
+    expect(normalizeFaculty("Faculty of Mathematics")).toBe("mathematics");
+    expect(normalizeFaculty("Faculty of Engineering")).toBe("engineering");
+    expect(normalizeFaculty("Faculty of Science")).toBe("science");
+    expect(normalizeFaculty("Faculty of Arts")).toBe("arts");
+    expect(normalizeFaculty("Faculty of Health")).toBe("health");
+    expect(normalizeFaculty("Faculty of Environment")).toBe("environment");
+  });
+
+  it("files a cross-faculty program under the first faculty it names", () => {
+    expect(normalizeFaculty("Faculties of Engineering and Mathematics")).toBe(
+      "engineering",
+    );
+    expect(normalizeFaculty("Faculties of Arts and Environment")).toBe("arts");
+    expect(normalizeFaculty("Faculties of Health and Science")).toBe("health");
+    expect(normalizeFaculty("Faculties of Arts, Health, and Science")).toBe(
+      "arts",
+    );
+  });
+
+  it("treats affiliated colleges as Faculty of Arts", () => {
+    expect(
+      normalizeFaculty("Faculty of Arts with Renison University College"),
+    ).toBe("arts");
+    expect(normalizeFaculty("Renison University College")).toBe("arts");
+    expect(normalizeFaculty("Conrad Grebel University College")).toBe("arts");
+  });
+
+  it("returns null for missing or unrecognized labels", () => {
+    expect(normalizeFaculty(undefined)).toBeNull();
+    expect(normalizeFaculty("")).toBeNull();
+    expect(normalizeFaculty("Some Other Division")).toBeNull();
   });
 });
 

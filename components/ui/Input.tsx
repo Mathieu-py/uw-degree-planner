@@ -7,8 +7,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   icon?: ReactNode;
 }
 
-// Shared base for text inputs and native selects (the design's `.input`):
-// hairline border, fixed height, gold focus ring. {@link Select} reuses it.
+// Shared base for the design's `.input`: hairline border, fixed height, gold
+// focus ring. Reused by {@link Picker}'s trigger so it matches text fields.
 export const FIELD_CLASSES =
   "h-[42px] w-full rounded-[9px] border border-line-2 bg-bg text-ink text-sm " +
   "placeholder:text-ink-3 outline-none transition-[border-color,box-shadow] " +

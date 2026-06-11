@@ -69,7 +69,6 @@ export interface FlexibleProgram {
 
 **Derived helpers** in [`lib/programs.ts`](../../lib/programs.ts):
 - `getRequiredCourses(program)` — walks the tree under `all`-only paths. Also promotes a `pick(N, N)` whose total course-leaf options equal `N` (single-option mandatory rules) to required, since Kuali emits some mandatory rules as `pick(1,1)` over one course instead of `all`.
-- `getSubjectPools` — list of `subjectPool` nodes for UI.
 - `getExcludedCourses` — flat union of courses across `excluded` nodes; the seeder uses this to warn rather than auto-complete when a student claims a barred course.
 - `walkRule`, `requiredCoursesIn` — tree-level helpers.
 

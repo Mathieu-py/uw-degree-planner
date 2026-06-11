@@ -8,9 +8,13 @@ async function createDemoPlan(page: Page) {
   await page.goto("/plan");
   // Step 1 (Set up): the program picker is now a multi-select that starts
   // empty (issue #32 double-degree), so Continue is gated until at least one
-  // program is chosen. Pick the first real option; Fall start and Regular
-  // stream defaults are fine, then advance.
-  await page.getByLabel("Add a program").selectOption({ index: 1 });
+  // program is chosen. The "Add a program" trigger opens a searchable palette;
+  // pick the first result, then close it. Fall start and Regular stream
+  // defaults are fine, then advance.
+  await page.getByRole("button", { name: "Add a program" }).click();
+  const palette = page.getByRole("dialog", { name: "Add a program" });
+  await palette.getByRole("option").first().click();
+  await palette.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   // Step 2 (Review): commit. Anon flow persists to localStorage and pushes /plan.
   await page.getByRole("button", { name: /build my plan/i }).click();
@@ -83,14 +87,15 @@ test("opening the slot picker on an empty 1A slot lets the user add a course", a
 });
 
 // Build a double-degree demo plan: pick TWO programs in the set-up stepper.
-// Selecting index 1 twice picks two distinct programs — ProgramMultiSelect
-// filters already-chosen ones out of the option list, so the second pick lands
-// on the next available program.
+// The palette is multi-select and stays open after each pick, so clicking the
+// first two result rows selects two distinct programs.
 async function createDoubleDegreePlan(page: Page) {
   await page.goto("/plan");
-  const programSelect = page.getByLabel("Add a program");
-  await programSelect.selectOption({ index: 1 });
-  await programSelect.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Add a program" }).click();
+  const palette = page.getByRole("dialog", { name: "Add a program" });
+  await palette.getByRole("option").nth(0).click();
+  await palette.getByRole("option").nth(1).click();
+  await palette.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /build my plan/i }).click();
   await page.waitForURL("/plan");

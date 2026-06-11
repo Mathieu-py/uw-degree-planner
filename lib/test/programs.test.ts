@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   describeRule,
+  FACULTIES,
+  facultyLabel,
+  getProgramOptions,
   getRequiredCourses,
   getSpecialization,
-  getSubjectPools,
-  isKnownProgram,
-  isKnownSpecialization,
   isTermLetter,
   PROGRAMS,
   type Program,
@@ -149,6 +149,40 @@ describe("programs.json schema integrity", () => {
       ).toBe(true);
     }
   });
+
+  it("every program is stamped with a known faculty (for the program picker)", () => {
+    // The picker filters + groups by faculty, so a missing/unknown faculty
+    // would leave a program unreachable from any tab but "All".
+    for (const [id, prog] of Object.entries(PROGRAMS)) {
+      expect(prog.faculty, `${id} should have a faculty`).toBeDefined();
+      expect(
+        FACULTIES,
+        `${id}.faculty "${prog.faculty}" should be a known faculty`,
+      ).toContain(prog.faculty);
+    }
+  });
+});
+
+describe("getProgramOptions — faculty", () => {
+  it("carries each program's faculty through to the option digest", () => {
+    const options = getProgramOptions();
+    expect(options.length).toBe(Object.keys(PROGRAMS).length);
+    for (const opt of options) {
+      expect(opt.faculty).toBe(PROGRAMS[opt.id].faculty);
+    }
+  });
+
+  it("every faculty has a title-case label and appears in the data", () => {
+    const present = new Set(getProgramOptions().map((o) => o.faculty));
+    for (const faculty of FACULTIES) {
+      expect(facultyLabel(faculty)).toBe(
+        faculty[0].toUpperCase() + faculty.slice(1),
+      );
+      expect(present, `${faculty} should be present in the catalog`).toContain(
+        faculty,
+      );
+    }
+  });
 });
 
 describe("getRequiredCourses", () => {
@@ -177,49 +211,24 @@ describe("isTermLetter", () => {
   });
 });
 
-describe("isKnownProgram", () => {
-  it("accepts well-known engineering program slugs", () => {
-    for (const id of [
-      "systems-design-engineering",
-      "electrical-engineering",
-      "software-engineering",
-      "mechatronics-engineering",
-      "architectural-studies",
-      "medical-sciences",
-    ]) {
-      expect(isKnownProgram(id)).toBe(true);
-    }
-  });
-
-  it("rejects unknown ids", () => {
-    expect(isKnownProgram("phys")).toBe(false);
-    expect(isKnownProgram("SYSTEMS-DESIGN-ENGINEERING")).toBe(false);
-  });
-});
-
-describe("isKnownSpecialization / getSpecialization", () => {
+describe("getSpecialization", () => {
   const parent = "3g-english-literature-and-rhetoric";
   const spec = "engl-communication-design";
 
-  it("accepts a slug that belongs to the program", () => {
-    expect(isKnownSpecialization(parent, spec)).toBe(true);
+  it("returns the spec for a slug that belongs to the program", () => {
     expect(getSpecialization(parent, spec)?.slug).toBe(spec);
   });
 
-  it("rejects a slug from a different program", () => {
-    expect(isKnownSpecialization("systems-design-engineering", spec)).toBe(
-      false,
-    );
+  it("returns null for a slug from a different program", () => {
     expect(getSpecialization("systems-design-engineering", spec)).toBeNull();
   });
 
-  it("rejects an unknown spec slug under a known program", () => {
-    expect(isKnownSpecialization(parent, "totally-fake-spec")).toBe(false);
+  it("returns null for an unknown spec slug under a known program", () => {
     expect(getSpecialization(parent, "totally-fake-spec")).toBeNull();
   });
 
-  it("rejects all specs when the program is unknown", () => {
-    expect(isKnownSpecialization("not-a-program", spec)).toBe(false);
+  it("returns null when the program is unknown", () => {
+    expect(getSpecialization("not-a-program", spec)).toBeNull();
   });
 });
 
@@ -263,13 +272,6 @@ describe("programShortNames", () => {
     expect(names.has("syde")).toBe(true);
     expect(names.has("cs")).toBe(true);
   });
-});
-
-const flexible = (rules: RuleNode): Program => ({
-  kind: "flexible",
-  name: "test",
-  asOf: "2026-05-22",
-  rules,
 });
 
 describe("requiredCoursesIn — functionally-mandatory pick promotion", () => {
@@ -335,66 +337,6 @@ describe("requiredCoursesIn — functionally-mandatory pick promotion", () => {
       children: [{ kind: "courses", courses: ["cs100"] }],
     };
     expect(requiredCoursesIn(node)).toEqual([]);
-  });
-});
-
-describe("getSubjectPools", () => {
-  it("returns every subjectPool node in DFS order", () => {
-    const program = flexible({
-      kind: "all",
-      children: [
-        {
-          kind: "subjectPool",
-          description: "Complete 2 additional STAT",
-          selectCount: 2,
-          subjectCodes: ["STAT"],
-          minLevel: 300,
-        },
-        {
-          kind: "pick",
-          selectMin: 1,
-          selectMax: 1,
-          children: [{ kind: "courses", courses: ["cs100"] }],
-        },
-        {
-          kind: "subjectPool",
-          description: "Complete 1 additional PMATH",
-          selectCount: 1,
-          subjectCodes: ["PMATH"],
-        },
-      ],
-    });
-    const pools = getSubjectPools(program);
-    expect(pools).toHaveLength(2);
-    expect(pools.map((p) => p.subjectCodes)).toEqual([["STAT"], ["PMATH"]]);
-    expect(pools[0].minLevel).toBe(300);
-  });
-
-  it("walks into nested pick/all children", () => {
-    const program = flexible({
-      kind: "all",
-      children: [
-        {
-          kind: "pick",
-          selectMin: 1,
-          selectMax: 1,
-          children: [
-            {
-              kind: "subjectPool",
-              description: "nested",
-              selectCount: 1,
-              subjectCodes: ["CS"],
-            },
-          ],
-        },
-      ],
-    });
-    expect(getSubjectPools(program)).toHaveLength(1);
-  });
-
-  it("returns [] when no subjectPool nodes are present", () => {
-    const program = flexible({ kind: "courses", courses: ["cs100"] });
-    expect(getSubjectPools(program)).toEqual([]);
   });
 });
 

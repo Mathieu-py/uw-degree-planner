@@ -1,16 +1,12 @@
 "use client";
 
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/ui/Icon";
-import { useEscape } from "@/lib/hooks/useEscape";
+import {
+  DropdownChevron,
+  DropdownSurface,
+} from "@/components/ui/DropdownSurface";
+import { useDropdown } from "@/components/ui/useDropdown";
 
 export interface MenuItem {
   /** Stable test/aria id (e.g. "rename", "delete"). */
@@ -31,29 +27,16 @@ interface Props {
 }
 
 /**
- * Generic header dropdown menu: a trigger button revealing a popover of actions
- * (e.g. "Plan options", "Data & settings"). Closes on click-outside, Escape, or
- * item select. Click-outside uses `pointerdown` (not `click`) so the menu
- * dismisses before another button receives the click.
+ * Command menu: a trigger button revealing a popover of *actions* (e.g. "Edit
+ * plan" → Plan settings / Reset). Each row fires an `onSelect` callback — there
+ * is no selected value, so this is not a form control. For choosing a value
+ * from a list, use {@link Picker} instead.
+ *
+ * Shares its open/close behaviour, gold chevron, and popover surface with the
+ * rest of the app's dropdowns ({@link useDropdown}, {@link DropdownSurface}).
  */
-export function DropdownMenu({ label, icon, items }: Props) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const menuId = useId();
-
-  // Only hold the global Escape listener while the menu is open.
-  const closeMenu = useCallback(() => setOpen(false), []);
-  useEscape(open ? closeMenu : null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(e: PointerEvent) {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    window.addEventListener("pointerdown", onPointerDown);
-    return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [open]);
+export function ActionMenu({ label, icon, items }: Props) {
+  const { open, toggle, close, containerRef, id } = useDropdown();
 
   return (
     <div ref={containerRef} className="relative">
@@ -62,8 +45,8 @@ export function DropdownMenu({ label, icon, items }: Props) {
         size="lg"
         aria-haspopup="true"
         aria-expanded={open}
-        aria-controls={menuId}
-        onClick={() => setOpen((v) => !v)}
+        aria-controls={open ? id : undefined}
+        onClick={toggle}
         className="inline-flex items-center gap-1.5"
       >
         {icon ? (
@@ -72,25 +55,23 @@ export function DropdownMenu({ label, icon, items }: Props) {
           </span>
         ) : null}
         <span>{label}</span>
-        <Icon
-          name="chevronDown"
-          size="xs"
-          aria-hidden="true"
-          className={`opacity-70 transition-transform ${open ? "" : "-rotate-90"}`}
-        />
+        <DropdownChevron open={open} />
       </Button>
       {open ? (
-        <div
-          id={menuId}
-          className="absolute right-0 top-full mt-1 z-20 min-w-[10rem] rounded-[10px] border border-line bg-bg shadow-card-md py-1"
+        <DropdownSurface
+          id={id}
+          role="menu"
+          aria-label={label}
+          className="right-0 min-w-[10rem]"
         >
           {items.map((item) => (
             <button
               key={item.key}
               type="button"
+              role="menuitem"
               disabled={item.disabled}
               onClick={() => {
-                setOpen(false);
+                close();
                 item.onSelect();
               }}
               className={`w-full text-left px-3 py-2 text-sm inline-flex items-center gap-2 disabled:opacity-50 ${
@@ -105,7 +86,7 @@ export function DropdownMenu({ label, icon, items }: Props) {
               <span>{item.label}</span>
             </button>
           ))}
-        </div>
+        </DropdownSurface>
       ) : null}
     </div>
   );

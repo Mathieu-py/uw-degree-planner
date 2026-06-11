@@ -6,8 +6,8 @@ import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSele
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
+import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
-import { Select } from "@/components/ui/Select";
 import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import { countNoun, pluralize } from "@/lib/format";
@@ -282,17 +282,15 @@ export function WelcomeFlow({
               </Field>
               <Field label="Start term (1A)">
                 {(id) => (
-                  <Select
+                  <Picker
                     id={id}
-                    value={startTermId}
-                    onChange={(e) => setStartTermId(Number(e.target.value))}
-                  >
-                    {fallTerms.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </Select>
+                    value={String(startTermId)}
+                    onChange={(v) => setStartTermId(Number(v))}
+                    options={fallTerms.map((t) => ({
+                      value: String(t.id),
+                      label: t.label,
+                    }))}
+                  />
                 )}
               </Field>
               <Field label="Co-op stream">
