@@ -87,14 +87,19 @@ test("opening the slot picker on an empty 1A slot lets the user add a course", a
 });
 
 // Build a double-degree demo plan: pick TWO programs in the set-up stepper.
-// The palette is multi-select and stays open after each pick, so clicking the
-// first two result rows selects two distinct programs.
+// The palette is multi-select and stays open after each pick. Sibling plan-
+// variants of the SAME subject (e.g. the two Actuarial Science rows) disable
+// each other — a student holds one plan per subject — so after the first pick
+// we choose the first still-selectable row, which belongs to another subject.
 async function createDoubleDegreePlan(page: Page) {
   await page.goto("/plan");
   await page.getByRole("button", { name: "Add a program" }).click();
   const palette = page.getByRole("dialog", { name: "Add a program" });
-  await palette.getByRole("option").nth(0).click();
-  await palette.getByRole("option").nth(1).click();
+  await palette.getByRole("option").first().click();
+  await palette
+    .locator('[role="option"]:not([disabled])[aria-selected="false"]')
+    .first()
+    .click();
   await palette.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /build my plan/i }).click();

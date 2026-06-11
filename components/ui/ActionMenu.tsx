@@ -58,17 +58,11 @@ export function ActionMenu({ label, icon, items }: Props) {
         <DropdownChevron open={open} />
       </Button>
       {open ? (
-        <DropdownSurface
-          id={id}
-          role="menu"
-          aria-label={label}
-          className="right-0 min-w-[10rem]"
-        >
+        <DropdownSurface id={id} className="right-0 min-w-[10rem]">
           {items.map((item) => (
             <button
               key={item.key}
               type="button"
-              role="menuitem"
               disabled={item.disabled}
               onClick={() => {
                 close();
