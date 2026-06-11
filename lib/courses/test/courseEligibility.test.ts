@@ -7,7 +7,7 @@ import {
   placedAntireqNamers,
 } from "../courseEligibility";
 import { enrichCourse } from "../filters";
-import type { Course, UWFlowCourse } from "../types";
+import type { BaseCourse, Course } from "../types";
 
 const SYDE: ProgramIdentity = {
   programId: "systems-design-engineering",
@@ -20,8 +20,8 @@ const CS: ProgramIdentity = {
   faculty: "mathematics",
 };
 
-function course(over: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function course(over: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "test100",
     name: "Test",

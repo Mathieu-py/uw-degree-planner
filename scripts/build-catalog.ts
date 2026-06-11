@@ -1,21 +1,21 @@
 /**
- * Fetches the UWaterloo course catalog from UWFlow's GraphQL endpoint (the
- * primary source: name, ratings, sections, description), joins UW's Kuali
- * catalog enrichment onto it by code (units, cross-listings, structured
- * requisites — see `./scrape/kualiCourses`), and writes a per-term JSON
- * snapshot under data/.
+ * Builds the committed per-term course catalog snapshot under data/ by combining
+ * three UW sources, joined by lowercased course code:
+ *   - UWFlow      → spine: code, name, description, requirement prose, ratings
+ *                   (`./scrape/uwflowCourses`)
+ *   - Kuali       → units, cross-listings, structured requisite ASTs
+ *                   (`./scrape/kualiCourses`)
+ *   - UW Open Data → live section seating (`./scrape/openData`)
  *
  * Usage:
- *   pnpm tsx scripts/fetch-uwflow.ts              # default term = PINNED_TERM
- *   pnpm tsx scripts/fetch-uwflow.ts 1265 1269    # multiple terms
+ *   pnpm tsx scripts/build-catalog.ts            # default term = PINNED_TERM
+ *   pnpm tsx scripts/build-catalog.ts 1265 1269  # multiple terms
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { z } from "zod";
-import type { CatalogCourse } from "../lib/courses/types";
+import type { CatalogCourse, CourseSection } from "../lib/courses/types";
 import {
-  CourseSchema,
   type CoursesFile,
   type DescriptionsFile,
   validateCoursesFile,
@@ -23,86 +23,38 @@ import {
 } from "../lib/courses/validation";
 import { PINNED_TERM } from "../lib/terms";
 import { fetchKualiData, type KualiCourseData } from "./scrape/kualiCourses";
+import { fetchSeating } from "./scrape/openData";
+import { fetchUWFlowCourses, type UWFlowCourse } from "./scrape/uwflowCourses";
 
-const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
-
-// UWFlow returns the calendar description; we split it into a sibling
-// descriptions file so the committed catalog (and client payload) stays lean.
-const FetchedCourseSchema = CourseSchema.extend({
-  description: z.string().nullable(),
-});
-type FetchedCourse = z.infer<typeof FetchedCourseSchema>;
-
-const COURSES_QUERY = `
-  query GetCourses($termId: Int!) {
-    course(order_by: { code: asc }) {
-      id
-      code
-      name
-      description
-      prereqs
-      coreqs
-      antireqs
-      rating {
-        easy
-        useful
-        liked
-        filled_count
-      }
-      sections(where: { term_id: { _eq: $termId } }) {
-        id
-        enrollment_total
-        enrollment_capacity
-      }
-    }
-  }
-`;
-
-const GraphQLResponseSchema = z.object({
-  data: z.object({ course: z.array(FetchedCourseSchema) }).optional(),
-  errors: z.array(z.object({ message: z.string() })).optional(),
-});
-
-async function fetchTerm(termId: number): Promise<FetchedCourse[]> {
-  const res = await fetch(GRAPHQL_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: COURSES_QUERY,
-      variables: { termId },
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`UWFlow HTTP ${res.status} for term ${termId}`);
-  }
-
-  const json = GraphQLResponseSchema.parse(await res.json());
-  if (json.errors?.length) {
-    throw new Error(`UWFlow GraphQL errors: ${JSON.stringify(json.errors)}`);
-  }
-  if (!json.data) throw new Error("UWFlow returned no data");
-  return json.data.course;
+// Load .env.local so UW_OPENDATA_KEY is available (Next.js loads it for the app,
+// but this standalone script doesn't). CI may set the var directly, so tolerate
+// a missing file.
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // no .env.local — rely on the ambient environment
 }
 
 async function writeSnapshot(
   termId: number,
-  courses: FetchedCourse[],
+  courses: UWFlowCourse[],
   kuali: Record<string, KualiCourseData>,
+  seating: Record<string, CourseSection[]>,
 ) {
   const dataDir = path.resolve(process.cwd(), "data");
   await mkdir(dataDir, { recursive: true });
   const fetchedAt = new Date().toISOString();
 
-  // Split each fetched course into the lean catalog record and the keyed
-  // description, then write them to sibling files. Kuali enrichment (units,
-  // cross-listings) is joined by lowercased code.
+  // Split each course into the lean catalog record and the keyed description,
+  // then write them to sibling files. Kuali enrichment (units, cross-listings,
+  // requisites) and Open Data seating are joined by lowercased code.
   const lean: CatalogCourse[] = [];
   const descriptions: Record<string, string> = {};
   for (const { description, ...rest } of courses) {
     const enrich = kuali[rest.code];
     lean.push({
       ...rest,
+      sections: seating[rest.code] ?? [],
       ...(enrich?.units != null ? { units: enrich.units } : {}),
       ...(enrich?.crossListed ? { crossListed: enrich.crossListed } : {}),
       ...(enrich?.antireqCodes ? { antireqCodes: enrich.antireqCodes } : {}),
@@ -162,24 +114,30 @@ async function main() {
     `${Object.keys(kuali).length} courses (${withUnitsTotal} units, ${withCrossListed} cross-listed, ${withAntireqs} antireqs, ${withPrereqAst} prereq-ASTs)`,
   );
 
+  // UWFlow's fields are term-independent, so fetch the course list once.
+  process.stdout.write("Fetching courses from UWFlow... ");
+  const raw = await fetchUWFlowCourses();
+  const courses = raw.filter((c) => !/xxx$/i.test(c.code));
+  console.log(`${courses.length} courses`);
+
   for (const term of terms) {
     if (!Number.isInteger(term)) {
       console.error(`Skipping non-numeric term arg: ${term}`);
       continue;
     }
-    process.stdout.write(`Fetching term ${term}... `);
-    const raw = await fetchTerm(term);
-    const courses = raw.filter((c) => !/xxx$/i.test(c.code));
+    process.stdout.write(`Term ${term}: seating from Open Data... `);
+    const seating = await fetchSeating(term);
     const { coursesPath, descriptionsPath } = await writeSnapshot(
       term,
       courses,
       kuali,
+      seating,
     );
-    const withUnits = courses.filter(
-      (c) => kuali[c.code]?.units != null,
+    const withSeating = courses.filter(
+      (c) => (seating[c.code]?.length ?? 0) > 0,
     ).length;
     console.log(
-      `${courses.length} courses (${withUnits} with units) → ${path.relative(process.cwd(), coursesPath)} + ${path.relative(process.cwd(), descriptionsPath)}`,
+      `${courses.length} courses (${withSeating} with seating) → ${path.relative(process.cwd(), coursesPath)} + ${path.relative(process.cwd(), descriptionsPath)}`,
     );
   }
 }

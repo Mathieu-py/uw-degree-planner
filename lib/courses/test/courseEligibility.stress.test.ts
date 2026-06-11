@@ -7,7 +7,7 @@ import {
   placedAntireqNamers,
 } from "../courseEligibility";
 import { enrichCourse } from "../filters";
-import type { Course, UWFlowCourse } from "../types";
+import type { BaseCourse, Course } from "../types";
 
 /**
  * Stress tests for course eligibility, anchored to verbatim antireq/restriction
@@ -23,8 +23,8 @@ import type { Course, UWFlowCourse } from "../types";
  * one must block the other.
  */
 
-function course(over: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function course(over: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "test100",
     name: "Test",

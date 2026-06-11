@@ -14,7 +14,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "knip": "knip",
-    "fetch-courses": "tsx scripts/fetch-uwflow.ts",
+    "fetch-courses": "tsx scripts/build-catalog.ts",
     "scrape-programs": "tsx scripts/scrape-programs.ts",
     "test": "vitest run",
     "test:watch": "vitest",

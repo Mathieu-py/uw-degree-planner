@@ -2,7 +2,7 @@
  * Fetches authoritative per-course data from UW's Kuali Curriculum Management
  * catalog — the data UWFlow doesn't expose: unit weights, cross-listings
  * (course equivalence), and the structured requisite rule trees. The catalog
- * fetch pipeline (`fetch-uwflow.ts`) joins this onto the UWFlow snapshot by code.
+ * catalog builder (`build-catalog.ts`) joins this onto the snapshot by code.
  *
  * Kuali HTML → AST parsing lives in `./kualiRequisites`; this module only does
  * the fetching and assembles the per-course record.

@@ -8,13 +8,24 @@ export interface UWFlowRating {
   filled_count: number | null;
 }
 
-interface UWFlowSection {
+/**
+ * A course section's seating, as stored in the snapshot. Sourced from UW Open
+ * Data's class schedules (the registrar's live enrolment), keyed names kept for
+ * back-compat with the original UWFlow shape.
+ */
+export interface CourseSection {
   id: number;
   enrollment_total: number;
   enrollment_capacity: number;
 }
 
-export interface UWFlowCourse {
+/**
+ * The base course record assembled by the catalog builder, before snapshot
+ * derivations. Fields come from several UW sources joined by code: name,
+ * description, requirement prose and `rating` from UWFlow; `sections` from UW
+ * Open Data; units/cross-listings/requisite ASTs are added on {@link CatalogCourse}.
+ */
+export interface BaseCourse {
   id: number;
   code: string;
   name: string;
@@ -23,7 +34,7 @@ export interface UWFlowCourse {
   coreqs: string | null;
   antireqs: string | null;
   rating: UWFlowRating | null;
-  sections: UWFlowSection[];
+  sections: CourseSection[];
 }
 
 /**
@@ -31,7 +42,7 @@ export interface UWFlowCourse {
  * dominates the file and only /course/[code] reads it, so it lives in a sibling
  * descriptions file).
  */
-export type CatalogCourse = Omit<UWFlowCourse, "description"> & {
+export type CatalogCourse = Omit<BaseCourse, "description"> & {
   /**
    * Unit weight: 0.5 standard, 0.25 lab/seminar, 1.0+ full-year. UWFlow doesn't
    * expose it, so the fetch script enriches from Kuali. `undefined` when

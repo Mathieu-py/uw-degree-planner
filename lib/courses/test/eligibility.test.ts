@@ -6,7 +6,7 @@ import {
   type EligibilityRow,
 } from "../eligibility";
 import { enrichCourse } from "../filters";
-import type { Course, UWFlowCourse } from "../types";
+import type { BaseCourse, Course } from "../types";
 
 const SYDE: ProgramIdentity = {
   programId: "systems-design-engineering",
@@ -14,8 +14,8 @@ const SYDE: ProgramIdentity = {
   faculty: "engineering",
 };
 
-function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function makeCourse(overrides: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "math116",
     name: "Calculus 1 for Engineering",
