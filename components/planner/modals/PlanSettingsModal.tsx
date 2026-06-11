@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import type { ProgramOption } from "@/components/planner/shell/PlannerShell";
 import { Button } from "@/components/ui/Button";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
+import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
-import { Select } from "@/components/ui/Select";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { termInfo } from "@/lib/terms";
@@ -133,26 +133,28 @@ export function PlanSettingsModal({
             </span>
           </div>
         ) : (
-          specPrograms.map(({ id, specs }) => (
-            <label key={id} className="flex flex-col gap-1.5 text-xs">
-              <span className="text-[12.5px] font-semibold text-ink-2">
-                {specPrograms.length > 1 || programIds.length > 1
-                  ? `${programName[id] ?? id} — specialization`
-                  : "Specialization / Option"}
-              </span>
-              <Select
-                value={specializationIds[id] ?? ""}
-                onChange={(e) => setSpec(id, e.target.value)}
-              >
-                <option value="">(none)</option>
-                {specs.map((s) => (
-                  <option key={s.slug} value={s.slug}>
-                    {s.name}
-                  </option>
-                ))}
-              </Select>
-            </label>
-          ))
+          specPrograms.map(({ id, specs }) => {
+            const labelText =
+              specPrograms.length > 1 || programIds.length > 1
+                ? `${programName[id] ?? id} — specialization`
+                : "Specialization / Option";
+            return (
+              <div key={id} className="flex flex-col gap-1.5 text-xs">
+                <span className="text-[12.5px] font-semibold text-ink-2">
+                  {labelText}
+                </span>
+                <Picker
+                  ariaLabel={labelText}
+                  value={specializationIds[id] ?? ""}
+                  onChange={(v) => setSpec(id, v)}
+                  options={[
+                    { value: "", label: "(none)" },
+                    ...specs.map((s) => ({ value: s.slug, label: s.name })),
+                  ]}
+                />
+              </div>
+            );
+          })
         )}
 
         <div className="flex flex-col gap-1.5 text-xs">

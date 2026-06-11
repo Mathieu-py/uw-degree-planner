@@ -10,6 +10,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ANTH",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -133,6 +134,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SDS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -668,6 +670,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CLAS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -807,6 +810,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "COMMST",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -940,6 +944,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -1454,6 +1459,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -2010,6 +2016,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -2587,6 +2594,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -2753,6 +2761,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GSJ",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -2916,6 +2925,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GEOG",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -3083,6 +3093,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GER",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -3207,6 +3218,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "HIST",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -3531,6 +3543,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -3740,6 +3753,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MEDVL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -3996,6 +4010,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MUSIC",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -4413,6 +4428,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PACS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -4823,6 +4839,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PHIL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -4931,6 +4948,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSCI",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -5116,6 +5134,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSYCH",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -5256,6 +5275,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "RCS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -5355,6 +5375,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCI",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -5533,6 +5554,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SDS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -6046,6 +6068,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SOC",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -6201,6 +6224,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SPAN",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -6289,6 +6313,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "VCULT",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -6434,6 +6459,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ANTH",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -6565,6 +6591,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SDS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -7095,6 +7122,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CLAS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -7237,6 +7265,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "COMMST",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -7578,6 +7607,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ECON",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -7839,6 +7869,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -8386,6 +8417,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -8908,6 +8940,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -9482,6 +9515,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -10061,6 +10095,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -10216,6 +10251,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GSJ",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -10391,6 +10427,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "HIST",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -10728,6 +10765,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "KIN",
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -10862,6 +10900,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "LS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -11036,6 +11075,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MEDVL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -11292,6 +11332,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MUSIC",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -11716,6 +11757,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PACS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -12158,6 +12200,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PHIL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -12275,6 +12318,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSCI",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -12482,6 +12526,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSYCH",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -12644,6 +12689,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "RCS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -12743,6 +12789,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SRF",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -12946,6 +12993,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SDS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -13451,6 +13499,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SOC",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -13653,6 +13702,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SPAN",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -13741,6 +13791,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "AFM",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -14078,6 +14129,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "AMATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -14251,6 +14303,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "AE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -14669,6 +14722,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -14807,6 +14861,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ARBUS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -15006,6 +15061,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CS",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -15960,6 +16016,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -16082,6 +16139,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -16294,6 +16352,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -16499,6 +16558,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -16619,6 +16679,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "BME",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -17422,6 +17483,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -17531,6 +17593,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -17673,6 +17736,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CHE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -18111,6 +18175,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CHEM",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -18385,6 +18450,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CIVE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -19076,6 +19142,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -19255,6 +19322,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -19672,6 +19740,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -19884,6 +19953,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -20136,6 +20206,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -20734,6 +20805,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CFM",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -21105,6 +21177,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "DATSC",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -21528,6 +21601,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "DATSC",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -21769,6 +21843,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "EARTH",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -21918,6 +21993,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "EARTH",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -22124,6 +22200,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "EARTH",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -22361,6 +22438,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "EARTH",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -22599,6 +22677,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -23218,6 +23297,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -23711,6 +23791,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENBUS",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -23915,6 +23996,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENVE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -24714,6 +24796,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -24913,6 +24996,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -25103,6 +25187,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -25289,6 +25374,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "FINE",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -25554,6 +25640,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "FINE",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -25871,6 +25958,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -26321,6 +26409,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GEOE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -26884,6 +26973,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GBDA",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -26945,6 +27035,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ACTSC",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -27211,6 +27302,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ANTH",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -27341,6 +27433,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "AMATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -27857,6 +27950,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SDS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -28387,6 +28481,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "BIOL",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -28493,6 +28588,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CHEM",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -28757,6 +28853,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CLAS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -28899,6 +28996,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CO",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -29216,6 +29314,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "COMMST",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -29557,6 +29656,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CS",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -30551,6 +30651,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CS",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -31486,6 +31587,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ECON",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -31768,6 +31870,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -32327,6 +32430,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -32861,6 +32965,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -33447,6 +33552,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ENGL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -34039,6 +34145,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ERS",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -34151,6 +34258,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -34434,6 +34542,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GSJ",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -34609,6 +34718,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GEOG",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -35082,6 +35192,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GDS",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -35570,6 +35681,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GER",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -35691,6 +35803,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "HIST",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -36028,6 +36141,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "KIN",
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -36175,6 +36289,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "LS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -36349,6 +36464,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MEDVL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -36605,6 +36721,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MUSIC",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -37041,6 +37158,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PACS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -37483,6 +37601,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PHIL",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -37600,6 +37719,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PHYS",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -37776,6 +37896,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSCI",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -37982,6 +38103,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PMATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -38097,6 +38219,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -38238,6 +38361,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "RCS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -38337,6 +38461,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCI",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -38519,6 +38644,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SRF",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -38812,6 +38938,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SDS",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -39317,6 +39444,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SOC",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -39519,6 +39647,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SPAN",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -39606,6 +39735,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -39809,6 +39939,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "STAT",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -39970,6 +40101,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -40068,6 +40200,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "VCULT",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -40223,6 +40356,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -40668,6 +40802,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -40841,6 +40976,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "INDEV",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -41008,6 +41144,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ACTSC",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -41088,6 +41225,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "AMATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -41263,6 +41401,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "BIOL",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -41360,6 +41499,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CHEM",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -41463,6 +41603,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CO",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -41689,6 +41830,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CS",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -41956,6 +42098,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "CS",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -42122,6 +42265,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ERS",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -42206,6 +42350,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GEOG",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -42673,6 +42818,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "GDS",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -42810,6 +42956,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -43005,6 +43152,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PHYS",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -43099,6 +43247,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PMATH",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -43247,6 +43396,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -43363,6 +43513,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -43542,6 +43693,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "STAT",
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -43622,6 +43774,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -43696,6 +43849,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "INTEG",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -44246,6 +44400,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -44577,6 +44732,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -44745,6 +44901,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -44935,6 +45092,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -45125,6 +45283,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -45592,6 +45751,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -45752,6 +45912,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -46012,6 +46173,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -46157,6 +46319,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -46302,6 +46465,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -46466,6 +46630,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -46627,6 +46792,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -47002,6 +47168,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -47223,6 +47390,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -47652,6 +47820,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "mathematics",
     "rules": {
       "kind": "all",
       "children": [
@@ -47903,6 +48072,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "ME",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -48271,6 +48441,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "MTE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -48514,6 +48685,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "terms": {
       "1A": {
         "kind": "all",
@@ -48667,6 +48839,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -48819,6 +48992,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "NE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -49525,6 +49699,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "OPTOM",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -49665,6 +49840,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PHARM",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -49772,6 +49948,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -49951,6 +50128,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PLAN",
+    "faculty": "environment",
     "rules": {
       "kind": "all",
       "children": [
@@ -50289,6 +50467,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSYCH",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -50473,6 +50652,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "PSYCH",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -50675,6 +50855,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -51022,6 +51203,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "REC",
+    "faculty": "health",
     "rules": {
       "kind": "all",
       "children": [
@@ -51254,6 +51436,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -51460,6 +51643,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCBUS",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -51694,6 +51878,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCBUS",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -51914,6 +52099,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCBUS",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -52077,6 +52263,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCBUS",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -52275,6 +52462,7 @@
       "title": "2026-2027 Undergraduate Studies Academic Calendar",
       "year": "2026-2027"
     },
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -52649,6 +52837,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SCI",
+    "faculty": "science",
     "rules": {
       "kind": "all",
       "children": [
@@ -52767,6 +52956,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SOCWK",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -52824,6 +53014,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -53727,6 +53918,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SFM",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [
@@ -53958,6 +54150,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "SYDE",
+    "faculty": "engineering",
     "terms": {
       "1A": {
         "kind": "all",
@@ -54389,6 +54582,7 @@
       "year": "2026-2027"
     },
     "subjectCode": "THPERF",
+    "faculty": "arts",
     "rules": {
       "kind": "all",
       "children": [

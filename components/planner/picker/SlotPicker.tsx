@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
+import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import {
   type CourseEligibilityVerdict,
@@ -150,15 +151,13 @@ export function SlotPicker({
         />
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="border-b border-line px-4 py-3">
-            <input
+            <Input
               type="search"
               value={filters.query}
               onChange={(e) => patchFilters({ query: e.target.value })}
-              // biome-ignore lint/a11y/noAutofocus: search is the primary action when the modal opens
               autoFocus
               aria-label="Search by code or name"
               placeholder="Search by code or name…"
-              className="w-full rounded-md border border-line-2 bg-bg px-3 py-2 text-sm placeholder:text-ink-3 outline-none focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]"
             />
           </div>
           <div className="flex-1 overflow-y-auto">

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { Select } from "@/components/ui/Select";
 import { type ProgramOption, splitProgramName } from "@/lib/programs";
+import { ProgramSearchPalette } from "./ProgramSearchPalette";
 
 interface Props {
   programOptions: ProgramOption[];
@@ -13,25 +14,28 @@ interface Props {
 
 /**
  * Slim multi-program picker: a compact single-line list of chosen programs over
- * a quiet "+ Add another program" text link (an invisible native `<select>`
- * stretched over it, offering only not-yet-chosen options). Used by Plan Settings and
- * onboarding so a double-degree student can audit against more than one program
- * (issue #32). The first row is the primary — it anchors the plan's single
- * specialization and is tagged "Primary" once a second program is added (the
- * rest read "Joint").
+ * a quiet "+ Add another program" link that opens a searchable, faculty-filtered
+ * command palette ({@link ProgramSearchPalette}) for adding more. Used by Plan
+ * Settings and onboarding so a double-degree student can audit against more than
+ * one program (issue #32). The first row is the primary — it anchors the plan's
+ * single specialization and is tagged "Primary" once a second program is added
+ * (the rest read "Joint").
  */
 export function ProgramMultiSelect({
   programOptions,
   selected,
   onChange,
 }: Props) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const nameById = new Map(programOptions.map((p) => [p.id, p.name]));
-  const available = programOptions.filter((p) => !selected.includes(p.id));
   const showPrimaryHint = selected.length > 1;
 
-  function add(id: string) {
-    if (!id || selected.includes(id)) return;
-    onChange([...selected, id]);
+  function toggle(id: string) {
+    onChange(
+      selected.includes(id)
+        ? selected.filter((x) => x !== id)
+        : [...selected, id],
+    );
   }
   function remove(id: string) {
     onChange(selected.filter((x) => x !== id));
@@ -81,32 +85,28 @@ export function ProgramMultiSelect({
         </ul>
       ) : null}
 
-      {selected.length > 0 && available.length > 0 ? (
+      {selected.length > 0 && programOptions.length > 0 ? (
         <div className="h-px bg-line" />
       ) : null}
 
-      {available.length > 0 ? (
-        <label className="relative inline-flex items-center gap-[7px] self-start rounded-[6px] px-0.5 py-1.5 text-[13px] font-semibold text-accent transition-colors hover:text-accent-ink dark:hover:text-accent-bg">
+      {programOptions.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="inline-flex items-center gap-[7px] self-start rounded-[6px] px-0.5 py-1.5 text-[13px] font-semibold text-accent transition-colors hover:text-accent-ink dark:hover:text-accent-bg"
+        >
           <Icon name="plusSign" size="sm" />
           {selected.length === 0 ? "Add a program" : "Add another program"}
-          <Select
-            aria-label="Add a program"
-            value=""
-            onChange={(e) => add(e.target.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer border-0 opacity-0"
-          >
-            <option value="">
-              {selected.length === 0
-                ? "Select a program…"
-                : "Add another program…"}
-            </option>
-            {available.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-        </label>
+        </button>
+      ) : null}
+
+      {pickerOpen ? (
+        <ProgramSearchPalette
+          options={programOptions}
+          selected={selected}
+          onToggle={toggle}
+          onClose={() => setPickerOpen(false)}
+        />
       ) : null}
     </div>
   );

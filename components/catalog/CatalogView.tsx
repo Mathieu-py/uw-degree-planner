@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
+import { Input } from "@/components/ui/Input";
+import { Picker } from "@/components/ui/Picker";
 import type { SortKey } from "@/lib/courses/courseSort";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
@@ -73,28 +75,21 @@ export function CatalogView({ catalog }: { catalog: Course[] }) {
 
         <div className="flex-1 min-w-0 flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            <div className="input-wrap flex-1">
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => patchFilters({ query: e.target.value })}
-                aria-label="Search by code or name"
-                placeholder="Search by code or name…"
-                className="w-full h-[42px] rounded-[9px] border border-line-2 bg-bg px-[13px] text-sm text-ink placeholder:text-ink-3 outline-none focus:border-accent-bg focus:shadow-[0_0_0_3px_var(--accent-soft)]"
-              />
-            </div>
-            <select
+            <Input
+              type="search"
+              value={filters.query}
+              onChange={(e) => patchFilters({ query: e.target.value })}
+              aria-label="Search by code or name"
+              placeholder="Search by code or name…"
+              className="flex-1"
+            />
+            <Picker
               value={sortKey}
-              onChange={(e) => onSort(e.target.value as SortKey)}
-              aria-label="Sort courses"
-              className="h-[42px] rounded-[9px] border border-line-2 bg-bg px-3 text-sm text-ink outline-none focus:border-accent-bg"
-            >
-              {SORTS.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+              onChange={onSort}
+              options={SORTS.map((s) => ({ value: s.key, label: s.label }))}
+              ariaLabel="Sort courses"
+              className="w-44"
+            />
           </div>
 
           <p className="u-small">

@@ -18,9 +18,9 @@ import { TermChoiceModal } from "@/components/planner/picker/TermChoiceModal";
 import { Timeline } from "@/components/planner/timeline/Timeline";
 import { PlanToolbar } from "@/components/planner/toolbar/PlanToolbar";
 import { SaveStatusBadge } from "@/components/planner/toolbar/SaveStatusBadge";
+import { ActionMenu } from "@/components/ui/ActionMenu";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
-import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
@@ -507,7 +507,7 @@ function PlannerShellInner({
             </span>
             {isLocalSource ? (
               <div className="ml-auto flex items-center gap-2">
-                <DropdownMenu
+                <ActionMenu
                   label="Edit plan"
                   icon={<Icon name="edit" size="sm" />}
                   items={[

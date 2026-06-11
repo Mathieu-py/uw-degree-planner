@@ -142,38 +142,49 @@ const TermsSchema = z.object({
  */
 const NumberOfTermsSchema = z.number().int().min(2).max(8).optional();
 
+/**
+ * The six UWaterloo undergraduate faculties — single source of truth for the
+ * {@link Faculty} type, the schema, and the program picker's tab order (listed
+ * most-searched first). Stamped per program by the scraper's `normalizeFaculty`.
+ */
+export const FACULTIES = [
+  "mathematics",
+  "engineering",
+  "science",
+  "arts",
+  "health",
+  "environment",
+] as const;
+
+const FacultySchema = z.enum(FACULTIES);
+
+/** Fields shared by both program variants; only the rule shape (`terms` vs `rules`) differs. */
+const baseProgramShape = {
+  name: z.string(),
+  asOf: z.string(),
+  source: z.string().optional(),
+  numberOfTerms: NumberOfTermsSchema,
+  electives: z.array(ElectiveCategorySchema).optional(),
+  unitPlan: UnitPlanSchema.optional(),
+  degreeRequirements: DegreeRequirementsSchema.optional(),
+  informational: z.array(InformationalItemSchema).optional(),
+  specializations: z.array(SpecializationSchema).optional(),
+  unverifiedRequirements: z.array(z.string()).optional(),
+  catalog: CatalogProvenanceSchema.optional(),
+  subjectCode: z.string().optional(),
+  faculty: FacultySchema.optional(),
+};
+
 const ProgramSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("engineering"),
-    name: z.string(),
-    asOf: z.string(),
-    source: z.string().optional(),
+    ...baseProgramShape,
     terms: TermsSchema,
-    numberOfTerms: NumberOfTermsSchema,
-    electives: z.array(ElectiveCategorySchema).optional(),
-    unitPlan: UnitPlanSchema.optional(),
-    degreeRequirements: DegreeRequirementsSchema.optional(),
-    informational: z.array(InformationalItemSchema).optional(),
-    specializations: z.array(SpecializationSchema).optional(),
-    unverifiedRequirements: z.array(z.string()).optional(),
-    catalog: CatalogProvenanceSchema.optional(),
-    subjectCode: z.string().optional(),
   }),
   z.object({
     kind: z.literal("flexible"),
-    name: z.string(),
-    asOf: z.string(),
-    source: z.string().optional(),
+    ...baseProgramShape,
     rules: RuleNodeSchema,
-    numberOfTerms: NumberOfTermsSchema,
-    electives: z.array(ElectiveCategorySchema).optional(),
-    unitPlan: UnitPlanSchema.optional(),
-    degreeRequirements: DegreeRequirementsSchema.optional(),
-    informational: z.array(InformationalItemSchema).optional(),
-    specializations: z.array(SpecializationSchema).optional(),
-    unverifiedRequirements: z.array(z.string()).optional(),
-    catalog: CatalogProvenanceSchema.optional(),
-    subjectCode: z.string().optional(),
   }),
 ]);
 
@@ -191,14 +202,13 @@ export function validatePrograms(raw: unknown): Record<string, Program> {
 
 export const PROGRAMS: Record<string, Program> = validatePrograms(programsData);
 
-/** The six UWaterloo undergraduate faculties a program can belong to. */
-export type Faculty =
-  | "engineering"
-  | "mathematics"
-  | "arts"
-  | "science"
-  | "environment"
-  | "health";
+/** A UWaterloo undergraduate faculty (see {@link FACULTIES}). */
+export type Faculty = (typeof FACULTIES)[number];
+
+/** Title-case display label for a faculty ("arts" → "Arts"). */
+export function facultyLabel(faculty: Faculty): string {
+  return faculty[0].toUpperCase() + faculty.slice(1);
+}
 
 /**
  * Normalized, matchable description of a program, to resolve program-restriction
@@ -437,10 +447,6 @@ export function isTermLetter(s: string | null | undefined): s is TermLetter {
   return s != null && (TERM_LETTERS as readonly string[]).includes(s);
 }
 
-export function isKnownProgram(id: string): boolean {
-  return Object.hasOwn(PROGRAMS, id);
-}
-
 /** Span when a program declares none, and the clamp ceiling (`TermLetter` ≤ 4B). */
 const DEFAULT_TERM_SPAN = 8;
 
@@ -466,15 +472,23 @@ export interface ProgramOption {
   id: string;
   name: string;
   kind: Program["kind"];
+  /** Home faculty, for the program picker's filter + grouping; absent if unknown. */
+  faculty?: Faculty;
 }
 
 /**
- * The `(id, name, kind)` digest of every program, sorted by name. Shipped to
- * the client instead of full programs.json so the dropdown works without trees.
+ * The `(id, name, kind, faculty)` digest of every program, sorted by name.
+ * Shipped to the client instead of full programs.json so the picker works
+ * without trees.
  */
 export function getProgramOptions(): ProgramOption[] {
   return Object.entries(PROGRAMS)
-    .map(([id, p]) => ({ id, name: p.name, kind: p.kind }))
+    .map(([id, p]) => ({
+      id,
+      name: p.name,
+      kind: p.kind,
+      ...(p.faculty ? { faculty: p.faculty } : {}),
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -510,11 +524,11 @@ export function getSpecialization(
   );
 }
 
-export function isKnownSpecialization(
-  programId: string,
-  specializationSlug: string,
-): boolean {
-  return getSpecialization(programId, specializationSlug) !== null;
+/** Every rule-tree root of a program: one per term for engineering, the single tree for flexible. */
+function programRuleRoots(program: Program): RuleNode[] {
+  return program.kind === "engineering"
+    ? TERM_LETTERS.map((t) => program.terms[t])
+    : [program.rules];
 }
 
 /**
@@ -522,27 +536,11 @@ export function isKnownSpecialization(
  * single tree for flexible). Choice-group options excluded — those need a pick.
  */
 export function getRequiredCourses(program: Program): string[] {
-  if (program.kind === "engineering") {
-    const out = new Set<string>();
-    for (const t of TERM_LETTERS) {
-      for (const c of requiredCoursesIn(program.terms[t])) out.add(c);
-    }
-    return [...out].sort();
+  const out = new Set<string>();
+  for (const root of programRuleRoots(program)) {
+    for (const c of requiredCoursesIn(root)) out.add(c);
   }
-  return requiredCoursesIn(program.rules);
-}
-
-export function getSubjectPools(program: Program): SubjectPoolNode[] {
-  const out: SubjectPoolNode[] = [];
-  const visit = (n: RuleNode) => {
-    if (n.kind === "subjectPool") out.push(n);
-  };
-  if (program.kind === "engineering") {
-    for (const t of TERM_LETTERS) walkRule(program.terms[t], visit);
-  } else {
-    walkRule(program.rules, visit);
-  }
-  return out;
+  return [...out].sort();
 }
 
 const EMPTY_CODE_SET: ReadonlySet<string> = new Set();
@@ -582,11 +580,7 @@ export function programReferencedCodes(
   }
 
   const out = new Set<string>();
-  if (program.kind === "engineering") {
-    for (const t of TERM_LETTERS) collectReferenced(program.terms[t], out);
-  } else {
-    collectReferenced(program.rules, out);
-  }
+  for (const root of programRuleRoots(program)) collectReferenced(root, out);
   for (const e of program.electives ?? []) {
     for (const c of e.approvedCourses ?? []) out.add(c.toLowerCase());
   }

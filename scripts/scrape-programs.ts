@@ -25,6 +25,8 @@ import { countNoun } from "../lib/format";
 import {
   type CatalogProvenance,
   type DegreeRequirements,
+  FACULTIES,
+  type Faculty,
   type Program,
   type Specialization,
   validatePrograms,
@@ -69,6 +71,8 @@ interface ProgramListEntry {
 }
 
 export interface ProgramDetail extends ProgramListEntry {
+  /** Calendar's faculty label, e.g. `{ name: "Faculty of Mathematics" }`. */
+  facultyCalendarDisplay?: { name?: string };
   requiredCoursesTermByTerm?: string;
   requirements?: string;
   courseRequirementsNoUnits?: string;
@@ -332,6 +336,33 @@ export function stripSubjectCodeSuffix(description: string): string {
   return description.replace(/\s*\([^)]*\)\s*$/, "").trim();
 }
 
+/**
+ * Map a calendar `facultyCalendarDisplay.name` to one of the six {@link FACULTIES}.
+ * Takes the first faculty keyword the (free-text) label names, so a cross-faculty
+ * program is filed under its lead faculty ("Faculties of Engineering and
+ * Mathematics" → engineering); an affiliated college ("…with Renison University
+ * College") falls back to Arts. Null when nothing matches, so the caller omits it.
+ */
+export function normalizeFaculty(display: string | undefined): Faculty | null {
+  if (!display) return null;
+  const lower = display.toLowerCase();
+  let best: Faculty | null = null;
+  let bestIndex = Number.POSITIVE_INFINITY;
+  for (const faculty of FACULTIES) {
+    const i = lower.indexOf(faculty);
+    if (i >= 0 && i < bestIndex) {
+      bestIndex = i;
+      best = faculty;
+    }
+  }
+  if (best) return best;
+  // Affiliated/federated colleges are all Faculty of Arts.
+  if (/renison|grebel|jerome|united college|university college/.test(lower)) {
+    return "arts";
+  }
+  return null;
+}
+
 interface CourseListEntry {
   subjectCode?: { name?: string; description?: string };
 }
@@ -435,12 +466,15 @@ async function runPhaseA(
       const subjectCode = p.fieldOfStudy?.name
         ? subjectCodeByDescription.get(p.fieldOfStudy.name.toLowerCase())
         : undefined;
+      // Home faculty (real attribute, not inferred), for the picker's filter.
+      const faculty = normalizeFaculty(detail.facultyCalendarDisplay?.name);
       const base = {
         name: p.title,
         asOf: today,
         source: `${VIEW_BASE}/${encodeURIComponent(p.pid)}`,
         catalog,
         ...(subjectCode ? { subjectCode } : {}),
+        ...(faculty ? { faculty } : {}),
       };
       programs[slug] =
         result.kind === "engineering"

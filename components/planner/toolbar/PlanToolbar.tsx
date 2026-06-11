@@ -10,8 +10,8 @@ import {
   useState,
 } from "react";
 import { ShareModal } from "@/components/planner/modals/ShareModal";
+import { ActionMenu, type MenuItem } from "@/components/ui/ActionMenu";
 import { Button } from "@/components/ui/Button";
-import { DropdownMenu, type MenuItem } from "@/components/ui/DropdownMenu";
 import { Icon } from "@/components/ui/Icon";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
@@ -298,7 +298,7 @@ function PlanToolbarAuthed({
   ];
 
   const optionsMenu = (
-    <DropdownMenu
+    <ActionMenu
       label="Edit plan"
       icon={<Icon name="edit" size="sm" />}
       items={actionItems}
