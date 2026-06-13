@@ -39,6 +39,7 @@ import {
   buildSpecializationSlug,
   type DegreeParseResult,
   dropPureUnitBucketElectives,
+  parseAdditionalConstraints,
   parseDegreeRequirements,
   parseElectives,
   parseProgramRequirements,
@@ -79,6 +80,13 @@ export interface ProgramDetail extends ProgramListEntry {
   graduationRequirements?: string;
   courseListsNew?: string;
   specializationsList?: string;
+  /**
+   * Free-prose calendar notes (an `<ol>` written for a human): where rules like
+   * a program's "List 1" are defined and where discretionary "see your advisor"
+   * rules live. Carried through as `informational` so the student can read them
+   * next to the audit. See #117.
+   */
+  additionalConstraints?: string;
 }
 
 export interface SpecializationRef {
@@ -451,10 +459,16 @@ async function runPhaseA(
       const unitPlanField = planResult.unitPlan
         ? { unitPlan: planResult.unitPlan }
         : {};
+      // Carry free-prose calendar notes (additionalConstraints) alongside the
+      // unit-plan informational items, so rules defined only in prose (e.g. what
+      // "List 1" means, discretionary advisor-permission rules) reach the UI
+      // instead of being dropped. See #117.
+      const informational = [
+        ...planResult.informational,
+        ...parseAdditionalConstraints(detail.additionalConstraints),
+      ];
       const informationalField =
-        planResult.informational.length > 0
-          ? { informational: planResult.informational }
-          : {};
+        informational.length > 0 ? { informational } : {};
       // Verbatim owed requirements we couldn't structure (unscoped subject
       // pools, unrecognized "Complete …" prose). Surfaced to the student so the
       // audit can't read complete while real requirements were dropped.

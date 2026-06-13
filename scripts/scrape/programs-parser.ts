@@ -4,6 +4,7 @@
  * pools, electives, unit plan, degree-level requirements, slugs). This file is
  * the stable entry point the scraper and its tests import from.
  */
+export { parseAdditionalConstraints } from "./additionalConstraints";
 export {
   type DegreeParseResult,
   parseDegreeRequirements,
