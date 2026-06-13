@@ -60,6 +60,12 @@ export function loadCatalogCodes(): CatalogIndex {
       codes.add(code);
       const { prefix, num } = splitCode(code);
       if (Number.isNaN(num)) continue;
+      // A code RANGE means "any real, offered course in this band". Index only
+      // courses the catalog actually weights (units present) — that excludes
+      // inactive / not-offered and WLU cross-listed band members (no sections,
+      // no unit weight), which a student can't take and which would otherwise
+      // surface as requirement courses lacking a unit weight. See #117 (bucket C).
+      if (c.units == null) continue;
       const bucket = byPrefix.get(prefix);
       if (bucket) bucket.push({ num, code });
       else byPrefix.set(prefix, [{ num, code }]);
