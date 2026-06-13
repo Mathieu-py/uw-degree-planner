@@ -109,13 +109,14 @@ interface LevelRange {
 
 /**
  * Parse an optional level constraint after "at the": a single level
- * ("300-level" → floor), an explicit range ("300- or 400-level"), a longer
- * enumeration ("200-, 300-, or 400-level" → min..max), or a single level "or
- * above/higher" (floor). One number is a floor; several span min..max.
+ * ("300-level" → floor), an explicit range ("300- or 400-level"), the slash
+ * form ("600-/700-level"), a longer enumeration ("200-, 300-, or 400-level" →
+ * min..max), or a single level "or above/higher" (floor). One number is a
+ * floor; several span min..max.
  */
 function parseLevelRange(rest: string): LevelRange {
   const levelMatch = rest.match(
-    /^at the\s+([\d\s,\-or]+?)\s*-?\s*level(?:\s+or\s+(?:above|higher))?\b/i,
+    /^at the\s+([\d\s,\-or/]+?)\s*-?\s*level(?:\s+or\s+(?:above|higher))?\b/i,
   );
   if (!levelMatch) return { rest };
   const nums = (levelMatch[1].match(/\d+/g) ?? []).map(Number);
@@ -150,22 +151,15 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
 }
 
 /**
- * Parse a "Complete N …" subject-pool rule into a `subjectPool` node, or null if
- * the prose names no enumerable subject set. Handles the varied phrasings
- * ("…STAT courses at the 300-level", "…from: ACTSC, AMATH, …", "N units of …").
- *
- * A unit amount is converted to an approximate course count (units / 0.5) for
- * the count-based audit; the unit audit re-weights by real catalog units, so the
- * approximation only affects the count fallback. Exclusions are kept verbatim
- * for display and don't gate matching.
+ * Build a `subjectPool` node from the text AFTER the count lead-in (the subject
+ * descriptor + optional level + optional "from:" list). Shared by
+ * {@link parseSubjectPool} (which derives `selectCount` from "Complete N") and
+ * {@link parseChooseAnyPool} (count 1). Returns null when no enumerable subject
+ * set survives.
  */
-export function parseSubjectPool(fullText: string): RuleNode | null {
-  const head = parseHead(fullText);
-  if (!head) return null;
-  const { amount, isUnits } = head;
-
+function buildPool(restIn: string, selectCount: number): RuleNode | null {
   const exclusions: string[] = [];
-  let rest = stripExclusionsAndQualifiers(head.rest, exclusions);
+  let rest = stripExclusionsAndQualifiers(restIn, exclusions);
 
   const subjects = parseSubjects(rest);
   let subjectCodes = subjects.subjectCodes;
@@ -178,6 +172,19 @@ export function parseSubjectPool(fullText: string): RuleNode | null {
   const level = parseLevelRange(rest);
   rest = level.rest;
 
+  // Strip a connective preamble between the subject noun and the "from" list —
+  // the calendar writes "…courses, in any combination, chosen from the following
+  // subject codes: …". The `(?=from\b)` lookahead fires the strip only when a
+  // real "from" list follows, so a bare "in any combination" with no list still
+  // falls through to null. Without this, parseFromClause never reaches the list
+  // and the pool drops to unverified. See #117 (bucket A).
+  rest = rest
+    .replace(
+      /^,?\s*(?:in any combination\s*,?\s*)?(?:chosen\s+)?(?=from\b)/i,
+      "",
+    )
+    .trim();
+
   const fromSubjects = parseFromClause(rest, exclusions);
   if (fromSubjects.length > 0) subjectCodes = fromSubjects;
 
@@ -186,10 +193,6 @@ export function parseSubjectPool(fullText: string): RuleNode | null {
   // is then untracked (no count ring).
   if (subjectCodes.length === 0) return null;
 
-  // A unit-stated pool ("5.25 units of Science courses") has no per-course units
-  // at parse time, so `selectCount` approximates the count assuming a 0.5-unit
-  // course.
-  const selectCount = isUnits ? Math.max(1, Math.round(amount / 0.5)) : amount;
   return {
     kind: "subjectPool",
     selectCount,
@@ -198,4 +201,42 @@ export function parseSubjectPool(fullText: string): RuleNode | null {
     ...(level.maxLevel !== undefined ? { maxLevel: level.maxLevel } : {}),
     ...(exclusions.length > 0 ? { exclusions } : {}),
   };
+}
+
+/**
+ * Parse a "Complete N …" subject-pool rule into a `subjectPool` node, or null if
+ * the prose names no enumerable subject set. Handles the varied phrasings
+ * ("…STAT courses at the 300-level", "…from: ACTSC, AMATH, …", "N units of …").
+ * A unit amount is converted to an approximate course count (units / 0.5); the
+ * unit audit re-weights by real catalog units, so the approximation only affects
+ * the count fallback. Exclusions are kept verbatim and don't gate matching.
+ */
+export function parseSubjectPool(fullText: string): RuleNode | null {
+  const head = parseHead(fullText);
+  if (!head) return null;
+  const { amount, isUnits } = head;
+  // A unit-stated pool ("5.25 units of Science courses") has no per-course units
+  // at parse time, so `selectCount` approximates the count assuming a 0.5-unit
+  // course.
+  const selectCount = isUnits ? Math.max(1, Math.round(amount / 0.5)) : amount;
+  return buildPool(head.rest, selectCount);
+}
+
+/**
+ * Parse a "Choose any …" pool phrase that has no "Complete N" lead-in, e.g.
+ * "any CS course at the 600-/700-level". Strips the "Choose any … from the
+ * following:" / leading "any" framing, then builds a `selectCount: 1` pool via
+ * {@link buildPool}. Used as a fallback when a "Choose any" rule extracted no
+ * literal course codes (the pool half of a list like "CS440-CS498, any CS
+ * course at the 600- or 700-level"). See #117 (bucket C).
+ */
+export function parseChooseAnyPool(fullText: string): RuleNode | null {
+  const rest = fullText
+    .replace(
+      /^choose\s+any\s+(?:of\s+|course\s+from\s+)?(?:the\s+following:?\s*)?/i,
+      "",
+    )
+    .replace(/^any\s+/i, "")
+    .trim();
+  return buildPool(rest, 1);
 }

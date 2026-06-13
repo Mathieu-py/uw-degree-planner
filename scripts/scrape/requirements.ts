@@ -5,14 +5,20 @@ import {
   TERM_LETTERS,
   type TermLetter,
 } from "../../lib/programs";
+import { catalogCodesInRange } from "./catalog";
 import {
   anchorCourseCodes,
   cleanText,
   RULE_RESULT_SELECTOR,
   SECTION_HEADING_SELECTOR,
 } from "./dom";
-import { CODE_RANGE_RE, normalizeCourseCode, TEXT_CODE_RE } from "./normalize";
-import { parseSubjectPool } from "./subjectPool";
+import {
+  CODE_RANGE_RE_G,
+  normalizeCourseCode,
+  parseCodeRange,
+  TEXT_CODE_RE,
+} from "./normalize";
+import { parseChooseAnyPool, parseSubjectPool } from "./subjectPool";
 
 export interface ProgramDetailFields {
   requiredCoursesTermByTerm?: string;
@@ -344,7 +350,11 @@ function parseLi(
   }
 
   if (CHOOSE_ANY_RE.test(prefix)) {
-    if (codes.length === 0)
+    if (codes.length === 0) {
+      // No literal codes — try the pool half ("any CS course at the 600-/700-
+      // level") before giving up. See #117 (bucket C).
+      const pool = parseChooseAnyPool(fullText);
+      if (pool) return { kind: "node", node: pool };
       return recordUnextracted(
         fullText,
         prefix,
@@ -352,6 +362,7 @@ function parseLi(
         warnings,
         unverified,
       );
+    }
     return {
       kind: "node",
       node: {
@@ -432,18 +443,29 @@ function collectCourseCodes(
   const codes = new Set<string>(anchorCourseCodes($, $result));
   // Fallback for required courses Kuali renders as PLAIN TEXT (absent from UW's
   // course DB — cross-institution "…W" codes like BUS127W, or unlinked INDEV387).
-  // Only when nothing was hyperlinked, scan the list after the colon. Bail on a
-  // range ("CS340-CS398"): pulling its endpoints as two literals would be wrong,
-  // so leave it unextracted (surfaces as unverified).
+  // Only when nothing was hyperlinked, scan the list after the colon.
   if (codes.size === 0) {
     const text = $result.text();
     const colon = text.indexOf(":");
     const list = colon >= 0 ? text.slice(colon + 1) : "";
-    if (list && !CODE_RANGE_RE.test(list))
-      for (const tok of list.match(TEXT_CODE_RE) ?? []) {
+    if (list) {
+      // Expand course-number RANGES ("CS440-CS498") against the AUTHORITATIVE
+      // catalog — the calendar states inclusive subject bands; we emit only codes
+      // that exist in the snapshot, never synthesizing endpoints. A range whose
+      // subject is absent (cross-listed/WLU) expands to nothing → unverified.
+      for (const m of list.matchAll(CODE_RANGE_RE_G)) {
+        const range = parseCodeRange(m[0]);
+        if (range)
+          for (const code of catalogCodesInRange(range)) codes.add(code);
+      }
+      // Then scan the non-range remainder for literal codes (a list may mix the
+      // two: "CS136, CS138, CS240-299").
+      const remainder = list.replace(CODE_RANGE_RE_G, " ");
+      for (const tok of remainder.match(TEXT_CODE_RE) ?? []) {
         const code = normalizeCourseCode(tok);
         if (code) codes.add(code);
       }
+    }
   }
   return [...codes].sort();
 }

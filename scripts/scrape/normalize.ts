@@ -9,10 +9,37 @@ export function normalizeCourseCode(raw: string): string | null {
 // between subject and number.
 export const TEXT_CODE_RE = /[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?/g;
 
-// A course-number RANGE ("CS340-CS398", "CS 440-489", "600- or 700-level"): a
-// set of courses, NOT a fixed list — must not be scraped as two literal codes.
-export const CODE_RANGE_RE =
-  /[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?\s*[-–—]\s*(?:[A-Za-z]{2,8}\s?)?\d{3,4}/;
+// A course-number RANGE ("CS340-CS398", "CS 440-489"): a set of courses, NOT a
+// fixed list — must be expanded against the catalog, not scraped as two literal
+// codes. Global + capturing, for finding/expanding every range token in a list.
+// Groups: 1=start subject, 2=start number, 3=end subject (optional — "CS240-299"
+// omits it), 4=end number.
+export const CODE_RANGE_RE_G =
+  /([A-Za-z]{2,8})\s?(\d{3,4})[A-Za-z]?\s*[-–—]\s*(?:([A-Za-z]{2,8})\s?)?(\d{3,4})[A-Za-z]?/g;
+
+/**
+ * Parse one course-number range token into its subject + numeric bounds. The
+ * subject is the START prefix ("CS240-299" and "CS340-CS398" are both CS bands);
+ * an end prefix, when present, is assumed to match and is ignored. Bounds are
+ * normalized so `lo <= hi`. Null when the token isn't a range. Expansion to real
+ * codes happens against the catalog (see catalog.ts) — endpoints are never
+ * synthesized.
+ */
+export function parseCodeRange(
+  token: string,
+): { prefix: string; lo: number; hi: number } | null {
+  const g = token.match(
+    /([A-Za-z]{2,8})\s?(\d{3,4})[A-Za-z]?\s*[-–—]\s*(?:([A-Za-z]{2,8})\s?)?(\d{3,4})[A-Za-z]?/,
+  );
+  if (!g) return null;
+  const a = Number(g[2]);
+  const b = Number(g[4]);
+  return {
+    prefix: g[1].toLowerCase(),
+    lo: Math.min(a, b),
+    hi: Math.max(a, b),
+  };
+}
 
 /**
  * Uppercase subject-code tokens (e.g. "BIOL", "ENVS") found in `text`, returned

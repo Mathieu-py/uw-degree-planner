@@ -528,9 +528,11 @@ describe("unverified requirements — owed prose we can't structure", () => {
     expect(r.warnings).toEqual([]);
   });
 
-  it("does NOT scrape a course-number range as literal codes (stays unverified)", () => {
-    // "CS440-CS498" is a SET of courses, not a 2-course list — pulling its
-    // endpoints would be wrong, so the rule is left unstructured (unverified).
+  it("expands a course-number range against the catalog (no longer unverified)", () => {
+    // "CS440-CS498" is a SET of courses, not a 2-course list. We expand it to the
+    // real catalog codes in that inclusive subject band (never synthesizing
+    // endpoints), so the rule structures instead of dropping to unverified.
+    // See #117 (bucket C).
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(
@@ -539,11 +541,33 @@ describe("unverified requirements — owed prose we can't structure", () => {
       },
       "test",
     );
-    if (r.kind === "flexible")
-      expect(findNode(r.rules, (n) => n.kind === "courses")).toBeUndefined();
-    expect(r.unverified).toEqual([
-      "Choose any course from the following: CS440-CS498",
-    ]);
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses node");
+    expect(node.courses).toContain("cs486"); // a real in-band code
+    expect(node.courses).not.toContain("cs440"); // doesn't exist → not synthesized
+    expect(node.courses.every((c) => /^cs\d/.test(c))).toBe(true);
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("recovers the pool half of a Choose-any rule with no literal codes", () => {
+    // "any CS course at the 600-/700-level" has no extractable codes; the
+    // Choose-any branch now falls through to a subject pool. See #117 (bucket C).
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Choose any course from the following: any CS course at the 600- or 700-level",
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["CS"]);
+    expect(pool.minLevel).toBe(600);
+    expect(pool.maxLevel).toBe(700);
+    expect(r.unverified).toEqual([]);
   });
 });
 
