@@ -50,6 +50,13 @@ export interface DegreeProgress {
   /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
   levelFloors: LevelFloor[];
   /**
+   * `unverifiedRequirements` texts still owed — i.e. not yet manually
+   * acknowledged on the plan. Non-empty ⇒ headline held below 100%. The audit
+   * panel names these near the headline so "check with your advisor" is
+   * actionable; clearing the list lets `pct` reach 100.
+   */
+  owedUnverified: string[];
+  /**
    * Per-rule-node distinct credit from the global bipartite match: how many of
    * each owning {@link AuditNode}'s slots a UNIQUE course actually filled. Read
    * by the audit panel (keyed by node identity) so a requirement ROW reflects the
@@ -234,6 +241,12 @@ export function computeDegreeProgress(
   unitsOf: (code: string) => number,
   legality: ReadonlySet<string> = new Set(),
   equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
+  /**
+   * Verbatim `unverifiedRequirements` texts the student has manually confirmed
+   * (per-program, from the plan). An acknowledged requirement stops gating the
+   * 100% headline — it's "complete, pending advisor confirmation", not "unmet".
+   */
+  acknowledged: ReadonlySet<string> = new Set(),
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -412,7 +425,13 @@ export function computeDegreeProgress(
   const allBreadthMet = breadthRequirements.every((b) =>
     unitsMet(b.placedUnits, b.needUnits),
   );
-  const unverifiedOwed = (program?.unverifiedRequirements?.length ?? 0) > 0;
+  // "Couldn't auto-verify" ≠ "unmet". An acknowledged requirement is the student
+  // confirming it manually (the audit's "see your advisor" exit), so it no longer
+  // holds the headline below 100%. Only still-owed (unacknowledged) ones gate.
+  const owedUnverified = (program?.unverifiedRequirements ?? []).filter(
+    (r) => !acknowledged.has(r),
+  );
+  const unverifiedOwed = owedUnverified.length > 0;
 
   // Level floors ("X units at the 200-level+") gate completion like breadth:
   // an overlapping filter that blocks 100% without inflating the denominator.
@@ -437,6 +456,7 @@ export function computeDegreeProgress(
     freeUnits,
     breadthRequirements,
     levelFloors,
+    owedUnverified,
     nodeFill,
   };
 }

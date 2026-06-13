@@ -7,7 +7,8 @@ import type { ValidationIssue } from "@/lib/plan/validate";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
 import { AuditMacroList } from "./AuditMacroList";
 import { buildProgramAudit } from "./buildProgramAudit";
-import type { DragWiring, DrillFn } from "./types";
+import type { AcknowledgeFn, DragWiring, DrillFn } from "./types";
+import { UnverifiedRequirements } from "./UnverifiedRequirements";
 
 interface Props {
   plan: LocalPlan;
@@ -21,6 +22,8 @@ interface Props {
   /** Plan-wide count of prereq/antireq placement issues (header rollup). */
   blockingIssueCount: number;
   onDrillToRequirement?: DrillFn;
+  /** Toggle manual confirmation of an unverified requirement. */
+  onAcknowledgeRequirement?: AcknowledgeFn;
   drag?: DragWiring;
 }
 
@@ -40,6 +43,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
   issues,
   blockingIssueCount,
   onDrillToRequirement,
+  onAcknowledgeRequirement,
   drag,
 }: Props) {
   const data = useMemo(
@@ -50,7 +54,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
   const {
     program,
     macros,
-    unverifiedCount,
+    unverifiedItems,
     placedCodes,
     illegalCodes,
     headlinePct,
@@ -84,8 +88,12 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
         </div>
         <AuditAdvisoryNotes
           estimatedDenom={estimatedDenom}
-          unverifiedCount={unverifiedCount}
           blockingIssueCount={blockingIssueCount}
+        />
+        <UnverifiedRequirements
+          programId={programId}
+          items={unverifiedItems}
+          onAcknowledge={onAcknowledgeRequirement}
         />
       </div>
       <AuditMacroList

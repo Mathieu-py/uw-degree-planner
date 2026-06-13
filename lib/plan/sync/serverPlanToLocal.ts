@@ -11,6 +11,7 @@ export function serverPlanToLocal(plan: ServerPlan): LocalPlan {
     schemaVersion: PLAN_SCHEMA_VERSION,
     programIds: plan.programIds,
     specializationIds: plan.specializationIds,
+    acknowledgedRequirements: plan.acknowledgedRequirements,
     stream: plan.stream ?? "regular",
     startTermId: plan.startTermId,
     slots: plan.slots,

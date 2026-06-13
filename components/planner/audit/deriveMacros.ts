@@ -92,7 +92,7 @@ export function deriveMacros(
    * per-node count.
    */
   nodeFill?: NodeFill,
-): { macros: Macro[]; unverifiedCount: number } {
+): { macros: Macro[] } {
   // Count like the headline: illegally-placed courses don't credit, keeping the
   // elective/communication counts consistent with the degree rows.
   const placedCodes = new Set<string>();
@@ -260,15 +260,9 @@ export function deriveMacros(
       });
     });
   }
-  const unverified = program?.unverifiedRequirements ?? [];
-  unverified.forEach((text, i) => {
-    otherSections.push({
-      kind: "info",
-      key: `unverified-${i}`,
-      title: "Couldn't auto-verify",
-      caption: text,
-    });
-  });
+  // `unverifiedRequirements` are NOT emitted here — they're surfaced near the
+  // headline as acknowledgeable "confirm manually" rows (buildProgramAudit →
+  // UnverifiedRequirements), not buried in this collapsed macro.
 
   const macros: Macro[] = [];
   if (degreeBlocks.length > 0)
@@ -330,7 +324,7 @@ export function deriveMacros(
       defaultOpen: false,
     });
 
-  return { macros, unverifiedCount: unverified.length };
+  return { macros };
 }
 
 function toElectiveSection(

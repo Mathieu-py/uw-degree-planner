@@ -112,6 +112,16 @@ export interface LocalPlan {
   /** Calendar term ID of the student's 1A. Null until set during onboarding. */
   startTermId: TermId | null;
   slots: PlanSlot[];
+  /**
+   * Per-program manual confirmation of `unverifiedRequirements`: `programId →
+   * acked requirement texts`. These are calendar rules the scraper couldn't turn
+   * into machine-checkable structure (discretionary "see your advisor" rules);
+   * acknowledging one stops it gating the 100% headline. Keyed by the **verbatim
+   * requirement string** — the only stable id we have (the array order shifts
+   * across scrapes, and a re-worded requirement *should* re-prompt). A missing
+   * program key (or missing text) means not yet acknowledged.
+   */
+  acknowledgedRequirements?: Record<string, string[]>;
   /** ISO-8601 timestamp of last save. */
   updatedAt: string;
 }

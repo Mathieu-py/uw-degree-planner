@@ -139,6 +139,7 @@ function PlannerShellInner({
     handlePickCode,
     handlePickTermForCourse,
     handleRemoveCourse,
+    handleAcknowledgeRequirement,
     handleCourseDrop,
     handleRetrySave,
   } = usePlanEditors({
@@ -472,6 +473,7 @@ function PlannerShellInner({
                   handleDrillToRequirement(codes);
                   setAuditSheetOpen(false);
                 }}
+                onAcknowledgeRequirement={handleAcknowledgeRequirement}
                 drag={auditDrag}
               />
             </BottomSheet>
@@ -608,6 +610,7 @@ function PlannerShellInner({
               plan={deferredPlan ?? plan}
               catalog={catalog}
               onDrillToRequirement={handleDrillToRequirement}
+              onAcknowledgeRequirement={handleAcknowledgeRequirement}
               drag={auditDrag}
             />
           </div>

@@ -111,6 +111,29 @@ describe("savePlan + loadPlan", () => {
     expect(reloaded?.slots[0].courses).toEqual([{ code: "cs115" }]);
   });
 
+  it("defaults acknowledgedRequirements to {} for a plan saved before the field existed", () => {
+    // Additive field (no schemaVersion bump): an old v3 plan without it must
+    // still load, defaulting the map to {}. See #116.
+    const legacy = JSON.stringify(VALID_PLAN); // VALID_PLAN omits the field
+    store.setItem(PLAN_STORAGE_KEY, legacy);
+    const loaded = loadPlan();
+    expect(loaded?.acknowledgedRequirements).toEqual({});
+  });
+
+  it("round-trips acknowledgedRequirements", () => {
+    const acked: LocalPlan = {
+      ...VALID_PLAN,
+      acknowledgedRequirements: {
+        "h-software-engineering-beng": ["Complete a co-op work term."],
+      },
+    };
+    expect(savePlan(acked)).toBe(true);
+    const loaded = loadPlan();
+    expect(loaded?.acknowledgedRequirements).toEqual({
+      "h-software-engineering-beng": ["Complete a co-op work term."],
+    });
+  });
+
   it("returns false (does not throw) when localStorage.setItem rejects the write", () => {
     const throwing = {
       getItem: () => null,
@@ -169,5 +192,6 @@ describe("emptyPlan", () => {
     const p = emptyPlan();
     expect(p.slots).toEqual([]);
     expect(p.stream).toBe("regular");
+    expect(p.acknowledgedRequirements).toEqual({});
   });
 });

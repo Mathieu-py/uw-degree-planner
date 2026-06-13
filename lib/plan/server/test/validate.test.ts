@@ -22,6 +22,7 @@ function snapshot(over: Partial<PlanSnapshot> = {}): PlanSnapshot {
   return {
     programIds: ["h-software-engineering-beng"],
     specializationIds: {},
+    acknowledgedRequirements: {},
     stream: "stream8",
     startTermId: 1239,
     programScrapeVersion: null,

@@ -30,10 +30,18 @@ function progressOf(
   codes: string[],
   unitsOf: (code: string) => number = () => 0.5,
   legality: ReadonlySet<string> = new Set(),
+  acknowledged: ReadonlySet<string> = new Set(),
 ) {
   const plan = makePlan(codes);
   const audit = compileAudit(program, plan, null, legality);
-  return computeDegreeProgress(audit, program, unitsOf, legality);
+  return computeDegreeProgress(
+    audit,
+    program,
+    unitsOf,
+    legality,
+    undefined,
+    acknowledged,
+  );
 }
 
 describe("computeDegreeProgress — required courses", () => {
@@ -580,6 +588,28 @@ describe("computeDegreeProgress — several gates owed at once", () => {
     expect(p.creditedUnits).toBe(0.5); // volume full
     expect(p.allComplete).toBe(false);
     expect(p.pct).toBe(99);
+    expect(p.owedUnverified).toEqual([
+      "A co-op work-term sequence (not audited here).",
+    ]);
+  });
+
+  it("reaches 100% once the unverified requirement is acknowledged (#116)", () => {
+    // Manual confirmation: "couldn't auto-verify" ≠ "unmet". An acked rule stops
+    // gating, so a volume-complete plan reads 100% instead of an indefinite 99%.
+    const acked = new Set([
+      "A co-op work-term sequence (not audited here).",
+    ]);
+    const p = progressOf(program, ["m1"], () => 0.5, new Set(), acked);
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
+    expect(p.owedUnverified).toEqual([]);
+  });
+
+  it("ignores an acknowledgement that doesn't match any requirement", () => {
+    const acked = new Set(["some other rule that isn't on this program"]);
+    const p = progressOf(program, ["m1"], () => 0.5, new Set(), acked);
+    expect(p.pct).toBe(99);
+    expect(p.owedUnverified).toHaveLength(1);
   });
 });
 

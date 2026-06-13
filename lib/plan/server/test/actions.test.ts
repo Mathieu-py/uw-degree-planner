@@ -100,6 +100,7 @@ beforeEach(() => {
 const SNAPSHOT: PlanSnapshot = {
   programIds: ["h-cs"],
   specializationIds: {},
+  acknowledgedRequirements: {},
   stream: "regular",
   startTermId: 1239,
   programScrapeVersion: null,

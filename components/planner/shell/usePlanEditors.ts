@@ -240,6 +240,29 @@ export function usePlanEditors({
     [setPlan],
   );
 
+  // Toggle a program's manual confirmation of an unverified requirement (keyed by
+  // verbatim text). Acked items stop gating the 100% headline (#116). Empty
+  // per-program arrays are pruned so the map doesn't accrete stale keys.
+  const handleAcknowledgeRequirement = useCallback(
+    (programId: string, text: string, acked: boolean) => {
+      const current = planRef.current;
+      if (!current) return;
+      const map = current.acknowledgedRequirements ?? {};
+      const prev = map[programId] ?? [];
+      const nextList = acked
+        ? prev.includes(text)
+          ? prev
+          : [...prev, text]
+        : prev.filter((t) => t !== text);
+      if (nextList === prev) return;
+      const nextMap = { ...map };
+      if (nextList.length > 0) nextMap[programId] = nextList;
+      else delete nextMap[programId];
+      setPlan({ ...current, acknowledgedRequirements: nextMap });
+    },
+    [setPlan],
+  );
+
   // Drag-and-drop: a placed chip moved to another term ("move") or an audit
   // "missing" chip dropped into a term ("add"). Routed through setPlan.
   const handleCourseDrop = useCallback(
@@ -266,6 +289,7 @@ export function usePlanEditors({
     handlePickCode,
     handlePickTermForCourse,
     handleRemoveCourse,
+    handleAcknowledgeRequirement,
     handleCourseDrop,
     handleRetrySave,
   };

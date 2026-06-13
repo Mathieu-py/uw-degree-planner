@@ -14,6 +14,7 @@ const PLAN: PlanRow = {
   name: "My plan",
   program_ids: ["h-software-engineering-beng"],
   specialization_ids: {},
+  acknowledged_requirements: {},
   system_of_study: "stream8",
   start_term_id: 1239,
   program_scrape_version: "2026-05-01",
@@ -207,6 +208,7 @@ describe("toSnapshot", () => {
     expect(snap).toEqual({
       programIds: ["h-cs"],
       specializationIds: {},
+      acknowledgedRequirements: {},
       stream: "regular",
       startTermId: 1239,
       programScrapeVersion: "2026-05-01",

@@ -74,6 +74,7 @@ function makePlan(overrides: Partial<ServerPlan> = {}): ServerPlan {
     name: "My shared plan",
     programIds: ["h-cs"],
     specializationIds: {},
+    acknowledgedRequirements: {},
     stream: "regular",
     startTermId: 1239,
     programScrapeVersion: null,
