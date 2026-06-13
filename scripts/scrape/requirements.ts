@@ -6,12 +6,14 @@ import {
   type TermLetter,
 } from "../../lib/programs";
 import { catalogCodesInRange } from "./catalog";
+import { WORD_NUMBERS } from "./counts";
 import {
   anchorCourseCodes,
   cleanText,
   RULE_RESULT_SELECTOR,
   SECTION_HEADING_SELECTOR,
 } from "./dom";
+import { buildNamedListIndex, normalizeListName } from "./electives";
 import {
   CODE_RANGE_RE_G,
   normalizeCourseCode,
@@ -24,6 +26,8 @@ export interface ProgramDetailFields {
   requiredCoursesTermByTerm?: string;
   requirements?: string;
   courseRequirementsNoUnits?: string;
+  /** Structured named lists ("Technical Electives List") joined by name (#117 D). */
+  courseListsNew?: string;
 }
 
 export type ParseResult =
@@ -68,6 +72,67 @@ const DEFERRED_PROSE_RE =
 // enough to keep warning messages readable.
 const MAX_PREFIX_LEN = 200;
 
+// Named lists from this program's `courseListsNew`, keyed by normalized heading.
+// Set once per `parseProgramRequirements` call (parsing is synchronous and
+// single-program, so a module-level value is reentrancy-safe — same pattern as
+// catalog.ts). Read by `resolveNamedList` to join a rule's "from List N"
+// reference to its course list. See #117 (bucket D).
+let namedLists = new Map<string, string[]>();
+
+// "List A, B, C, or D" / "List 1" — captures the enumeration after "List".
+const LIST_ENUM_RE =
+  /\blist\s+([A-Za-z0-9](?:\s*,\s*(?:or\s+)?[A-Za-z0-9]|\s+or\s+[A-Za-z0-9])*)/i;
+// "from the Technical Electives lists" / "from the Approved Courses list".
+const NAMED_LIST_RE = /\bfrom\s+(?:the\s+)?([^.;:]+?)\s+lists?\b/i;
+// Leading count: "Complete 1 additional course…", "four courses…", "Complete a
+// total of 7…". Stops the count from being mistaken for a trailing "List 1".
+const LEADING_COUNT_RE =
+  /\b(?:complete\s+(?:a\s+total\s+of\s+)?)?(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:additional\s+)?(?:courses?|of\b)/i;
+
+/**
+ * Resolve a rule that references a named `courseListsNew` list ("four courses
+ * from the Technical Electives lists", "options in List 1", "List A, B, C, or
+ * D") to the union of those lists' course codes. Tries a "List X[, Y…]"
+ * enumeration first (each letter/number is its own list), then a "from the
+ * <Name> list" reference. Returns null when nothing matches a known list — the
+ * rule then stays unverified (e.g. a list defined only in additionalConstraints
+ * prose, which is the correct home for discretionary rules). See #117 (bucket D).
+ */
+function resolveNamedList(fullText: string): string[] | null {
+  if (namedLists.size === 0) return null;
+  const keys: string[] = [];
+
+  const enumMatch = LIST_ENUM_RE.exec(fullText);
+  if (enumMatch)
+    for (const tok of enumMatch[1].split(/[,\s]+|\bor\b/i))
+      if (tok.trim()) keys.push(normalizeListName(`list ${tok.trim()}`));
+
+  const namedMatch = NAMED_LIST_RE.exec(fullText);
+  if (namedMatch) keys.push(normalizeListName(namedMatch[1]));
+
+  const courses = new Set<string>();
+  for (const key of keys) {
+    const exact = namedLists.get(key);
+    if (exact) {
+      for (const c of exact) courses.add(c);
+      continue;
+    }
+    // Fall back to a contains-match (heading "Technical Electives" vs a rule's
+    // longer "Technical Electives for Option X" phrasing).
+    for (const [name, list] of namedLists)
+      if (key && (name.includes(key) || key.includes(name)))
+        for (const c of list) courses.add(c);
+  }
+  return courses.size > 0 ? [...courses].sort() : null;
+}
+
+/** Leading requirement count ("Complete 1 …", "four courses …"); null if none. */
+function leadingCount(fullText: string): number | null {
+  const m = LEADING_COUNT_RE.exec(fullText);
+  if (!m) return null;
+  return WORD_NUMBERS[m[1].toLowerCase()] ?? Number(m[1]);
+}
+
 /**
  * Parse a Kuali program detail into a discriminated `ParseResult`.
  *
@@ -83,6 +148,10 @@ export function parseProgramRequirements(
   detail: ProgramDetailFields,
   programLabel = "(unknown)",
 ): ParseResult {
+  // Reset per program so a "from List N" rule can be joined to THIS program's
+  // named lists (and never leaks the previous program's).
+  namedLists = buildNamedListIndex(detail.courseListsNew);
+
   const engHtml = detail.requiredCoursesTermByTerm?.trim();
   if (engHtml) return parseEngineering(engHtml, programLabel);
 
@@ -314,6 +383,33 @@ function parseLi(
       : fullText.slice(0, MAX_PREFIX_LEN);
 
   const codes = collectCourseCodes($, $result);
+
+  // Named-list reference: a rule that points at a `courseListsNew` list by name
+  // ("four courses from the Technical Electives lists", "options in List 1")
+  // extracts no codes of its own. Join the list's courses here, before the
+  // recognized-rule branches record it as unverified. A count makes it a
+  // `pick N`; no count → an open `pick`. See #117 (bucket D).
+  if (codes.length === 0) {
+    const listCourses = resolveNamedList(fullText);
+    if (listCourses) {
+      const n = leadingCount(fullText);
+      return {
+        kind: "node",
+        node:
+          n !== null
+            ? {
+                kind: "pick",
+                selectMin: n,
+                selectMax: n,
+                children: [{ kind: "courses", courses: listCourses }],
+              }
+            : {
+                kind: "pick",
+                children: [{ kind: "courses", courses: listCourses }],
+              },
+      };
+    }
+  }
 
   if (COMPLETE_ALL_RE.test(prefix)) {
     if (codes.length === 0)

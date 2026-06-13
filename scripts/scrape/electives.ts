@@ -196,3 +196,46 @@ function parseCourseListsSections(
   );
   return out;
 }
+
+/**
+ * Normalize a list NAME (a `courseListsNew` heading or a rule's reference to it)
+ * to a stable key for joining the two. Lowercases, drops parentheticals ("(TEs)")
+ * and punctuation, then strips the structural words "list(s)" and "approved" so
+ * "Technical Electives List" and a rule's "the Technical Electives lists" collide
+ * on "technical electives", and a "List A" heading collides with a "List A, B…"
+ * reference on "a". See #117 (bucket D).
+ */
+export function normalizeListName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(?:lists?|approved)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^the\s+/, "");
+}
+
+/**
+ * Index `courseListsNew` by normalized heading → its approved course codes, so a
+ * rule that references a list BY NAME ("four courses from the Technical Electives
+ * lists", "options in List 1") can be joined to its definition. Only sections
+ * that both have a heading and link courses are indexed. See #117 (bucket D).
+ */
+export function buildNamedListIndex(
+  courseListsNewHtml: string | undefined,
+): Map<string, string[]> {
+  const index = new Map<string, string[]>();
+  if (!courseListsNewHtml?.trim()) return index;
+  const $ = cheerio.load(courseListsNewHtml);
+  $("section").each((_, section) => {
+    const $section = $(section);
+    const heading = cleanText($section.find(SECTION_HEADING_SELECTOR).text());
+    if (!heading) return;
+    const courses = [...new Set(anchorCourseCodes($, $section))].sort();
+    if (courses.length === 0) return;
+    const key = normalizeListName(heading);
+    if (key) index.set(key, courses);
+  });
+  return index;
+}
