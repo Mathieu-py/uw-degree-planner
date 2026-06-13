@@ -141,6 +141,29 @@ describe("attachEligibility", () => {
     expect(out[0].eligibility?.state).not.toBe("ineligible");
   });
 
+  it("greys a placed course's cross-listed twin (not dropped from candidates)", () => {
+    // CLAS 221 is the same course as ANTH 201; with ANTH 201 placed, the twin
+    // must surface as ineligible/already-placed (greyed) — and stay hidden when
+    // hideUnmetPrereqs — even with an empty completed set (term-independent).
+    const rows = makeRows([
+      { ...makeCourse({ code: "clas221" }), crossListed: ["anth201"] },
+    ]);
+    const shown = attach(rows, {
+      completed: new Set(),
+      placedAnywhere: new Set(["anth201"]),
+    });
+    expect(shown[0].eligibility?.state).toBe("ineligible");
+    expect(shown[0].eligibility?.alreadyPlaced).toBe(true);
+    expect(shown[0].eligibility?.reasons[0]).toContain("ANTH 201");
+    expect(
+      attach(rows, {
+        completed: new Set(),
+        placedAnywhere: new Set(["anth201"]),
+        hideUnmetPrereqs: true,
+      }),
+    ).toHaveLength(0);
+  });
+
   it("blocks a course whose antireq is already placed — even with an empty completed set", () => {
     const rows = makeRows([
       makeCourse({ code: "math119", antireqs: "MATH138" }),

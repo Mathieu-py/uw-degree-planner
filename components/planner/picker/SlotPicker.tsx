@@ -307,13 +307,14 @@ function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
   const { course, eligibility } = row;
   const reviews = course.rating?.filled_count ?? 0;
   const seats = seatsAvailable(course);
-  // A course closed to the student's faculty/program can't be added — render
-  // its add affordances inert (the "Wrong program" chip explains why).
-  const blocked = !!eligibility?.blockedByProgram;
+  // A course that can't be added — closed to the student's faculty/program, or
+  // already in the plan (incl. a cross-listed twin) — renders its add
+  // affordances inert; the chip explains why.
+  const inert = !!eligibility?.blockedByProgram || !!eligibility?.alreadyPlaced;
   return (
     <tr className="border-b border-line hover:bg-bg-2">
       <td className="px-2 py-2 font-mono text-xs whitespace-nowrap">
-        {blocked ? (
+        {inert ? (
           <span className="text-ink-3 cursor-not-allowed" aria-disabled="true">
             {formatCourseCode(course.code)}
           </span>
@@ -328,7 +329,7 @@ function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
         )}
       </td>
       <td className="px-2 py-2">
-        {blocked ? (
+        {inert ? (
           <span
             className="text-left flex items-center gap-2 min-w-0 w-full cursor-not-allowed"
             aria-disabled="true"
@@ -417,8 +418,18 @@ function EligibilityChip({ verdict }: { verdict: CourseEligibilityVerdict }) {
       </span>
     );
   }
-  // Ineligible — label the specific reason. (Never `alreadyPlaced`: candidates
-  // are pre-filtered by the placed set in useFilteredCourses.)
+  // Ineligible — label the specific reason. `alreadyPlaced` fires for a placed
+  // cross-listed twin (the exact code is filtered out of candidates upstream).
+  if (verdict.alreadyPlaced) {
+    return (
+      <span
+        className="inline-flex shrink-0 items-center rounded-full bg-bg-2 text-ink-2 px-1.5 py-0.5 text-[10px] font-medium"
+        title={verdict.reasons[0] ?? "Already in plan"}
+      >
+        In plan
+      </span>
+    );
+  }
   if (verdict.antireqConflicts.length > 0) {
     return (
       <span

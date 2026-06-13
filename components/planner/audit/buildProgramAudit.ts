@@ -114,6 +114,7 @@ export function buildProgramAudit(
     progress.levelFloors,
     unitsOf,
     legality,
+    progress.nodeFill,
   );
 
   // Whole-degree completion, not a sum of overlapping slots. See computeDegreeProgress.

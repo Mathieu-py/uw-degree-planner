@@ -113,9 +113,12 @@ export function useFilteredCourses({
     [catalog, placedCodes],
   );
 
-  // Course equivalence (GitHub #21): a cross-listed twin of a placed/completed
-  // course counts as that course. Expand the placed and completed sets so the
-  // twin is filtered out as a candidate and treated as already-taken.
+  // Course equivalence (#21): a cross-listed twin of a placed/completed course
+  // counts as that course. `placedExpanded` drives the antireq + already-placed
+  // checks (a placed course's twin reads as taken); `completedExpanded` lets a
+  // twin satisfy a prereq. Candidates exclude only the EXACT placed codes — a
+  // twin stays in the list and renders greyed "already in plan" (like the
+  // wrong-program case) rather than silently vanishing.
   const equiv = useMemo(() => equivalenceForCatalog(catalog), [catalog]);
   const placedExpanded = useMemo(
     () => equiv.expand(placedCodes),
@@ -130,11 +133,11 @@ export function useFilteredCourses({
     if (focusCodes && focusCodes.length > 0) {
       const want = new Set(focusCodes.map((c) => c.toLowerCase()));
       return catalog.filter(
-        (c) => want.has(c.code) && !placedExpanded.has(c.code),
+        (c) => want.has(c.code) && !placedCodes.has(c.code),
       );
     }
-    return catalog.filter((c) => !placedExpanded.has(c.code));
-  }, [catalog, focusCodes, placedExpanded]);
+    return catalog.filter((c) => !placedCodes.has(c.code));
+  }, [catalog, focusCodes, placedCodes]);
 
   const userFiltered = useMemo<Course[]>(
     () =>

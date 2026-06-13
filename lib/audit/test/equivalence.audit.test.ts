@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import {
+  nodeProgress,
+  ringFor,
+} from "../../../components/planner/audit/nodeProgress";
 import { equivalenceForCatalog } from "../../courses/equivalence";
 import type { LocalPlan } from "../../plan/types";
 import type { Program } from "../../programs";
@@ -179,5 +183,45 @@ describe("computeDegreeProgress — course equivalence", () => {
     const progress = computeDegreeProgress(audit, program, unitsOf, new Set());
     expect(progress.allComplete).toBe(false);
     expect(progress.pct).toBeLessThan(100);
+  });
+
+  it("treats an all-required leaf naming both twins as ONE bucket", () => {
+    // Mirrors the compileAudit case above: a leaf "AMATH 242, CS 371" is one
+    // course, so one placement completes it. Without class collapse the headline
+    // would push two singleton buckets and stay below 100 while the tree is met.
+    const leafProgram: Program = {
+      kind: "flexible",
+      name: "Toy",
+      asOf: "2026",
+      rules: {
+        kind: "all",
+        children: [{ kind: "courses", courses: ["amath242", "cs371"] }],
+      },
+    };
+    const plan = makePlan(["cs371"]);
+    const audit = compileAudit(leafProgram, plan, null, new Set(), null, equiv);
+    const progress = computeDegreeProgress(
+      audit,
+      leafProgram,
+      unitsOf,
+      new Set(),
+      equiv,
+    );
+    expect(progress.allComplete).toBe(true);
+    expect(progress.creditedUnits).toBe(0.5);
+    expect(progress.pct).toBe(100);
+
+    // The panel must agree: before the summarize fix, `needed` used
+    // r.courses.length, so this met leaf showed a 1/2 ring (and the group stuck
+    // below 100%) on both the read-only and catalog-backed (fill) views.
+    const root = audit.flexibleRoot;
+    if (!root) throw new Error("expected a flexible root");
+    const leaf = root.children[0];
+    expect(nodeProgress(leaf)).toEqual({ needed: 1, satisfied: 1 });
+    expect(nodeProgress(leaf, progress.nodeFill)).toEqual({
+      needed: 1,
+      satisfied: 1,
+    });
+    expect(ringFor(root, progress.nodeFill).pct).toBe(100);
   });
 });

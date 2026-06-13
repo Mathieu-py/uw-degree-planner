@@ -66,7 +66,7 @@ export function MacroSection({
           if (block.subLabel) {
             const ring =
               block.content.kind === "node"
-                ? ringFor(block.content.node)
+                ? ringFor(block.content.node, macro.nodeFill)
                 : null;
             return (
               <details

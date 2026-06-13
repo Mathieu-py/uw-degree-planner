@@ -83,8 +83,8 @@ export default async function CoursePage(props: {
                   ? [course.antireqCodes.map(formatCourseCode).join(", ")]
                   : null
               }
-              // An explicit empty antireqCodes is Kuali's authoritative "none" —
-              // don't resurface the stale UWFlow prose for it.
+              // Empty antireqCodes = Kuali's authoritative "none"; suppress the
+              // stale UWFlow prose for it.
               value={
                 course.antireqCodes && course.antireqCodes.length === 0
                   ? null

@@ -14,6 +14,7 @@ import {
   subjectPoolEligible as electivePoolEligible,
 } from "@/lib/audit/electives";
 import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
+import type { NodeFill } from "@/lib/audit/progress";
 import {
   countNoun,
   fmtUnits,
@@ -84,6 +85,13 @@ export function deriveMacros(
   unitsOf: (code: string) => number,
   /** Slot-scoped illegality keys; illegal placements don't credit counts. */
   legality: ReadonlySet<string>,
+  /**
+   * Per-node distinct credit from the unit headline (computeDegreeProgress).
+   * When present, rule-tree rows reflect the same one-course-per-slot assignment
+   * as the headline; when omitted (read-only view), rows use the independent
+   * per-node count.
+   */
+  nodeFill?: NodeFill,
 ): { macros: Macro[]; unverifiedCount: number } {
   // Count like the headline: illegally-placed courses don't credit, keeping the
   // elective/communication counts consistent with the degree rows.
@@ -102,7 +110,7 @@ export function deriveMacros(
     for (const t of TERM_LETTERS) {
       const node = audit.byTerm[t];
       if (!node) continue;
-      const summary = nodeProgress(node);
+      const summary = nodeProgress(node, nodeFill);
       if (summary.needed === 0) continue;
       degNeeded += summary.needed;
       degSatisfied += summary.satisfied;
@@ -115,7 +123,7 @@ export function deriveMacros(
   if (audit.flexibleRoot) {
     for (const block of flattenRuleRoot(audit.flexibleRoot)) {
       if (block.content.kind === "node") {
-        const s = nodeProgress(block.content.node);
+        const s = nodeProgress(block.content.node, nodeFill);
         degNeeded += s.needed;
         degSatisfied += s.satisfied;
       }
@@ -129,7 +137,7 @@ export function deriveMacros(
   if (audit.specializationRoot) {
     for (const block of flattenRuleRoot(audit.specializationRoot)) {
       if (block.content.kind === "node") {
-        const s = nodeProgress(block.content.node);
+        const s = nodeProgress(block.content.node, nodeFill);
         specNeeded += s.needed;
         specSatisfied += s.satisfied;
       }
@@ -272,6 +280,7 @@ export function deriveMacros(
       hint: null,
       blocks: degreeBlocks,
       defaultOpen: true,
+      nodeFill,
     });
   if (specBlocks.length > 0)
     macros.push({
@@ -284,6 +293,7 @@ export function deriveMacros(
       hint: null,
       blocks: specBlocks,
       defaultOpen: true,
+      nodeFill,
     });
   if (electiveSections.length > 0)
     macros.push({

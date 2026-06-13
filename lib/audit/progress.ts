@@ -49,7 +49,19 @@ export interface DegreeProgress {
   breadthRequirements: BreadthRequirement[];
   /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
   levelFloors: LevelFloor[];
+  /**
+   * Per-rule-node distinct credit from the global bipartite match: how many of
+   * each owning {@link AuditNode}'s slots a UNIQUE course actually filled. Read
+   * by the audit panel (keyed by node identity) so a requirement ROW reflects the
+   * same one-course-per-slot assignment as this headline — an overlapping pool
+   * (e.g. "1 additional ENGL course") shows unmet once its courses are claimed by
+   * named requirements, not re-counted. (`needed` comes from `summarize`.)
+   */
+  nodeFill: NodeFill;
 }
+
+/** Filled-slot count per owning rule-tree node (see {@link DegreeProgress.nodeFill}). */
+export type NodeFill = WeakMap<AuditNode, number>;
 
 /** A requirement that consumes real degree slots. */
 interface Bucket {
@@ -62,6 +74,15 @@ interface Bucket {
    * so ~0.5.
    */
   estimateUnit?: number;
+  /**
+   * The rule-tree node these slots belong to, when one exists (rule-tree
+   * buckets only — elective/communication buckets have no node). After the
+   * match, each owner's filled-slot total feeds `nodeFill`, so the panel's
+   * requirement rows read the SAME one-course-per-slot credit as the headline
+   * instead of an independent per-node count that double-credits overlapping
+   * pools (#21 follow-up).
+   */
+  owner?: AuditNode;
 }
 
 /** Every course code appearing in `courses` leaves under a node (pick pools). */
@@ -117,13 +138,15 @@ function collect(
   placed: ReadonlySet<string>,
   placedMatches: (code: string) => string[],
   buckets: Bucket[],
-  required: Set<string>,
+  required: Map<string, AuditNode>,
   unitsOf: (code: string) => number,
 ): void {
   const r = node.ruleNode;
   switch (r.kind) {
     case "courses":
-      for (const c of r.courses) required.add(c);
+      // First leaf to name a code owns its singleton bucket (codes rarely repeat
+      // across leaves; first-wins keeps the owner stable).
+      for (const c of r.courses) if (!required.has(c)) required.set(c, node);
       break;
     case "pick": {
       // No selectMin ⇒ an optional pick: 0 required slots, so it neither gates
@@ -146,6 +169,7 @@ function collect(
           // Reserve the options' real weight when uniform (e.g. a full-year
           // 1.0-unit pick), else the 0.5 default via the matcher.
           estimateUnit: uniformUnit(codes, unitsOf),
+          owner: node,
         });
         break;
       }
@@ -165,7 +189,8 @@ function collect(
           credited += 1;
         }
       }
-      if (credited < min) buckets.push({ need: min - credited, eligible: [] });
+      if (credited < min)
+        buckets.push({ need: min - credited, eligible: [], owner: node });
       break;
     }
     case "subjectPool": {
@@ -173,6 +198,7 @@ function collect(
       buckets.push({
         need: r.selectCount,
         eligible: [...placed].filter((c) => poolMatch(c, f)),
+        owner: node,
       });
       break;
     }
@@ -241,7 +267,7 @@ export function computeDegreeProgress(
   };
 
   const buckets: Bucket[] = [];
-  const required = new Set<string>();
+  const required = new Map<string, AuditNode>();
 
   for (const root of roots)
     if (root) collect(root, placed, placedMatches, buckets, required, unitsOf);
@@ -281,11 +307,23 @@ export function computeDegreeProgress(
   }
 
   // Required courses → singleton buckets; each reserves its real catalog units.
-  for (const code of required) {
+  // Collapse to one bucket per equivalence class first (mirrors compileAudit's
+  // partitionByPlacement, #21, keyed on the sorted class head): a leaf naming
+  // both twins of one course — or two leaves each naming a twin — is ONE
+  // required course, not two slots, else the headline demands two placements
+  // where the compiled tree shows the row met by a single one.
+  const requiredClasses = new Map<string, { code: string; owner: AuditNode }>();
+  for (const [code, owner] of required) {
+    const classKey = equiv.classOf(code)[0];
+    if (!requiredClasses.has(classKey))
+      requiredClasses.set(classKey, { code, owner });
+  }
+  for (const { code, owner } of requiredClasses.values()) {
     buckets.push({
       need: 1,
       eligible: placedMatches(code),
       estimateUnit: unitsOf(code),
+      owner,
     });
   }
 
@@ -293,6 +331,18 @@ export function computeDegreeProgress(
   // matched course credits exactly one bucket, so overlapping pools can't
   // double-count and a satisfiable set is never left spuriously unfilled.
   const { filledByBucket, matched } = maxBipartiteMatch(buckets);
+
+  // Per-node distinct credit: roll each owning rule-node's filled-slot total up,
+  // so the panel's requirement rows reflect this match (one course → one slot)
+  // rather than an independent count that lets a course satisfy several
+  // overlapping requirements. A node owning several buckets (a multi-course leaf,
+  // or a compound pick + its residual) sums across them.
+  const nodeFill: NodeFill = new WeakMap();
+  for (let bi = 0; bi < buckets.length; bi++) {
+    const owner = buckets[bi].owner;
+    if (!owner) continue;
+    nodeFill.set(owner, (nodeFill.get(owner) ?? 0) + filledByBucket[bi]);
+  }
 
   // Unit-based subject-pool electives (issue #101): greedily assign leftover
   // (not-yet-matched) eligible courses until their REAL units cover needUnits.
@@ -387,5 +437,6 @@ export function computeDegreeProgress(
     freeUnits,
     breadthRequirements,
     levelFloors,
+    nodeFill,
   };
 }

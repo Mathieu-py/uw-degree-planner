@@ -570,8 +570,11 @@ export function summarize(node: AuditNode): {
   const r = node.ruleNode;
   switch (r.kind) {
     case "courses":
+      // `satisfiers + missingCodes` is the post-equivalence option count (see
+      // partitionByPlacement) — a leaf naming both twins of one course is ONE
+      // slot, matching the headline. `r.courses.length` would double-count it.
       return {
-        needed: r.courses.length,
+        needed: node.satisfiers.length + node.missingCodes.length,
         satisfied: node.satisfiers.length,
         excludedViolationCount: 0,
       };

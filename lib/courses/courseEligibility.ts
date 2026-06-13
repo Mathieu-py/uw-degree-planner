@@ -70,18 +70,21 @@ export function evaluateCourseEligibility(
   const code = course.code.toLowerCase();
 
   // 1. Already in the plan — not a fresh add. A cross-listed twin counts (same
-  //    course under another code). Checked via the course's own `crossListed`,
-  //    so it works even when the caller didn't equiv-expand `placedAnywhere` (#21).
-  const placedAs = ctx.placedAnywhere.has(code)
-    ? code
-    : (course.crossListed?.find((m) => ctx.placedAnywhere.has(m)) ?? null);
-  if (placedAs !== null) {
+  //    course under another code). Name the actually-placed member, checking
+  //    `crossListed` first so the message stays "in plan as ANTH 201" even when
+  //    the caller passed an equiv-expanded `placedAnywhere` (which also contains
+  //    this code). The twin isn't dropped from the picker — it renders greyed
+  //    with this badge, like the wrong-program case (#21).
+  const placedTwin =
+    course.crossListed?.find((m) => m !== code && ctx.placedAnywhere.has(m)) ??
+    null;
+  if (placedTwin !== null || ctx.placedAnywhere.has(code)) {
     return {
       state: "ineligible",
       reasons: [
-        placedAs === code
-          ? "Already in plan"
-          : `Already in plan as ${formatCourseCode(placedAs)} (cross-listed)`,
+        placedTwin !== null
+          ? `Already in plan as ${formatCourseCode(placedTwin)} (cross-listed)`
+          : "Already in plan",
       ],
       alreadyPlaced: true,
       antireqConflicts: NONE,
