@@ -21,7 +21,11 @@ import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
-import { evaluate } from "@/lib/prereqs/satisfied";
+import {
+  compareLevel,
+  evaluate,
+  minimumRequiredLevel,
+} from "@/lib/prereqs/satisfied";
 import { completedSetFromPlan } from "./derive";
 import type { LocalPlan } from "./types";
 
@@ -53,19 +57,24 @@ export function validatePlan(
   );
 
   // Antireqs bar *degree credit* for both courses when EITHER names the other:
-  // "Degree credit will not be granted for both the antirequisite course and a
-  // course naming it as such" (UW calendar glossary). Raw lists are often
-  // one-directional, so we flag symmetrically — precompute, per placed code, the
-  // other placed codes that name it (the reverse direction its own list omits).
+  // "credit will not be granted for both the antirequisite course and a course
+  // naming it as such" (UW calendar glossary). Lists are often one-directional,
+  // so flag symmetrically: precompute, per placed code, the other placed codes
+  // that name it. Equivalence-aware — a list usually names ONE member of a
+  // cross-listed class (CIVE 392, not its twins ENVE/GEOE 392), so register the
+  // reverse edge under every placed member of the named class.
   const namedAsAntireqBy = new Map<string, Set<string>>();
   for (const code of allPlacedCodes) {
     const data = catalogByCode.get(code);
     if (!data) continue;
     for (const named of resolveAntireqCodes(data)) {
-      if (named === code || !allPlacedCodes.has(named)) continue;
-      const set = namedAsAntireqBy.get(named) ?? new Set<string>();
-      set.add(code);
-      namedAsAntireqBy.set(named, set);
+      for (const member of equiv.classOf(named)) {
+        if (equiv.areEquivalent(member, code) || !allPlacedCodes.has(member))
+          continue;
+        const set = namedAsAntireqBy.get(member) ?? new Set<string>();
+        set.add(code);
+        namedAsAntireqBy.set(member, set);
+      }
     }
   }
 
@@ -84,12 +93,13 @@ export function validatePlan(
       });
     }
 
-    const completedBefore =
+    const completedBeforeSet =
       slot.termId !== null
         ? completedSetFromPlan(plan, slot.termId, equiv)
         : completedSetFromPlan(plan, undefined, equiv);
-    const completedBeforeSet = new Set(completedBefore);
-    const sameSlotCodes = new Set(slot.courses.map((c) => c.code));
+    // Expanded like completedBefore so a coreq naming one cross-listed twin is
+    // satisfied by the other co-scheduled twin, as it would be a term earlier (#21).
+    const sameSlotCodes = equiv.expand(slot.courses.map((c) => c.code));
     const coreqContext = new Set<string>([
       ...completedBeforeSet,
       ...sameSlotCodes,
@@ -126,30 +136,31 @@ export function validatePlan(
             message: `Prereq missing: ${missing}`,
           });
         }
-        const levelGate = result.rawRequirements.find((r) =>
-          /^Level at least/i.test(r),
-        );
-        if (levelGate) {
-          const min = levelGate.match(/Level at least (\S+)/i)?.[1];
+        // Structural, not string-matched: only flag a level the prereq
+        // UNCONDITIONALLY requires. A gate that's one OR alternative
+        // ("VCULT 101 or Level 2A") isn't required; matching the rawRequirements
+        // string couldn't tell that apart and leaked false badges.
+        const minLevel = minimumRequiredLevel(prereqAst);
+        if (minLevel !== null && compareLevel(slot.position, minLevel) < 0) {
           issues.push({
             slotId: slot.id,
             courseCode: c.code,
             kind: "level",
-            message: min
-              ? `Term below required level (needs ${min})`
-              : levelGate,
+            message: `Term below required level (needs ${minLevel})`,
           });
         }
       }
 
       // ---- Antireq (symmetric: this course names a placed one, OR a placed
       //      one names this course) ----
-      const forwardAnti = resolveAntireqCodes(courseData).filter(
-        (a) => a !== c.code && allPlacedCodes.has(a),
+      // Resolve a named code through its class and report the PLACED member —
+      // conflictsWith must name placed codes for the credit-exclusion grouping.
+      const forwardAnti = resolveAntireqCodes(courseData).flatMap((a) =>
+        equiv.classOf(a).filter((m) => allPlacedCodes.has(m)),
       );
       const reverseAnti = namedAsAntireqBy.get(c.code);
-      // A course never conflicts with its own cross-listed twin — they're the
-      // same course, not two that can't both earn credit (GitHub #21).
+      // A course never conflicts with its own twin (same course, not an antireq
+      // pair) — holding both is flagged as a duplicate below instead (#21).
       const collisions = [
         ...new Set([...forwardAnti, ...(reverseAnti ?? [])]),
       ].filter((other) => !equiv.areEquivalent(other, c.code));
@@ -163,14 +174,30 @@ export function validatePlan(
         });
       }
 
+      // ---- Duplicate (cross-listed twin placed under another code) ----
+      // Two codes of one class are the SAME course, so credit its units once.
+      // Use the antireq kind so creditExclusionKeys grouping holds one member
+      // out — "credit for one, never both, never zero" (#21).
+      const twins = equiv
+        .classOf(c.code)
+        .filter((m) => m !== c.code && allPlacedCodes.has(m));
+      if (twins.length > 0) {
+        issues.push({
+          slotId: slot.id,
+          courseCode: c.code,
+          kind: "antireq",
+          message: `Same course (cross-listed): ${twins.map(formatCourseCode).join(", ")}`,
+          conflictsWith: twins,
+        });
+      }
+
       // ---- Coreq ----
       const coreqAst = resolveCoreqs(courseData);
       if (coreqAst) {
-        const ast = coreqAst;
-        const result = evaluate(ast, { completed: coreqContext });
+        const result = evaluate(coreqAst, { completed: coreqContext });
         if (!result.satisfied) {
           const missing =
-            describeMissingPrereqs(ast, coreqContext) ?? "coreqs not met";
+            describeMissingPrereqs(coreqAst, coreqContext) ?? "coreqs not met";
           issues.push({
             slotId: slot.id,
             courseCode: c.code,
@@ -219,7 +246,9 @@ function cachedExtractCourseCodes(
 /**
  * A course's antirequisite codes, preferring Kuali's structured `antireqCodes`
  * (authoritative) over the regex parse of UWFlow's free-text `antireqs`
- * (fallback for courses Kuali lacks). The single switch point for antireq
+ * (fallback for courses Kuali lacks). An empty `antireqCodes` array is an
+ * authoritative ZERO (Kuali lists none) — `??` deliberately keeps it and does
+ * NOT fall back to the stale prose. The single switch point for antireq
  * sourcing — both the validator and the eligibility checker route through it.
  */
 export function resolveAntireqCodes(course: {

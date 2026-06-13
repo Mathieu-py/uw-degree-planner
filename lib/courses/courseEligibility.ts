@@ -69,11 +69,20 @@ export function evaluateCourseEligibility(
 ): CourseEligibilityVerdict {
   const code = course.code.toLowerCase();
 
-  // 1. Already in the plan — not a fresh add.
-  if (ctx.placedAnywhere.has(code)) {
+  // 1. Already in the plan — not a fresh add. A cross-listed twin counts (same
+  //    course under another code). Checked via the course's own `crossListed`,
+  //    so it works even when the caller didn't equiv-expand `placedAnywhere` (#21).
+  const placedAs = ctx.placedAnywhere.has(code)
+    ? code
+    : (course.crossListed?.find((m) => ctx.placedAnywhere.has(m)) ?? null);
+  if (placedAs !== null) {
     return {
       state: "ineligible",
-      reasons: ["Already in plan"],
+      reasons: [
+        placedAs === code
+          ? "Already in plan"
+          : `Already in plan as ${formatCourseCode(placedAs)} (cross-listed)`,
+      ],
       alreadyPlaced: true,
       antireqConflicts: NONE,
       blockedByProgram: false,
@@ -91,12 +100,15 @@ export function evaluateCourseEligibility(
     level: ctx.level,
     programs: ctx.programs,
     suppressProgramBlock,
+    // Lets a coreqOf prereq branch resolve same-term, agreeing with the planner badge.
+    concurrent: ctx.sameTerm,
   });
   // Describe the unmet portion with the SAME context as the verdict, so an OR
   // mixing course + level/program lists every open alternative, not just the raw gate.
   const missingDescription = describeMissingPrereqs(prereqAst, ctx.completed, {
     level: ctx.level,
     programs: ctx.programs,
+    concurrent: ctx.sameTerm,
   });
   if (!pre.satisfied && pre.blockedByProgram) {
     // Lead with the restriction prose so a program block reads as "wrong program",

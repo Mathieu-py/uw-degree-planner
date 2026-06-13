@@ -13,6 +13,9 @@
  *              |  RAW_TEXT                            (level/program/etc.)
  */
 
+// The grammar above describes only this UWFlow-prose parser. The AST type is
+// shared with the Kuali requisite parser (scripts/scrape/kualiRequisites.ts),
+// which is what produces the `countOf` and `coreqOf` node kinds.
 export type PrereqNode =
   | { kind: "course"; code: string }
   | { kind: "and"; children: PrereqNode[] }

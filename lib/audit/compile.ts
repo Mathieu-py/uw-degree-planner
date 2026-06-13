@@ -109,18 +109,29 @@ function withIllegal(node: AuditNode, illegal: Placement[]): AuditNode {
 
 /**
  * Split codes into satisfying placements and still-missing codes. A code is
- * satisfied by its exact placement OR any cross-listed equivalent (GitHub #21);
- * the equivalent's placement is credited directly, never duplicated, so units
- * count once.
+ * satisfied by its exact placement OR any cross-listed equivalent (#21); the
+ * equivalent's placement is credited directly, never duplicated.
+ *
+ * Codes collapse to one per equivalence class first, since an option list can
+ * name several codes of ONE course (a pool listing both PSYCH 352 and 352R) —
+ * else one placement counts once per listed twin, inflating "choose N" pools.
+ * `optionCount` is the post-collapse total; status math compares against it.
  */
 function partitionByPlacement(
   codes: Iterable<string>,
   placement: PlacementMap,
   equiv: EquivalenceIndex,
-): { satisfiers: Placement[]; missing: string[] } {
+): { satisfiers: Placement[]; missing: string[]; optionCount: number } {
   const satisfiers: Placement[] = [];
   const missing: string[] = [];
+  const seenClasses = new Set<string>();
+  let optionCount = 0;
   for (const code of codes) {
+    // classOf is sorted, so [0] is a stable class key.
+    const classKey = equiv.classOf(code)[0];
+    if (seenClasses.has(classKey)) continue;
+    seenClasses.add(classKey);
+    optionCount++;
     let p = placement.get(code);
     if (!p) {
       for (const member of equiv.classOf(code)) {
@@ -134,7 +145,7 @@ function partitionByPlacement(
     if (p) satisfiers.push(p);
     else missing.push(code);
   }
-  return { satisfiers, missing };
+  return { satisfiers, missing, optionCount };
 }
 
 function compile(
@@ -145,14 +156,15 @@ function compile(
 ): AuditNode {
   switch (node.kind) {
     case "courses": {
-      // Top-level / under all: treat as all-required.
-      const { satisfiers, missing } = partitionByPlacement(
+      // Top-level / under all: all-required. Met when every DISTINCT course
+      // (one per class) is placed — a leaf naming both twins needs one course.
+      const { satisfiers, missing, optionCount } = partitionByPlacement(
         node.courses,
         placement,
         equiv,
       );
       const status: AuditStatus =
-        satisfiers.length === node.courses.length
+        satisfiers.length === optionCount
           ? "met"
           : satisfiers.length > 0
             ? "partial"
@@ -294,6 +306,12 @@ function compilePick(
 /**
  * A `subjectPool` node: count placed courses with a pooled prefix and in-bounds
  * level. Threshold is `selectCount` exactly.
+ *
+ * DELIBERATELY literal-match only (no equivalence widening, unlike courses/pick):
+ * whether AMATH 242 counts toward "N CS courses" is a calendar question the UW
+ * calendar doesn't answer generally, and the transcript records the enrolled
+ * code — so we count what was taken. If a program is confirmed to accept
+ * cross-listings, thread `equiv` through with a citation (AGENTS.md).
  */
 function compileSubjectPool(
   node: Extract<RuleNode, { kind: "subjectPool" }>,

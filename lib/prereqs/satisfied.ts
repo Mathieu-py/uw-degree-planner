@@ -222,8 +222,64 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
   }
 }
 
+/**
+ * The minimum student level `node` UNCONDITIONALLY requires, or null when a
+ * choice of branches avoids every gate. Structural (ignores completion): the
+ * planner badges a below-level term without misreading a gate that's only one
+ * OR alternative — "VCULT 101 or Level 2A" needs no level (take VCULT 101),
+ * "CS 246 and Level 3A" needs 3A. Replaces scanning the "Level at least X"
+ * display string, which leaked gates from uncertainty-biased ORs (validate.ts).
+ */
+export function minimumRequiredLevel(
+  node: PrereqNode | null | undefined,
+): string | null {
+  if (!node) return null;
+  switch (node.kind) {
+    case "level":
+      return node.minLevel;
+    case "and": {
+      // Every child must hold → the strictest child's gate binds.
+      let max: string | null = null;
+      for (const c of node.children) {
+        const lvl = minimumRequiredLevel(c);
+        if (lvl !== null && (max === null || compareLevel(lvl, max) > 0))
+          max = lvl;
+      }
+      return max;
+    }
+    case "or": {
+      // One child suffices → the laxest gate binds; a level-free alternative
+      // means no level is required at all.
+      let min: string | null = null;
+      for (const c of node.children) {
+        const lvl = minimumRequiredLevel(c);
+        if (lvl === null) return null;
+        if (min === null || compareLevel(lvl, min) < 0) min = lvl;
+      }
+      return min;
+    }
+    case "countOf": {
+      // The student picks the n easiest children: level-free ones first, then
+      // ascending gates — the n-th pick's gate binds.
+      const lvls = node.children.map((c) => minimumRequiredLevel(c));
+      const free = lvls.filter((l) => l === null).length;
+      if (free >= node.n) return null;
+      const sorted = lvls
+        .filter((l): l is string => l !== null)
+        .sort(compareLevel);
+      return sorted[node.n - free - 1];
+    }
+    case "coreqOf":
+      // Concurrent enrollment doesn't waive a level gate inside the requirement.
+      return minimumRequiredLevel(node.child);
+    default:
+      // course / program / raw carry no level constraint.
+      return null;
+  }
+}
+
 /** UWaterloo year-letter levels: "1A" < "1B" < "2A" < ... < "4B" < "5A". */
-function compareLevel(a: string, b: string): number {
+export function compareLevel(a: string, b: string): number {
   const score = (lvl: string) => {
     const m = lvl.match(/^(\d+)([A-Z])?$/);
     if (!m) return 0;

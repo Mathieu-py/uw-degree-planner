@@ -1,4 +1,8 @@
 import { type PoolFilter, poolMatch } from "@/lib/courses/code";
+import {
+  EMPTY_EQUIVALENCE,
+  type EquivalenceIndex,
+} from "@/lib/courses/equivalence";
 import { unitsMet } from "@/lib/format";
 import { type Program, type RuleNode, walkRule } from "@/lib/programs";
 import { type BreadthRequirement, deriveBreadthRequirements } from "./breadth";
@@ -104,10 +108,14 @@ function poolFilterOf(
  * filters by prefix/level; `excluded` is ignored. Picks mirror {@link compilePick}:
  * an all-`courses` pick collapses into one pool, a compound pick credits only its
  * genuinely-satisfied option-groups (see the `pick` case).
+ *
+ * `placedMatches` maps a requirement code to the real PLACED codes satisfying
+ * it (exact, else cross-listed equivalents), so every pass counts a course once.
  */
 function collect(
   node: AuditNode,
   placed: ReadonlySet<string>,
+  placedMatches: (code: string) => string[],
   buckets: Bucket[],
   required: Set<string>,
   unitsOf: (code: string) => number,
@@ -132,7 +140,9 @@ function collect(
         leafCodes(r, codes);
         buckets.push({
           need: min,
-          eligible: [...new Set(codes.filter((c) => placed.has(c)))],
+          // Equivalence-aware (mirrors partitionByPlacement): an option's
+          // placed cross-listed twin fills the slot under its REAL code.
+          eligible: [...new Set(codes.flatMap(placedMatches))],
           // Reserve the options' real weight when uniform (e.g. a full-year
           // 1.0-unit pick), else the 0.5 default via the matcher.
           estimateUnit: uniformUnit(codes, unitsOf),
@@ -151,7 +161,7 @@ function collect(
       for (const child of node.children) {
         if (credited >= min) break;
         if (isSatisfied(child)) {
-          collect(child, placed, buckets, required, unitsOf);
+          collect(child, placed, placedMatches, buckets, required, unitsOf);
           credited += 1;
         }
       }
@@ -168,7 +178,7 @@ function collect(
     }
     case "all":
       for (const c of node.children)
-        collect(c, placed, buckets, required, unitsOf);
+        collect(c, placed, placedMatches, buckets, required, unitsOf);
       break;
     // excluded: never consumes slots.
   }
@@ -188,12 +198,16 @@ function collectExcluded(node: AuditNode, out: Set<string>): void {
  * @param legality slot-scoped keys of illegally-placed courses, from
  *   `creditExclusionKeys`. Excluded from credit so they never inflate the headline
  *   (still shown met-but-flagged on their row).
+ * @param equiv course-equivalence index (#21). MUST match what `compileAudit`
+ *   was given, else a twin marks the tree row met while this leaves its bucket
+ *   unfilled — pct stuck below 100 with every row green.
  */
 export function computeDegreeProgress(
   audit: AuditRoot,
   program: Program | null,
   unitsOf: (code: string) => number,
   legality: ReadonlySet<string> = new Set(),
+  equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -219,11 +233,18 @@ export function computeDegreeProgress(
   );
   const placed = new Set(placedList);
 
+  // Real placed codes satisfying a requirement code: the exact code, else its
+  // placed cross-listed equivalents (never the unplaced requirement code).
+  const placedMatches = (code: string): string[] => {
+    if (placed.has(code)) return [code];
+    return equiv.classOf(code).filter((m) => m !== code && placed.has(m));
+  };
+
   const buckets: Bucket[] = [];
   const required = new Set<string>();
 
   for (const root of roots)
-    if (root) collect(root, placed, buckets, required, unitsOf);
+    if (root) collect(root, placed, placedMatches, buckets, required, unitsOf);
 
   // Finite electives (consolidated upstream so overlapping pools count once)
   // and unit-based subject pools ("0.5 unit of BIOL/CHEM/… at 200+").
@@ -240,7 +261,7 @@ export function computeDegreeProgress(
       if (e.kind === "finite")
         buckets.push({
           need: e.need,
-          eligible: e.options.filter((c) => placed.has(c)),
+          eligible: [...new Set(e.options.flatMap(placedMatches))],
         });
       else if (e.kind === "subjectPool")
         unitPools.push({
@@ -255,7 +276,7 @@ export function computeDegreeProgress(
     if (comm && !comm.alreadyInTree)
       buckets.push({
         need: comm.need,
-        eligible: comm.options.filter((c) => placed.has(c)),
+        eligible: [...new Set(comm.options.flatMap(placedMatches))],
       });
   }
 
@@ -263,7 +284,7 @@ export function computeDegreeProgress(
   for (const code of required) {
     buckets.push({
       need: 1,
-      eligible: placed.has(code) ? [code] : [],
+      eligible: placedMatches(code),
       estimateUnit: unitsOf(code),
     });
   }

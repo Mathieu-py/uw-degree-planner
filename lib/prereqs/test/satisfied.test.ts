@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProgramIdentity } from "@/lib/programs";
 import { type PrereqNode, parsePrereqs } from "../parse";
-import { evaluate } from "../satisfied";
+import { evaluate, minimumRequiredLevel } from "../satisfied";
 
 function user(completed: string[], level?: string) {
   return { completed: new Set(completed), level };
@@ -358,5 +358,69 @@ describe("evaluate — coreqOf (corequisite satisfies a prereq, ACTSC 231)", () 
     expect(r.satisfied).toBe(true);
     expect(r.uncertain).toBe(true);
     expect(r.missingCourses).toEqual([]);
+  });
+});
+
+describe("minimumRequiredLevel", () => {
+  const level = (minLevel: string): PrereqNode => ({ kind: "level", minLevel });
+  const course = (code: string): PrereqNode => ({ kind: "course", code });
+
+  it("returns the gate of a bare level node, null for level-free leaves", () => {
+    expect(minimumRequiredLevel(level("3A"))).toBe("3A");
+    expect(minimumRequiredLevel(course("cs135"))).toBeNull();
+    expect(minimumRequiredLevel({ kind: "raw", text: "consent" })).toBeNull();
+    expect(minimumRequiredLevel(null)).toBeNull();
+  });
+
+  it("AND: the strictest child binds", () => {
+    expect(
+      minimumRequiredLevel({
+        kind: "and",
+        children: [course("cs246"), level("3A"), level("2A")],
+      }),
+    ).toBe("3A");
+  });
+
+  it("OR: a level-free alternative means no level is required", () => {
+    // "VCULT 101 or Level at least 2A" — take VCULT 101 instead.
+    expect(
+      minimumRequiredLevel({
+        kind: "or",
+        children: [course("vcult101"), level("2A")],
+      }),
+    ).toBeNull();
+  });
+
+  it("OR of only level gates: the laxest binds", () => {
+    expect(
+      minimumRequiredLevel({
+        kind: "or",
+        children: [level("3A"), level("2A")],
+      }),
+    ).toBe("2A");
+  });
+
+  it("countOf: level-free children are picked first; the n-th pick binds", () => {
+    const node: PrereqNode = {
+      kind: "countOf",
+      n: 2,
+      children: [course("a"), level("2A"), level("3A")],
+    };
+    // 2 of {course, 2A, 3A}: pick the course + the 2A gate → needs 2A.
+    expect(minimumRequiredLevel(node)).toBe("2A");
+    // 2 of with two level-free children → no level needed.
+    expect(
+      minimumRequiredLevel({
+        kind: "countOf",
+        n: 2,
+        children: [course("a"), course("b"), level("3A")],
+      }),
+    ).toBeNull();
+  });
+
+  it("looks through coreqOf (concurrency doesn't waive a level gate)", () => {
+    expect(minimumRequiredLevel({ kind: "coreqOf", child: level("2B") })).toBe(
+      "2B",
+    );
   });
 });

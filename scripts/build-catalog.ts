@@ -87,8 +87,12 @@ async function writeSnapshot(
 
 async function main() {
   const args = process.argv.slice(2);
-  const terms =
-    args.length > 0 ? args.map((a) => parseInt(a, 10)) : [PINNED_TERM];
+  // Whole-string numeric only — parseInt would silently accept "1261foo".
+  for (const a of args.filter((a) => !/^\d+$/.test(a))) {
+    console.error(`Skipping non-numeric term arg: ${a}`);
+  }
+  const validArgs = args.filter((a) => /^\d+$/.test(a));
+  const terms = args.length > 0 ? validArgs.map(Number) : [PINNED_TERM];
   process.stdout.write("Fetching course data from Kuali... ");
   const kuali = await fetchKualiData();
   const withUnitsTotal = Object.values(kuali).filter(
@@ -112,10 +116,6 @@ async function main() {
   console.log(`${courses.length} courses`);
 
   for (const term of terms) {
-    if (!Number.isInteger(term)) {
-      console.error(`Skipping non-numeric term arg: ${term}`);
-      continue;
-    }
     process.stdout.write(`Term ${term}: seating from Open Data... `);
     const seating = await fetchSeating(term);
     const { coursesPath, descriptionsPath } = await writeSnapshot(

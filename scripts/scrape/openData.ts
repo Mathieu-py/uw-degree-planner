@@ -120,6 +120,7 @@ export async function fetchSeating(
 
   const seating: Record<string, CourseSection[]> = {};
   let next = 0;
+  let failures = 0;
   const worker = async () => {
     while (true) {
       const i = next++;
@@ -137,13 +138,23 @@ export async function fetchSeating(
         if (sections.length > 0) {
           seating[codeOf(c.subjectCode, c.catalogNumber)] = sections;
         }
-      } catch {
-        // skip; this course loads without seating (shown as no sections)
+      } catch (err) {
+        // Allowed 404s return null above, so anything caught here is a
+        // persistent non-404 failure (retries exhausted). The course still
+        // loads without seating (shown as no sections), but log it so a
+        // systemic outage doesn't pass silently.
+        failures++;
+        console.error(
+          `Seating fetch failed for ${codeOf(c.subjectCode, c.catalogNumber)}: ${err instanceof Error ? err.message : err}`,
+        );
       }
     }
   };
   await Promise.all(
     Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker),
   );
+  if (failures > 0) {
+    console.warn(`${failures} of ${targets.length} seating fetches failed`);
+  }
   return seating;
 }

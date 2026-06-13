@@ -17,6 +17,7 @@ function mkCourse(
     antireqs?: string;
     antireqCodes?: string[];
     prereqAst?: PrereqNode;
+    crossListed?: string[];
   } = {},
 ): Course {
   return {
@@ -28,6 +29,7 @@ function mkCourse(
     antireqs: opts.antireqs ?? null,
     ...(opts.antireqCodes ? { antireqCodes: opts.antireqCodes } : {}),
     ...(opts.prereqAst ? { prereqAst: opts.prereqAst } : {}),
+    ...(opts.crossListed ? { crossListed: opts.crossListed } : {}),
     rating: null,
     sections: [],
     prefix: code.replace(/\d.*$/, "").toUpperCase(),
@@ -437,5 +439,131 @@ describe("validatePlan — level", () => {
       .map((i) => i.kind)
       .sort();
     expect(kinds).toEqual(["level", "prereq"]);
+  });
+
+  it("does not flag a level gate that is only one OR alternative", () => {
+    // FINE 209-style: "VCULT 101 or Level at least 2A" — taking VCULT 101
+    // satisfies the prereq with NO level requirement, so a 1A placement gets a
+    // prereq badge (listing the open routes) but never a hard level badge.
+    const cat = catalog(
+      mkCourse("fine209", { prereqs: "VCULT 101 or Level at least 2A" }),
+      mkCourse("vcult101"),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, position: "1A", courses: ["fine209"] },
+    ]);
+    const issues = validatePlan(plan, cat);
+    expect(issues.some((i) => i.kind === "level")).toBe(false);
+    expect(issues.some((i) => i.kind === "prereq")).toBe(true);
+  });
+
+  it("does not flag the level branch of a satisfied-with-uncertainty OR", () => {
+    // or(level 2A, program restriction): with no program identity the OR
+    // biases to satisfied+uncertain — its failed level branch must not leak
+    // into a hard badge (regression: the old rawRequirements string scan did).
+    const cat = catalog(
+      mkCourse("blkst202", {
+        prereqAst: {
+          kind: "or",
+          children: [
+            { kind: "level", minLevel: "2A" },
+            { kind: "program", clause: "Black Studies students only" },
+          ],
+        },
+      }),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, position: "1A", courses: ["blkst202"] },
+    ]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+
+  it("flags the binding gate of an OR whose every branch is level-gated", () => {
+    // or(level 3A, level 2A): some level is unavoidable — the laxest binds.
+    const cat = catalog(
+      mkCourse("x300", {
+        prereqAst: {
+          kind: "or",
+          children: [
+            { kind: "level", minLevel: "3A" },
+            { kind: "level", minLevel: "2A" },
+          ],
+        },
+      }),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, position: "1A", courses: ["x300"] },
+    ]);
+    const level = validatePlan(plan, cat).filter((i) => i.kind === "level");
+    expect(level).toHaveLength(1);
+    expect(level[0].message).toContain("2A");
+  });
+});
+
+describe("validatePlan — cross-listed twins (#21)", () => {
+  const amath242 = () => mkCourse("amath242", { crossListed: ["cs371"] });
+  const cs371 = () => mkCourse("cs371", { crossListed: ["amath242"] });
+
+  it("flags a plan holding BOTH members of a cross-listed pair", () => {
+    // They're the same course — both placed means its units would credit
+    // twice. Surfaced with the antireq kind so creditExclusionKeys holds one
+    // member out of credit.
+    const cat = catalog(amath242(), cs371());
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["amath242"] },
+      { id: "s2", termId: 1241, courses: ["cs371"] },
+    ]);
+    const issues = validatePlan(plan, cat);
+    expect(issues.map((i) => i.kind)).toEqual(["antireq", "antireq"]);
+    expect(
+      issues.find((i) => i.courseCode === "amath242")?.conflictsWith,
+    ).toEqual(["cs371"]);
+    expect(issues.find((i) => i.courseCode === "cs371")?.conflictsWith).toEqual(
+      ["amath242"],
+    );
+    expect(issues[0].message).toContain("cross-listed");
+  });
+
+  it("does not flag a lone member of a cross-listed pair", () => {
+    const cat = catalog(amath242(), cs371());
+    const plan = mkPlan([{ id: "s1", termId: 1239, courses: ["cs371"] }]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+
+  it("matches a named antireq through the placed cross-listed twin", () => {
+    // ACTSC 221 names CIVE 392 but not its twins; the plan holds ENVE 392.
+    // Both directions must flag (same conflict, one set).
+    const cat = catalog(
+      mkCourse("actsc221", { antireqCodes: ["cive392"] }),
+      mkCourse("cive392", { crossListed: ["enve392"] }),
+      mkCourse("enve392", { crossListed: ["cive392"] }),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["actsc221"] },
+      { id: "s2", termId: 1241, courses: ["enve392"] },
+    ]);
+    const issues = validatePlan(plan, cat);
+    expect(issues.map((i) => i.kind)).toEqual(["antireq", "antireq"]);
+    expect(
+      issues.find((i) => i.courseCode === "actsc221")?.conflictsWith,
+    ).toEqual(["enve392"]);
+    expect(
+      issues.find((i) => i.courseCode === "enve392")?.conflictsWith,
+    ).toEqual(["actsc221"]);
+  });
+
+  it("satisfies a coreq with a co-scheduled cross-listed twin", () => {
+    // PHYS 121's coreq names ECE 205; the student co-schedules its twin
+    // MATH 211 — same course, same term, no badge (it already passed one term
+    // earlier via the expanded completed set; same-term must agree).
+    const cat = catalog(
+      mkCourse("phys121", { coreqs: "ECE 205" }),
+      mkCourse("ece205", { crossListed: ["math211"] }),
+      mkCourse("math211", { crossListed: ["ece205"] }),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["phys121", "math211"] },
+    ]);
+    expect(validatePlan(plan, cat)).toEqual([]);
   });
 });

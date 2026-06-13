@@ -41,4 +41,37 @@ describe("parseKualiAntireqCodes", () => {
     expect(parseKualiAntireqCodes("")).toEqual([]);
     expect(parseKualiAntireqCodes("   ")).toEqual([]);
   });
+
+  it("extracts anchor-less TEXT-form codes (AFM 205-style rules)", () => {
+    // Kuali renders many antireq rules as plain text with no course anchor:
+    // missing these silently drops a real antireq (and would let the
+    // empty-list-is-authoritative contract erase it).
+    expect(
+      parseKualiAntireqCodes(
+        "<div>Not completed any of the following: AFM204</div>",
+      ),
+    ).toEqual(["afm204"]);
+    expect(
+      parseKualiAntireqCodes(
+        "<div>Not completed nor concurrently enrolled in AFM 273 or BUS 127W</div>",
+      ),
+    ).toEqual(["afm273", "bus127w"]);
+  });
+
+  it("dedupes a code present both as anchor and text", () => {
+    const html = antireqList(courseLink("a", "CS137")).replace(
+      "</div></li>",
+      " Also listed as CS137.</div></li>",
+    );
+    expect(parseKualiAntireqCodes(html)).toEqual(["cs137"]);
+  });
+
+  it("ignores prose that is not an all-caps course code", () => {
+    // Case-sensitive subject match: "Fall 2015" and years never read as codes.
+    expect(
+      parseKualiAntireqCodes(
+        "<div>CS245 taken in Fall 2015 or later; see the calendar from 2015 onward</div>",
+      ),
+    ).toEqual(["cs245"]);
+  });
 });

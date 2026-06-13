@@ -88,15 +88,24 @@ export function buildProgramAudit(
     ? scopePlanToSpan(plan, programTermSpan(program))
     : plan;
 
+  // One index for BOTH passes: the audit tree and the progress headline must
+  // agree on what a placed cross-listed twin satisfies (#21).
+  const equiv = equivalenceForCatalog(catalogByCode);
   const audit = compileAudit(
     program,
     scopedPlan,
     plan.specializationIds[programId] ?? null,
     legality,
     programId,
-    equivalenceForCatalog(catalogByCode),
+    equiv,
   );
-  const progress = computeDegreeProgress(audit, program, unitsOf, legality);
+  const progress = computeDegreeProgress(
+    audit,
+    program,
+    unitsOf,
+    legality,
+    equiv,
+  );
   const { macros, unverifiedCount } = deriveMacros(
     audit,
     program,

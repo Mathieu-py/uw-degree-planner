@@ -57,7 +57,9 @@ export type CatalogCourse = Omit<BaseCourse, "description"> & {
   /**
    * Antireq codes (lowercased) from Kuali's structured `antirequisites` — the
    * authoritative replacement for parsing UWFlow's free-text `antireqs`. Preferred
-   * when present (see `resolveAntireqCodes`); else fall back to the prose.
+   * when present (see `resolveAntireqCodes`); else fall back to the prose. An
+   * EMPTY array means Kuali authoritatively lists zero antireqs — it suppresses
+   * the prose fallback rather than triggering it.
    */
   antireqCodes?: string[];
   /**

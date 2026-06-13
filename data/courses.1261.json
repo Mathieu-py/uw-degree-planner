@@ -1198,19 +1198,6 @@
             "minLevel": "2A"
           }
         ]
-      },
-      "coreqAst": {
-        "kind": "or",
-        "children": [
-          {
-            "kind": "course",
-            "code": "stat230"
-          },
-          {
-            "kind": "course",
-            "code": "stat240"
-          }
-        ]
       }
     },
     {

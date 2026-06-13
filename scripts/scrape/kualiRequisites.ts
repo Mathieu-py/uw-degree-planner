@@ -16,11 +16,17 @@ const COURSE_ANCHOR_SELECTOR = 'a[href*="#/courses/view/"]';
 /** A Kuali requisite anchor that links to a program (enrolment restriction). */
 const PROGRAM_ANCHOR_SELECTOR = 'a[href*="#/programs/view/"]';
 
+// Plain-text course codes (Kuali renders many antireq rules anchor-less, so
+// `<a>` tags alone miss them). Case-SENSITIVE all-caps subject: prose like
+// "Fall 2015" never reads as a subject glued to a catalog number; codes do.
+const TEXT_COURSE_CODE_RE = /\b([A-Z]{2,8})\s?(\d{3,4}[A-Z]?)\b/g;
+
 /**
  * Every course code named in a Kuali `antirequisites` tree, deduped. Antireqs are
  * a flat conflict set ("credit will not be granted for both"), so the tree's
  * boolean structure is irrelevant — only which courses are named. Program anchors
- * are enrolment restrictions, not antireqs, so they're excluded (course hrefs only).
+ * are enrolment restrictions, not antireqs, so they're excluded (course hrefs and
+ * text-form codes only — program names carry no catalog number).
  */
 export function parseKualiAntireqCodes(
   html: string | null | undefined,
@@ -32,6 +38,12 @@ export function parseKualiAntireqCodes(
     const code = normalizeCourseCode($(a).text());
     if (code) codes.add(code);
   });
+  // Anchor-less text codes ("…any of the following: AFM204"). Without these a
+  // real antireq is dropped, and the empty-is-authoritative contract erases it.
+  for (const m of $.root().text().matchAll(TEXT_COURSE_CODE_RE)) {
+    const code = normalizeCourseCode(`${m[1]}${m[2]}`);
+    if (code) codes.add(code);
+  }
   return [...codes];
 }
 
@@ -99,16 +111,27 @@ export function isCoreqReference(text: string): boolean {
  * parsed coreq tree, e.g. "STAT 220 or (see corequisite)" → "STAT 220 or a
  * corequisite of STAT 230/240". No-op when there's no coreq tree (pointer stays
  * raw → "check") or no pointer.
+ *
+ * `consumed` reports whether a pointer was spliced. If so, the coreq field was
+ * reference material for that (often optional) prereq path, not a standalone
+ * corequisite — so the caller must drop the standalone coreq AST, else a
+ * student on the prereq's other branch is wrongly badged "Coreq missing"
+ * (ACTSC 231).
  */
 export function spliceCoreqReferences(
   prereq: PrereqNode | null,
   coreq: PrereqNode | null,
-): PrereqNode | null {
-  if (!prereq || !coreq) return prereq;
+): { node: PrereqNode | null; consumed: boolean } {
+  if (!prereq || !coreq) return { node: prereq, consumed: false };
+  let consumed = false;
   const visit = (n: PrereqNode): PrereqNode => {
     switch (n.kind) {
       case "raw":
-        return isCoreqReference(n.text) ? { kind: "coreqOf", child: coreq } : n;
+        if (isCoreqReference(n.text)) {
+          consumed = true;
+          return { kind: "coreqOf", child: coreq };
+        }
+        return n;
       case "and":
       case "or":
         return { ...n, children: n.children.map(visit) };
@@ -120,7 +143,7 @@ export function spliceCoreqReferences(
         return n;
     }
   };
-  return visit(prereq);
+  return { node: visit(prereq), consumed };
 }
 
 /** Collapse a child list into a single node (or the lone child, or null). */

@@ -16,6 +16,8 @@ import {
 const KUALI_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";
 const CONCURRENCY = 12;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /** Authoritative per-course data Kuali supplies that UWFlow lacks. */
 export interface KualiCourseData {
   /** Unit weight: 0.5 standard, 0.25 lab, 1.0+ full-year. Undefined if unknown. */
@@ -27,7 +29,10 @@ export interface KualiCourseData {
   crossListed?: string[];
   /**
    * Antireq codes from Kuali's structured `antirequisites` tree — authoritative
-   * replacement for the regex over UWFlow's prose. Lowercased; omitted when none.
+   * replacement for the regex over UWFlow's prose. Lowercased. An EMPTY array is
+   * meaningful (Kuali says zero antireqs → suppresses the prose fallback); the
+   * field is omitted only when Kuali has antireq text we couldn't parse a code
+   * from (prose fallback stays in effect).
    */
   antireqCodes?: string[];
   /** Prerequisite AST from Kuali's `prerequisites` rule tree; omitted if empty. */
@@ -64,20 +69,30 @@ function buildRecord(
     .filter((c): c is string => c !== null && c !== code);
   if (crossListed.length > 0) record.crossListed = [...new Set(crossListed)];
 
-  const antireqCodes = parseKualiAntireqCodes(detail.antirequisites).filter(
+  const antireqHtml = detail.antirequisites;
+  const antireqCodes = parseKualiAntireqCodes(antireqHtml).filter(
     (a) => a !== code,
   );
-  if (antireqCodes.length > 0) record.antireqCodes = antireqCodes;
+  // Kuali is authoritative, so an EMPTY antirequisites field is an explicit []
+  // (zero antireqs) — omitting it reads as "no coverage" and the runtime falls
+  // back to UWFlow's stale prose. Exception: antireq text we parsed no code from
+  // (unrecognized phrasing) → omit, so the prose fallback still applies.
+  if (antireqCodes.length > 0 || !antireqHtml || antireqHtml.trim() === "") {
+    record.antireqCodes = antireqCodes;
+  }
 
   // Splice the parsed coreq tree into any "or (see corequisite)" pointer the
   // prereq carries, so the corequisite path is actually evaluated (ACTSC 231).
   const coreqAst = parseKualiRequisite(detail.corequisites);
-  const prereqAst = spliceCoreqReferences(
+  const { node: prereqAst, consumed } = spliceCoreqReferences(
     parseKualiRequisite(detail.prerequisites),
     coreqAst,
   );
   if (prereqAst) record.prereqAst = prereqAst;
-  if (coreqAst) record.coreqAst = coreqAst;
+  // A consumed coreq tree was reference material for the prereq pointer, not a
+  // standalone requirement — keeping it would enforce it unconditionally (false
+  // "Coreq missing" for students on the other prereq branch).
+  if (coreqAst && !consumed) record.coreqAst = coreqAst;
 
   return Object.keys(record).length > 0 ? record : null;
 }
@@ -93,11 +108,14 @@ export async function fetchKualiData(): Promise<
   const getJson = async <T>(url: string): Promise<T> => {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const res = await fetch(url);
+        // A timed-out attempt throws TimeoutError, which retries like any
+        // other failure here — no separate abort handling needed.
+        const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return (await res.json()) as T;
       } catch (err) {
         if (attempt === 2) throw err;
+        await sleep(500 * 2 ** attempt);
       }
     }
     throw new Error("unreachable");
@@ -123,8 +141,11 @@ export async function fetchKualiData(): Promise<
         );
         const record = buildRecord(code, detail);
         if (record) data[code] = record;
-      } catch {
-        // skip; the course loads without Kuali enrichment (audit still counts it)
+      } catch (err) {
+        // The course still loads without Kuali enrichment (audit counts it).
+        console.warn(
+          `Kuali enrichment skipped for ${code}: ${err instanceof Error ? err.message : err}`,
+        );
       }
     }
   };

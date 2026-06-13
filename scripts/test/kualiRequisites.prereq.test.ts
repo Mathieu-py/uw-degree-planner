@@ -288,7 +288,7 @@ describe("spliceCoreqReferences (ACTSC 231 'or a corequisite of …')", () => {
     expect(isCoreqReference("STAT 230")).toBe(false);
   });
 
-  it("replaces the pointer leaf with a coreqOf wrapping the coreq tree", () => {
+  it("replaces the pointer leaf with a coreqOf and reports it consumed", () => {
     const prereq: PrereqNode = {
       kind: "or",
       children: [
@@ -301,8 +301,11 @@ describe("spliceCoreqReferences (ACTSC 231 'or a corequisite of …')", () => {
       children: [c("stat230"), c("stat240")],
     };
     expect(spliceCoreqReferences(prereq, coreq)).toEqual({
-      kind: "or",
-      children: [c("stat220"), { kind: "coreqOf", child: coreq }],
+      node: {
+        kind: "or",
+        children: [c("stat220"), { kind: "coreqOf", child: coreq }],
+      },
+      consumed: true,
     });
   });
 
@@ -314,11 +317,17 @@ describe("spliceCoreqReferences (ACTSC 231 'or a corequisite of …')", () => {
         { kind: "raw", text: "Corequisite (see below)" },
       ],
     };
-    expect(spliceCoreqReferences(prereq, null)).toBe(prereq);
+    const result = spliceCoreqReferences(prereq, null);
+    expect(result.node).toBe(prereq);
+    expect(result.consumed).toBe(false);
   });
 
-  it("leaves a prereq with no coreq pointer untouched", () => {
+  it("leaves a prereq with no coreq pointer untouched and unconsumed", () => {
     const prereq: PrereqNode = { kind: "and", children: [c("math137")] };
-    expect(spliceCoreqReferences(prereq, c("stat230"))).toEqual(prereq);
+    const result = spliceCoreqReferences(prereq, c("stat230"));
+    expect(result.node).toEqual(prereq);
+    // Unconsumed → the standalone coreq AST is a REAL corequisite and must be
+    // kept on the record (buildRecord drops it only when consumed).
+    expect(result.consumed).toBe(false);
   });
 });

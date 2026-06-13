@@ -78,9 +78,16 @@ export default async function CoursePage(props: {
             />
             <ReqCard
               label="Antirequisites"
-              value={
+              lines={
                 course.antireqCodes && course.antireqCodes.length > 0
-                  ? course.antireqCodes.map(formatCourseCode).join(", ")
+                  ? [course.antireqCodes.map(formatCourseCode).join(", ")]
+                  : null
+              }
+              // An explicit empty antireqCodes is Kuali's authoritative "none" —
+              // don't resurface the stale UWFlow prose for it.
+              value={
+                course.antireqCodes && course.antireqCodes.length === 0
+                  ? null
                   : course.antireqs
               }
             />
@@ -177,6 +184,11 @@ function RatingRow({ label, value }: { label: string; value: number | null }) {
   );
 }
 
+/** Lowercased alphanumerics only, for "is the prose just the parts re-worded" checks. */
+function squash(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 function ReqCard({
   label,
   lines,
@@ -186,11 +198,16 @@ function ReqCard({
   // Structured requirement parts (one per top-level AND clause); preferred over
   // `value` when present so grouping shows as separate lines, not brackets.
   lines?: string[] | null;
-  // Plain-prose fallback used when there's no structured tree to split.
+  // Verbatim calendar prose. Sole content with no structured tree; otherwise a
+  // footnote under the parts, since the AST drops grade thresholds/qualifiers
+  // ("60% in CS 135", "taken prior to fall 2013") the student still needs.
   value?: string | null;
 }) {
   const parts = lines && lines.length > 0 ? lines : null;
-  const text = !parts && value && value.trim() !== "" ? value : null;
+  const text = value && value.trim() !== "" ? value : null;
+  // Skip the footnote when the prose is just the parts re-worded.
+  const proseNote =
+    parts && text && squash(text) !== squash(parts.join("; ")) ? text : null;
   return (
     <div className="card-2 border border-line rounded-[14px] p-4 flex flex-col gap-1.5">
       <span className="u-eyebrow">{label}</span>
@@ -199,8 +216,9 @@ function ReqCard({
           <p className="text-[13px] leading-relaxed text-ink">{parts[0]}</p>
         ) : (
           <ul className="flex flex-col gap-1 text-[13px] leading-relaxed text-ink">
-            {parts.map((part) => (
-              <li key={part} className="flex gap-2">
+            {parts.map((part, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: lines are static per course (never reordered); index disambiguates duplicate strings
+              <li key={`${part}-${index}`} className="flex gap-2">
                 <span aria-hidden className="text-ink-3 select-none">
                   •
                 </span>
@@ -214,6 +232,11 @@ function ReqCard({
       ) : (
         <span className="text-[13px] text-ink-3">None</span>
       )}
+      {proseNote ? (
+        <p className="text-xs leading-relaxed text-ink-3">
+          Calendar: {proseNote}
+        </p>
+      ) : null}
     </div>
   );
 }
