@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Course } from "@/lib/courses/types";
+import type { PrereqNode } from "@/lib/prereqs/parse";
 import type { LocalPlan } from "../types";
 import {
   ACADEMIC_TERM_CAP,
@@ -15,6 +16,7 @@ function mkCourse(
     coreqs?: string;
     antireqs?: string;
     antireqCodes?: string[];
+    prereqAst?: PrereqNode;
   } = {},
 ): Course {
   return {
@@ -25,6 +27,7 @@ function mkCourse(
     coreqs: opts.coreqs ?? null,
     antireqs: opts.antireqs ?? null,
     ...(opts.antireqCodes ? { antireqCodes: opts.antireqCodes } : {}),
+    ...(opts.prereqAst ? { prereqAst: opts.prereqAst } : {}),
     rating: null,
     sections: [],
     prefix: code.replace(/\d.*$/, "").toUpperCase(),
@@ -135,6 +138,59 @@ describe("validatePlan — prereq", () => {
     ]);
     const issues = validatePlan(plan, cat);
     expect(issues.map((i) => i.kind)).toEqual(["prereq"]);
+  });
+});
+
+describe("validatePlan — coreqOf prereq (ACTSC 231)", () => {
+  // STAT 220 OR a corequisite of STAT 230/240 — the corequisite path may be
+  // satisfied by a same-term course, unlike an ordinary prereq.
+  const actsc231 = (): Course =>
+    mkCourse("actsc231", {
+      prereqAst: {
+        kind: "or",
+        children: [
+          { kind: "course", code: "stat220" },
+          {
+            kind: "coreqOf",
+            child: {
+              kind: "or",
+              children: [
+                { kind: "course", code: "stat230" },
+                { kind: "course", code: "stat240" },
+              ],
+            },
+          },
+        ],
+      },
+    });
+
+  it("is satisfied by the corequisite taken in the SAME term", () => {
+    const cat = catalog(actsc231(), mkCourse("stat230"));
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["actsc231", "stat230"] },
+    ]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+
+  it("is satisfied by the STAT 220 prereq taken in an earlier term", () => {
+    const cat = catalog(actsc231(), mkCourse("stat220"));
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, courses: ["stat220"] },
+      { id: "s2", termId: 1241, courses: ["actsc231"] },
+    ]);
+    expect(validatePlan(plan, cat)).toEqual([]);
+  });
+
+  it("flags STAT 220 + the coreq option when neither route is taken", () => {
+    const cat = catalog(actsc231());
+    const plan = mkPlan([{ id: "s1", termId: 1239, courses: ["actsc231"] }]);
+    const issues = validatePlan(plan, cat);
+    expect(issues.map((i) => i.kind)).toEqual(["prereq"]);
+    // No longer swallowed: the coreq path is inlined, so the message lists
+    // STAT 220 alongside the corequisite courses as one flat choice.
+    expect(issues[0].message).toContain("STAT 220");
+    expect(issues[0].message).toContain("STAT 230");
+    expect(issues[0].message).toContain("STAT 240");
   });
 });
 
@@ -283,11 +339,13 @@ describe("validatePlan — co-op slots", () => {
 });
 
 describe("validatePlan — uncertain prereqs", () => {
-  it("does not flag uncertain prereqs (e.g. 'Level at least 2A')", () => {
-    // The parser turns "Level at least 2A" into a `level` node; the evaluator
-    // returns satisfied=true, uncertain=true when no student level is given.
-    // validate.ts must not treat that as an issue.
-    const cat = catalog(mkCourse("cs246", { prereqs: "Level at least 2A" }));
+  it("does not flag a genuinely uncertain prereq (raw 'Permission of instructor')", () => {
+    // Raw/program clauses resolve to "uncertain" (not a definite miss), so they
+    // must not raise an issue. (Level gates, by contrast, ARE flagged against the
+    // slot's level — see the "level" suite.)
+    const cat = catalog(
+      mkCourse("cs246", { prereqs: "Permission of instructor" }),
+    );
     const plan = mkPlan([{ id: "s1", termId: 1239, courses: ["cs246"] }]);
     expect(validatePlan(plan, cat)).toEqual([]);
   });
@@ -343,5 +401,41 @@ describe("issuesByCourseInSlot", () => {
       "antireq",
     ]);
     expect(slotLevel.map((i) => i.kind)).toEqual(["overload"]);
+  });
+});
+
+describe("validatePlan — level", () => {
+  it("flags a course placed in a term below its required level", () => {
+    const cat = catalog(mkCourse("cs492", { prereqs: "Level at least 3A" }));
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, position: "1A", courses: ["cs492"] },
+    ]);
+    const level = validatePlan(plan, cat).filter((i) => i.kind === "level");
+    expect(level).toHaveLength(1);
+    expect(level[0].courseCode).toBe("cs492");
+    expect(level[0].message).toContain("3A");
+  });
+
+  it("does not flag when the term meets the level", () => {
+    const cat = catalog(mkCourse("cs492", { prereqs: "Level at least 3A" }));
+    const plan = mkPlan([
+      { id: "s1", termId: 1259, position: "3A", courses: ["cs492"] },
+    ]);
+    expect(validatePlan(plan, cat).some((i) => i.kind === "level")).toBe(false);
+  });
+
+  it("emits a level badge separate from a missing-course prereq", () => {
+    const cat = catalog(
+      mkCourse("cs492", { prereqs: "CS 246; Level at least 3A" }),
+      mkCourse("cs246"),
+    );
+    const plan = mkPlan([
+      { id: "s1", termId: 1239, position: "1A", courses: ["cs492"] }, // cs246 missing + too low
+    ]);
+    const kinds = validatePlan(plan, cat)
+      .filter((i) => i.courseCode === "cs492")
+      .map((i) => i.kind)
+      .sort();
+    expect(kinds).toEqual(["level", "prereq"]);
   });
 });

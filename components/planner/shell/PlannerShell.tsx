@@ -26,6 +26,7 @@ import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { completedSetFromPlan } from "@/lib/plan/derive";
 import { eligibleSlotIdsForCourse } from "@/lib/plan/eligibleTerms";
+import { removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
@@ -182,6 +183,12 @@ function PlannerShellInner({
 
   // Code of the dragged audit chip, so the timeline can tint its eligible terms.
   const [draggingAddCode, setDraggingAddCode] = useState<string | null>(null);
+  // The placed course being dragged between terms (code + its current slot), so
+  // the same eligibility highlight runs on a move, not just an add.
+  const [movingCourse, setMovingCourse] = useState<{
+    code: string;
+    fromSlotId: string;
+  } | null>(null);
   // A successful drop can unmount the source chip before `dragend` fires,
   // leaving the flag stale. A drop yields a new `plan` ref, so clear it on any
   // plan change.
@@ -189,12 +196,18 @@ function PlannerShellInner({
   if (planRef.current !== plan) {
     planRef.current = plan;
     if (draggingAddCode !== null) setDraggingAddCode(null);
+    if (movingCourse !== null) setMovingCourse(null);
   }
   const handleAddDragStart = useCallback(
     (code: string) => setDraggingAddCode(code),
     [],
   );
   const handleAddDragEnd = useCallback(() => setDraggingAddCode(null), []);
+  const handleMoveDrag = useCallback(
+    (moving: { code: string; fromSlotId: string } | null) =>
+      setMovingCourse(moving),
+    [],
+  );
   // Codes the program(s) reference, so a stale restriction can't grey out a
   // required course. Shared by the drag highlight and the picker. Unions across
   // every program on the plan (double degree), each with its own specialization.
@@ -222,19 +235,43 @@ function PlannerShellInner({
   );
   // Eligible terms for the dragged course, from the synchronous `plan` (the drop
   // surface), not `deferredPlan`. Null when idle so the timeline skips the work.
-  const eligibleSlotIds = useMemo(
-    () =>
-      draggingAddCode && plan
-        ? eligibleSlotIdsForCourse(
-            plan,
-            draggingAddCode,
-            catalogByCode,
-            programs,
-            programReferenced,
-          )
-        : null,
-    [draggingAddCode, plan, catalogByCode, programs, programReferenced],
-  );
+  // Drives the green/muted tinting for both an audit add and a between-term move;
+  // a move is judged against the plan WITHOUT the in-flight course (else it reads
+  // as "already placed" everywhere and its own slot satisfies its prereqs).
+  const eligibleSlotIds = useMemo(() => {
+    if (!plan) return null;
+    if (draggingAddCode) {
+      return eligibleSlotIdsForCourse(
+        plan,
+        draggingAddCode,
+        catalogByCode,
+        programs,
+        programReferenced,
+      );
+    }
+    if (movingCourse) {
+      const without = removeCourseFromSlot(
+        plan,
+        movingCourse.fromSlotId,
+        movingCourse.code,
+      );
+      return eligibleSlotIdsForCourse(
+        without,
+        movingCourse.code,
+        catalogByCode,
+        programs,
+        programReferenced,
+      );
+    }
+    return null;
+  }, [
+    draggingAddCode,
+    movingCourse,
+    plan,
+    catalogByCode,
+    programs,
+    programReferenced,
+  ]);
   const auditDrag = useMemo(
     () => ({
       draggingCode: draggingAddCode,
@@ -558,6 +595,7 @@ function PlannerShellInner({
                 onSlotClick={openPicker}
                 onRemoveCourse={handleRemoveCourse}
                 onCourseDrop={handleCourseDrop}
+                onMoveDrag={handleMoveDrag}
                 eligibleSlotIds={eligibleSlotIds}
                 planOriginQuery={planOriginQuery}
               />

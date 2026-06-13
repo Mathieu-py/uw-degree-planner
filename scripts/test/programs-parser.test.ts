@@ -15,7 +15,7 @@ import {
   parseProgramRequirements,
   parseSpecializationsList,
   parseUnitPlan,
-} from "../scrape-programs.parser";
+} from "../scrape/programs-parser";
 
 const rawJson = (slug: string): Record<string, string> =>
   JSON.parse(

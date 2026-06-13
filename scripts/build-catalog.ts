@@ -1,15 +1,9 @@
 /**
- * Builds the committed per-term course catalog snapshot under data/ by combining
- * three UW sources, joined by lowercased course code:
- *   - UWFlow      → spine: code, name, description, requirement prose, ratings
- *                   (`./scrape/uwflowCourses`)
- *   - Kuali       → units, cross-listings, structured requisite ASTs
- *                   (`./scrape/kualiCourses`)
- *   - UW Open Data → live section seating (`./scrape/openData`)
+ * Builds the committed per-term catalog snapshot under data/, joining three
+ * sources by lowercased code: UWFlow (spine: code/name/description/prose/ratings),
+ * Kuali (units, cross-listings, requisite ASTs), UW Open Data (seating).
  *
- * Usage:
- *   pnpm tsx scripts/build-catalog.ts            # default term = PINNED_TERM
- *   pnpm tsx scripts/build-catalog.ts 1265 1269  # multiple terms
+ * Usage: `pnpm tsx scripts/build-catalog.ts [term...]` (default PINNED_TERM).
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
@@ -26,13 +20,12 @@ import { fetchKualiData, type KualiCourseData } from "./scrape/kualiCourses";
 import { fetchSeating } from "./scrape/openData";
 import { fetchUWFlowCourses, type UWFlowCourse } from "./scrape/uwflowCourses";
 
-// Load .env.local so UW_OPENDATA_KEY is available (Next.js loads it for the app,
-// but this standalone script doesn't). CI may set the var directly, so tolerate
-// a missing file.
+// Load .env.local for UW_OPENDATA_KEY (Next.js does this for the app; this script
+// doesn't). Tolerate a missing file — CI may set the var directly.
 try {
   process.loadEnvFile(".env.local");
 } catch {
-  // no .env.local — rely on the ambient environment
+  // rely on the ambient environment
 }
 
 async function writeSnapshot(
@@ -45,9 +38,8 @@ async function writeSnapshot(
   await mkdir(dataDir, { recursive: true });
   const fetchedAt = new Date().toISOString();
 
-  // Split each course into the lean catalog record and the keyed description,
-  // then write them to sibling files. Kuali enrichment (units, cross-listings,
-  // requisites) and Open Data seating are joined by lowercased code.
+  // Split each course into the lean record + keyed description (sibling files).
+  // Kuali enrichment and Open Data seating join by lowercased code.
   const lean: CatalogCourse[] = [];
   const descriptions: Record<string, string> = {};
   for (const { description, ...rest } of courses) {
@@ -78,8 +70,7 @@ async function writeSnapshot(
     descriptions,
   };
 
-  // Fail fast on a malformed shape rather than committing files the app would
-  // reject at load (it parses these same schemas via validate*File).
+  // Fail fast on a bad shape: the app loads these via the same validate*File.
   validateCoursesFile(coursesFile);
   validateDescriptionsFile(descriptionsFile);
 

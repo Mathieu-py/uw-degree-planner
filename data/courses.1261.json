@@ -1,6 +1,6 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-06-11T16:44:31.038Z",
+  "fetchedAt": "2026-06-11T17:48:15.500Z",
   "courseCount": 10729,
   "courses": [
     {
@@ -1176,8 +1176,20 @@
                 "code": "stat220"
               },
               {
-                "kind": "raw",
-                "text": "Corequisite (see below)"
+                "kind": "coreqOf",
+                "child": {
+                  "kind": "or",
+                  "children": [
+                    {
+                      "kind": "course",
+                      "code": "stat230"
+                    },
+                    {
+                      "kind": "course",
+                      "code": "stat240"
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -1188,7 +1200,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -1405,7 +1417,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -4314,13 +4326,7 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [
-        {
-          "id": 5182,
-          "enrollment_total": 63,
-          "enrollment_capacity": 80
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "crossListed": [
         "cive392",
@@ -6632,7 +6638,7 @@
         "kind": "or",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -6693,7 +6699,7 @@
         "kind": "or",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -9847,7 +9853,7 @@
         "kind": "and",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -9864,7 +9870,7 @@
             ]
           },
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -10053,13 +10059,7 @@
         "liked": 0.875,
         "filled_count": 16
       },
-      "sections": [
-        {
-          "id": 5995,
-          "enrollment_total": 61,
-          "enrollment_capacity": 75
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -11296,7 +11296,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -19280,18 +19280,7 @@
         "liked": 1,
         "filled_count": 3
       },
-      "sections": [
-        {
-          "id": 8500,
-          "enrollment_total": 11,
-          "enrollment_capacity": 50
-        },
-        {
-          "id": 8971,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        }
-      ],
+      "sections": [],
       "units": 0.5
     },
     {
@@ -23074,7 +23063,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -30951,7 +30940,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8234,
+          "enrollment_total": 20,
+          "enrollment_capacity": 40
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "or",
@@ -31759,7 +31754,78 @@
         "liked": 0.8333333333333334,
         "filled_count": 12
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8389,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 8390,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 8391,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 8387,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6581,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6582,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6271,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6379,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6380,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6381,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6089,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6090,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6457,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6109,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "afm102",
@@ -32990,18 +33056,7 @@
         "liked": 0.5,
         "filled_count": 2
       },
-      "sections": [
-        {
-          "id": 6191,
-          "enrollment_total": 9,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6015,
-          "enrollment_total": 15,
-          "enrollment_capacity": 1000
-        }
-      ]
+      "sections": []
     },
     {
       "id": 7590,
@@ -37423,7 +37478,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4624,
+          "enrollment_total": 0,
+          "enrollment_capacity": 20
+        }
+      ],
       "units": 0.25
     },
     {
@@ -38942,7 +39003,18 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8914,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 8869,
+          "enrollment_total": 7,
+          "enrollment_capacity": 7
+        }
+      ]
     },
     {
       "id": 896,
@@ -40354,13 +40426,7 @@
         "liked": 0.6,
         "filled_count": 50
       },
-      "sections": [
-        {
-          "id": 6880,
-          "enrollment_total": 66,
-          "enrollment_capacity": 70
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "ece403",
@@ -40461,7 +40527,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -41324,7 +41390,7 @@
         "code": "chem233l"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -41454,7 +41520,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -41814,7 +41880,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -44571,7 +44637,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -49939,13 +50005,7 @@
         "liked": 0.8571428571428571,
         "filled_count": 14
       },
-      "sections": [
-        {
-          "id": 5972,
-          "enrollment_total": 24,
-          "enrollment_capacity": 80
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "co250",
@@ -50032,7 +50092,7 @@
                 ]
               },
               {
-                "kind": "and",
+                "kind": "or",
                 "children": [
                   {
                     "kind": "course",
@@ -51645,7 +51705,7 @@
         "kind": "and",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -56103,93 +56163,7 @@
         "liked": 0.7337883959044369,
         "filled_count": 293
       },
-      "sections": [
-        {
-          "id": 8751,
-          "enrollment_total": 30,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6366,
-          "enrollment_total": 64,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6367,
-          "enrollment_total": 36,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6368,
-          "enrollment_total": 56,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6369,
-          "enrollment_total": 65,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6370,
-          "enrollment_total": 56,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6371,
-          "enrollment_total": 64,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6372,
-          "enrollment_total": 29,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6373,
-          "enrollment_total": 28,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6374,
-          "enrollment_total": 58,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6375,
-          "enrollment_total": 54,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6376,
-          "enrollment_total": 35,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6432,
-          "enrollment_total": 65,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6433,
-          "enrollment_total": 61,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 6434,
-          "enrollment_total": 37,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 8752,
-          "enrollment_total": 64,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 8753,
-          "enrollment_total": 64,
-          "enrollment_capacity": 65
-        }
-      ],
+      "sections": [],
       "units": 0.25,
       "prereqAst": {
         "kind": "or",
@@ -56213,7 +56187,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -56824,7 +56798,7 @@
         "kind": "and",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -56847,7 +56821,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -56918,7 +56892,7 @@
                     "code": "cs136l"
                   },
                   {
-                    "kind": "and",
+                    "kind": "or",
                     "children": [
                       {
                         "kind": "course",
@@ -56996,7 +56970,7 @@
                     "code": "cs136l"
                   },
                   {
-                    "kind": "and",
+                    "kind": "or",
                     "children": [
                       {
                         "kind": "course",
@@ -57115,7 +57089,7 @@
         "kind": "and",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -57238,7 +57212,7 @@
             "code": "cs136l"
           },
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -57392,7 +57366,7 @@
         "kind": "and",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -58043,7 +58017,7 @@
         "clause": "BBA & BCS Double Degree or Computer Science or Computing & Financial Management or Data Science or Software Engineering students only"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -58309,13 +58283,7 @@
         "liked": 0.7142857142857143,
         "filled_count": 56
       },
-      "sections": [
-        {
-          "id": 5881,
-          "enrollment_total": 39,
-          "enrollment_capacity": 60
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "cs360"
@@ -58981,13 +58949,7 @@
         "liked": 0.7674418604651163,
         "filled_count": 43
       },
-      "sections": [
-        {
-          "id": 5794,
-          "enrollment_total": 40,
-          "enrollment_capacity": 70
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -59776,7 +59738,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -59898,7 +59860,7 @@
         "kind": "and",
         "children": [
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -60115,7 +60077,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -60426,7 +60388,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -68634,13 +68596,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 7791,
-          "enrollment_total": 1,
-          "enrollment_capacity": 5
-        }
-      ]
+      "sections": []
     },
     {
       "id": 1828,
@@ -71220,7 +71176,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -76330,7 +76286,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 4954,
+          "enrollment_total": 81,
+          "enrollment_capacity": 144
+        }
+      ]
     },
     {
       "id": 2051,
@@ -77272,7 +77234,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 5206,
+          "enrollment_total": 5,
+          "enrollment_capacity": 20
+        }
+      ]
     },
     {
       "id": 2100,
@@ -77559,13 +77527,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8334,
-          "enrollment_total": 32,
-          "enrollment_capacity": 50
-        }
-      ]
+      "sections": []
     },
     {
       "id": 2114,
@@ -79843,7 +79805,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3659,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        }
+      ]
     },
     {
       "id": 9693,
@@ -83502,7 +83470,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8451,
+          "enrollment_total": 9,
+          "enrollment_capacity": 20
+        }
+      ]
     },
     {
       "id": 2241,
@@ -89490,7 +89464,7 @@
             "kind": "or",
             "children": [
               {
-                "kind": "and",
+                "kind": "or",
                 "children": [
                   {
                     "kind": "course",
@@ -108362,7 +108336,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8959,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1000
+        }
+      ]
     },
     {
       "id": 3120,
@@ -117363,7 +117343,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3616,
+          "enrollment_total": 2,
+          "enrollment_capacity": 5
+        }
+      ]
     },
     {
       "id": 3468,
@@ -117647,13 +117633,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 5716,
-          "enrollment_total": 12,
-          "enrollment_capacity": 30
-        }
-      ]
+      "sections": []
     },
     {
       "id": 8980,
@@ -117729,13 +117709,7 @@
         "liked": 1,
         "filled_count": 5
       },
-      "sections": [
-        {
-          "id": 8207,
-          "enrollment_total": 37,
-          "enrollment_capacity": 40
-        }
-      ]
+      "sections": []
     },
     {
       "id": 8067,
@@ -124028,13 +124002,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 3257,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        }
-      ]
+      "sections": []
     },
     {
       "id": 3668,
@@ -131856,7 +131824,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5542,
+          "enrollment_total": 3,
+          "enrollment_capacity": 6
+        }
+      ],
       "units": 1,
       "prereqAst": {
         "kind": "course",
@@ -137228,13 +137202,7 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [
-        {
-          "id": 8851,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1000
-        }
-      ]
+      "sections": []
     },
     {
       "id": 9385,
@@ -139064,13 +139032,7 @@
         "liked": 1,
         "filled_count": 6
       },
-      "sections": [
-        {
-          "id": 3006,
-          "enrollment_total": 30,
-          "enrollment_capacity": 30
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -145962,7 +145924,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -146396,13 +146358,7 @@
         "liked": 0.7745098039215687,
         "filled_count": 102
       },
-      "sections": [
-        {
-          "id": 6177,
-          "enrollment_total": 80,
-          "enrollment_capacity": 120
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "math106",
@@ -147225,7 +147181,7 @@
             "code": "math147"
           },
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -148045,7 +148001,7 @@
                 "code": "math136"
               },
               {
-                "kind": "and",
+                "kind": "or",
                 "children": [
                   {
                     "kind": "course",
@@ -148079,7 +148035,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -150921,7 +150877,13 @@
         "liked": 0.5384615384615384,
         "filled_count": 13
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4545,
+          "enrollment_total": 157,
+          "enrollment_capacity": 200
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "mte482"
@@ -152638,13 +152600,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8886,
-          "enrollment_total": 2,
-          "enrollment_capacity": 15
-        }
-      ]
+      "sections": []
     },
     {
       "id": 4477,
@@ -152950,13 +152906,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 7995,
-          "enrollment_total": 10,
-          "enrollment_capacity": 16
-        }
-      ]
+      "sections": []
     },
     {
       "id": 4496,
@@ -154557,7 +154507,7 @@
         "clause": "Materials & Nanosciences students only"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -154719,7 +154669,7 @@
         "ne333"
       ],
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -157490,7 +157440,13 @@
         "liked": 0.6666666666666666,
         "filled_count": 3
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5232,
+          "enrollment_total": 87,
+          "enrollment_capacity": 100
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -158243,7 +158199,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5242,
+          "enrollment_total": 75,
+          "enrollment_capacity": 94
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -159276,7 +159238,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5255,
+          "enrollment_total": 83,
+          "enrollment_capacity": 94
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -159712,13 +159680,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8476,
-          "enrollment_total": 18,
-          "enrollment_capacity": 40
-        }
-      ]
+      "sections": []
     },
     {
       "id": 8968,
@@ -160057,7 +160019,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 7591,
+          "enrollment_total": 12,
+          "enrollment_capacity": 96
+        }
+      ]
     },
     {
       "id": 8930,
@@ -161603,7 +161571,13 @@
         "liked": 0,
         "filled_count": 2
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4641,
+          "enrollment_total": 200,
+          "enrollment_capacity": 213
+        }
+      ],
       "units": 0,
       "prereqAst": {
         "kind": "and",
@@ -162978,7 +162952,7 @@
         "text": "Audition required"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -163056,7 +163030,7 @@
         "code": "music226"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -163783,7 +163757,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -163855,7 +163829,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -164483,7 +164457,7 @@
         "code": "music327"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -164549,7 +164523,7 @@
         "code": "music426"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -164615,7 +164589,7 @@
         "code": "music426"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -169383,7 +169357,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -170566,7 +170540,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 6933,
+          "enrollment_total": 32,
+          "enrollment_capacity": 40
+        }
+      ],
       "units": 3,
       "prereqAst": {
         "kind": "and",
@@ -182094,7 +182074,7 @@
         "text": "Must have completed the following: 4U Calculus and Vectors, 4U Advanced Functions, and 4U Physics"
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -182207,7 +182187,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -182875,7 +182855,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -183006,7 +182986,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -183122,7 +183102,7 @@
         ]
       },
       "coreqAst": {
-        "kind": "and",
+        "kind": "or",
         "children": [
           {
             "kind": "course",
@@ -185493,13 +185473,7 @@
         "liked": 1,
         "filled_count": 5
       },
-      "sections": [
-        {
-          "id": 7775,
-          "enrollment_total": 27,
-          "enrollment_capacity": 60
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -189890,13 +189864,7 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [
-        {
-          "id": 5673,
-          "enrollment_total": 21,
-          "enrollment_capacity": 35
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "plan348"
@@ -192337,7 +192305,7 @@
             "code": "math237"
           },
           {
-            "kind": "and",
+            "kind": "or",
             "children": [
               {
                 "kind": "course",
@@ -193755,7 +193723,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 7729,
+          "enrollment_total": 5,
+          "enrollment_capacity": 10
+        }
+      ]
     },
     {
       "id": 5687,
@@ -197191,7 +197165,13 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8316,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "level",
@@ -202453,23 +202433,7 @@
         "liked": 0.6153846153846154,
         "filled_count": 13
       },
-      "sections": [
-        {
-          "id": 3478,
-          "enrollment_total": 15,
-          "enrollment_capacity": 18
-        },
-        {
-          "id": 3480,
-          "enrollment_total": 18,
-          "enrollment_capacity": 18
-        },
-        {
-          "id": 3583,
-          "enrollment_total": 19,
-          "enrollment_capacity": 18
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "psych392",
@@ -203282,7 +203246,13 @@
         "liked": 0.75,
         "filled_count": 4
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4222,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "and",
@@ -235322,18 +235292,7 @@
         "liked": 0.6269230769230769,
         "filled_count": 260
       },
-      "sections": [
-        {
-          "id": 5872,
-          "enrollment_total": 202,
-          "enrollment_capacity": 204
-        },
-        {
-          "id": 6063,
-          "enrollment_total": 202,
-          "enrollment_capacity": 204
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "stat220",
@@ -235623,7 +235582,7 @@
                 "code": "math128"
               },
               {
-                "kind": "and",
+                "kind": "or",
                 "children": [
                   {
                     "kind": "course",
@@ -235841,7 +235800,7 @@
                 ]
               },
               {
-                "kind": "and",
+                "kind": "or",
                 "children": [
                   {
                     "kind": "course",
@@ -237997,7 +237956,13 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6527,
+          "enrollment_total": 17,
+          "enrollment_capacity": 30
+        }
+      ]
     },
     {
       "id": 7173,
@@ -238033,7 +237998,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6201,
+          "enrollment_total": 10,
+          "enrollment_capacity": 30
+        }
+      ]
     },
     {
       "id": 7175,
@@ -244774,7 +244745,18 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 4338,
+          "enrollment_total": 14,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 3140,
+          "enrollment_total": 12,
+          "enrollment_capacity": 25
+        }
+      ]
     },
     {
       "id": 7382,

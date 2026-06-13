@@ -1,19 +1,12 @@
 /**
- * Course equivalence (GitHub #21). Two UW courses with different codes can be
- * the *same course* — cross-listed under another subject. UW's authoritative
- * source is Kuali's `crossListedCourses` field, captured per course as
- * {@link Course.crossListed} in the committed snapshot.
+ * Course equivalence (GitHub #21): cross-listed courses are the *same course*
+ * under different codes. Authoritative source is Kuali's `crossListedCourses`
+ * ({@link Course.crossListed}). Builds the transitive closure (union-find) into
+ * equivalence classes, so any member satisfies a requirement naming another.
  *
- * This builds the symmetric, transitive closure of those pairwise links into
- * equivalence classes (union-find), so any member of a class satisfies a
- * requirement, prereq, or placement that names another member.
- *
- * The index is consulted for SATISFACTION LOOKUPS ONLY — "does a placed/completed
- * course count for this code?". It must never inject synthetic placements or sum
- * a course's units twice; unit totals always flow from real placed codes.
- *
- * All codes are lowercase (the catalog, the AST, and plan Sets are all
- * lowercase). Callers passing raw-case codes will silently miss.
+ * Satisfaction lookups ONLY — never injects synthetic placements or double-counts
+ * units; unit totals flow from real placed codes. Lowercase codes only (raw-case
+ * silently misses).
  */
 
 export interface EquivalenceIndex {
@@ -21,17 +14,11 @@ export interface EquivalenceIndex {
   classOf(code: string): readonly string[];
   /** True if `a` and `b` are the same course (equal, or cross-listed equivalents). */
   areEquivalent(a: string, b: string): boolean;
-  /**
-   * Expand a set of codes to also include every equivalent of each member. Used
-   * to widen completed/placed sets so an equivalent satisfies an exact-code check.
-   */
+  /** Widen a code set to include every equivalent, so equivalents satisfy exact-code checks. */
   expand(codes: Iterable<string>): Set<string>;
 }
 
-/**
- * Build an equivalence index from pairwise cross-listing links. Each pair unions
- * the two codes; the closure groups transitively-linked codes into one class.
- */
+/** Build an equivalence index from pairwise cross-listing links via union-find. */
 function buildEquivalenceIndex(
   pairs: Iterable<readonly [string, string]>,
 ): EquivalenceIndex {
@@ -64,8 +51,7 @@ function buildEquivalenceIndex(
     if (a && b && a !== b) union(a, b);
   }
 
-  // Materialize classes once. The canonical of a class is its min code, for a
-  // stable representative independent of union order.
+  // Materialize classes once; canonical = min code (stable, union-order independent).
   const classes = new Map<string, string[]>();
   for (const code of parent.keys()) {
     const root = find(code);
@@ -104,11 +90,7 @@ function buildEquivalenceIndex(
   };
 }
 
-/**
- * A no-op index (no course is equivalent to any other). The default wherever an
- * equivalence index is optional, so callers without a catalog keep exact-code
- * behavior unchanged.
- */
+/** No-op index (no equivalences). Default when none supplied — preserves exact-code behavior. */
 export const EMPTY_EQUIVALENCE: EquivalenceIndex = buildEquivalenceIndex([]);
 
 interface CrossListedCourse {
@@ -131,10 +113,8 @@ function buildEquivalenceFromCourses(
 const catalogIndexCache = new WeakMap<object, EquivalenceIndex>();
 
 /**
- * The equivalence index for a catalog, memoized on the container's identity.
- * The catalog (a `Course[]` from `loadTerm`, or a `code → Course` map) is a
- * stable reference within a render, so the union-find runs once per catalog
- * rather than per keystroke. Accepts either an array or a Map.
+ * Equivalence index for a catalog (array or Map), memoized on container identity
+ * so union-find runs once per catalog rather than per keystroke.
  */
 export function equivalenceForCatalog(
   catalog:

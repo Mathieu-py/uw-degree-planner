@@ -19,6 +19,11 @@ interface Props {
   /** Present only in editable views; absent makes term columns inert as drop targets. */
   onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
   /**
+   * Notifies the shell which placed course is being dragged between terms (or
+   * null on drag end), so the eligibility highlight runs on a move like an add.
+   */
+  onMoveDrag?: (moving: { code: string; fromSlotId: string } | null) => void;
+  /**
    * Slot ids where the dragged audit course is eligible; non-null only mid-drag.
    * Drives the per-term green/muted highlight. Absent in read-only views.
    */
@@ -40,6 +45,7 @@ export function Timeline({
   onSlotClick,
   onRemoveCourse,
   onCourseDrop,
+  onMoveDrag,
   eligibleSlotIds = null,
   readOnly = false,
   planOriginQuery,
@@ -62,6 +68,7 @@ export function Timeline({
             onSlotClick={onSlotClick}
             onRemoveCourse={onRemoveCourse}
             onCourseDrop={onCourseDrop}
+            onMoveDrag={onMoveDrag}
             eligibility={
               eligibleSlotIds == null
                 ? null

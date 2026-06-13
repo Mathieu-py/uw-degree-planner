@@ -1,16 +1,17 @@
 /**
- * Fetches authoritative per-course data from UW's Kuali Curriculum Management
- * catalog — the data UWFlow doesn't expose: unit weights, cross-listings
- * (course equivalence), and the structured requisite rule trees. The catalog
- * catalog builder (`build-catalog.ts`) joins this onto the snapshot by code.
- *
- * Kuali HTML → AST parsing lives in `./kualiRequisites`; this module only does
- * the fetching and assembles the per-course record.
+ * Authoritative per-course data Kuali supplies that UWFlow lacks: unit weights,
+ * cross-listings (course equivalence), and structured requisite rule trees.
+ * Joined onto the snapshot by code in `build-catalog.ts`. HTML→AST parsing lives
+ * in `./kualiRequisites`; this module only fetches and assembles the record.
  */
 
 import type { PrereqNode } from "../../lib/prereqs/parse";
 import { discoverCatalogId } from "../scrape-programs";
-import { parseKualiAntireqCodes, parseKualiRequisite } from "./kualiRequisites";
+import {
+  parseKualiAntireqCodes,
+  parseKualiRequisite,
+  spliceCoreqReferences,
+} from "./kualiRequisites";
 
 const KUALI_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";
 const CONCURRENCY = 12;
@@ -20,15 +21,13 @@ export interface KualiCourseData {
   /** Unit weight: 0.5 standard, 0.25 lab, 1.0+ full-year. Undefined if unknown. */
   units?: number;
   /**
-   * Cross-listed equivalents — the same course offered under another code
-   * (Kuali's structured `crossListedCourses`). Authoritative source for course
-   * equivalence (GitHub #21). Lowercased codes; omitted when there are none.
+   * Cross-listed equivalents (Kuali `crossListedCourses`) — authoritative source
+   * for course equivalence (GitHub #21). Lowercased; omitted when none.
    */
   crossListed?: string[];
   /**
-   * Antirequisite course codes from Kuali's structured `antirequisites` rule
-   * tree — the authoritative replacement for the regex over UWFlow's free-text
-   * antireqs. Lowercased; omitted when there are none.
+   * Antireq codes from Kuali's structured `antirequisites` tree — authoritative
+   * replacement for the regex over UWFlow's prose. Lowercased; omitted when none.
    */
   antireqCodes?: string[];
   /** Prerequisite AST from Kuali's `prerequisites` rule tree; omitted if empty. */
@@ -70,18 +69,23 @@ function buildRecord(
   );
   if (antireqCodes.length > 0) record.antireqCodes = antireqCodes;
 
-  const prereqAst = parseKualiRequisite(detail.prerequisites);
-  if (prereqAst) record.prereqAst = prereqAst;
+  // Splice the parsed coreq tree into any "or (see corequisite)" pointer the
+  // prereq carries, so the corequisite path is actually evaluated (ACTSC 231).
   const coreqAst = parseKualiRequisite(detail.corequisites);
+  const prereqAst = spliceCoreqReferences(
+    parseKualiRequisite(detail.prerequisites),
+    coreqAst,
+  );
+  if (prereqAst) record.prereqAst = prereqAst;
   if (coreqAst) record.coreqAst = coreqAst;
 
   return Object.keys(record).length > 0 ? record : null;
 }
 
 /**
- * Fetch Kuali course data keyed by lowercased course code: one list call for
- * codes+pids, then a bounded-concurrency detail call per course. Courses whose
- * detail fetch fails are skipped (they load from UWFlow without enrichment).
+ * Kuali data keyed by lowercased code: one list call for codes+pids, then a
+ * bounded-concurrency detail call per course (failed details skipped — they load
+ * from UWFlow without enrichment).
  */
 export async function fetchKualiData(): Promise<
   Record<string, KualiCourseData>

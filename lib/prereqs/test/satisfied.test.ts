@@ -303,3 +303,60 @@ describe("evaluate — countOf (Kuali 'Complete N of')", () => {
     expect(evaluate(node, user(["a"])).satisfied).toBe(false);
   });
 });
+
+describe("evaluate — coreqOf (corequisite satisfies a prereq, ACTSC 231)", () => {
+  const c = (code: string): PrereqNode => ({ kind: "course", code });
+  // OR[ STAT 220, coreqOf(STAT 230 or STAT 240) ] — the ACTSC 231 prereq branch.
+  const branch: PrereqNode = {
+    kind: "or",
+    children: [
+      c("stat220"),
+      {
+        kind: "coreqOf",
+        child: { kind: "or", children: [c("stat230"), c("stat240")] },
+      },
+    ],
+  };
+
+  it("is satisfied when the prereq alternative (STAT 220) is completed", () => {
+    expect(
+      evaluate(branch, { completed: new Set(["stat220"]) }).satisfied,
+    ).toBe(true);
+  });
+
+  it("is satisfied when the coreq is completed in a prior term", () => {
+    const r = evaluate(branch, { completed: new Set(["stat230"]) });
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(false);
+  });
+
+  it("is satisfied when the coreq is co-scheduled (concurrent) this term", () => {
+    const r = evaluate(branch, {
+      completed: new Set(),
+      concurrent: new Set(["stat240"]),
+    });
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(false);
+  });
+
+  it("is a definite miss in planner context when neither route is taken", () => {
+    const r = evaluate(branch, {
+      completed: new Set(),
+      concurrent: new Set(["other101"]),
+    });
+    expect(r.satisfied).toBe(false);
+    // Both the prereq alternative and the coreq options are surfaced.
+    expect(r.missingCourses).toEqual(
+      expect.arrayContaining(["stat220", "stat230", "stat240"]),
+    );
+  });
+
+  it("stays uncertain (never a false miss) with no concurrent context", () => {
+    // Picker / course page: term placement unknown, so a not-yet-completed
+    // coreq biases the OR to satisfiable+uncertain rather than failing STAT 220.
+    const r = evaluate(branch, { completed: new Set() });
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(true);
+    expect(r.missingCourses).toEqual([]);
+  });
+});

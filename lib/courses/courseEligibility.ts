@@ -1,13 +1,10 @@
 /**
  * Single source of truth for "can this course be added, and where?", shared by
- * every add-a-course surface (audit drag highlight, slot/term pickers) so they
- * never drift; each maps the verdict onto its own UX.
+ * every add-a-course surface so they never drift.
  *
- * Precedence: already-in-plan → program/faculty restriction (hard "wrong
- * program", ranked above antireqs) → antireqs (block everywhere) → other
- * prereqs + level → coreqs. Restrictions are "required-aware": a course the
- * program references isn't blocked by a stale prose restriction (see
- * `programReferenced`).
+ * Precedence: already-in-plan → program/faculty restriction (outranks antireqs)
+ * → antireqs (block everywhere) → other prereqs + level → coreqs. A course the
+ * program references isn't blocked by a stale restriction (see `programReferenced`).
  */
 
 import { formatCourseCode } from "@/lib/format";
@@ -34,10 +31,9 @@ export interface CourseEligibilityContext {
   /** Every code already placed anywhere in the plan (antireqs + duplicate). */
   placedAnywhere: ReadonlySet<string>;
   /**
-   * Reverse antireqs: code → placed courses that name it. Flags a candidate when
-   * a *placed* course names it even if its own list doesn't reciprocate (UW's
-   * "credit not granted for both … a course naming it as such"). Build with
-   * {@link placedAntireqNamers}.
+   * Reverse antireqs: code → placed courses that name it. Flags a candidate when a
+   * placed course names it even without reciprocation (UW: "credit not granted for
+   * both … a course naming it as such"). Build with {@link placedAntireqNamers}.
    */
   placedAntireqNamers?: ReadonlyMap<string, readonly string[]>;
 }
@@ -86,9 +82,8 @@ export function evaluateCourseEligibility(
     };
   }
 
-  // 2. Prereqs + level + program. Before antireqs so a program/faculty block (a
-  //    hard "wrong program") outranks an antireq conflict; a block demotes to
-  //    "check" when the program references this course (suppressProgramBlock).
+  // 2. Prereqs + level + program. Before antireqs so a program/faculty block
+  //    outranks an antireq conflict; suppressed when the program references this course.
   const suppressProgramBlock = ctx.programReferenced.has(code);
   const prereqAst = resolvePrereqs(course);
   const pre = evaluate(prereqAst, {
@@ -97,17 +92,15 @@ export function evaluateCourseEligibility(
     programs: ctx.programs,
     suppressProgramBlock,
   });
-  // Describe the unmet portion with the SAME context the verdict used, so an OR
-  // mixing a course with a level/program branch lists every open alternative
-  // (e.g. "one of CS 135, Level at least 3A") rather than just the raw gate.
+  // Describe the unmet portion with the SAME context as the verdict, so an OR
+  // mixing course + level/program lists every open alternative, not just the raw gate.
   const missingDescription = describeMissingPrereqs(prereqAst, ctx.completed, {
     level: ctx.level,
     programs: ctx.programs,
   });
   if (!pre.satisfied && pre.blockedByProgram) {
-    // Lead with the restriction prose (in rawRequirements) so a program block
-    // reads as "wrong program", not a missing-course "Needs …" — which would
-    // otherwise win when the block also has an unmet course alongside it.
+    // Lead with the restriction prose so a program block reads as "wrong program",
+    // not a missing-course "Needs …" (which would otherwise win when both apply).
     return {
       state: "ineligible",
       reasons:
@@ -122,8 +115,8 @@ export function evaluateCourseEligibility(
     };
   }
 
-  // 3. Antireq already placed — can't hold both credit, in any term. Symmetric:
-  //    this course names a placed one, OR a placed one names this course.
+  // 3. Antireq already placed — can't hold both credit, any term. Symmetric: this
+  //    course names a placed one, OR a placed one names this course.
   const forwardAnti = resolveAntireqCodes(course).filter(
     (a) => a !== code && ctx.placedAnywhere.has(a),
   );
@@ -156,8 +149,8 @@ export function evaluateCourseEligibility(
     };
   }
 
-  // 5. Coreqs — met same-term or earlier. Advisory: an unmet coreq is a
-  //    "check", never a hard block (it may be added to this term later).
+  // 5. Coreqs — met same-term or earlier. Advisory: unmet is a "check", never a
+  //    hard block (it may be added to this term later).
   let coreqUnmet = false;
   const coreqReasons: string[] = [];
   const coreqAst = resolveCoreqs(course);
@@ -196,9 +189,8 @@ export function evaluateCourseEligibility(
 
 /**
  * Does a program/faculty restriction confirm this course is closed to the student?
- * Term-independent (ignores completed/level/antireqs), so an add surface can
- * hard-block a wrong-faculty placement regardless of when it would land. A course
- * the program references is never blocked (via `programReferenced`).
+ * Term-independent (ignores completed/level/antireqs), for hard-blocking a
+ * wrong-faculty placement. A course the program references is never blocked.
  */
 export function isProgramBlocked(
   course: Course,
@@ -209,10 +201,9 @@ export function isProgramBlocked(
 ): boolean {
   const suppressProgramBlock =
     opts.programReferenced?.has(course.code.toLowerCase()) ?? false;
-  // `assumeCoursesUncertain`: with no completed set, a not-yet-taken course in
-  // the prereqs would otherwise look failed and let an OR'd restriction ("X
-  // students only OR CS 135") report blocked. Treating courses as completable
-  // keeps this to the UNCONDITIONAL program walls it's meant to detect.
+  // `assumeCoursesUncertain`: with no completed set, treat courses as completable
+  // so an OR'd restriction ("X students only OR CS 135") isn't falsely reported
+  // blocked — limits this to UNCONDITIONAL program walls.
   const pre = evaluate(resolvePrereqs(course), {
     completed: EMPTY_SET,
     programs: opts.programs,
@@ -224,8 +215,8 @@ export function isProgramBlocked(
 
 /**
  * Build the reverse-antireq index for {@link CourseEligibilityContext}: each code
- * → the placed courses that name it as an antireq. Pass the placed courses'
- * catalog entries (one missing from the catalog can't contribute, so it's skipped).
+ * → placed courses naming it as an antireq. Pass placed courses' catalog entries
+ * (missing ones can't contribute and are skipped).
  */
 export function placedAntireqNamers(
   placedCourses: Iterable<Course>,

@@ -32,8 +32,7 @@ import {
   validatePrograms,
 } from "../lib/programs";
 import { resolveDegreeTotalUnits } from "./scrape/degreeTotal";
-import { deriveNumberOfTerms } from "./scrape/termSpan";
-import { applyRuleOverrides } from "./scrape-programs.overrides";
+import { applyRuleOverrides } from "./scrape/programs-overrides";
 import {
   buildConflictCounts,
   buildProgramSlug,
@@ -45,7 +44,8 @@ import {
   parseProgramRequirements,
   parseSpecializationsList,
   parseUnitPlan,
-} from "./scrape-programs.parser";
+} from "./scrape/programs-parser";
+import { deriveNumberOfTerms } from "./scrape/termSpan";
 
 const FALLBACK_CATALOG_ID = "67e557ed6ed2fe2bd3a38956";
 const API_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";

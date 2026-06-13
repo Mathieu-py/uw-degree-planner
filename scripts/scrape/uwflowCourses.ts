@@ -1,8 +1,7 @@
 /**
- * Fetches the course catalog from UWFlow's GraphQL endpoint — the primary spine
- * (code, name, description, requirement prose, crowd-sourced ratings). Seating
- * comes from UW Open Data and structured requisites from Kuali; those are joined
- * on by the catalog builder (`scripts/build-catalog.ts`).
+ * Course catalog from UWFlow's GraphQL endpoint — the primary spine (code, name,
+ * description, requirement prose, crowd ratings). Seating (Open Data) and
+ * structured requisites (Kuali) are joined in by `build-catalog.ts`.
  */
 
 import { z } from "zod";
@@ -10,17 +9,16 @@ import { CourseSchema } from "../../lib/courses/validation";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 
-// UWFlow returns the calendar description; the builder splits it into a sibling
-// descriptions file so the committed catalog stays lean. Sections come from Open
-// Data, not UWFlow, so they're omitted here and joined in by the builder.
+// Builder splits the description into a sibling file to keep the catalog lean.
+// Sections come from Open Data, not UWFlow, so they're omitted and joined later.
 const UWFlowCourseSchema = CourseSchema.omit({ sections: true }).extend({
   description: z.string().nullable(),
 });
 export type UWFlowCourse = z.infer<typeof UWFlowCourseSchema>;
 
-// No term variable: the fields we take from UWFlow (name, prose, ratings) are
-// term-independent. Seating — the only term-scoped data — now comes from Open
-// Data, so a `$termId` here would be an unused variable UWFlow's API rejects.
+// No $termId: UWFlow's fields (name, prose, ratings) are term-independent, and
+// the only term-scoped data (seating) now comes from Open Data — an unused
+// $termId here would be rejected by UWFlow's API.
 const COURSES_QUERY = `
   query GetCourses {
     course(order_by: { code: asc }) {

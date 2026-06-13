@@ -4,7 +4,9 @@
  *
  * Per validation:
  *  - Prereq: evaluate parsed prereqs against everything completed STRICTLY
- *    before this slot's term. "uncertain" results (raw/level) aren't flagged here.
+ *    before this slot's term. Unresolved raw/program clauses aren't flagged here.
+ *  - Level: the slot's position is the student's level that term, so an unmet
+ *    "Level at least X" gate in the prereqs is flagged as its own badge.
  *  - Antireq: extract codes from the antireq string; if any appears elsewhere
  *    in the plan, flag both (UW's "one of {X,Y} bars the other" convention).
  *  - Coreq: like prereqs, but evaluated against completed-before ∪ same-slot
@@ -23,7 +25,7 @@ import { evaluate } from "@/lib/prereqs/satisfied";
 import { completedSetFromPlan } from "./derive";
 import type { LocalPlan } from "./types";
 
-type ValidationKind = "prereq" | "antireq" | "coreq" | "overload";
+type ValidationKind = "prereq" | "antireq" | "coreq" | "level" | "overload";
 
 export interface ValidationIssue {
   slotId: string;
@@ -97,20 +99,45 @@ export function validatePlan(
       const courseData = catalogByCode.get(c.code);
       if (!courseData) continue;
 
-      // ---- Prereq ----
+      // ---- Prereq + level ----
+      // The slot's position IS the student's level that term, so pass it to the
+      // evaluator: an unmet level gate ("Level at least 3A") then surfaces as its
+      // own `level` badge, while missing courses stay a `prereq` badge.
       const prereqAst = resolvePrereqs(courseData);
       if (prereqAst) {
-        const ast = prereqAst;
-        const result = evaluate(ast, { completed: completedBeforeSet });
-        if (!result.satisfied) {
+        const result = evaluate(prereqAst, {
+          completed: completedBeforeSet,
+          level: slot.position,
+          // A "coreqOf" prereq branch (e.g. ACTSC 231: STAT 220 OR a corequisite
+          // of STAT 230/240) is satisfiable by a same-term course, so the
+          // evaluator needs this term's co-scheduled codes too.
+          concurrent: sameSlotCodes,
+        });
+        if (result.missingCourses.length > 0) {
           const missing =
-            describeMissingPrereqs(ast, completedBeforeSet) ??
-            "prereqs not met";
+            describeMissingPrereqs(prereqAst, completedBeforeSet, {
+              level: slot.position,
+              concurrent: sameSlotCodes,
+            }) ?? "prereqs not met";
           issues.push({
             slotId: slot.id,
             courseCode: c.code,
             kind: "prereq",
             message: `Prereq missing: ${missing}`,
+          });
+        }
+        const levelGate = result.rawRequirements.find((r) =>
+          /^Level at least/i.test(r),
+        );
+        if (levelGate) {
+          const min = levelGate.match(/Level at least (\S+)/i)?.[1];
+          issues.push({
+            slotId: slot.id,
+            courseCode: c.code,
+            kind: "level",
+            message: min
+              ? `Term below required level (needs ${min})`
+              : levelGate,
           });
         }
       }

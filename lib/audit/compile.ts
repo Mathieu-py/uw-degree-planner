@@ -1,14 +1,11 @@
 /**
- * Audit compiler: walks a `RuleNode` against a plan's placed courses, emitting
- * a same-shape `AuditNode` tree with status, satisfiers, and miss-counts.
- *
- * Semantics:
- *  - `all`: every child met/overSatisfied; mixed → partial.
- *  - `pick` over all-`courses` children: union codes into one pool, count
- *    distinct placed; met at ≥ selectMin, overSatisfied at > selectMax.
- *  - `pick` over mixed/nested children: count met children, same threshold.
- *  - `subjectPool`: count placed courses matching prefix + level; threshold is
- *    `selectCount` exactly.
+ * Audit compiler: walks a `RuleNode` against placed courses → same-shape
+ * `AuditNode` tree (status, satisfiers, miss-counts). Per kind:
+ *  - `all`: all children met → met; mixed → partial.
+ *  - `pick` over all-`courses`: union into one distinct-code pool, met at
+ *    ≥ selectMin, overSatisfied at > selectMax.
+ *  - `pick` over mixed/nested: count met children, same threshold.
+ *  - `subjectPool`: count prefix+level matches; threshold = selectCount exactly.
  *  - `courses` leaf with no pick parent: all-required.
  *  - `excluded`: never gates status; violations surface as UI warnings.
  */
@@ -47,9 +44,8 @@ export interface AuditNode {
   /** Placed codes that hit an `excluded` rule (the rule says they can't count). */
   excludedViolations?: Placement[];
   /**
-   * Satisfiers placed illegally (unmet prereq / antireq conflict in their
-   * slot). Still count ("met-but-flagged"), but the UI warns. Coreqs are
-   * advisory, so excluded.
+   * Satisfiers placed illegally (unmet prereq / antireq conflict). Still count
+   * ("met-but-flagged"); UI warns. Coreqs are advisory, so excluded.
    */
   illegalSatisfiers?: Placement[];
   children: AuditNode[];
@@ -112,10 +108,10 @@ function withIllegal(node: AuditNode, illegal: Placement[]): AuditNode {
 }
 
 /**
- * Split codes into the placements that satisfy them and the codes still missing.
- * A required code is satisfied by a placement of that exact code OR of any
- * cross-listed equivalent (GitHub #21) — the equivalent's placement is credited
- * directly, never duplicated into the placement map, so units count once.
+ * Split codes into satisfying placements and still-missing codes. A code is
+ * satisfied by its exact placement OR any cross-listed equivalent (GitHub #21);
+ * the equivalent's placement is credited directly, never duplicated, so units
+ * count once.
  */
 function partitionByPlacement(
   codes: Iterable<string>,
@@ -215,7 +211,7 @@ function compile(
 /**
  * A `pick` node. All-`courses` children collapse into one distinct-code pool
  * (MATH235 in two branches counts once); otherwise each child must be
- * independently met to count toward the threshold.
+ * independently met to count.
  */
 function compilePick(
   node: Extract<RuleNode, { kind: "pick" }>,
@@ -237,10 +233,9 @@ function compilePick(
       placement,
       equiv,
     );
-    // No `satisfiers > 0` guard here (unlike the nested branch below): a flat
-    // courses pool has no vacuously-met children to discount, and a min-0 pool
-    // that is genuinely optional is correctly "met" at 0 — consumers that need
-    // "actually decided" call `isSatisfied`.
+    // No `satisfiers > 0` guard (unlike the nested branch): a flat pool has no
+    // vacuously-met children, and a min-0 pool is correctly "met" at 0 —
+    // consumers needing "actually decided" call `isSatisfied`.
     return withIllegal(
       {
         ruleNode: node,
@@ -265,9 +260,8 @@ function compilePick(
   const children = node.children.map((c) =>
     compile(c, placement, legality, equiv),
   );
-  // Require ≥1 satisfier: an optional child (selectMin 0/undefined) is
-  // vacuously "met" with nothing placed, which would inflate the parent on an
-  // empty plan (issue #95).
+  // Require ≥1 satisfier: an optional child is vacuously "met" with nothing
+  // placed, inflating the parent on an empty plan (issue #95).
   const count = children.filter(
     (c) =>
       (c.status === "met" || c.status === "overSatisfied") &&
@@ -286,7 +280,7 @@ function compilePick(
       description: describeRule(node),
       satisfiers: children.flatMap((c) => c.satisfiers),
       // No definite missing set: a compound pick needs only `selectMin`
-      // children, so no single code list completes it. Panel recurses instead.
+      // children, so no single code list completes it. Panel recurses.
       missingCodes: [],
       satisfiedCount: count,
       selectMin: node.selectMin,
@@ -298,8 +292,8 @@ function compilePick(
 }
 
 /**
- * A `subjectPool` node: count placed courses whose prefix is in the pool and
- * level is within the optional bounds. Threshold is `selectCount` exactly.
+ * A `subjectPool` node: count placed courses with a pooled prefix and in-bounds
+ * level. Threshold is `selectCount` exactly.
  */
 function compileSubjectPool(
   node: Extract<RuleNode, { kind: "subjectPool" }>,
@@ -352,18 +346,16 @@ interface ConflictMember {
 
 /**
  * Group antireq issues into conflict sets — connected components over the
- * (symmetric) `conflictsWith` edges, so a pair that names each other collapses
- * to one set. Each set lists its placements. Used both to credit one member per
- * conflict and to count a conflict once.
+ * symmetric `conflictsWith` edges. Each set lists its placements; used to credit
+ * one member per conflict and to count a conflict once.
  */
 export function antireqConflictGroups(
   issues: readonly PlacementIssue[],
 ): ConflictMember[][] {
-  // First occurrence of a code wins, mirroring buildPlacementMap (which keeps
-  // the first slot for a duplicated code; issues arrive in slot order). If the
-  // two disagreed, an exclusion key `slotId::code` could name a slot the
-  // placement map never recorded, so the legality overlay would silently miss
-  // that satisfier.
+  // First occurrence wins, mirroring buildPlacementMap (keeps first slot per
+  // code; issues arrive in slot order). Must agree, else an exclusion key
+  // `slotId::code` could name a slot the placement map never recorded and the
+  // legality overlay would silently miss that satisfier.
   const slotOf = new Map<string, string>();
   for (const i of issues) {
     if (
@@ -432,12 +424,12 @@ function pickKeeper(
 }
 
 /**
- * Slot-scoped keys (`slotId::code`) to EXCLUDE from degree credit. Per-program,
- * because the antireq keeper depends on what the program requires:
- *  - every prereq-misplaced course (held out, as before);
- *  - every antireq conflict member EXCEPT the keeper — UW grants credit for one
+ * Slot-scoped keys (`slotId::code`) to EXCLUDE from degree credit. Per-program
+ * (keeper depends on what the program requires):
+ *  - every prereq-misplaced course;
+ *  - every antireq conflict member except the keeper — UW grants credit for one
  *    of an antireq pair, never both, never zero.
- * {@link compileAudit} / {@link computeDegreeProgress} take this set unchanged.
+ * Passed unchanged to {@link compileAudit} / {@link computeDegreeProgress}.
  */
 export function creditExclusionKeys(
   issues: readonly PlacementIssue[],
@@ -460,9 +452,9 @@ export function creditExclusionKeys(
 }
 
 /**
- * Plan-wide count of blocking placement issues for the header: one per
- * prereq-misplaced course plus one per antireq conflict SET (not per course).
- * Program-agnostic — group cardinality doesn't depend on which member is kept.
+ * Plan-wide count of blocking issues for the header: one per prereq-misplaced
+ * course plus one per antireq conflict SET (not per course). Program-agnostic —
+ * group cardinality doesn't depend on the keeper.
  */
 export function countPlacementIssues(
   issues: readonly PlacementIssue[],
@@ -479,19 +471,18 @@ export function compileAudit(
   plan: LocalPlan,
   specializationId: string | null = null,
   /**
-   * Slot-scoped keys from {@link creditExclusionKeys}. Matching satisfiers are
-   * flagged (met-but-flagged). Empty/omitted → no legality overlay.
+   * Slot-scoped keys from {@link creditExclusionKeys}; matches are flagged
+   * met-but-flagged. Empty/omitted → no legality overlay.
    */
   legality: ReadonlySet<string> = new Set(),
   /**
-   * Id of `program`, stamped onto the result. A plan can carry several programs
-   * (double degree), so the caller passes the one being compiled rather than
-   * reading a single id off the plan.
+   * Id of `program`, stamped onto the result. Passed explicitly since a plan can
+   * carry several programs (double degree).
    */
   programId: string | null = null,
   /**
-   * Course-equivalence index (GitHub #21). A required code is also satisfied by a
-   * placed cross-listed equivalent. Omitted → exact-code matching only.
+   * Course-equivalence index (GitHub #21): a required code is also satisfied by
+   * a placed cross-listed equivalent. Omitted → exact-code matching only.
    */
   equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
 ): AuditRoot {
@@ -537,9 +528,8 @@ export function compileAudit(
 }
 
 /**
- * Whether a node is GENUINELY satisfied — "met"/"overSatisfied" with ≥1
- * satisfier — vs. a vacuously-met optional group. Lets choice UIs tell whether
- * a pick has actually been decided.
+ * GENUINELY satisfied — met/overSatisfied with ≥1 satisfier — vs. a
+ * vacuously-met optional group. Lets choice UIs tell if a pick was decided.
  */
 export function isSatisfied(node: AuditNode): boolean {
   return (
@@ -549,13 +539,10 @@ export function isSatisfied(node: AuditNode): boolean {
 }
 
 /**
- * Roll-up across a subtree for headline numbers, counting each slot once:
- * `courses` = N, `pick` = selectMin, `subjectPool` = selectCount, `all` sums
- * its children.
- *
- * `excludedViolationCount` totals placed courses hitting an `excluded` rule.
- * Those rules don't change `status`; the count is surfaced so the panel can
- * badge it without re-walking the tree.
+ * Roll-up for headline numbers, counting each slot once: `courses` = N,
+ * `pick` = selectMin, `subjectPool` = selectCount, `all` sums children.
+ * `excludedViolationCount` totals `excluded`-rule hits (don't change status;
+ * surfaced so the panel can badge without re-walking).
  */
 export function summarize(node: AuditNode): {
   needed: number;
@@ -585,8 +572,7 @@ export function summarize(node: AuditNode): {
     case "pick": {
       const min = r.selectMin ?? 0;
       const got = Math.min(node.satisfiedCount ?? 0, min);
-      // An excluded leaf can sit under a pick (program wraps "either A or B"
-      // around a shared excluded note). Fold counts up the same way as `all`.
+      // An excluded leaf can sit under a pick; fold counts up as in `all`.
       let excludedViolationCount = 0;
       for (const c of node.children) {
         excludedViolationCount += summarize(c).excludedViolationCount;

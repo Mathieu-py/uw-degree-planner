@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ProgramIdentity } from "@/lib/programs";
+import { enrichCourse } from "../filters";
 import {
   type AttachEligibilityOptions,
   attachEligibility,
   type EligibilityRow,
-} from "../eligibility";
-import { enrichCourse } from "../filters";
+} from "../rowEligibility";
 import type { BaseCourse, Course } from "../types";
 
 const SYDE: ProgramIdentity = {

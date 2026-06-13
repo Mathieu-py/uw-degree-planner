@@ -42,10 +42,10 @@ export interface ProgramAuditData {
 }
 
 /**
- * Restrict a plan to the slots within a program's span, so a short leg of a
- * multi-program plan doesn't credit courses placed past its end (3-year ignores
- * 4A/4B). Keeps "pre" and everything up to the span's last academic term. No-op
- * when that term isn't in the plan (span ≥ plan length), e.g. single-program plans.
+ * Restrict a plan to slots within a program's span, so a short leg of a
+ * multi-program plan doesn't credit courses past its end (3-year ignores 4A/4B).
+ * Keeps "pre" + everything up to the span's last term. No-op when that term
+ * isn't in the plan (span ≥ plan length).
  */
 function scopePlanToSpan(plan: LocalPlan, span: number): LocalPlan {
   const endTerm = TERM_LETTERS[span - 1];
@@ -58,14 +58,10 @@ function scopePlanToSpan(plan: LocalPlan, span: number): LocalPlan {
 }
 
 /**
- * The full audit of one program against a plan: compile → score → macros, plus
- * the small derivations the panel renders (legality split, headline fraction).
- *
- * A pure function (no hooks), so it's safe to call once per program inside a
- * single `useMemo` — the master·detail panel builds a `programId → data` map for
- * the rail, and the single-program card calls it once. `issues` (plan-wide
- * validation) and `catalogByCode` are passed in; the credit-exclusion overlay is
- * built per-program here because the antireq keeper depends on this program's
+ * Full audit of one program against a plan: compile → score → macros, plus the
+ * panel's derivations (legality split, headline fraction). Pure (no hooks), safe
+ * to call once per program in a `useMemo`. The credit-exclusion overlay is built
+ * per-program here because the antireq keeper depends on this program's
  * required courses.
  */
 export function buildProgramAudit(
@@ -77,17 +73,17 @@ export function buildProgramAudit(
   const program = PROGRAMS[programId] ?? null;
   const unitsOf = (code: string) => catalogByCode.get(code)?.units ?? 0.5;
 
-  // Credit one member of each antireq conflict (the program-required one, else
-  // higher units); hold out prereq-misplaced courses. Per-program because
-  // "required" is program-specific.
+  // Credit one member of each antireq conflict (program-required, else higher
+  // units); hold out prereq-misplaced courses. Per-program: "required" is
+  // program-specific.
   const referenced = programReferencedCodes(
     programId,
     plan.specializationIds[programId] ?? null,
   );
   const legality = creditExclusionKeys(issues, { referenced, unitsOf });
 
-  // Audit only the terms within this program's span, so the short leg of a
-  // mixed double degree doesn't credit courses placed in 4A/4B (#105).
+  // Audit only this program's span, so a short leg of a mixed double degree
+  // doesn't credit courses in 4A/4B (#105).
   const scopedPlan = program
     ? scopePlanToSpan(plan, programTermSpan(program))
     : plan;
@@ -111,11 +107,10 @@ export function buildProgramAudit(
     legality,
   );
 
-  // One honest headline: how much of the whole degree the plan accounts for,
-  // not a sum of overlapping slots. See computeDegreeProgress.
+  // Whole-degree completion, not a sum of overlapping slots. See computeDegreeProgress.
   const headlinePct = progress.pct;
-  // No calendar total (e.g. Joint Honours, units split across plans) → fall back
-  // to the sum of structured requirements. Mark it so it's not read as exact.
+  // No calendar total (e.g. Joint Honours) → fall back to summed structured
+  // requirements. Mark estimated so it's not read as exact.
   const estimatedDenom = progress.totalUnits == null;
   const headlineFraction = `${fmtUnits(progress.creditedUnits)}/${estimatedDenom ? "~" : ""}${fmtUnits(progress.denom)} units`;
 

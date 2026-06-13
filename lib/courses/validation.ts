@@ -1,7 +1,6 @@
 /**
- * Boundary validator for the committed UWFlow snapshots in data/. These can be
- * hand-edited; a zod parse fails fast with a path to the bad field instead of a
- * deep TypeError downstream.
+ * Boundary validator for the committed data/ snapshots (hand-editable): a zod
+ * parse fails fast with the bad field's path instead of a deep downstream TypeError.
  */
 
 import { z } from "zod";
@@ -9,8 +8,7 @@ import type { PrereqNode } from "@/lib/prereqs/parse";
 
 /**
  * Recursive validator for a stored prereq/coreq AST (Kuali-derived; see
- * {@link PrereqNode}). The AST now lives in the committed snapshot, so it's
- * shape-checked at both build (fetch script) and load like every other field.
+ * {@link PrereqNode}). Now committed to the snapshot, so shape-checked at build and load.
  */
 const PrereqNodeSchema: z.ZodType<PrereqNode> = z.lazy(() =>
   z.union([
@@ -24,6 +22,7 @@ const PrereqNodeSchema: z.ZodType<PrereqNode> = z.lazy(() =>
     }),
     z.object({ kind: z.literal("level"), minLevel: z.string().min(1) }),
     z.object({ kind: z.literal("program"), clause: z.string() }),
+    z.object({ kind: z.literal("coreqOf"), child: PrereqNodeSchema }),
     z.object({ kind: z.literal("raw"), text: z.string() }),
   ]),
 );

@@ -22,6 +22,8 @@ interface Props {
   onSlotClick: (slotId: string) => void;
   onRemoveCourse: (slotId: string, code: string) => void;
   onCourseDrop?: (toSlotId: string, data: CourseDragData) => void;
+  /** Bubbles a between-term move drag (or null on end) up for the eligibility highlight. */
+  onMoveDrag?: (moving: { code: string; fromSlotId: string } | null) => void;
   readOnly?: boolean;
   /**
    * Drag highlight: "eligible" tints green, "ineligible" mutes, null clears.
@@ -38,6 +40,7 @@ export const TermColumn = memo(function TermColumn({
   onSlotClick,
   onRemoveCourse,
   onCourseDrop,
+  onMoveDrag,
   readOnly = false,
   eligibility = null,
   planOriginQuery,
@@ -127,6 +130,7 @@ export const TermColumn = memo(function TermColumn({
         issuesByCourse={byCourse}
         onAdd={handleAdd}
         onRemoveCourse={handleRemoveCourse}
+        onMoveDrag={onMoveDrag}
         readOnly={readOnly}
         planOriginQuery={planOriginQuery}
       />

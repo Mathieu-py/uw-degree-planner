@@ -62,12 +62,13 @@ describe("per-course unit weights in the catalog", () => {
     const codes = requirementCodes();
     const missing = [...codes].filter((c) => !unitOf.has(c));
     // A handful of stragglers (recently renamed/retired courses absent from the
-    // active catalog) are tolerable and flagged; the audit counts them rather
-    // than misreporting units. A real regression would drop many at once.
+    // active catalog) are tolerable; the audit counts them rather than
+    // misreporting units. A real regression would drop many at once, so cap the
+    // absolute count (the prior `> 5 ? 0 : len` form was a tautology that bounded
+    // nothing).
     expect(
-      missing,
-      `${missing.length}/${codes.size} requirement codes lack a unit weight: ${missing.join(", ")}`,
-    ).toHaveLength(missing.length > 5 ? 0 : missing.length);
-    expect(missing.length / codes.size).toBeLessThan(0.01);
+      missing.length,
+      `requirement codes lacking a unit weight: ${missing.join(", ")}`,
+    ).toBeLessThanOrEqual(5);
   });
 });

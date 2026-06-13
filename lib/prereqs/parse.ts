@@ -20,6 +20,7 @@ export type PrereqNode =
   | { kind: "countOf"; n: number; children: PrereqNode[] }
   | { kind: "level"; minLevel: string }
   | { kind: "program"; clause: string }
+  | { kind: "coreqOf"; child: PrereqNode }
   | { kind: "raw"; text: string };
 
 type Token =

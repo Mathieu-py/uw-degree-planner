@@ -12,9 +12,9 @@ import {
   isProgramBlocked,
 } from "@/lib/courses/courseEligibility";
 import type { SortDir, SortKey } from "@/lib/courses/courseSort";
-import type { EligibilityRow } from "@/lib/courses/eligibility";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
+import type { EligibilityRow } from "@/lib/courses/rowEligibility";
 import type { Course, FilterPreset } from "@/lib/courses/types";
 import {
   formatCourseCode,

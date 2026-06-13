@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseKualiRequisite } from "../scrape/kualiRequisites";
+import type { PrereqNode } from "../../lib/prereqs/parse";
+import {
+  isCoreqReference,
+  parseKualiRequisite,
+  spliceCoreqReferences,
+} from "../scrape/kualiRequisites";
 
 // Builders mirroring real Kuali prereq/coreq markup.
 const cLink = (code: string) =>
@@ -82,6 +87,89 @@ describe("parseKualiRequisite — leaves", () => {
       children: [
         { kind: "course", code: "math135" },
         { kind: "course", code: "math136" },
+      ],
+    });
+  });
+
+  it("coreq 'Completed or concurrently enrolled in at least 1 of' → or (not and)", () => {
+    // ACTSC 231's real coreq markup. COREQ_ALL_RE ("Completed or concurrently
+    // enrolled in") is a prefix of this text, so the "at least n of" form must
+    // win — otherwise the OR collapses into a (wrong) AND.
+    const html = root(
+      courseLeaf(
+        "A",
+        "Completed or concurrently enrolled in at least 1 of the following",
+        "STAT230",
+        "STAT240",
+      ),
+    );
+    expect(parseKualiRequisite(html)).toEqual({
+      kind: "or",
+      children: [
+        { kind: "course", code: "stat230" },
+        { kind: "course", code: "stat240" },
+      ],
+    });
+  });
+
+  it("coreq 'Completed or concurrently enrolled in' (all required) → and", () => {
+    const html = root(
+      courseLeaf(
+        "A",
+        "Completed or concurrently enrolled in",
+        "MATH237",
+        "MATH239",
+      ),
+    );
+    expect(parseKualiRequisite(html)).toEqual({
+      kind: "and",
+      children: [
+        { kind: "course", code: "math237" },
+        { kind: "course", code: "math239" },
+      ],
+    });
+  });
+
+  it("graded choice 'Earned a minimum grade of 85% in at least 1 of' → or (not and)", () => {
+    // CS240E's real prereq markup. GRADE_IN_EACH_RE's `\b` branch also matches
+    // this text, so the "at least n of" form must be detected first — otherwise
+    // a graded OR collapses into a (wrong) AND.
+    const html = root(
+      courseLeaf(
+        "A",
+        "Earned a minimum grade of 85% in at least 1 of the following",
+        "CS136",
+        "CS138",
+        "CS146",
+      ),
+    );
+    expect(parseKualiRequisite(html)).toEqual({
+      kind: "or",
+      children: [
+        { kind: "course", code: "cs136" },
+        { kind: "course", code: "cs138" },
+        { kind: "course", code: "cs146" },
+      ],
+    });
+  });
+
+  it("graded choice 'at least 2 of' → countOf n=2", () => {
+    const html = root(
+      courseLeaf(
+        "A",
+        "Earned a minimum grade of 70% in at least 2 of the following",
+        "MATH106",
+        "MATH114",
+        "MATH115",
+      ),
+    );
+    expect(parseKualiRequisite(html)).toEqual({
+      kind: "countOf",
+      n: 2,
+      children: [
+        { kind: "course", code: "math106" },
+        { kind: "course", code: "math114" },
+        { kind: "course", code: "math115" },
       ],
     });
   });
@@ -187,5 +275,50 @@ describe("parseKualiRequisite — groups + nesting", () => {
         leaf("B", "Students must be in level 2A or higher"),
     );
     expect(parseKualiRequisite(html)?.kind).toBe("and");
+  });
+});
+
+describe("spliceCoreqReferences (ACTSC 231 'or a corequisite of …')", () => {
+  const c = (code: string): PrereqNode => ({ kind: "course", code });
+
+  it("recognizes bare coreq-pointer text, not real requirements", () => {
+    expect(isCoreqReference("Corequisite (see below)")).toBe(true);
+    expect(isCoreqReference("Corequisite")).toBe(true);
+    expect(isCoreqReference("Must have completed the following")).toBe(false);
+    expect(isCoreqReference("STAT 230")).toBe(false);
+  });
+
+  it("replaces the pointer leaf with a coreqOf wrapping the coreq tree", () => {
+    const prereq: PrereqNode = {
+      kind: "or",
+      children: [
+        c("stat220"),
+        { kind: "raw", text: "Corequisite (see below)" },
+      ],
+    };
+    const coreq: PrereqNode = {
+      kind: "or",
+      children: [c("stat230"), c("stat240")],
+    };
+    expect(spliceCoreqReferences(prereq, coreq)).toEqual({
+      kind: "or",
+      children: [c("stat220"), { kind: "coreqOf", child: coreq }],
+    });
+  });
+
+  it("is a no-op when there is no coreq tree to splice (pointer stays raw)", () => {
+    const prereq: PrereqNode = {
+      kind: "or",
+      children: [
+        c("stat220"),
+        { kind: "raw", text: "Corequisite (see below)" },
+      ],
+    };
+    expect(spliceCoreqReferences(prereq, null)).toBe(prereq);
+  });
+
+  it("leaves a prereq with no coreq pointer untouched", () => {
+    const prereq: PrereqNode = { kind: "and", children: [c("math137")] };
+    expect(spliceCoreqReferences(prereq, c("stat230"))).toEqual(prereq);
   });
 });

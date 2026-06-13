@@ -1,7 +1,7 @@
 /**
  * Walk a prereq AST against a student's completed set. Course nodes give
- * definite pass/fail; level and raw-text nodes resolve to "uncertain" so
- * the UI can ask the student to verify them rather than wrongly failing.
+ * definite pass/fail; level and raw-text nodes resolve to "uncertain" (ask the
+ * student to verify) rather than wrongly failing.
  */
 
 import type { ProgramIdentity } from "@/lib/programs";
@@ -12,27 +12,32 @@ export interface UserState {
   completed: ReadonlySet<string>;
   level?: string;
   /**
-   * Student's program(s) — a double degree carries more than one. A restriction
-   * clause is judged against each, then merged asymmetrically (see the
-   * "program" case in `walk`): allow-lists take the most-permissive verdict, a
-   * negated "Not open to …" exclusion takes the most-restrictive. Empty/omitted
-   * → judged with no identity (usually "check").
+   * Student's program(s) — double degree carries more than one. A restriction
+   * clause is judged per-program then merged asymmetrically (see `walk`'s
+   * "program" case): allow-lists most-permissive, negated exclusions
+   * most-restrictive. Empty/omitted → no identity (usually "check").
    */
   programs?: ProgramIdentity[];
   /**
-   * Demote a program-restriction "block" to a "check". Set when the student's
+   * Demote a program-restriction "block" to a "check": set when the student's
    * program references this course, so a stale prose restriction can't grey it
-   * out. Other prereqs still gate normally.
+   * out. Other prereqs still gate.
    */
   suppressProgramBlock?: boolean;
   /**
-   * Treat a not-yet-completed course as "uncertain" (completable) instead of a
-   * hard miss. Set only by `isProgramBlocked`, which asks whether a program/
-   * faculty restriction is an UNCONDITIONAL wall: a requirement the student
-   * could satisfy by taking a course isn't, so an OR'd course alternative
-   * ("X students only OR CS 135") must not be reported as blocked.
+   * Treat a not-yet-completed course as "uncertain" (completable), not a hard
+   * miss. Set only by `isProgramBlocked` to test whether a program/faculty
+   * restriction is an UNCONDITIONAL wall — an OR'd course alternative ("X
+   * students only OR CS 135") must not read as blocked.
    */
   assumeCoursesUncertain?: boolean;
+  /**
+   * Courses co-scheduled in the same term. A `coreqOf` is satisfiable by
+   * completion OR concurrent enrollment, so its inner requirement is judged
+   * against `completed ∪ concurrent`. Set by the planner (knows term placement);
+   * absent elsewhere, where a `coreqOf` stays "uncertain" not a false miss.
+   */
+  concurrent?: ReadonlySet<string>;
 }
 
 export interface EligibilityResult {
@@ -75,10 +80,7 @@ interface WalkResult {
   blockedByProgram: boolean;
 }
 
-/**
- * A WalkResult with neutral "satisfied, nothing to report" defaults; pass only
- * the fields that differ. Keeps each `walk` branch to its meaningful deltas.
- */
+/** A WalkResult with neutral "satisfied, nothing to report" defaults; override only the differing fields. */
 function res(over: Partial<WalkResult> = {}): WalkResult {
   return {
     satisfied: true,
@@ -95,15 +97,15 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
     case "course": {
       const ok = state.completed.has(node.code);
       if (ok) return res();
-      // A completable course is "uncertain" rather than a hard miss when asked
-      // (isProgramBlocked) — so an OR'd course alternative isn't read as blocked.
+      // assumeCoursesUncertain: completable → "uncertain" not a miss, so an
+      // OR'd course alternative isn't read as blocked.
       if (state.assumeCoursesUncertain) return res({ uncertain: true });
       return res({ satisfied: false, missing: [node.code] });
     }
     case "level": {
       const gate = `Level at least ${node.minLevel}`;
-      // Unknown level → "check". Known level is definite; on a fail we surface
-      // the gate so the UI names the level, not a bare "Missing prereqs".
+      // Unknown level → "check". Known is definite; on fail, surface the gate so
+      // the UI names the level, not a bare "Missing prereqs".
       if (!state.level) return res({ uncertain: true, raw: [gate] });
       const ok = compareLevel(state.level, node.minLevel) >= 0;
       return res({ satisfied: ok, raw: ok ? [] : [gate] });
@@ -114,19 +116,15 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       const verdicts = ids.length
         ? ids.map((p) => matchProgram(clause, p))
         : [matchProgram(clause, null)];
-      // Merging the per-program verdicts is asymmetric, grounded in how UW
-      // writes enrolment restrictions for double-degree students:
+      // Asymmetric merge of per-program verdicts (a double degree is enrolled in
+      // each of its programs):
       //  - Allow-list ("… students only"): MOST-PERMISSIVE (allow > unknown >
-      //    block). A double degree is "enrolled in" each of its programs, so a
-      //    course open to one side is open to the student.
-      //  - Negated ("Not open to students enrolled in Faculty of X programs"):
-      //    MOST-RESTRICTIVE (block > unknown > allow). The student is enrolled
-      //    in a Faculty-of-X program on the excluded side, so the exclusion
-      //    catches them even though their other degree wouldn't be excluded.
-      // Source: UW Kuali-CM "How to build course requisites" (standard
-      // exclusion wording) + uwaterloo.ca New Math Students "Double Degree"
-      // (double-degree students must satisfy the requirements of *both*
-      // faculties). When unsure, matchProgram already returns "unknown" → check.
+      //    block) — open to one side ⇒ open to the student.
+      //  - Negated ("Not open to … Faculty of X …"): MOST-RESTRICTIVE (block >
+      //    unknown > allow) — enrolled on the excluded side ⇒ caught.
+      // Source: UW Kuali-CM "How to build course requisites" + uwaterloo.ca New
+      // Math Students "Double Degree" (must satisfy *both* faculties). matchProgram
+      // returns "unknown" → check when unsure.
       const verdict = clause.negated
         ? verdicts.includes("block")
           ? "block"
@@ -138,8 +136,8 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
           : verdicts.includes("unknown")
             ? "unknown"
             : "block";
-      // block → hard fail (via raw, no missing course to point at); unknown →
-      // "check"; allow → pass. suppressProgramBlock demotes a block to "check".
+      // block → hard fail (via raw); unknown → "check"; allow → pass.
+      // suppressProgramBlock demotes a block to "check".
       if (verdict === "block") {
         if (state.suppressProgramBlock) {
           return res({ uncertain: true, raw: [node.clause] });
@@ -158,6 +156,22 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       const text = node.text.trim();
       return text === "" ? res() : res({ uncertain: true, raw: [text] });
     }
+    case "coreqOf": {
+      // Coreq satisfied by completing the inner requirement OR concurrent
+      // enrollment. With same-term context (planner), fold `concurrent` into
+      // `completed` and judge definitively. Without it, a not-yet-completed coreq
+      // is "uncertain" — never a false miss that would swallow an OR sibling.
+      if (!state.concurrent) {
+        const done = walk(node.child, state);
+        return done.satisfied && !done.uncertain
+          ? res()
+          : res({ uncertain: true, raw: done.raw });
+      }
+      return walk(node.child, {
+        ...state,
+        completed: new Set([...state.completed, ...state.concurrent]),
+      });
+    }
     case "and": {
       const child = node.children.map((c) => walk(c, state));
       return res({
@@ -170,9 +184,8 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       });
     }
     case "or": {
-      // Any definitely-satisfied child satisfies the OR. Otherwise, if any is
-      // uncertain (raw text / unknown level), bias to "satisfied + uncertain"
-      // rather than fail — the student may meet it via a route we can't see.
+      // Any definite child satisfies the OR. Else if any is uncertain, bias to
+      // "satisfied + uncertain" — may be met via a route we can't see.
       const child = node.children.map((c) => walk(c, state));
       if (child.some((c) => c.satisfied && !c.uncertain)) return res();
       const anyUncertain = child.some((c) => c.uncertain);
@@ -188,11 +201,9 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       });
     }
     case "countOf": {
-      // "N of the following". Definite passes are children satisfied without
-      // uncertainty. If ≥ n are definite, met. Otherwise, if the definite passes
-      // plus the uncertain children could still reach n, bias to satisfied +
-      // uncertain (same "completable via an unseen route" logic as `or`). Only a
-      // shortfall with no uncertain top-up is a hard miss.
+      // "N of the following". ≥ n definite (satisfied, not uncertain) → met.
+      // Else if definite + uncertain could still reach n, bias to satisfied +
+      // uncertain (as `or`). Only a shortfall with no uncertain top-up is a miss.
       const child = node.children.map((c) => walk(c, state));
       const definite = child.filter((c) => c.satisfied && !c.uncertain).length;
       if (definite >= node.n) return res();
@@ -201,8 +212,8 @@ function walk(node: PrereqNode, state: UserState): WalkResult {
       return res({
         satisfied: reachable,
         uncertain: reachable,
-        // On a hard shortfall, surface the unmet children's missing courses so
-        // the student sees concrete options; otherwise nothing is owed yet.
+        // On a hard shortfall, surface unmet children's missing courses; else
+        // nothing is owed yet.
         missing: reachable ? [] : child.flatMap((c) => c.missing),
         raw: child.flatMap((c) => c.raw),
         blockedByProgram: !reachable && child.some((c) => c.blockedByProgram),

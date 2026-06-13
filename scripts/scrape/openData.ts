@@ -1,11 +1,9 @@
 /**
- * Fetches course seating from UW's Open Data API — the registrar's authoritative
- * live enrolment, replacing UWFlow's second-hand `sections`. The catalog fetch
- * builder (`build-catalog.ts`) joins this onto the snapshot by course code.
- *
- * There's no working bulk schedules endpoint, so seating is fetched per offered
- * course: `/Courses/{term}` lists offerings (with the primary enrolment
- * component), then `/ClassSchedules/{term}/{subject}/{catalogNumber}` per course.
+ * Course seating from UW Open Data — the registrar's authoritative live
+ * enrolment, replacing UWFlow's second-hand `sections`. Joined by code in
+ * `build-catalog.ts`. No working bulk endpoint, so fetched per offered course:
+ * `/Courses/{term}` lists offerings (with primary component), then
+ * `/ClassSchedules/{term}/{subject}/{catalogNumber}` per course.
  */
 
 import type { CourseSection } from "../../lib/courses/types";
@@ -39,10 +37,9 @@ function codeOf(subjectCode: string, catalogNumber: string): string {
 
 /**
  * Map a course's Open Data schedules to snapshot {@link CourseSection}s. Keeps
- * only the course's primary enrolment component (so test/tutorial slots — which
- * carry their own large capacities — don't inflate the seat count). Falls back
- * to all sections if none match the primary component (defensive against missing
- * `courseComponentCode`). Schedules missing a numeric capacity are dropped.
+ * only the primary enrolment component so tutorial/test slots don't inflate the
+ * seat count; falls back to all sections if none match (missing
+ * `courseComponentCode`). Schedules with no numeric capacity are dropped.
  */
 export function toSections(
   schedules: OpenDataSchedule[],
@@ -78,17 +75,16 @@ function apiKey(): string {
 }
 
 /**
- * Seating for a term, keyed by lowercased course code. Courses with no Open Data
- * schedule (not offered, or fetch failed) are simply absent → the caller defaults
- * them to no sections.
+ * Seating for a term, keyed by lowercased code. Courses with no schedule (not
+ * offered, or fetch failed) are absent → caller defaults them to no sections.
  */
 export async function fetchSeating(
   termId: number,
 ): Promise<Record<string, CourseSection[]>> {
   const headers = { "x-api-key": apiKey(), accept: "application/json" };
 
-  // GET with retry. 429 (rate limit) backs off and retries rather than failing;
-  // 404 (allowed) returns null. Other errors retry a few times then throw.
+  // GET with retry: 429 backs off and retries; allowed 404 → null; other errors
+  // retry then throw.
   const getJson = async <T>(
     url: string,
     allow404 = false,
@@ -111,9 +107,8 @@ export async function fetchSeating(
     throw new Error("unreachable");
   };
 
-  // Map courseId → course, and fetch only the courses that actually have a
-  // schedule this term (the bulk endpoint returns their courseIds) — ~2.2k of
-  // the ~7.9k offered, so we skip thousands of pointless 404s.
+  // Fetch only courses with a schedule this term (bulk endpoint returns their
+  // courseIds) — ~2.2k of ~7.9k offered, skipping thousands of pointless 404s.
   const courses =
     (await getJson<OpenDataCourse[]>(`${BASE}/Courses/${termId}`)) ?? [];
   const byCourseId = new Map(courses.map((c) => [c.courseId, c]));

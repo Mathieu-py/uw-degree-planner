@@ -9,12 +9,12 @@ import {
   type SortDir,
   type SortKey,
 } from "@/lib/courses/courseSort";
+import { equivalenceForCatalog } from "@/lib/courses/equivalence";
+import { applyFilters } from "@/lib/courses/filters";
 import {
   attachEligibility,
   type EligibilityRow,
-} from "@/lib/courses/eligibility";
-import { equivalenceForCatalog } from "@/lib/courses/equivalence";
-import { applyFilters } from "@/lib/courses/filters";
+} from "@/lib/courses/rowEligibility";
 import type { Course, FilterPreset } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
 

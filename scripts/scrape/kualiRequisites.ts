@@ -1,13 +1,9 @@
 /**
- * Parsers for Kuali's structured course-requisite HTML (the `prerequisites`,
- * `corequisites`, `antirequisites` fields of a Kuali course detail). Build-time
- * only — the fetch script turns these into the structured fields stored in the
- * committed snapshot, so the runtime never parses HTML.
- *
- * Kuali renders each requisite as a nested rule tree: group headers ("Complete
- * all/N of the following") wrap `data-test="ruleView-X"` leaves; course refs are
- * `<a href="#/courses/view/{id}">CODE</a>` and program refs are
- * `<a href="#/programs/view/{id}">Name</a>`.
+ * Build-time parsers for Kuali's requisite HTML (`prerequisites`, `corequisites`,
+ * `antirequisites`) → structured snapshot fields, so the runtime never parses
+ * HTML. Each requisite is a nested rule tree: group headers ("Complete all/N of
+ * the following") wrap `data-test="ruleView-X"` leaves; course refs are
+ * `#/courses/view/{id}`, program refs `#/programs/view/{id}`.
  */
 
 import * as cheerio from "cheerio";
@@ -21,14 +17,10 @@ const COURSE_ANCHOR_SELECTOR = 'a[href*="#/courses/view/"]';
 const PROGRAM_ANCHOR_SELECTOR = 'a[href*="#/programs/view/"]';
 
 /**
- * Every course code named anywhere in a Kuali `antirequisites` rule tree, in
- * document order, deduped. Antireqs are a flat conflict set — "credit will not
- * be granted for both" — so the boolean structure of the tree doesn't matter;
- * what matters is which courses are named.
- *
- * Program anchors ("Not open to students enrolled in …") are enrolment
- * restrictions, not course antirequisites, so they're excluded (course-href
- * anchors only).
+ * Every course code named in a Kuali `antirequisites` tree, deduped. Antireqs are
+ * a flat conflict set ("credit will not be granted for both"), so the tree's
+ * boolean structure is irrelevant — only which courses are named. Program anchors
+ * are enrolment restrictions, not antireqs, so they're excluded (course hrefs only).
  */
 export function parseKualiAntireqCodes(
   html: string | null | undefined,
@@ -45,10 +37,9 @@ export function parseKualiAntireqCodes(
 
 // ── Prerequisite / corequisite rule tree → PrereqNode ──────────────────────
 //
-// Kuali nests rules as: group-wrapper <li> ("Complete all/1/N of the following"
-// in a <span>, children in a nested <ul>) and leaf <li data-test="ruleView-X">
-// (a result <div> stating the requirement). The grammar of leaf result text was
-// enumerated from a catalog sample; see the regexes below.
+// Group-wrapper <li> ("Complete all/1/N of the following" in a <span>, children
+// in a nested <ul>) and leaf <li data-test="ruleView-X"> (result <div>). Leaf
+// text grammar was enumerated from a catalog sample; see the regexes below.
 
 const clean = (s: string): string => s.replace(/\s+/g, " ").trim();
 
@@ -62,6 +53,11 @@ const COMPLETED_N_OF_RE =
   /^Must have completed at least (\d+) of the following/i;
 const GRADE_IN_EACH_RE =
   /^Earned a minimum grade of .*? in (?:each of the following|\b)/i;
+// Graded choice ("…at least 1 of the following: CS136, CS138"). This is a CHOICE
+// (OR/countOf), but GRADE_IN_EACH_RE's `\b` branch also matches and would route it
+// to requiredCourses (AND); matching this first keeps it an OR.
+const GRADE_N_OF_RE =
+  /^Earned a minimum grade of .*? in at least (\d+) of the following/i;
 const COREQ_N_OF_RE =
   /^Completed or concurrently enrolled in at least (\d+) of the following/i;
 const COREQ_ALL_RE = /^Completed or concurrently enrolled in\b/i;
@@ -70,10 +66,9 @@ const NOT_OPEN_RE = /^Not (?:open|available) to\b/i;
 const ENROLLED_RE = /^Enrolled in\b/i;
 
 /**
- * Parse a Kuali `prerequisites` or `corequisites` rule-tree HTML string into a
- * {@link PrereqNode} AST, or null when empty/unparseable. Top-level siblings are
- * conjoined (all must hold). Anything whose shape isn't recognized degrades to a
- * `raw` node, which the evaluator surfaces as "check" — never a wrong hard-fail.
+ * Parse a Kuali `prerequisites`/`corequisites` rule tree into a {@link PrereqNode}
+ * AST, or null when empty. Top-level siblings are conjoined. Unrecognized shapes
+ * degrade to a `raw` node → evaluator surfaces "check", never a wrong hard-fail.
  */
 export function parseKualiRequisite(
   html: string | null | undefined,
@@ -85,6 +80,47 @@ export function parseKualiRequisite(
     .first();
   if ($topUl.length === 0) return null;
   return combine(walkUl($, $topUl), "and");
+}
+
+// A prereq leaf pointing at the coreq list ("Corequisite (see below)"). UW writes
+// some prereqs as "… or a corequisite of X"; Kuali stores X in the coreq field and
+// leaves only this pointer, which `parseLi` makes a `raw` node — left raw it
+// evaluates "uncertain" and swallows its real OR sibling. `spliceCoreqReferences`
+// resolves it once both trees are parsed.
+const COREQ_REF_RE = /^corequisites?\b.*\bsee\b|^corequisites?\s*$/i;
+
+/** True when a `raw` node's text is a bare "see the corequisite" pointer. */
+export function isCoreqReference(text: string): boolean {
+  return COREQ_REF_RE.test(text.trim());
+}
+
+/**
+ * `prereq` with each coreq-pointer `raw` leaf replaced by a `coreqOf` wrapping the
+ * parsed coreq tree, e.g. "STAT 220 or (see corequisite)" → "STAT 220 or a
+ * corequisite of STAT 230/240". No-op when there's no coreq tree (pointer stays
+ * raw → "check") or no pointer.
+ */
+export function spliceCoreqReferences(
+  prereq: PrereqNode | null,
+  coreq: PrereqNode | null,
+): PrereqNode | null {
+  if (!prereq || !coreq) return prereq;
+  const visit = (n: PrereqNode): PrereqNode => {
+    switch (n.kind) {
+      case "raw":
+        return isCoreqReference(n.text) ? { kind: "coreqOf", child: coreq } : n;
+      case "and":
+      case "or":
+        return { ...n, children: n.children.map(visit) };
+      case "countOf":
+        return { ...n, children: n.children.map(visit) };
+      case "coreqOf":
+        return { ...n, child: visit(n.child) };
+      default:
+        return n;
+    }
+  };
+  return visit(prereq);
 }
 
 /** Collapse a child list into a single node (or the lone child, or null). */
@@ -156,6 +192,15 @@ function parseLi(
   const text = clean($result.text());
   const codes = courseCodes($, $result);
 
+  // "At least n of" first: COREQ_ALL_RE is a prefix of the coreq "…at least n of"
+  // phrasing, so testing all-of forms first would shadow it and collapse an OR
+  // into an AND (e.g. ACTSC 231's "at least 1 of STAT230, STAT240").
+  const atLeast =
+    COMPLETED_N_OF_RE.exec(text) ??
+    COREQ_N_OF_RE.exec(text) ??
+    GRADE_N_OF_RE.exec(text);
+  if (atLeast) return atLeastNOf(Number(atLeast[1]), codes, text);
+
   // Course-list leaves (grade thresholds are dropped — the app tracks no grades).
   if (
     COMPLETED_ALL_RE.test(text) ||
@@ -164,8 +209,6 @@ function parseLi(
   ) {
     return requiredCourses(codes, text);
   }
-  const atLeast = COMPLETED_N_OF_RE.exec(text) ?? COREQ_N_OF_RE.exec(text);
-  if (atLeast) return atLeastNOf(Number(atLeast[1]), codes, text);
 
   // Level gate.
   const level = LEVEL_RE.exec(text);
@@ -220,13 +263,11 @@ function courseCodes(
 }
 
 /**
- * A program/faculty enrolment restriction → `program` node. Program names come
- * from the program-anchors; strip Kuali's plan-type prefix ("H-", "3G-") and the
- * degree-suffix parenthetical so they match the eligibility vocabulary, then
- * phrase the clause in the allow-list / negated forms `parseProgramClause`
- * understands. With no program anchors (faculty prose like "Enrolled in a
- * program offered by Faculty of Engineering"), pass the raw text through — the
- * clause parser extracts faculty words, or returns "unknown" → "check".
+ * A program/faculty enrolment restriction → `program` node. Names come from the
+ * program-anchors (cleaned to match the eligibility vocab), phrased in the
+ * allow-list / negated forms `parseProgramClause` understands. With no anchors
+ * (faculty prose), pass raw text through — the clause parser extracts faculty
+ * words or returns "unknown" → "check".
  */
 function programNode(
   $: cheerio.CheerioAPI,

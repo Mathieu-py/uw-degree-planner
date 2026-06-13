@@ -6,6 +6,7 @@ import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
 import { countNoun, formatCourseCode, formatPercent } from "@/lib/format";
+import { describePrereqParts } from "@/lib/prereqs/describe";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
 export async function generateMetadata(props: {
@@ -65,9 +66,24 @@ export default async function CoursePage(props: {
           ) : null}
 
           <section className="grid sm:grid-cols-3 gap-3">
-            <ReqCard label="Prerequisites" value={course.prereqs} />
-            <ReqCard label="Corequisites" value={course.coreqs} />
-            <ReqCard label="Antirequisites" value={course.antireqs} />
+            <ReqCard
+              label="Prerequisites"
+              lines={describePrereqParts(course.prereqAst)}
+              value={course.prereqs}
+            />
+            <ReqCard
+              label="Corequisites"
+              lines={describePrereqParts(course.coreqAst)}
+              value={course.coreqs}
+            />
+            <ReqCard
+              label="Antirequisites"
+              value={
+                course.antireqCodes && course.antireqCodes.length > 0
+                  ? course.antireqCodes.map(formatCourseCode).join(", ")
+                  : course.antireqs
+              }
+            />
           </section>
 
           <section className="flex flex-col gap-3">
@@ -161,13 +177,40 @@ function RatingRow({ label, value }: { label: string; value: number | null }) {
   );
 }
 
-function ReqCard({ label, value }: { label: string; value: string | null }) {
-  const has = !!value && value.trim() !== "";
+function ReqCard({
+  label,
+  lines,
+  value,
+}: {
+  label: string;
+  // Structured requirement parts (one per top-level AND clause); preferred over
+  // `value` when present so grouping shows as separate lines, not brackets.
+  lines?: string[] | null;
+  // Plain-prose fallback used when there's no structured tree to split.
+  value?: string | null;
+}) {
+  const parts = lines && lines.length > 0 ? lines : null;
+  const text = !parts && value && value.trim() !== "" ? value : null;
   return (
     <div className="card-2 border border-line rounded-[14px] p-4 flex flex-col gap-1.5">
       <span className="u-eyebrow">{label}</span>
-      {has ? (
-        <p className="text-[13px] leading-relaxed text-ink">{value}</p>
+      {parts ? (
+        parts.length === 1 ? (
+          <p className="text-[13px] leading-relaxed text-ink">{parts[0]}</p>
+        ) : (
+          <ul className="flex flex-col gap-1 text-[13px] leading-relaxed text-ink">
+            {parts.map((part) => (
+              <li key={part} className="flex gap-2">
+                <span aria-hidden className="text-ink-3 select-none">
+                  •
+                </span>
+                <span className="min-w-0">{part}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : text ? (
+        <p className="text-[13px] leading-relaxed text-ink">{text}</p>
       ) : (
         <span className="text-[13px] text-ink-3">None</span>
       )}

@@ -7,17 +7,17 @@
 export {
   type DegreeParseResult,
   parseDegreeRequirements,
-} from "./scrape/degree";
-export { parseElectives } from "./scrape/electives";
-export { normalizeCourseCode } from "./scrape/normalize";
-export { parseProgramRequirements } from "./scrape/requirements";
+} from "./degree";
+export { parseElectives } from "./electives";
+export { normalizeCourseCode } from "./normalize";
+export { parseProgramRequirements } from "./requirements";
 export {
   buildConflictCounts,
   buildProgramSlug,
   buildSpecializationSlug,
   parseSpecializationsList,
-} from "./scrape/slugs";
+} from "./slugs";
 export {
   dropPureUnitBucketElectives,
   parseUnitPlan,
-} from "./scrape/unitPlan";
+} from "./unitPlan";
