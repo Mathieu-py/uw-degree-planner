@@ -1,3 +1,4 @@
+import type { EquivalenceIndex } from "@/lib/courses/equivalence";
 import type { TermId } from "@/lib/terms";
 import type { PlanSlot } from "./types";
 
@@ -32,10 +33,16 @@ export function completedCoursesFromPlan(
 /**
  * Set form of `completedCoursesFromPlan`, ready to feed directly into the
  * prereq evaluator (`evaluate()` in lib/prereqs/satisfied.ts).
+ *
+ * With `equiv`, the set is widened to include every cross-listed equivalent of a
+ * completed course (GitHub #21), so a prereq naming one code is satisfied by an
+ * equivalent the student actually took.
  */
 export function completedSetFromPlan(
   plan: WithSlots,
   asOfTermId?: TermId,
+  equiv?: EquivalenceIndex,
 ): Set<string> {
-  return new Set(completedCoursesFromPlan(plan, asOfTermId));
+  const set = new Set(completedCoursesFromPlan(plan, asOfTermId));
+  return equiv ? equiv.expand(set) : set;
 }

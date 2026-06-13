@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ProgramIdentity } from "@/lib/programs";
+import { enrichCourse } from "../filters";
 import {
   type AttachEligibilityOptions,
   attachEligibility,
   type EligibilityRow,
-} from "../eligibility";
-import { enrichCourse } from "../filters";
-import type { Course, UWFlowCourse } from "../types";
+} from "../rowEligibility";
+import type { BaseCourse, Course } from "../types";
 
 const SYDE: ProgramIdentity = {
   programId: "systems-design-engineering",
@@ -14,8 +14,8 @@ const SYDE: ProgramIdentity = {
   faculty: "engineering",
 };
 
-function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function makeCourse(overrides: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "math116",
     name: "Calculus 1 for Engineering",
@@ -139,6 +139,29 @@ describe("attachEligibility", () => {
     });
     expect(out).toHaveLength(1); // not hidden
     expect(out[0].eligibility?.state).not.toBe("ineligible");
+  });
+
+  it("greys a placed course's cross-listed twin (not dropped from candidates)", () => {
+    // CLAS 221 is the same course as ANTH 201; with ANTH 201 placed, the twin
+    // must surface as ineligible/already-placed (greyed) — and stay hidden when
+    // hideUnmetPrereqs — even with an empty completed set (term-independent).
+    const rows = makeRows([
+      { ...makeCourse({ code: "clas221" }), crossListed: ["anth201"] },
+    ]);
+    const shown = attach(rows, {
+      completed: new Set(),
+      placedAnywhere: new Set(["anth201"]),
+    });
+    expect(shown[0].eligibility?.state).toBe("ineligible");
+    expect(shown[0].eligibility?.alreadyPlaced).toBe(true);
+    expect(shown[0].eligibility?.reasons[0]).toContain("ANTH 201");
+    expect(
+      attach(rows, {
+        completed: new Set(),
+        placedAnywhere: new Set(["anth201"]),
+        hideUnmetPrereqs: true,
+      }),
+    ).toHaveLength(0);
   });
 
   it("blocks a course whose antireq is already placed — even with an empty completed set", () => {

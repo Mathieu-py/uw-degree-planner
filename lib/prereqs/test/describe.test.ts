@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { describeMissingPrereqs } from "../describe";
+import { describeMissingPrereqs, describePrereqs } from "../describe";
+import type { PrereqNode } from "../parse";
 import { parsePrereqs } from "../parse";
 
 const has = (...codes: string[]) => new Set(codes);
@@ -80,5 +81,121 @@ describe("describeMissingPrereqs", () => {
     expect(
       missing(amath242, has("cs136", "cs135", "math245", "math247")),
     ).toBeNull();
+  });
+});
+
+describe("describeMissingPrereqs — countOf", () => {
+  const countOf = (n: number, ...codes: string[]) => ({
+    kind: "countOf" as const,
+    n,
+    children: codes.map((code) => ({ kind: "course" as const, code })),
+  });
+
+  it("lists 'N of <options>' for an unmet countOf", () => {
+    expect(
+      describeMissingPrereqs(countOf(2, "cs136", "cs138", "cs146"), has()),
+    ).toBe("2 of CS 136, CS 138, CS 146");
+  });
+
+  it("returns null once n options are met", () => {
+    expect(
+      describeMissingPrereqs(
+        countOf(2, "cs136", "cs138", "cs146"),
+        has("cs136", "cs138"),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("describePrereqs", () => {
+  const course = (code: string): PrereqNode => ({ kind: "course", code });
+
+  it("returns null for an absent tree", () => {
+    expect(describePrereqs(null)).toBeNull();
+    expect(describePrereqs(undefined)).toBeNull();
+  });
+
+  it("renders a lone course", () => {
+    expect(describePrereqs(course("math137"))).toBe("MATH 137");
+  });
+
+  it("joins an or / and group without bracketing the top level", () => {
+    expect(
+      describePrereqs({
+        kind: "or",
+        children: [course("math137"), course("math147")],
+      }),
+    ).toBe("MATH 137 or MATH 147");
+  });
+
+  it("brackets a nested boolean group so precedence is unambiguous", () => {
+    // ACTSC 231's prereqAst shape: (MATH137 or MATH147) and (STAT220 or coreq)
+    // and Level 2A — the OR groups must be parenthesized inside the AND.
+    const ast: PrereqNode = {
+      kind: "and",
+      children: [
+        { kind: "or", children: [course("math137"), course("math147")] },
+        {
+          kind: "or",
+          children: [
+            course("stat220"),
+            { kind: "raw", text: "Corequisite (see below)" },
+          ],
+        },
+        { kind: "level", minLevel: "2A" },
+      ],
+    };
+    expect(describePrereqs(ast)).toBe(
+      "(MATH 137 or MATH 147) and (STAT 220 or Corequisite) and Level at least 2A",
+    );
+  });
+
+  it("drops a Kuali '(see below)' cross-reference from raw text (ACTSC 231)", () => {
+    // The coreq path is preserved as an option; only the dangling page pointer
+    // — meaningless in our card layout — is stripped.
+    const ast: PrereqNode = {
+      kind: "or",
+      children: [
+        course("stat220"),
+        { kind: "raw", text: "Corequisite (see below)" },
+      ],
+    };
+    expect(describePrereqs(ast)).toBe("STAT 220 or Corequisite");
+  });
+
+  it("inlines a coreqOf branch as flat alternatives (ACTSC 231)", () => {
+    // The corequisite path is shown inline (its concurrent-enrollment nuance is
+    // evaluated, not displayed), and the same-kind inner OR is merged so the
+    // whole branch reads as one flat choice rather than a nested group.
+    const ast: PrereqNode = {
+      kind: "or",
+      children: [
+        course("stat220"),
+        {
+          kind: "coreqOf",
+          child: {
+            kind: "or",
+            children: [course("stat230"), course("stat240")],
+          },
+        },
+      ],
+    };
+    expect(describePrereqs(ast)).toBe("STAT 220 or STAT 230 or STAT 240");
+  });
+
+  it("renders countOf and a program clause", () => {
+    expect(
+      describePrereqs({
+        kind: "countOf",
+        n: 2,
+        children: [course("cs136"), course("cs138"), course("cs146")],
+      }),
+    ).toBe("2 of CS 136, CS 138, CS 146");
+    expect(
+      describePrereqs({
+        kind: "program",
+        clause: "Not open to Computer Science",
+      }),
+    ).toBe("Not open to Computer Science");
   });
 });

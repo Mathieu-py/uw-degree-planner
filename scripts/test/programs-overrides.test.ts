@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RuleNode } from "../../lib/programs";
-import { applyRuleOverrides } from "../scrape-programs.overrides";
+import { applyRuleOverrides } from "../scrape/programs-overrides";
 
 /** Collect every course code referenced anywhere in a rule tree. */
 function collectCourses(node: RuleNode): string[] {

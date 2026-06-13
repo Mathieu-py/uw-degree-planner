@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { enrichCourse } from "@/lib/courses/filters";
-import type { Course, UWFlowCourse } from "@/lib/courses/types";
+import type { BaseCourse, Course } from "@/lib/courses/types";
 import type { PlanSlot } from "@/lib/plan/types";
 import { makeTermId } from "@/lib/terms";
 import { alreadyInLabel, computeTermOptions } from "../termOptions";
@@ -15,8 +15,8 @@ function slot(
   return { termId: null, isCoop: false, courses: [], ...over };
 }
 
-function course(over: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function course(over: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "test100",
     name: "Test",

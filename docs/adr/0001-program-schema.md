@@ -214,7 +214,7 @@ Electives are NOT scraped or filled by #30. The field exists in v1 so the future
 - Variant-picker modal UX — depends on `choiceGroups*` being populated by #30 first.
 - `StudentPassage` extensions (`specializationId`, `choiceGroupSelections`, `systemOfStudy`) — depends on the schema fields being populated.
 
-## Parser changes ([`scripts/scrape-programs.parser.ts`](../../scripts/scrape-programs.parser.ts)) — for #30
+## Parser changes ([`scripts/scrape/programs-parser.ts`](../../scripts/scrape/programs-parser.ts)) — for #30
 
 Three independently testable steps. The existing engineering path stays bit-identical for `terms` so `data/programs.json`'s 16 entries don't drift.
 

@@ -14,7 +14,7 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseProgramRequirements } from "../scrape-programs.parser";
+import { parseProgramRequirements } from "../scrape/programs-parser";
 
 const RAW_DIR = join(process.cwd(), "scripts", "diagnostic", "raw");
 

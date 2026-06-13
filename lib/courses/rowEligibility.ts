@@ -73,12 +73,12 @@ export function attachEligibility(
         placedAntireqNamers,
       });
       // Without a completed set, only term-independent verdicts are trustworthy;
-      // suppress prereq-based chips/filtering. Antireq and program/faculty
-      // blocks don't depend on completed courses, so they always stand. (The
-      // duplicate verdict never fires here — candidates are pre-filtered in
-      // useFilteredCourses.)
+      // suppress prereq-based chips/filtering. Already-placed (incl. a placed
+      // cross-listed twin), antireq, and program/faculty blocks don't depend on
+      // completed courses, so they always stand.
       const trustworthy =
         canAssessPrereqs ||
+        verdict.alreadyPlaced ||
         verdict.antireqConflicts.length > 0 ||
         verdict.blockedByProgram;
       return { course: r.course, eligibility: trustworthy ? verdict : null };

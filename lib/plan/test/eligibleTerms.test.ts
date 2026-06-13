@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { enrichCourse } from "@/lib/courses/filters";
-import type { Course, UWFlowCourse } from "@/lib/courses/types";
+import type { BaseCourse, Course } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
 import { eligibleSlotIdsForCourse } from "../eligibleTerms";
 import type { LocalPlan } from "../types";
@@ -16,7 +16,7 @@ function makeCourse(
   prereqs: string | null,
   antireqs: string | null = null,
 ): Course {
-  const base: UWFlowCourse = {
+  const base: BaseCourse = {
     id: 1,
     code,
     name: code.toUpperCase(),

@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/browserStorage";
 import { logWarn } from "@/lib/log";
-import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/storage";
 import {
   type LocalPlan,
   PLAN_SCHEMA_VERSION,

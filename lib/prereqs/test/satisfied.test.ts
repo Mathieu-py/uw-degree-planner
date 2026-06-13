@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProgramIdentity } from "@/lib/programs";
-import { parsePrereqs } from "../parse";
-import { evaluate } from "../satisfied";
+import { type PrereqNode, parsePrereqs } from "../parse";
+import { evaluate, minimumRequiredLevel } from "../satisfied";
 
 function user(completed: string[], level?: string) {
   return { completed: new Set(completed), level };
@@ -259,5 +259,168 @@ describe("evaluate", () => {
     const result = evaluate(parsePrereqs("Level at least 2A"), user([], "1B"));
     expect(result.satisfied).toBe(false);
     expect(result.rawRequirements).toEqual(["Level at least 2A"]);
+  });
+});
+
+describe("evaluate — countOf (Kuali 'Complete N of')", () => {
+  const c = (code: string): PrereqNode => ({ kind: "course", code });
+  const countOf = (n: number, ...codes: string[]): PrereqNode => ({
+    kind: "countOf",
+    n,
+    children: codes.map(c),
+  });
+
+  it("is satisfied when at least n children are definitely met", () => {
+    const node = countOf(2, "a", "b", "cc");
+    expect(evaluate(node, user(["a", "b"])).satisfied).toBe(true);
+    expect(evaluate(node, user(["a", "b"])).uncertain).toBe(false);
+    expect(evaluate(node, user(["a", "b", "cc"])).satisfied).toBe(true); // over
+  });
+
+  it("fails when fewer than n are met and none are uncertain", () => {
+    const node = countOf(2, "a", "b", "cc");
+    const r = evaluate(node, user(["a"]));
+    expect(r.satisfied).toBe(false);
+    // The unmet children's codes are surfaced as options.
+    expect(r.missingCourses).toEqual(expect.arrayContaining(["b", "cc"]));
+  });
+
+  it("biases to satisfied+uncertain when uncertain children could reach n", () => {
+    // 1 definite (a) + 1 uncertain (raw) can still reach n=2.
+    const node: PrereqNode = {
+      kind: "countOf",
+      n: 2,
+      children: [c("a"), c("b"), { kind: "raw", text: "instructor consent" }],
+    };
+    const r = evaluate(node, user(["a"]));
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(true);
+  });
+
+  it("n=all behaves like AND; missing one fails", () => {
+    const node = countOf(2, "a", "b");
+    expect(evaluate(node, user(["a", "b"])).satisfied).toBe(true);
+    expect(evaluate(node, user(["a"])).satisfied).toBe(false);
+  });
+});
+
+describe("evaluate — coreqOf (corequisite satisfies a prereq, ACTSC 231)", () => {
+  const c = (code: string): PrereqNode => ({ kind: "course", code });
+  // OR[ STAT 220, coreqOf(STAT 230 or STAT 240) ] — the ACTSC 231 prereq branch.
+  const branch: PrereqNode = {
+    kind: "or",
+    children: [
+      c("stat220"),
+      {
+        kind: "coreqOf",
+        child: { kind: "or", children: [c("stat230"), c("stat240")] },
+      },
+    ],
+  };
+
+  it("is satisfied when the prereq alternative (STAT 220) is completed", () => {
+    expect(
+      evaluate(branch, { completed: new Set(["stat220"]) }).satisfied,
+    ).toBe(true);
+  });
+
+  it("is satisfied when the coreq is completed in a prior term", () => {
+    const r = evaluate(branch, { completed: new Set(["stat230"]) });
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(false);
+  });
+
+  it("is satisfied when the coreq is co-scheduled (concurrent) this term", () => {
+    const r = evaluate(branch, {
+      completed: new Set(),
+      concurrent: new Set(["stat240"]),
+    });
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(false);
+  });
+
+  it("is a definite miss in planner context when neither route is taken", () => {
+    const r = evaluate(branch, {
+      completed: new Set(),
+      concurrent: new Set(["other101"]),
+    });
+    expect(r.satisfied).toBe(false);
+    // Both the prereq alternative and the coreq options are surfaced.
+    expect(r.missingCourses).toEqual(
+      expect.arrayContaining(["stat220", "stat230", "stat240"]),
+    );
+  });
+
+  it("stays uncertain (never a false miss) with no concurrent context", () => {
+    // Picker / course page: term placement unknown, so a not-yet-completed
+    // coreq biases the OR to satisfiable+uncertain rather than failing STAT 220.
+    const r = evaluate(branch, { completed: new Set() });
+    expect(r.satisfied).toBe(true);
+    expect(r.uncertain).toBe(true);
+    expect(r.missingCourses).toEqual([]);
+  });
+});
+
+describe("minimumRequiredLevel", () => {
+  const level = (minLevel: string): PrereqNode => ({ kind: "level", minLevel });
+  const course = (code: string): PrereqNode => ({ kind: "course", code });
+
+  it("returns the gate of a bare level node, null for level-free leaves", () => {
+    expect(minimumRequiredLevel(level("3A"))).toBe("3A");
+    expect(minimumRequiredLevel(course("cs135"))).toBeNull();
+    expect(minimumRequiredLevel({ kind: "raw", text: "consent" })).toBeNull();
+    expect(minimumRequiredLevel(null)).toBeNull();
+  });
+
+  it("AND: the strictest child binds", () => {
+    expect(
+      minimumRequiredLevel({
+        kind: "and",
+        children: [course("cs246"), level("3A"), level("2A")],
+      }),
+    ).toBe("3A");
+  });
+
+  it("OR: a level-free alternative means no level is required", () => {
+    // "VCULT 101 or Level at least 2A" — take VCULT 101 instead.
+    expect(
+      minimumRequiredLevel({
+        kind: "or",
+        children: [course("vcult101"), level("2A")],
+      }),
+    ).toBeNull();
+  });
+
+  it("OR of only level gates: the laxest binds", () => {
+    expect(
+      minimumRequiredLevel({
+        kind: "or",
+        children: [level("3A"), level("2A")],
+      }),
+    ).toBe("2A");
+  });
+
+  it("countOf: level-free children are picked first; the n-th pick binds", () => {
+    const node: PrereqNode = {
+      kind: "countOf",
+      n: 2,
+      children: [course("a"), level("2A"), level("3A")],
+    };
+    // 2 of {course, 2A, 3A}: pick the course + the 2A gate → needs 2A.
+    expect(minimumRequiredLevel(node)).toBe("2A");
+    // 2 of with two level-free children → no level needed.
+    expect(
+      minimumRequiredLevel({
+        kind: "countOf",
+        n: 2,
+        children: [course("a"), course("b"), level("3A")],
+      }),
+    ).toBeNull();
+  });
+
+  it("looks through coreqOf (concurrency doesn't waive a level gate)", () => {
+    expect(minimumRequiredLevel({ kind: "coreqOf", child: level("2B") })).toBe(
+      "2B",
+    );
   });
 });

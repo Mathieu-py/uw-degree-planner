@@ -13,6 +13,8 @@ interface Props {
   issuesByCourse: ReadonlyMap<string, ValidationIssue[]>;
   onAdd: () => void;
   onRemoveCourse: (code: string) => void;
+  /** Reports a chip being dragged between terms (or null on end) for the highlight. */
+  onMoveDrag?: (moving: { code: string; fromSlotId: string } | null) => void;
   readOnly?: boolean;
   /** `?from=plan` appended to course links so the detail page knows they came
    *  from a plan (and hides its "Add to plan"). Omitted by the shared view. */
@@ -39,6 +41,7 @@ export const SlotBody = memo(function SlotBody({
   issuesByCourse,
   onAdd,
   onRemoveCourse,
+  onMoveDrag,
   readOnly = false,
   planOriginQuery = "",
 }: Props) {
@@ -69,8 +72,14 @@ export const SlotBody = memo(function SlotBody({
           : courseDragProps(
               { kind: "move", fromSlotId: slot.id, code: c.code },
               {
-                onStart: () => setDraggingCode(c.code),
-                onEnd: () => setDraggingCode(null),
+                onStart: () => {
+                  setDraggingCode(c.code);
+                  onMoveDrag?.({ code: c.code, fromSlotId: slot.id });
+                },
+                onEnd: () => {
+                  setDraggingCode(null);
+                  onMoveDrag?.(null);
+                },
               },
             );
         return (

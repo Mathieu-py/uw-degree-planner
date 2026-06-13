@@ -9,11 +9,12 @@ import {
   type SortDir,
   type SortKey,
 } from "@/lib/courses/courseSort";
+import { equivalenceForCatalog } from "@/lib/courses/equivalence";
+import { applyFilters } from "@/lib/courses/filters";
 import {
   attachEligibility,
   type EligibilityRow,
-} from "@/lib/courses/eligibility";
-import { applyFilters } from "@/lib/courses/filters";
+} from "@/lib/courses/rowEligibility";
 import type { Course, FilterPreset } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
 
@@ -106,9 +107,26 @@ export function useFilteredCourses({
 
   // Reverse-antireq index over the placed courses, so a candidate is flagged
   // when a placed course names it even if its own list doesn't reciprocate.
+  // Built over the REAL placed courses (not equivalents, which aren't placed).
   const antireqNamers = useMemo(
     () => placedAntireqNamers(catalog.filter((c) => placedCodes.has(c.code))),
     [catalog, placedCodes],
+  );
+
+  // Course equivalence (#21): a cross-listed twin of a placed/completed course
+  // counts as that course. `placedExpanded` drives the antireq + already-placed
+  // checks (a placed course's twin reads as taken); `completedExpanded` lets a
+  // twin satisfy a prereq. Candidates exclude only the EXACT placed codes — a
+  // twin stays in the list and renders greyed "already in plan" (like the
+  // wrong-program case) rather than silently vanishing.
+  const equiv = useMemo(() => equivalenceForCatalog(catalog), [catalog]);
+  const placedExpanded = useMemo(
+    () => equiv.expand(placedCodes),
+    [equiv, placedCodes],
+  );
+  const completedExpanded = useMemo(
+    () => equiv.expand(completedBefore),
+    [equiv, completedBefore],
   );
 
   const candidates = useMemo<Course[]>(() => {
@@ -159,8 +177,8 @@ export function useFilteredCourses({
         eligibility: null,
       }));
       const annotated = attachEligibility(baseRows, {
-        completed: completedBefore,
-        placedAnywhere: placedCodes,
+        completed: completedExpanded,
+        placedAnywhere: placedExpanded,
         programReferenced,
         hideUnmetPrereqs: true,
         level,
@@ -181,8 +199,8 @@ export function useFilteredCourses({
     );
   }, [
     searched,
-    completedBefore,
-    placedCodes,
+    completedExpanded,
+    placedExpanded,
     programReferenced,
     sameTerm,
     level,
@@ -199,8 +217,8 @@ export function useFilteredCourses({
     // pre-pagination pass — re-annotating would be wasted work.
     if (filters.hideUnmetPrereqs) return slice;
     return attachEligibility(slice, {
-      completed: completedBefore,
-      placedAnywhere: placedCodes,
+      completed: completedExpanded,
+      placedAnywhere: placedExpanded,
       programReferenced,
       hideUnmetPrereqs: false,
       level,
@@ -211,8 +229,8 @@ export function useFilteredCourses({
   }, [
     sortedCourses,
     limit,
-    completedBefore,
-    placedCodes,
+    completedExpanded,
+    placedExpanded,
     programReferenced,
     sameTerm,
     level,

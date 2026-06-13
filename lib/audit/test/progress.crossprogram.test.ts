@@ -83,13 +83,14 @@ describe("computeDegreeProgress — every program (maximal plan)", () => {
         structuredShortfalls.push({ id, pct: p.pct });
       }
     }
-    // A fully-structured program should complete on a maximal plan; a few may
-    // reference subjects/levels absent from this term's catalog snapshot.
-    if (structuredShortfalls.length > 0)
-      console.warn(
-        "structured programs that can't reach 100% even fully loaded:",
-        structuredShortfalls.map((s) => `${s.id}=${s.pct}%`).join(", "),
-      );
-    expect(structuredShortfalls.length).toBeLessThanOrEqual(15);
+    // Every fully-structured program must complete on a maximal plan. A new
+    // shortfall is a real requirement-data regression (or a course the snapshot
+    // dropped), so fail with the offenders listed rather than absorbing up to N
+    // of them behind a tolerance. If a snapshot gap ever makes one legitimately
+    // un-completable, add it to an explicit allowlist here — consciously.
+    expect(
+      structuredShortfalls.map((s) => `${s.id}=${s.pct}%`),
+      "structured programs that can't reach 100% even fully loaded",
+    ).toEqual([]);
   });
 });

@@ -7,7 +7,7 @@ import {
   placedAntireqNamers,
 } from "../courseEligibility";
 import { enrichCourse } from "../filters";
-import type { Course, UWFlowCourse } from "../types";
+import type { BaseCourse, Course } from "../types";
 
 const SYDE: ProgramIdentity = {
   programId: "systems-design-engineering",
@@ -20,8 +20,8 @@ const CS: ProgramIdentity = {
   faculty: "mathematics",
 };
 
-function course(over: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function course(over: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "test100",
     name: "Test",
@@ -279,5 +279,80 @@ describe("isProgramBlocked", () => {
       prereqs: "CS 135 and Anthropology students only",
     });
     expect(isProgramBlocked(c, { programs: [SYDE] })).toBe(true);
+  });
+});
+
+describe("evaluateCourseEligibility — cross-listed twins (#21)", () => {
+  it("is ineligible (already placed) when the course's twin is in the plan", () => {
+    // The check rides on the course's own crossListed record, so even a
+    // surface that built placedAnywhere WITHOUT equivalence expansion (the
+    // course-page add flow) can't admit the same course under a second code.
+    const amath242 = {
+      ...course({ code: "amath242" }),
+      crossListed: ["cs371"],
+    };
+    const v = evaluateCourseEligibility(
+      amath242,
+      ctx({ placedAnywhere: new Set(["cs371"]) }),
+    );
+    expect(v.state).toBe("ineligible");
+    expect(v.alreadyPlaced).toBe(true);
+    expect(v.reasons[0]).toContain("CS 371");
+    expect(v.reasons[0]).toContain("cross-listed");
+  });
+
+  it("stays eligible when neither member is placed", () => {
+    const amath242 = {
+      ...course({ code: "amath242" }),
+      crossListed: ["cs371"],
+    };
+    const v = evaluateCourseEligibility(amath242, ctx());
+    expect(v.state).toBe("eligible");
+  });
+});
+
+describe("evaluateCourseEligibility — coreqOf prereq with same-term context", () => {
+  // ACTSC 231: STAT 220 OR a corequisite of STAT 230/240. With the coreq
+  // course co-scheduled, the verdict must be a clean "eligible" — matching the
+  // planner badge (validatePlan passes the same concurrent context).
+  const actsc231 = {
+    ...course({ code: "actsc231" }),
+    prereqAst: {
+      kind: "or" as const,
+      children: [
+        { kind: "course" as const, code: "stat220" },
+        {
+          kind: "coreqOf" as const,
+          child: {
+            kind: "or" as const,
+            children: [
+              { kind: "course" as const, code: "stat230" },
+              { kind: "course" as const, code: "stat240" },
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  it("is eligible (not 'check') when the coreq course is co-scheduled", () => {
+    const v = evaluateCourseEligibility(
+      actsc231,
+      ctx({ sameTerm: new Set(["stat230"]) }),
+    );
+    expect(v.state).toBe("eligible");
+  });
+
+  it("is 'check' without same-term context (placement unknown)", () => {
+    const v = evaluateCourseEligibility(actsc231, ctx());
+    expect(v.state).toBe("check");
+  });
+
+  it("is ineligible when neither route is available", () => {
+    const v = evaluateCourseEligibility(
+      actsc231,
+      ctx({ sameTerm: new Set(["econ101"]) }),
+    );
+    expect(v.state).toBe("ineligible");
   });
 });

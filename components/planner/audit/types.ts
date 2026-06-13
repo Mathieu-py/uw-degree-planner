@@ -1,4 +1,5 @@
 import type { AuditNode } from "@/lib/audit/compile";
+import type { NodeFill } from "@/lib/audit/progress";
 import type { Course, FilterPreset } from "@/lib/courses/types";
 import { unitsMet } from "@/lib/format";
 
@@ -123,6 +124,13 @@ export interface Macro {
   hint: string | null;
   blocks: MacroBlock[];
   defaultOpen: boolean;
+  /**
+   * Per-node distinct credit from the unit headline (catalog-backed view only),
+   * so sub-group rings read the same one-course-per-slot assignment as the
+   * macro's header count. Absent in the read-only view → rings fall back to the
+   * independent per-node count.
+   */
+  nodeFill?: NodeFill;
 }
 
 /** Props every option-card piece needs to render (and recurse via NodeBody). */

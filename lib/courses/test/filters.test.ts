@@ -11,10 +11,10 @@ import {
   passesSeatsFilter,
   seatsAvailable,
 } from "../filters";
-import type { Course, UWFlowCourse, UWFlowRating } from "../types";
+import type { BaseCourse, Course, UWFlowRating } from "../types";
 
-function makeCourse(overrides: Partial<UWFlowCourse> = {}): Course {
-  const base: UWFlowCourse = {
+function makeCourse(overrides: Partial<BaseCourse> = {}): Course {
+  const base: BaseCourse = {
     id: 1,
     code: "math116",
     name: "Calculus 1 for Engineering",

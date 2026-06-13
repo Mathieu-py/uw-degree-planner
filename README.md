@@ -25,7 +25,7 @@ pnpm knip              # unused-export detection
 pnpm test              # vitest (single run)
 pnpm test:watch        # vitest in watch mode
 pnpm test:e2e          # Playwright e2e
-pnpm fetch-courses     # refresh data/courses.*.json from UWFlow
+pnpm fetch-courses     # rebuild data/courses.*.json (UWFlow + Kuali + Open Data)
 pnpm scrape-programs   # refresh data/programs.json from the UW calendar
 ```
 
@@ -47,7 +47,7 @@ The planner UI lives in [components/planner/](components/planner/), rooted at `P
 
 ## Data sources
 
-**Courses**: ratings, metadata, and section/seat counts come from [UWFlow](https://uwflow.com) via their public GraphQL endpoint. Refresh with `pnpm fetch-courses`.
+**Courses**: `scripts/build-catalog.ts` combines three UW sources, joined by course code — [UWFlow](https://uwflow.com) (GraphQL: name, description, requirement prose, crowd-sourced ratings), Kuali (`uwaterloocm.kuali.co`: units, cross-listings, structured prerequisite/antirequisite data), and the [UW Open Data API](https://openapi.data.uwaterloo.ca) (live section seat counts; needs `UW_OPENDATA_KEY` in `.env.local`). Refresh with `pnpm fetch-courses`.
 
 **Programs**: term-by-term schedules come from the UWaterloo academic calendar's Kuali backend (`uwaterloocm.kuali.co/api/v1/catalog/`). Refresh with `pnpm scrape-programs` — typically once per academic year when the calendar is republished, or whenever the `asOf` dates in `data/programs.json` look stale.
 
