@@ -1,5 +1,6 @@
-import type { RuleNode } from "../../lib/programs";
+import type { Faculty, RuleNode } from "../../lib/programs";
 import { WORD_NUMBERS } from "./counts";
+import { facultyFromName, subjectsForFaculties } from "./data/subjectFaculty";
 import { extractSubjectCodes } from "./normalize";
 
 /**
@@ -151,6 +152,28 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
 }
 
 /**
+ * Resolve a faculty-scoped clause ("in the Faculty of Arts", "from the following
+ * Faculties: Environment, Health, Science", "Faculties of Arts, Science") to the
+ * faculties it names. The blob is read up to a clause break (";", ".", end, or
+ * a ", or from …" alternation), then split on connectives and each fragment
+ * resolved via {@link facultyFromName}. Empty when no faculty is named. See #117
+ * (bucket B).
+ */
+function parseFacultyClause(text: string): Faculty[] {
+  if (!/facult/i.test(text)) return [];
+  const m = text.match(
+    /facult(?:y\s+of|ies)\b\s*:?\s*([\s\S]+?)(?=;|\.|$|,?\s+or\s+from\b)/i,
+  );
+  if (!m) return [];
+  const found = new Set<Faculty>();
+  for (const part of m[1].split(/[,;/]|\band\b|\bor\b/i)) {
+    const faculty = facultyFromName(part.trim());
+    if (faculty) found.add(faculty);
+  }
+  return [...found];
+}
+
+/**
  * Build a `subjectPool` node from the text AFTER the count lead-in (the subject
  * descriptor + optional level + optional "from:" list). Shared by
  * {@link parseSubjectPool} (which derives `selectCount` from "Complete N") and
@@ -187,6 +210,17 @@ function buildPool(restIn: string, selectCount: number): RuleNode | null {
 
   const fromSubjects = parseFromClause(rest, exclusions);
   if (fromSubjects.length > 0) subjectCodes = fromSubjects;
+
+  // Faculty-scoped clause ("courses in the Faculty of Arts") → expand to that
+  // faculty's subject codes via the authoritative table. Unioned with any
+  // explicit/`from:` codes so a compound "Faculty of Arts, or … subject codes:
+  // BET, BUS, …" rule keeps both halves. Codes are uppercased to match the
+  // stored convention (extractSubjectCodes / parseFromClause emit uppercase).
+  const facultySubjects = subjectsForFaculties(parseFacultyClause(rest)).map(
+    (c) => c.toUpperCase(),
+  );
+  if (facultySubjects.length > 0)
+    subjectCodes = [...new Set([...subjectCodes, ...facultySubjects])];
 
   // No enumerable subject codes (e.g. "Science courses…" with no `from:` list):
   // drop rather than fabricate a subject set. Conservative-but-lossy — the rule

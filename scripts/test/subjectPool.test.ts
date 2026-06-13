@@ -79,6 +79,51 @@ describe("parseChooseAnyPool — bucket C: pool with no 'Complete N' head", () =
   });
 });
 
+describe("parseSubjectPool — bucket B: faculty-scoped pools", () => {
+  it("expands 'courses in the Faculty of Arts' to that faculty's subjects", () => {
+    const p = pool(
+      parseSubjectPool("Complete 1.0 unit of courses in the Faculty of Arts"),
+    );
+    expect(p.subjectCodes).toContain("ANTH");
+    expect(p.subjectCodes).toContain("HIST");
+    expect(p.subjectCodes).not.toContain("CS"); // CS is Mathematics
+    expect(p.selectCount).toBe(2); // 1.0 unit ÷ 0.5
+  });
+
+  it("expands a multi-faculty 'Faculties: Environment, Health, Science' clause", () => {
+    const p = pool(
+      parseSubjectPool(
+        "Complete 1.0 unit of courses, in any combination, chosen from the following Faculties: Environment, Health, Science",
+      ),
+    );
+    expect(p.subjectCodes).toContain("GEOG"); // Environment
+    expect(p.subjectCodes).toContain("KIN"); // Health
+    expect(p.subjectCodes).toContain("BIOL"); // Science
+    expect(p.subjectCodes).not.toContain("ANTH"); // Arts not named
+  });
+
+  it("keeps BOTH halves of a 'Faculty of Arts, or … subject codes' compound rule", () => {
+    const p = pool(
+      parseSubjectPool(
+        "Complete 1.0 unit of courses, in any combination, chosen from the Faculty of Arts, or from the following subject codes: BET, BUS, COMM, STV",
+      ),
+    );
+    // The explicit subject codes…
+    for (const code of ["BET", "BUS", "COMM", "STV"])
+      expect(p.subjectCodes).toContain(code);
+    // …unioned with the Faculty of Arts subjects.
+    expect(p.subjectCodes).toContain("ANTH");
+  });
+
+  it("returns null for an unrecognized faculty with no other subjects", () => {
+    expect(
+      parseSubjectPool(
+        "Complete 1.0 unit of courses in the Faculty of Hogwarts",
+      ),
+    ).toBeNull();
+  });
+});
+
 describe("parseCodeRange", () => {
   it("parses a re-prefixed range 'CS440-CS498'", () => {
     expect(parseCodeRange("CS440-CS498")).toEqual({
