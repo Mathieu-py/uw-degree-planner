@@ -15,6 +15,19 @@ const CONCURRENCY = 4;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Backoff for a 429: honour an integer `Retry-After` (delta-seconds) when the
+ * server sends one, clamped to 30s; otherwise fall back to linear backoff. The
+ * HTTP-date form is rare here and not worth parsing — it falls through too.
+ */
+function retryAfterMs(res: Response, attempt: number): number {
+  const header = res.headers.get("retry-after");
+  const seconds = header == null ? Number.NaN : Number(header);
+  if (Number.isInteger(seconds) && seconds >= 0)
+    return Math.min(seconds * 1000, 30_000);
+  return 1000 * (attempt + 1);
+}
+
 interface OpenDataCourse {
   courseId: string;
   subjectCode: string;
@@ -84,17 +97,21 @@ export async function fetchSeating(
   const headers = { "x-api-key": apiKey(), accept: "application/json" };
 
   // GET with retry: 429 backs off and retries; allowed 404 → null; other errors
-  // retry then throw.
+  // retry then throw. A 30s timeout per attempt keeps a stalled upstream from
+  // hanging the whole build (matches kualiCourses.ts).
   const getJson = async <T>(
     url: string,
     allow404 = false,
   ): Promise<T | null> => {
     for (let attempt = 0; attempt < 8; attempt++) {
       try {
-        const res = await fetch(url, { headers });
+        const res = await fetch(url, {
+          headers,
+          signal: AbortSignal.timeout(30_000),
+        });
         if (allow404 && res.status === 404) return null;
         if (res.status === 429) {
-          await sleep(1000 * (attempt + 1));
+          await sleep(retryAfterMs(res, attempt));
           continue;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

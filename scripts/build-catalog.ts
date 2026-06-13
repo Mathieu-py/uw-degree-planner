@@ -92,6 +92,8 @@ async function main() {
     console.error(`Skipping non-numeric term arg: ${a}`);
   }
   const validArgs = args.filter((a) => /^\d+$/.test(a));
+  if (args.length > 0 && validArgs.length === 0)
+    throw new Error("No valid numeric term arguments provided.");
   const terms = args.length > 0 ? validArgs.map(Number) : [PINNED_TERM];
   process.stdout.write("Fetching course data from Kuali... ");
   const kuali = await fetchKualiData();
@@ -105,15 +107,26 @@ async function main() {
     (k) => k.antireqCodes,
   ).length;
   const withPrereqAst = Object.values(kuali).filter((k) => k.prereqAst).length;
+  const withCoreqAst = Object.values(kuali).filter((k) => k.coreqAst).length;
   console.log(
-    `${Object.keys(kuali).length} courses (${withUnitsTotal} units, ${withCrossListed} cross-listed, ${withAntireqs} antireqs, ${withPrereqAst} prereq-ASTs)`,
+    `${Object.keys(kuali).length} courses (${withUnitsTotal} units, ${withCrossListed} cross-listed, ${withAntireqs} antireqs, ${withPrereqAst} prereq-ASTs, ${withCoreqAst} coreq-ASTs)`,
   );
 
-  // UWFlow's fields are term-independent, so fetch the course list once.
+  // UWFlow's fields are term-independent, so fetch the course list once. Drop
+  // `xxx`-suffixed placeholders and any non-canonical code (UWFlow carries
+  // high-school/transfer pseudo-courses like `hschem`/`arts1x000` that have no
+  // Kuali enrichment and never appear in a program rule).
   process.stdout.write("Fetching courses from UWFlow... ");
   const raw = await fetchUWFlowCourses();
-  const courses = raw.filter((c) => !/xxx$/i.test(c.code));
-  console.log(`${courses.length} courses`);
+  const courses = raw.filter(
+    (c) => !/xxx$/i.test(c.code) && /^[a-z]+\d+[a-z]*$/.test(c.code),
+  );
+  const proseFallback = courses.filter(
+    (c) => !kuali[c.code]?.prereqAst && c.prereqs?.trim(),
+  ).length;
+  console.log(
+    `${courses.length} courses (${raw.length - courses.length} placeholder codes dropped, ${proseFallback} on prereq prose fallback)`,
+  );
 
   for (const term of terms) {
     process.stdout.write(`Term ${term}: seating from Open Data... `);
