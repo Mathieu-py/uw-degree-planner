@@ -73,7 +73,10 @@ const PlanSnapshotSchema = z
         BoundedId,
         z
           .array(z.string().min(1).max(MAX_ACKED_TEXT_LEN))
-          .max(MAX_ACKED_PER_PROGRAM),
+          .max(MAX_ACKED_PER_PROGRAM)
+          .refine((texts) => new Set(texts).size === texts.length, {
+            message: "duplicate acknowledged requirements",
+          }),
       )
       .refine((m) => Object.keys(m).length <= MAX_PROGRAM_IDS, {
         message: "too many acknowledged-requirement programs",

@@ -50,10 +50,9 @@ export interface DegreeProgress {
   /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
   levelFloors: LevelFloor[];
   /**
-   * `unverifiedRequirements` texts still owed — i.e. not yet manually
-   * acknowledged on the plan. Non-empty ⇒ headline held below 100%. The audit
-   * panel names these near the headline so "check with your advisor" is
-   * actionable; clearing the list lets `pct` reach 100.
+   * `unverifiedRequirements` not yet acknowledged on the plan. Non-empty ⇒
+   * headline held below 100%. Surfaced near the headline so "check with your
+   * advisor" is actionable.
    */
   owedUnverified: string[];
   /**
@@ -242,9 +241,8 @@ export function computeDegreeProgress(
   legality: ReadonlySet<string> = new Set(),
   equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
   /**
-   * Verbatim `unverifiedRequirements` texts the student has manually confirmed
-   * (per-program, from the plan). An acknowledged requirement stops gating the
-   * 100% headline — it's "complete, pending advisor confirmation", not "unmet".
+   * Verbatim `unverifiedRequirements` the student manually confirmed; an
+   * acknowledged one stops gating the 100% headline ("not unmet, just unverified").
    */
   acknowledged: ReadonlySet<string> = new Set(),
 ): DegreeProgress {
@@ -425,13 +423,11 @@ export function computeDegreeProgress(
   const allBreadthMet = breadthRequirements.every((b) =>
     unitsMet(b.placedUnits, b.needUnits),
   );
-  // "Couldn't auto-verify" ≠ "unmet". An acknowledged requirement is the student
-  // confirming it manually (the audit's "see your advisor" exit), so it no longer
-  // holds the headline below 100%. Only still-owed (unacknowledged) ones gate.
+  // "Couldn't auto-verify" ≠ "unmet": an acknowledged requirement no longer gates
+  // the headline. Only still-owed (unacknowledged) ones do.
   const owedUnverified = (program?.unverifiedRequirements ?? []).filter(
     (r) => !acknowledged.has(r),
   );
-  const unverifiedOwed = owedUnverified.length > 0;
 
   // Level floors ("X units at the 200-level+") gate completion like breadth:
   // an overlapping filter that blocks 100% without inflating the denominator.
@@ -443,7 +439,10 @@ export function computeDegreeProgress(
   );
 
   const allComplete =
-    allBucketsFilled && allBreadthMet && allFloorsMet && !unverifiedOwed;
+    allBucketsFilled &&
+    allBreadthMet &&
+    allFloorsMet &&
+    owedUnverified.length === 0;
   const raw = denom > 0 ? Math.round((creditedUnits / denom) * 100) : 0;
   const pct = allComplete ? Math.min(raw, 100) : Math.min(raw, 99);
 

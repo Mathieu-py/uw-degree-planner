@@ -596,9 +596,7 @@ describe("computeDegreeProgress — several gates owed at once", () => {
   it("reaches 100% once the unverified requirement is acknowledged (#116)", () => {
     // Manual confirmation: "couldn't auto-verify" ≠ "unmet". An acked rule stops
     // gating, so a volume-complete plan reads 100% instead of an indefinite 99%.
-    const acked = new Set([
-      "A co-op work-term sequence (not audited here).",
-    ]);
+    const acked = new Set(["A co-op work-term sequence (not audited here)."]);
     const p = progressOf(program, ["m1"], () => 0.5, new Set(), acked);
     expect(p.allComplete).toBe(true);
     expect(p.pct).toBe(100);

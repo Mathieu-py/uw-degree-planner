@@ -13,6 +13,10 @@ This app encodes University of Waterloo academic rules (prerequisites, antirequi
 - State the rule and cite the source in the PR/commit and in a code comment next to the logic, so the reasoning is reviewable.
 - When the source is ambiguous or silent, surface that to the user rather than guessing.
 
+## Comments: concise, explain *why*
+
+Keep comments short — one line where possible, a few at most. Explain the non-obvious reason, trade-off, or gotcha; don't narrate what the code plainly says or restate the identifier. Cut hedging and ceremony. (The academic-rule citations above are the deliberate exception — keep those, just tighten the prose.)
+
 ## Tests
 
 Tests live in `test/` subfolders next to the code they cover (e.g. `lib/test/filters.test.ts`, `lib/prereqs/test/parse.test.ts`). Vitest's default discovery picks them up; no extra config needed.

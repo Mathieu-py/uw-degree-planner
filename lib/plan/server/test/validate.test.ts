@@ -102,6 +102,16 @@ describe("snapshotError — structural validation", () => {
     ).toBeNull();
   });
 
+  it("rejects duplicate acknowledged requirements within a program", () => {
+    expect(
+      snapshotError(
+        snapshot({
+          acknowledgedRequirements: { "h-cs": ["rule A", "rule A"] },
+        }),
+      ),
+    ).toBe("invalid_snapshot");
+  });
+
   it("rejects too many programIds", () => {
     const programIds = Array.from(
       { length: MAX_PROGRAM_IDS + 1 },
