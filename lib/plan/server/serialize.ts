@@ -20,6 +20,25 @@ function toStringRecord(v: unknown): Record<string, string> {
 }
 
 /**
+ * Defensive coercion for `acknowledged_requirements` jsonb (same posture as
+ * {@link toStringRecord}): a string→string[] map. Non-objects collapse to `{}`;
+ * non-array values are dropped; array elements are stringified.
+ */
+function toStringArrayRecord(v: unknown): Record<string, string[]> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  const out: Record<string, string[]> = {};
+  for (const [k, val] of Object.entries(v)) {
+    if (!Array.isArray(val)) continue;
+    // Drop empty strings to mirror the write-path `z.string().min(1)` rule
+    // (validate.ts); a key whose array empties out is omitted entirely, like the
+    // handler's empty-list pruning, so a no-op ack can't leave a stale `[]` key.
+    const strs = val.map(String).filter((s) => s.length > 0);
+    if (strs.length > 0) out[k] = strs;
+  }
+  return out;
+}
+
+/**
  * Row shape from `select * from plans` (raw snake_case Postgres columns). The
  * selectors below pluck them into camelCase for the app.
  */
@@ -29,6 +48,8 @@ export interface PlanRow {
   program_ids: string[] | null;
   /** jsonb column — PostgREST returns it already parsed (do not JSON.parse). */
   specialization_ids: Record<string, string> | null;
+  /** jsonb column — `programId -> acked requirement texts`. */
+  acknowledged_requirements: Record<string, string[]> | null;
   system_of_study: Stream | null;
   start_term_id: number | null;
   program_scrape_version: string | null;
@@ -113,6 +134,9 @@ export function assembleServerPlan(
     name: plan.name,
     programIds: plan.program_ids ?? [],
     specializationIds: plan.specialization_ids ?? {},
+    acknowledgedRequirements: toStringArrayRecord(
+      plan.acknowledged_requirements,
+    ),
     stream: plan.system_of_study,
     startTermId: plan.start_term_id,
     programScrapeVersion: plan.program_scrape_version,
@@ -160,6 +184,7 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
     name: String(j.name),
     programIds: Array.isArray(j.program_ids) ? j.program_ids.map(String) : [],
     specializationIds: toStringRecord(j.specialization_ids),
+    acknowledgedRequirements: toStringArrayRecord(j.acknowledged_requirements),
     stream: (j.system_of_study ?? null) as Stream | null,
     startTermId: (j.start_term_id ?? null) as number | null,
     programScrapeVersion: (j.program_scrape_version ?? null) as string | null,
@@ -176,6 +201,7 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
 export function toSnapshot(plan: {
   programIds: string[];
   specializationIds: Record<string, string>;
+  acknowledgedRequirements?: Record<string, string[]>;
   stream: Stream | null;
   startTermId: number | null;
   programScrapeVersion?: string | null;
@@ -184,6 +210,7 @@ export function toSnapshot(plan: {
   return {
     programIds: plan.programIds,
     specializationIds: plan.specializationIds,
+    acknowledgedRequirements: plan.acknowledgedRequirements ?? {},
     stream: plan.stream,
     startTermId: plan.startTermId,
     programScrapeVersion: plan.programScrapeVersion ?? null,

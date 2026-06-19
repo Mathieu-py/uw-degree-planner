@@ -21,6 +21,16 @@ export interface DragWiring {
  */
 export type DrillFn = (codes: string[], preset?: FilterPreset) => void;
 
+/**
+ * Toggle a program's manual confirmation of an unverified requirement (keyed by
+ * its verbatim text). Absent in the read-only shared view → rows render static.
+ */
+export type AcknowledgeFn = (
+  programId: string,
+  text: string,
+  acked: boolean,
+) => void;
+
 interface SectionSummary {
   needed: number;
   satisfied: number;

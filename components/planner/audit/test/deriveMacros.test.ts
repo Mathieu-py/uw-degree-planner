@@ -63,23 +63,21 @@ describe("deriveMacros", () => {
     expect(partial?.count).toEqual({ satisfied: 2, needed: 3 });
   });
 
-  it("reports no unverified requirements for a fully-structured program", () => {
-    expect(macrosOf(PROGRAM, []).unverifiedCount).toBe(0);
-  });
-
-  it("surfaces unverified requirements in the Co-op & other macro", () => {
+  it("does NOT surface unverified requirements in a macro", () => {
+    // Unverified rules are now rendered near the headline as acknowledgeable
+    // rows (buildProgramAudit → UnverifiedRequirements), not buried in a macro.
     const program: Program = {
       ...PROGRAM,
       unverifiedRequirements: ["Complete a co-op work term."],
     };
-    const { macros, unverifiedCount } = macrosOf(program, []);
-    expect(unverifiedCount).toBe(1);
-    const other = macros.find((m) => m.key === "other");
-    expect(other?.blocks[0].content).toMatchObject({ kind: "sections" });
-    const sections =
-      other?.blocks[0].content.kind === "sections"
-        ? other.blocks[0].content.sections
-        : [];
-    expect(sections.some((s) => s.kind === "info")).toBe(true);
+    const { macros } = macrosOf(program, []);
+    const sections = macros.flatMap((m) =>
+      m.blocks.flatMap((b) =>
+        b.content.kind === "sections" ? b.content.sections : [],
+      ),
+    );
+    expect(
+      sections.some((s) => s.caption === "Complete a co-op work term."),
+    ).toBe(false);
   });
 });

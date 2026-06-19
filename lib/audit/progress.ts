@@ -50,6 +50,12 @@ export interface DegreeProgress {
   /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
   levelFloors: LevelFloor[];
   /**
+   * `unverifiedRequirements` not yet acknowledged on the plan. Non-empty ⇒
+   * headline held below 100%. Surfaced near the headline so "check with your
+   * advisor" is actionable.
+   */
+  owedUnverified: string[];
+  /**
    * Per-rule-node distinct credit from the global bipartite match: how many of
    * each owning {@link AuditNode}'s slots a UNIQUE course actually filled. Read
    * by the audit panel (keyed by node identity) so a requirement ROW reflects the
@@ -234,6 +240,11 @@ export function computeDegreeProgress(
   unitsOf: (code: string) => number,
   legality: ReadonlySet<string> = new Set(),
   equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
+  /**
+   * Verbatim `unverifiedRequirements` the student manually confirmed; an
+   * acknowledged one stops gating the 100% headline ("not unmet, just unverified").
+   */
+  acknowledged: ReadonlySet<string> = new Set(),
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -412,7 +423,11 @@ export function computeDegreeProgress(
   const allBreadthMet = breadthRequirements.every((b) =>
     unitsMet(b.placedUnits, b.needUnits),
   );
-  const unverifiedOwed = (program?.unverifiedRequirements?.length ?? 0) > 0;
+  // "Couldn't auto-verify" ≠ "unmet": an acknowledged requirement no longer gates
+  // the headline. Only still-owed (unacknowledged) ones do.
+  const owedUnverified = (program?.unverifiedRequirements ?? []).filter(
+    (r) => !acknowledged.has(r),
+  );
 
   // Level floors ("X units at the 200-level+") gate completion like breadth:
   // an overlapping filter that blocks 100% without inflating the denominator.
@@ -424,7 +439,10 @@ export function computeDegreeProgress(
   );
 
   const allComplete =
-    allBucketsFilled && allBreadthMet && allFloorsMet && !unverifiedOwed;
+    allBucketsFilled &&
+    allBreadthMet &&
+    allFloorsMet &&
+    owedUnverified.length === 0;
   const raw = denom > 0 ? Math.round((creditedUnits / denom) * 100) : 0;
   const pct = allComplete ? Math.min(raw, 100) : Math.min(raw, 99);
 
@@ -437,6 +455,7 @@ export function computeDegreeProgress(
     freeUnits,
     breadthRequirements,
     levelFloors,
+    owedUnverified,
     nodeFill,
   };
 }

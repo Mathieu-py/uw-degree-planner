@@ -22,6 +22,7 @@ function snapshot(over: Partial<PlanSnapshot> = {}): PlanSnapshot {
   return {
     programIds: ["h-software-engineering-beng"],
     specializationIds: {},
+    acknowledgedRequirements: {},
     stream: "stream8",
     startTermId: 1239,
     programScrapeVersion: null,
@@ -99,6 +100,16 @@ describe("snapshotError — structural validation", () => {
     expect(
       snapshotError(snapshot({ programIds: ["h-cs", "h-stats"] })),
     ).toBeNull();
+  });
+
+  it("rejects duplicate acknowledged requirements within a program", () => {
+    expect(
+      snapshotError(
+        snapshot({
+          acknowledgedRequirements: { "h-cs": ["rule A", "rule A"] },
+        }),
+      ),
+    ).toBe("invalid_snapshot");
   });
 
   it("rejects too many programIds", () => {
