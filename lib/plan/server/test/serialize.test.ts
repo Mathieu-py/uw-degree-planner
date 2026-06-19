@@ -354,3 +354,55 @@ describe("mapSharedPlanJson", () => {
     expect(result?.programIds).toEqual(["h-cs", "h-stats", "h-math-econ"]);
   });
 });
+
+describe("toStringArrayRecord (via acknowledgedRequirements coercion)", () => {
+  // The helper is internal; exercise it through the public read paths that map
+  // the `acknowledged_requirements` jsonb column into `ServerPlan`. Crafting the
+  // raw value lets us assert the defensive coercion without exporting it.
+  const ackFromShared = (v: unknown) =>
+    mapSharedPlanJson({ acknowledged_requirements: v })
+      ?.acknowledgedRequirements;
+
+  it("coerces null to an empty record", () => {
+    expect(ackFromShared(null)).toEqual({});
+  });
+
+  it("coerces a non-object (string) to an empty record", () => {
+    expect(ackFromShared("nope")).toEqual({});
+  });
+
+  it("coerces a top-level array to an empty record", () => {
+    expect(ackFromShared(["a", "b"])).toEqual({});
+  });
+
+  it("drops keys whose value isn't an array", () => {
+    expect(ackFromShared({ p: "not an array", q: 3 })).toEqual({});
+  });
+
+  it("stringifies array elements", () => {
+    expect(ackFromShared({ p: ["x", 1, true] })).toEqual({
+      p: ["x", "1", "true"],
+    });
+  });
+
+  it("filters out empty strings and drops a key that empties out (Fix 2)", () => {
+    expect(ackFromShared({ p: ["", "real", ""], q: [""] })).toEqual({
+      p: ["real"],
+    });
+  });
+
+  it("keeps only the valid keys from a mixed record", () => {
+    expect(
+      ackFromShared({ good: ["x"], notArray: "nope", emptied: [""] }),
+    ).toEqual({ good: ["x"] });
+  });
+
+  it("applies the same coercion on the authenticated read path (assembleServerPlan)", () => {
+    const plan = assembleServerPlan(
+      { ...PLAN, acknowledged_requirements: { p: ["", "real"] } },
+      [],
+      [],
+    );
+    expect(plan.acknowledgedRequirements).toEqual({ p: ["real"] });
+  });
+});

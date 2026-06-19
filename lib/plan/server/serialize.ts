@@ -27,8 +27,14 @@ function toStringRecord(v: unknown): Record<string, string> {
 function toStringArrayRecord(v: unknown): Record<string, string[]> {
   if (!v || typeof v !== "object" || Array.isArray(v)) return {};
   const out: Record<string, string[]> = {};
-  for (const [k, val] of Object.entries(v))
-    if (Array.isArray(val)) out[k] = val.map(String);
+  for (const [k, val] of Object.entries(v)) {
+    if (!Array.isArray(val)) continue;
+    // Drop empty strings to mirror the write-path `z.string().min(1)` rule
+    // (validate.ts); a key whose array empties out is omitted entirely, like the
+    // handler's empty-list pruning, so a no-op ack can't leave a stale `[]` key.
+    const strs = val.map(String).filter((s) => s.length > 0);
+    if (strs.length > 0) out[k] = strs;
+  }
   return out;
 }
 

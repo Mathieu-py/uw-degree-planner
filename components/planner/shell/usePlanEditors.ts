@@ -254,7 +254,12 @@ export function usePlanEditors({
           ? prev
           : [...prev, text]
         : prev.filter((t) => t !== text);
+      // acked=true returns `prev` unchanged when the text is already present, so
+      // reference equality catches that no-op. acked=false can't: `filter` always
+      // returns a fresh array, so an unchanged length means nothing was removed
+      // (the text wasn't acknowledged) — also a no-op.
       if (nextList === prev) return;
+      if (!acked && nextList.length === prev.length) return;
       const nextMap = { ...map };
       if (nextList.length > 0) nextMap[programId] = nextList;
       else delete nextMap[programId];
