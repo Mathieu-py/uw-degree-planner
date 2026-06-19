@@ -526,22 +526,23 @@ function collectCourseCodes(
   $: cheerio.CheerioAPI,
   $result: ReturnType<cheerio.CheerioAPI>,
 ): string[] {
-  const codes = new Set<string>(anchorCourseCodes($, $result));
-  // Fallback for codes Kuali renders as plain text (absent from UW's DB —
-  // cross-institution "…W" codes, unlinked INDEV387): scan the post-colon list.
-  if (codes.size === 0) {
-    const text = $result.text();
-    const colon = text.indexOf(":");
-    const list = colon >= 0 ? text.slice(colon + 1) : "";
-    if (list) {
-      // Expand ranges ("CS440-CS498") against the catalog — inclusive bands, real
-      // codes only (never synthesized; absent subject → nothing). See #117 (C).
-      for (const m of list.matchAll(CODE_RANGE_RE_G)) {
-        const range = parseCodeRange(m[0]);
-        if (range)
-          for (const code of catalogCodesInRange(range)) codes.add(code);
-      }
-      // Then literal codes from the remainder (a list may mix: "CS136, CS240-299").
+  const anchored = anchorCourseCodes($, $result);
+  const codes = new Set<string>(anchored);
+  const text = $result.text();
+  const colon = text.indexOf(":");
+  const list = colon >= 0 ? text.slice(colon + 1) : "";
+  if (list) {
+    // Ranges ("CS440-CS498") are never hyperlinked, so expand them even when the
+    // rule also has anchored literals — a plain-text range in a mixed list isn't
+    // lost. Inclusive bands, real codes only (never synthesized). See #117 (C).
+    for (const m of list.matchAll(CODE_RANGE_RE_G)) {
+      const range = parseCodeRange(m[0]);
+      if (range) for (const code of catalogCodesInRange(range)) codes.add(code);
+    }
+    // Literal plain-text codes only as a fallback when nothing was hyperlinked
+    // (Kuali "…W" codes, unlinked INDEV387), so prose codes don't leak into an
+    // already-anchored rule.
+    if (anchored.length === 0) {
       const remainder = list.replace(CODE_RANGE_RE_G, " ");
       for (const tok of remainder.match(TEXT_CODE_RE) ?? []) {
         const code = normalizeCourseCode(tok);

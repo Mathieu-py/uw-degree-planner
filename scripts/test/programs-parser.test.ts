@@ -550,6 +550,25 @@ describe("unverified requirements — owed prose we can't structure", () => {
     expect(r.unverified).toEqual([]);
   });
 
+  it("expands a plain-text range alongside an anchored literal in the same rule", () => {
+    // Ranges are never hyperlinked, so a mixed "anchored literal + plain-text
+    // range" list must keep both halves rather than trusting only the anchors.
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          'Choose any course from the following: <a href="#/courses/x">CS135</a>, CS440-CS498',
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses node");
+    expect(node.courses).toContain("cs135"); // the anchored literal
+    expect(node.courses).toContain("cs486"); // expanded from the CS440-CS498 range
+    expect(r.unverified).toEqual([]);
+  });
+
   it("recovers the pool half of a Choose-any rule with no literal codes", () => {
     // "any CS course at the 600-/700-level" has no extractable codes; the
     // Choose-any branch now falls through to a subject pool. See #117 (bucket C).

@@ -176,6 +176,10 @@ describe("parseCodeRange", () => {
   it("returns null for a non-range token", () => {
     expect(parseCodeRange("CS136")).toBeNull();
   });
+
+  it("rejects a mixed-subject range rather than coercing it to the start", () => {
+    expect(parseCodeRange("CS440-MATH498")).toBeNull();
+  });
 });
 
 describe("catalogCodesInRange — expands against the committed snapshot", () => {

@@ -20,15 +20,17 @@ const CODE_RANGE_RE = new RegExp(CODE_RANGE_SRC);
 
 /**
  * Parse one range token into subject + numeric bounds. The subject is the START
- * prefix (an end prefix, if present, is assumed to match and ignored); bounds are
- * normalized so `lo <= hi`. Null when not a range. Real codes are expanded against
- * the catalog (catalog.ts) — endpoints are never synthesized.
+ * prefix; an end prefix, if present, must match it ("CS440-MATH498" is malformed
+ * → null). Bounds are normalized so `lo <= hi`. Null when not a range. Real codes
+ * are expanded against the catalog (catalog.ts) — endpoints are never synthesized.
  */
 export function parseCodeRange(
   token: string,
 ): { prefix: string; lo: number; hi: number } | null {
   const g = token.match(CODE_RANGE_RE);
   if (!g) return null;
+  // Reject a mixed-subject range rather than silently coercing it to the start.
+  if (g[3] && g[3].toLowerCase() !== g[1].toLowerCase()) return null;
   const a = Number(g[2]);
   const b = Number(g[4]);
   return {

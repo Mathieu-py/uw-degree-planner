@@ -59,6 +59,15 @@ describe("buildNamedListIndex", () => {
     expect(idx.has("empty")).toBe(false);
   });
 
+  it("merges sections whose headings normalize to the same key", () => {
+    // Both headings → "technical electives"; the second must not drop the first.
+    const idx = buildNamedListIndex(
+      section("Technical Electives List", ["SYDE 522"]) +
+        section("the Technical Electives (TEs) lists", ["SYDE 543"]),
+    );
+    expect(idx.get("technical electives")).toEqual(["syde522", "syde543"]);
+  });
+
   it("returns an empty map for missing input", () => {
     expect(buildNamedListIndex(undefined).size).toBe(0);
   });

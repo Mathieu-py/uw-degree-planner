@@ -232,7 +232,15 @@ export function buildNamedListIndex(
     const courses = [...new Set(anchorCourseCodes($, $section))].sort();
     if (courses.length === 0) return;
     const key = normalizeListName(heading);
-    if (key) index.set(key, courses);
+    if (!key) return;
+    // Merge, don't overwrite: two sections whose headings normalize to the same
+    // key (e.g. "Technical Electives List" + "the Technical Electives lists")
+    // contribute to one list rather than the later silently dropping the earlier.
+    const existing = index.get(key);
+    index.set(
+      key,
+      existing ? [...new Set([...existing, ...courses])].sort() : courses,
+    );
   });
   return index;
 }
