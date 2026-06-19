@@ -8,13 +8,11 @@ interface CatalogEntry {
 }
 
 export interface CatalogIndex {
-  /** Every catalog code (lowercase, e.g. "cs136"). */
-  codes: Set<string>;
-  /** subject prefix → its courses, so a code RANGE can be expanded to real codes. */
+  /** Subject prefix → its courses, so a code range can be expanded to real codes. */
   byPrefix: Map<string, CatalogEntry[]>;
 }
 
-const EMPTY: CatalogIndex = { codes: new Set(), byPrefix: new Map() };
+const EMPTY: CatalogIndex = { byPrefix: new Map() };
 
 let cached: CatalogIndex | null = null;
 
@@ -27,13 +25,11 @@ function splitCode(code: string): CatalogEntry & { prefix: string } {
 }
 
 /**
- * Load the committed course snapshot (`data/courses.<termId>.json`, newest term)
- * as a lookup for expanding code RANGES against the AUTHORITATIVE catalog —
- * never synthesizing codes that don't exist. Read with plain `node:fs` because
- * the scraper is a `tsx` script and can't use the `server-only` `loadTerm`.
- * Memoized (read once per run). A missing/unreadable file degrades to empty
- * structures, so a range simply expands to nothing (stays unverified) rather
- * than crashing the scrape. See #117 (bucket C).
+ * Load the newest committed course snapshot (`data/courses.<termId>.json`) as a
+ * lookup for expanding code ranges against the authoritative catalog. Plain
+ * `node:fs` (the scraper is a tsx script, no `server-only` loadTerm); memoized.
+ * A missing/unreadable file degrades to empty, so a range expands to nothing
+ * rather than crashing. See #117 (bucket C).
  */
 export function loadCatalogCodes(): CatalogIndex {
   if (cached) return cached;
@@ -53,24 +49,20 @@ export function loadCatalogCodes(): CatalogIndex {
     );
     const { courses } = validateCoursesFile(raw);
 
-    const codes = new Set<string>();
     const byPrefix = new Map<string, CatalogEntry[]>();
     for (const c of courses) {
       const code = c.code.toLowerCase();
-      codes.add(code);
       const { prefix, num } = splitCode(code);
       if (Number.isNaN(num)) continue;
-      // A code RANGE means "any real, offered course in this band". Index only
-      // courses the catalog actually weights (units present) — that excludes
-      // inactive / not-offered and WLU cross-listed band members (no sections,
-      // no unit weight), which a student can't take and which would otherwise
-      // surface as requirement courses lacking a unit weight. See #117 (bucket C).
+      // A range means "any real, offered course in this band": index only
+      // weighted courses (units present), excluding inactive/not-offered and WLU
+      // cross-listed members a student can't take. See #117 (bucket C).
       if (c.units == null) continue;
       const bucket = byPrefix.get(prefix);
       if (bucket) bucket.push({ num, code });
       else byPrefix.set(prefix, [{ num, code }]);
     }
-    cached = { codes, byPrefix };
+    cached = { byPrefix };
   } catch {
     cached = EMPTY;
   }
@@ -78,11 +70,9 @@ export function loadCatalogCodes(): CatalogIndex {
 }
 
 /**
- * Expand a parsed code range to the catalog codes whose subject is `prefix` and
- * whose number falls in `[lo, hi]` inclusive (the calendar states subject bands
- * inclusively). Returns only codes that EXIST in the snapshot — a range whose
- * subject is absent (cross-listed/WLU) expands to nothing. Suffix-letter codes
- * (e.g. "cs497a") are kept when their number is in band.
+ * Expand a parsed range to the catalog codes whose subject is `prefix` and whose
+ * number is in `[lo, hi]` inclusive. Only codes that exist in the snapshot (an
+ * absent subject → nothing); suffix-letter codes ("cs497a") count when in band.
  */
 export function catalogCodesInRange(range: {
   prefix: string;

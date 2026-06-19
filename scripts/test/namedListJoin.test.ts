@@ -121,4 +121,34 @@ describe("named-list join (#117 bucket D)", () => {
       "Complete 1 additional course from the options in List 1",
     ]);
   });
+
+  it("does not over-union a single-letter 'List A' reference into a fuzzy heading", () => {
+    // "List A" → key "a"; the contains-fallback must NOT match "technical
+    // electives" (which contains the letter 'a'). With no real List A section the
+    // rule stays unverified rather than grabbing the wrong list.
+    const r = parseProgramRequirements({
+      requirements: rule("Complete 1 course from List A"),
+      courseListsNew: section("Technical Electives List", ["SYDE 522"]),
+    });
+    expect(r.unverified).toContain("Complete 1 course from List A");
+    if (r.kind === "flexible") expect(coursesIn(r.rules)).toEqual([]);
+  });
+
+  it("still resolves a multi-word reference via the contains-match fallback", () => {
+    // "Technical Electives for Option A" ⊇ heading "Technical Electives" — the
+    // length-guarded fuzzy match still joins (only single letters are exact-only).
+    const r = parseProgramRequirements({
+      requirements: rule(
+        "Complete four courses from the Technical Electives for Option A lists",
+      ),
+      courseListsNew: section("Technical Electives List", [
+        "SYDE 522",
+        "SYDE 543",
+      ]),
+    });
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(coursesIn(r.rules).sort()).toEqual(["syde522", "syde543"]);
+    expect(pickNodes(r.rules)[0].selectMin).toBe(4);
+    expect(r.unverified).toEqual([]);
+  });
 });

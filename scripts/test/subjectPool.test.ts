@@ -48,6 +48,38 @@ describe("parseSubjectPool — bucket A: 'in any combination, chosen from' pream
       ),
     ).toBeNull();
   });
+
+  it("keeps the last code when the clause ends with a period (STV.)", () => {
+    // A trailing "." must not defeat the subject-code filter.
+    const p = pool(
+      parseSubjectPool(
+        "Complete 1.0 unit of courses, in any combination, chosen from the following subject codes: BET, BUS, COMM, STV.",
+      ),
+    );
+    expect(p.subjectCodes).toEqual(["BET", "BUS", "COMM", "STV"]);
+  });
+});
+
+describe("parseSubjectPool — level enumerations", () => {
+  it("parses a 3-way enumeration '200-, 300-, or 400-level' as a min..max range", () => {
+    const p = pool(
+      parseSubjectPool(
+        "Complete 1.0 unit at the 200-, 300-, or 400-level from the following subject codes: CS",
+      ),
+    );
+    expect(p.minLevel).toBe(200);
+    expect(p.maxLevel).toBe(400);
+  });
+
+  it("treats a single level with 'or above' as a floor (no max)", () => {
+    const p = pool(
+      parseSubjectPool(
+        "Complete 1.0 unit at the 300-level or above from: MATH",
+      ),
+    );
+    expect(p.minLevel).toBe(300);
+    expect(p.maxLevel).toBeUndefined();
+  });
 });
 
 describe("parseChooseAnyPool — bucket C: pool with no 'Complete N' head", () => {

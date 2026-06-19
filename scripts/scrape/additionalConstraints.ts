@@ -3,22 +3,13 @@ import type { InformationalItem } from "../../lib/programs";
 import { cleanText } from "./dom";
 
 /**
- * Parse Kuali's `additionalConstraints` HTML into informational notes shown
- * verbatim under the audit (progress-untracked).
+ * Parse Kuali's `additionalConstraints` HTML into progress-untracked
+ * `informational` notes. This calendar prose is where a referenced list (e.g.
+ * "List 1") is *defined* and where discretionary "see your advisor" rules live —
+ * unstructurable, but dropping it lost the one sentence the student needs. See #117.
  *
- * This field is calendar prose written for a human — it's where rules like a
- * program's "List 1" are *defined* and where genuinely discretionary rules live
- * ("CS 600-/700-level courses may be taken only with special permission from the
- * instructor and a CS academic advisor"). The rules parser can't structure these
- * (some are unverifiable by definition), but the single most useful sentence for
- * the student — what a referenced list actually means — was being dropped before
- * it reached the UI. Carrying it through as `informational` lets the student read
- * each rule next to the audit. See issue #117.
- *
- * One item per TOP-LEVEL `<li>` (a nested sub-list stays with its parent so
- * "Elective Requirement: …" keeps its heading), tags stripped to readable text.
- * Falls back to `<p>` paragraphs, then the whole cleaned blob, when there's no
- * list. Empty fragments are dropped.
+ * One item per top-level `<li>` (a nested sub-list stays with its parent),
+ * falling back to `<p>` paragraphs then the whole blob. Empty fragments dropped.
  */
 export function parseAdditionalConstraints(
   html: string | undefined,

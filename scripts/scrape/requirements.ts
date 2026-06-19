@@ -60,23 +60,18 @@ const COMPLETE_N_FROM_CHOICES_RE =
   /^Complete (\d+) courses? from the following choices/i;
 const EXCLUDED_RE =
   /^The following cannot be used towards (?:this )?(?:academic )?plan/i;
-// Catch-all for prose that fits no recognized rule shape: stray notes,
-// conditional preambles, exclusion clauses, and unit-bound elective phrasings
-// (handled by `parseElectives`). "Choose" is deliberately absent so future
-// Kuali drift on `Choose …` surfaces as warnings.
+// Prose that fits no rule shape (notes, preambles, unit-bound electives handled
+// by parseElectives). "Choose" is omitted so Kuali drift on it surfaces as a warning.
 const DEFERRED_PROSE_RE =
   /^(?:Complete|The following|Note|If\b|Subject concentration)/i;
 
-// A colon-less rule has no clean "prefix" to slice, so we fall back to its
-// leading slice — long enough for every `^`-anchored rule regex to match, short
-// enough to keep warning messages readable.
+// Fallback prefix slice for a colon-less rule: long enough for every ^-anchored
+// rule regex, short enough to keep warnings readable.
 const MAX_PREFIX_LEN = 200;
 
-// Named lists from this program's `courseListsNew`, keyed by normalized heading.
-// Set once per `parseProgramRequirements` call (parsing is synchronous and
-// single-program, so a module-level value is reentrancy-safe — same pattern as
-// catalog.ts). Read by `resolveNamedList` to join a rule's "from List N"
-// reference to its course list. See #117 (bucket D).
+// This program's `courseListsNew` keyed by normalized heading; reset per
+// parseProgramRequirements call (synchronous, single-program → reentrancy-safe).
+// Joins a rule's "from List N" reference to its courses. See #117 (bucket D).
 let namedLists = new Map<string, string[]>();
 
 // "List A, B, C, or D" / "List 1" — captures the enumeration after "List".
@@ -90,13 +85,11 @@ const LEADING_COUNT_RE =
   /\b(?:complete\s+(?:a\s+total\s+of\s+)?)?(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:additional\s+)?(?:courses?|of\b)/i;
 
 /**
- * Resolve a rule that references a named `courseListsNew` list ("four courses
- * from the Technical Electives lists", "options in List 1", "List A, B, C, or
- * D") to the union of those lists' course codes. Tries a "List X[, Y…]"
- * enumeration first (each letter/number is its own list), then a "from the
- * <Name> list" reference. Returns null when nothing matches a known list — the
- * rule then stays unverified (e.g. a list defined only in additionalConstraints
- * prose, which is the correct home for discretionary rules). See #117 (bucket D).
+ * Resolve a rule referencing named `courseListsNew` lists ("from the Technical
+ * Electives lists", "List A, B, C, or D") to the union of their course codes.
+ * Tries a "List X[, Y…]" enumeration first, then a "from the <Name> list"
+ * reference. Null when no known list matches — the rule stays unverified (e.g. a
+ * list defined only in additionalConstraints prose). See #117 (bucket D).
  */
 function resolveNamedList(fullText: string): string[] | null {
   if (namedLists.size === 0) return null;
@@ -117,10 +110,11 @@ function resolveNamedList(fullText: string): string[] | null {
       for (const c of exact) courses.add(c);
       continue;
     }
-    // Fall back to a contains-match (heading "Technical Electives" vs a rule's
-    // longer "Technical Electives for Option X" phrasing).
+    // Contains-match for multi-word headings ("Technical Electives" vs a rule's
+    // "Technical Electives for Option X"). Length guard keeps single letters/
+    // digits ("List A"/"List 1") exact-only — else "a" matches any heading.
     for (const [name, list] of namedLists)
-      if (key && (name.includes(key) || key.includes(name)))
+      if (key.length >= 3 && (name.includes(key) || key.includes(name)))
         for (const c of list) courses.add(c);
   }
   return courses.size > 0 ? [...courses].sort() : null;
@@ -331,10 +325,8 @@ type ParsedLi =
     };
 
 /**
- * A recognized rule prefix whose course codes we failed to extract is a SILENT
- * LOSS — a bare `return null` drops a real requirement and the audit reads 100%.
- * Record it as UNVERIFIED (gates the headline below 100%, shown to the student)
- * and warn so the parser miss is visible to developers.
+ * A recognized rule whose codes we couldn't extract is a silent loss (a bare
+ * `return null` would let the audit read 100%). Record it as unverified and warn.
  */
 function recordUnextracted(
   fullText: string,
@@ -384,11 +376,9 @@ function parseLi(
 
   const codes = collectCourseCodes($, $result);
 
-  // Named-list reference: a rule that points at a `courseListsNew` list by name
-  // ("four courses from the Technical Electives lists", "options in List 1")
-  // extracts no codes of its own. Join the list's courses here, before the
-  // recognized-rule branches record it as unverified. A count makes it a
-  // `pick N`; no count → an open `pick`. See #117 (bucket D).
+  // A rule referencing a `courseListsNew` list by name extracts no codes itself;
+  // join the list's courses before the branches below record it unverified. A
+  // leading count → `pick N`, else an open `pick`. See #117 (bucket D).
   if (codes.length === 0) {
     const listCourses = resolveNamedList(fullText);
     if (listCourses) {
@@ -537,25 +527,21 @@ function collectCourseCodes(
   $result: ReturnType<cheerio.CheerioAPI>,
 ): string[] {
   const codes = new Set<string>(anchorCourseCodes($, $result));
-  // Fallback for required courses Kuali renders as PLAIN TEXT (absent from UW's
-  // course DB — cross-institution "…W" codes like BUS127W, or unlinked INDEV387).
-  // Only when nothing was hyperlinked, scan the list after the colon.
+  // Fallback for codes Kuali renders as plain text (absent from UW's DB —
+  // cross-institution "…W" codes, unlinked INDEV387): scan the post-colon list.
   if (codes.size === 0) {
     const text = $result.text();
     const colon = text.indexOf(":");
     const list = colon >= 0 ? text.slice(colon + 1) : "";
     if (list) {
-      // Expand course-number RANGES ("CS440-CS498") against the AUTHORITATIVE
-      // catalog — the calendar states inclusive subject bands; we emit only codes
-      // that exist in the snapshot, never synthesizing endpoints. A range whose
-      // subject is absent (cross-listed/WLU) expands to nothing → unverified.
+      // Expand ranges ("CS440-CS498") against the catalog — inclusive bands, real
+      // codes only (never synthesized; absent subject → nothing). See #117 (C).
       for (const m of list.matchAll(CODE_RANGE_RE_G)) {
         const range = parseCodeRange(m[0]);
         if (range)
           for (const code of catalogCodesInRange(range)) codes.add(code);
       }
-      // Then scan the non-range remainder for literal codes (a list may mix the
-      // two: "CS136, CS138, CS240-299").
+      // Then literal codes from the remainder (a list may mix: "CS136, CS240-299").
       const remainder = list.replace(CODE_RANGE_RE_G, " ");
       for (const tok of remainder.match(TEXT_CODE_RE) ?? []) {
         const code = normalizeCourseCode(tok);
@@ -567,11 +553,9 @@ function collectCourseCodes(
 }
 
 /**
- * Wrap children by the prose on a DOM wrapper `<li>`. Only `Complete N of` is
- * structurally meaningful; everything else becomes a plain `all` (the children
- * carry the rule shape). Recognized "Complete all/N of …" text is dropped —
- * `describeRule()` reconstructs it. Non-standard prose (defensive; none in
- * current data) is preserved on the node.
+ * Wrap children by a DOM wrapper `<li>`'s prose. Only "Complete N of" is
+ * structural; recognized "Complete all/N of …" text is dropped (describeRule
+ * reconstructs it). Non-standard prose is preserved on the node.
  */
 function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
   const nOf = COMPLETE_N_OF_RE.exec(wrapperText);
@@ -584,9 +568,8 @@ function wrapWithProse(wrapperText: string, children: RuleNode[]): RuleNode {
       children,
     };
   }
-  // Drop wrapper text only when it matches the standard `Complete all …` form.
-  // Anything else is non-standard prose that's worth preserving verbatim — even
-  // on the single-child fast path, where unwrapping would otherwise lose it.
+  // Keep non-standard wrapper prose verbatim — even on the single-child fast
+  // path, where unwrapping would otherwise drop it.
   const isStandardAll = COMPLETE_ALL_RE.test(wrapperText);
   if (children.length === 1 && (!wrapperText || isStandardAll)) {
     return children[0];

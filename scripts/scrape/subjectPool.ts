@@ -3,12 +3,8 @@ import { WORD_NUMBERS } from "./counts";
 import { facultyFromName, subjectsForFaculties } from "./data/subjectFaculty";
 import { extractSubjectCodes } from "./normalize";
 
-/**
- * A clause that genuinely narrows the pool ("excluding CS100", "exclusive of
- * BIOL225 and BIOL280", "except …"). Used to keep real exclusions out of the
- * noise — clarifying parentheticals ("0.5 unit", "see Additional Constraints",
- * "including any taken above") are NOT exclusions and are dropped.
- */
+// A genuine pool-narrowing clause ("excluding CS100", "exclusive of …", "except
+// …") — clarifying parentheticals ("0.5 unit", "see Additional Constraints") are not.
 const EXCLUSION_RE = /^(?:exclud|exclusive\s+of|except)/i;
 
 interface PoolHead {
@@ -19,9 +15,8 @@ interface PoolHead {
 }
 
 /**
- * Match the "Complete N …" lead-in and optional unit keyword. The count may be a
- * digit, a word ("two"), or "a"/"an"; the unit keyword may be followed by
- * "of"/"in", a level, or the subject directly. Null when not a "Complete N" rule.
+ * Match the "Complete N [units] [of|in]" lead-in. Count may be a digit, a word,
+ * or "a"/"an". Null when not a "Complete N" rule.
  */
 function parseHead(fullText: string): PoolHead | null {
   const head = fullText.match(
@@ -36,10 +31,9 @@ function parseHead(fullText: string): PoolHead | null {
 }
 
 /**
- * Pull parenthetical clauses out ("(excluding CS100)") so they don't confuse
- * level/from parsing, collecting only the ones that are genuine exclusions (see
- * {@link EXCLUSION_RE}). Then drop count-qualifier noise: a stray leading
- * "additional" and a per-course unit-size qualifier ("0.5-unit course").
+ * Pull parentheticals out so they don't confuse level/from parsing, keeping only
+ * genuine exclusions ({@link EXCLUSION_RE}). Then drop count-qualifier noise (a
+ * stray leading "additional", a per-course "0.5-unit" size).
  */
 function stripExclusionsAndQualifiers(
   rest: string,
@@ -54,11 +48,9 @@ function stripExclusionsAndQualifiers(
       })
       .replace(/\s+/g, " ")
       .trim()
-      // "N units of additional ERS courses" → drop the stray "additional" so the
-      // subject code that follows it is found (it sits after "units of", not before).
+      // Drop a stray leading "additional" so the subject code after it is found.
       .replace(/^additional\s+/i, "")
-      // Drop a per-course unit-size qualifier ("0.5-unit course"); it's a count
-      // requirement, not a unit total.
+      // Drop a per-course unit-size qualifier ("0.5-unit course"), not a unit total.
       .replace(/^[\d.]+[\s-]unit\s+/i, "")
   );
 }
@@ -75,10 +67,8 @@ interface SubjectMatch {
  * Subjects may instead arrive via "from:", so an empty result isn't yet a fail.
  */
 function parseSubjects(rest: string): SubjectMatch {
-  // All-caps codes joined by "and/or", "and", "or", "," or an Oxford ", or".
-  // Case-sensitive so prose words aren't mistaken for codes (they fall through
-  // to "from:"). A descriptor adjective ("lecture", "lab") may sit before
-  // "courses".
+  // All-caps codes joined by and/or/comma; case-sensitive so prose words aren't
+  // mistaken for codes. A descriptor adjective ("lecture", "lab") may precede "courses".
   const codesMatch = rest.match(
     /^([A-Z]{2,8}(?:\s*(?:,\s*(?:or|and)|and\/or|,|and|or)\s*[A-Z]{2,8})*)\s+(?:(?:lecture|laboratory|lab|elective|approved)\s+)*courses?\b/,
   );
@@ -96,9 +86,7 @@ function parseSubjects(rest: string): SubjectMatch {
   if (/^courses?\b/i.test(rest)) {
     return { subjectCodes: [], rest: rest.replace(/^courses?\b/i, "").trim() };
   }
-  // No "courses" noun at all ("1.0 unit at the 300-level from the following
-  // subject codes: …") — don't bail; the subject set comes from the "from:"
-  // clause. We only give up if NO subjects are found after level + from.
+  // No "courses" noun — don't bail; subjects come from the "from:" clause.
   return { subjectCodes: [], rest };
 }
 
@@ -109,11 +97,9 @@ interface LevelRange {
 }
 
 /**
- * Parse an optional level constraint after "at the": a single level
- * ("300-level" → floor), an explicit range ("300- or 400-level"), the slash
- * form ("600-/700-level"), a longer enumeration ("200-, 300-, or 400-level" →
- * min..max), or a single level "or above/higher" (floor). One number is a
- * floor; several span min..max.
+ * Parse an optional "at the <level>" constraint: one level → floor; several
+ * ("300- or 400-level", "600-/700-level", "200-, 300-, or 400-level") → min..max.
+ * A single level with "or above/higher" stays a floor.
  */
 function parseLevelRange(rest: string): LevelRange {
   const levelMatch = rest.match(
@@ -124,18 +110,16 @@ function parseLevelRange(rest: string): LevelRange {
   const out: LevelRange = { rest: rest.slice(levelMatch[0].length).trim() };
   if (nums.length > 0) {
     out.minLevel = Math.min(...nums);
-    // Multiple bounded levels span a range; a single level (with or without
-    // "or above") is a floor, so leave maxLevel open.
+    // Several levels span a range; one level (even with "or above") is a floor.
     if (nums.length > 1) out.maxLevel = Math.max(...nums);
   }
   return out;
 }
 
 /**
- * Parse an optional "from [the following subject codes|subjects][:] <list>[;
- * <exclusion>]" clause. Returns the subject codes it names (empty when absent)
- * and pushes any trailing `;`-led clause that is a genuine exclusion (see
- * {@link EXCLUSION_RE}) onto `exclusions`.
+ * Parse an optional "from [the following subject codes] <list>[; <exclusion>]"
+ * clause. Returns the codes it names (empty when absent); pushes a trailing
+ * `;`-led genuine exclusion ({@link EXCLUSION_RE}) onto `exclusions`.
  */
 function parseFromClause(rest: string, exclusions: string[]): string[] {
   const fromMatch = rest.match(
@@ -145,19 +129,17 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
   const parts = fromMatch[1].split(";").map((p) => p.trim());
   const fromSubjects = parts[0]
     .split(/[,\s]+/)
-    .map((s) => s.trim())
+    // Strip trailing punctuation ("STV." at a sentence end) before the filter.
+    .map((s) => s.replace(/[^A-Za-z]/g, ""))
     .filter((s) => /^[A-Z]{2,8}$/.test(s));
   for (const p of parts.slice(1)) if (EXCLUSION_RE.test(p)) exclusions.push(p);
   return fromSubjects;
 }
 
 /**
- * Resolve a faculty-scoped clause ("in the Faculty of Arts", "from the following
- * Faculties: Environment, Health, Science", "Faculties of Arts, Science") to the
- * faculties it names. The blob is read up to a clause break (";", ".", end, or
- * a ", or from …" alternation), then split on connectives and each fragment
- * resolved via {@link facultyFromName}. Empty when no faculty is named. See #117
- * (bucket B).
+ * Resolve a faculty-scoped clause ("Faculty of Arts", "Faculties: Environment,
+ * Health, Science") to the faculties it names — read up to a clause break, split
+ * on connectives, each fragment via {@link facultyFromName}. See #117 (bucket B).
  */
 function parseFacultyClause(text: string): Faculty[] {
   if (!/facult/i.test(text)) return [];
@@ -174,11 +156,9 @@ function parseFacultyClause(text: string): Faculty[] {
 }
 
 /**
- * Build a `subjectPool` node from the text AFTER the count lead-in (the subject
- * descriptor + optional level + optional "from:" list). Shared by
- * {@link parseSubjectPool} (which derives `selectCount` from "Complete N") and
- * {@link parseChooseAnyPool} (count 1). Returns null when no enumerable subject
- * set survives.
+ * Build a `subjectPool` node from the text after the count lead-in (subject
+ * descriptor + optional level + "from:" list). Shared by {@link parseSubjectPool}
+ * and {@link parseChooseAnyPool}. Null when no enumerable subject set survives.
  */
 function buildPool(restIn: string, selectCount: number): RuleNode | null {
   const exclusions: string[] = [];
@@ -195,12 +175,10 @@ function buildPool(restIn: string, selectCount: number): RuleNode | null {
   const level = parseLevelRange(rest);
   rest = level.rest;
 
-  // Strip a connective preamble between the subject noun and the "from" list —
-  // the calendar writes "…courses, in any combination, chosen from the following
-  // subject codes: …". The `(?=from\b)` lookahead fires the strip only when a
-  // real "from" list follows, so a bare "in any combination" with no list still
-  // falls through to null. Without this, parseFromClause never reaches the list
-  // and the pool drops to unverified. See #117 (bucket A).
+  // Strip a connective preamble between the subject noun and "from" ("…courses,
+  // in any combination, chosen from …"). The `(?=from\b)` lookahead fires only
+  // when a real list follows, so a bare "in any combination" still falls through
+  // to null. See #117 (bucket A).
   rest = rest
     .replace(
       /^,?\s*(?:in any combination\s*,?\s*)?(?:chosen\s+)?(?=from\b)/i,
@@ -211,20 +189,17 @@ function buildPool(restIn: string, selectCount: number): RuleNode | null {
   const fromSubjects = parseFromClause(rest, exclusions);
   if (fromSubjects.length > 0) subjectCodes = fromSubjects;
 
-  // Faculty-scoped clause ("courses in the Faculty of Arts") → expand to that
-  // faculty's subject codes via the authoritative table. Unioned with any
-  // explicit/`from:` codes so a compound "Faculty of Arts, or … subject codes:
-  // BET, BUS, …" rule keeps both halves. Codes are uppercased to match the
-  // stored convention (extractSubjectCodes / parseFromClause emit uppercase).
+  // Faculty clause → that faculty's codes via the authoritative table, unioned
+  // with explicit/`from:` codes so a compound "Faculty of Arts, or … codes" rule
+  // keeps both halves. Uppercased to match the stored convention. See #117 (B).
   const facultySubjects = subjectsForFaculties(parseFacultyClause(rest)).map(
     (c) => c.toUpperCase(),
   );
   if (facultySubjects.length > 0)
     subjectCodes = [...new Set([...subjectCodes, ...facultySubjects])];
 
-  // No enumerable subject codes (e.g. "Science courses…" with no `from:` list):
-  // drop rather than fabricate a subject set. Conservative-but-lossy — the rule
-  // is then untracked (no count ring).
+  // No enumerable codes (e.g. "Science courses" with no `from:`): drop rather
+  // than fabricate. Conservative-but-lossy — the rule is then untracked.
   if (subjectCodes.length === 0) return null;
 
   return {
@@ -239,30 +214,24 @@ function buildPool(restIn: string, selectCount: number): RuleNode | null {
 
 /**
  * Parse a "Complete N …" subject-pool rule into a `subjectPool` node, or null if
- * the prose names no enumerable subject set. Handles the varied phrasings
- * ("…STAT courses at the 300-level", "…from: ACTSC, AMATH, …", "N units of …").
- * A unit amount is converted to an approximate course count (units / 0.5); the
- * unit audit re-weights by real catalog units, so the approximation only affects
- * the count fallback. Exclusions are kept verbatim and don't gate matching.
+ * no enumerable subject set is named. A unit amount becomes an approximate count
+ * (units / 0.5) — the unit audit re-weights by real catalog units, so the
+ * approximation only affects the count fallback.
  */
 export function parseSubjectPool(fullText: string): RuleNode | null {
   const head = parseHead(fullText);
   if (!head) return null;
   const { amount, isUnits } = head;
-  // A unit-stated pool ("5.25 units of Science courses") has no per-course units
-  // at parse time, so `selectCount` approximates the count assuming a 0.5-unit
-  // course.
+  // Unit-stated pool has no per-course units at parse time; approximate the count
+  // assuming 0.5-unit courses.
   const selectCount = isUnits ? Math.max(1, Math.round(amount / 0.5)) : amount;
   return buildPool(head.rest, selectCount);
 }
 
 /**
- * Parse a "Choose any …" pool phrase that has no "Complete N" lead-in, e.g.
- * "any CS course at the 600-/700-level". Strips the "Choose any … from the
- * following:" / leading "any" framing, then builds a `selectCount: 1` pool via
- * {@link buildPool}. Used as a fallback when a "Choose any" rule extracted no
- * literal course codes (the pool half of a list like "CS440-CS498, any CS
- * course at the 600- or 700-level"). See #117 (bucket C).
+ * Parse a "Choose any …" pool with no "Complete N" head ("any CS course at the
+ * 600-/700-level"): strip the framing, build a `selectCount: 1` pool. Fallback
+ * when a "Choose any" rule extracted no literal codes. See #117 (bucket C).
  */
 export function parseChooseAnyPool(fullText: string): RuleNode | null {
   const rest = fullText

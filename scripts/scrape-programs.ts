@@ -81,10 +81,8 @@ export interface ProgramDetail extends ProgramListEntry {
   courseListsNew?: string;
   specializationsList?: string;
   /**
-   * Free-prose calendar notes (an `<ol>` written for a human): where rules like
-   * a program's "List 1" are defined and where discretionary "see your advisor"
-   * rules live. Carried through as `informational` so the student can read them
-   * next to the audit. See #117.
+   * Free-prose calendar notes carried through as `informational` (where list
+   * defs and discretionary "see your advisor" rules live). See #117.
    */
   additionalConstraints?: string;
 }
@@ -459,10 +457,8 @@ async function runPhaseA(
       const unitPlanField = planResult.unitPlan
         ? { unitPlan: planResult.unitPlan }
         : {};
-      // Carry free-prose calendar notes (additionalConstraints) alongside the
-      // unit-plan informational items, so rules defined only in prose (e.g. what
-      // "List 1" means, discretionary advisor-permission rules) reach the UI
-      // instead of being dropped. See #117.
+      // Carry additionalConstraints prose alongside the unit-plan informational
+      // items, so rules defined only in prose reach the UI. See #117.
       const informational = [
         ...planResult.informational,
         ...parseAdditionalConstraints(detail.additionalConstraints),

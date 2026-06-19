@@ -1,23 +1,19 @@
 import type { Faculty } from "../../../lib/programs";
 
 /**
- * Subject code → owning UW Faculty, transcribed verbatim from the University of
- * Waterloo Undergraduate Academic Calendar's authoritative "Course Subjects
- * Offered" table (the page programs' `additionalConstraints` point to for
- * "faculty assignment of subject codes").
+ * Subject code → owning UW Faculty, transcribed verbatim (per AGENTS.md, not
+ * inferred from course data) from the UW Undergraduate Calendar's authoritative
+ * "Course Subjects Offered" table — the page programs' `additionalConstraints`
+ * cite for "faculty assignment of subject codes".
  *
  * Source (Kuali content node, fetched 2026-06-13):
  *   https://uwaterloocm.kuali.co/api/v1/catalog/content/67e557ed6ed2fe2bd3a38964
- *   (rendered: Undergraduate Calendar → Course Subjects Offered)
  *
- * Per AGENTS.md this is transcribed from the authoritative source, NOT inferred
- * from course data. The table's "Owner" column is mapped onto {@link Faculty}:
- * "Faculty of Arts with <College>" → arts. Subjects whose owner is NOT a single
- * faculty — Interdisciplinary Studies (e.g. SE, PD, STV, AVIA, CFM), Wilfrid
- * Laurier University (BUS), or a standalone affiliated college (Renison: BASE,
- * EMLS, SWREN) — are intentionally OMITTED, so a "Faculty of X" pool never
- * wrongly claims them. A clause naming an unrecognized faculty expands to
- * nothing, so the rule stays unverified rather than being mis-structured.
+ * The "Owner" column maps onto {@link Faculty} ("Faculty of Arts with <College>"
+ * → arts). Subjects whose owner is NOT a single faculty — Interdisciplinary
+ * Studies (SE, PD, STV, …), Wilfrid Laurier (BUS), affiliated colleges (Renison:
+ * BASE, EMLS, SWREN) — are intentionally OMITTED, so a "Faculty of X" pool never
+ * wrongly claims them (an unrecognized faculty expands to nothing → unverified).
  */
 export const SUBJECT_FACULTY: Record<string, Faculty> = {
   // mathematics
