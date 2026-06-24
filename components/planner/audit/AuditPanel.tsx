@@ -16,7 +16,8 @@ import { AuditMacroList } from "./AuditMacroList";
 import type { ProgramAuditData } from "./buildProgramAudit";
 import { buildProgramAudit } from "./buildProgramAudit";
 import { ProgramAuditCard } from "./ProgramAuditCard";
-import type { DragWiring, DrillFn } from "./types";
+import type { AcknowledgeFn, DragWiring, DrillFn } from "./types";
+import { UnverifiedRequirements } from "./UnverifiedRequirements";
 
 interface Props {
   plan: LocalPlan;
@@ -30,6 +31,8 @@ interface Props {
    * pre-filtered to those codes. Omitted by the read-only view (rows inert).
    */
   onDrillToRequirement?: DrillFn;
+  /** Toggle manual confirmation of an unverified requirement; omitted read-only. */
+  onAcknowledgeRequirement?: AcknowledgeFn;
   /** Drag lifecycle for course rows; omitted alongside the read-only view. */
   drag?: DragWiring;
 }
@@ -49,6 +52,7 @@ export const AuditPanel = memo(function AuditPanel({
   plan,
   catalog,
   onDrillToRequirement,
+  onAcknowledgeRequirement,
   drag,
 }: Props) {
   const catalogByCode = useMemo(
@@ -106,6 +110,7 @@ export const AuditPanel = memo(function AuditPanel({
           issues={issues}
           blockingIssueCount={blockingIssueCount}
           onDrillToRequirement={onDrillToRequirement}
+          onAcknowledgeRequirement={onAcknowledgeRequirement}
           drag={drag}
         />
       </aside>
@@ -214,8 +219,12 @@ export const AuditPanel = memo(function AuditPanel({
             </div>
             <AuditAdvisoryNotes
               estimatedDenom={detail.estimatedDenom}
-              unverifiedCount={detail.unverifiedCount}
               blockingIssueCount={blockingIssueCount}
+            />
+            <UnverifiedRequirements
+              programId={activeId}
+              items={detail.unverifiedItems}
+              onAcknowledge={onAcknowledgeRequirement}
             />
             <AuditMacroList
               macros={detail.macros}

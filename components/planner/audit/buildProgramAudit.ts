@@ -27,8 +27,12 @@ export interface ProgramAuditData {
   audit: AuditRoot;
   progress: DegreeProgress;
   macros: Macro[];
-  /** Structured requirements that couldn't be auto-verified. */
-  unverifiedCount: number;
+  /**
+   * Requirements the scraper couldn't auto-verify, each with whether the student
+   * has manually confirmed it on the plan. Rendered near the headline as
+   * "confirm manually" rows; acknowledging one lets the headline reach 100%.
+   */
+  unverifiedItems: { text: string; acked: boolean }[];
   /** Every code with a placement (shown on its row). */
   placedCodes: Set<string>;
   /** Placed-but-illegal codes — flagged and excluded from ring counts/headline. */
@@ -99,14 +103,18 @@ export function buildProgramAudit(
     programId,
     equiv,
   );
+  const acknowledged = new Set(
+    plan.acknowledgedRequirements?.[programId] ?? [],
+  );
   const progress = computeDegreeProgress(
     audit,
     program,
     unitsOf,
     legality,
     equiv,
+    acknowledged,
   );
-  const { macros, unverifiedCount } = deriveMacros(
+  const { macros } = deriveMacros(
     audit,
     program,
     progress.freeUnits,
@@ -115,6 +123,16 @@ export function buildProgramAudit(
     unitsOf,
     legality,
     progress.nodeFill,
+  );
+
+  // Unverified requirements, surfaced near the headline (not buried in a macro)
+  // so "confirm with your advisor" is actionable. Each carries its acked state;
+  // the still-owed ones (progress.owedUnverified) hold the headline below 100%.
+  const unverifiedItems = (program?.unverifiedRequirements ?? []).map(
+    (text) => ({
+      text,
+      acked: acknowledged.has(text),
+    }),
   );
 
   // Whole-degree completion, not a sum of overlapping slots. See computeDegreeProgress.
@@ -136,7 +154,7 @@ export function buildProgramAudit(
     audit,
     progress,
     macros,
-    unverifiedCount,
+    unverifiedItems,
     placedCodes,
     illegalCodes,
     headlinePct,

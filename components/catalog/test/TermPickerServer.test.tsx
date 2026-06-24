@@ -69,6 +69,7 @@ function makeServerPlan(
     name: "My plan",
     programIds: ["se"],
     specializationIds: {},
+    acknowledgedRequirements: {},
     stream: "regular",
     startTermId: FALL_2025,
     programScrapeVersion: null,

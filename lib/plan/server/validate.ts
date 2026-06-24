@@ -14,6 +14,11 @@ export const MAX_ID_LEN = 128;
 const MAX_SCRAPE_VERSION_LEN = 64;
 const MAX_COURSE_CODE_LEN = 32;
 const MAX_GRADE_LEN = 16;
+// Acknowledged unverified requirements: keyed by program (≤ MAX_PROGRAM_IDS),
+// each a small list of verbatim requirement texts. Texts are calendar prose, so
+// allow a generous per-string length but cap the count to bound the payload.
+const MAX_ACKED_PER_PROGRAM = 64;
+const MAX_ACKED_TEXT_LEN = 512;
 
 /**
  * Size-only caps, checked first so genuine resource-exhaustion payloads keep the
@@ -63,6 +68,21 @@ const PlanSnapshotSchema = z
       .refine((m) => Object.keys(m).length <= MAX_SPECIALIZATIONS, {
         message: "too many specializations",
       }),
+    acknowledgedRequirements: z
+      .record(
+        BoundedId,
+        z
+          .array(z.string().min(1).max(MAX_ACKED_TEXT_LEN))
+          .max(MAX_ACKED_PER_PROGRAM)
+          .refine((texts) => new Set(texts).size === texts.length, {
+            message: "duplicate acknowledged requirements",
+          }),
+      )
+      .refine((m) => Object.keys(m).length <= MAX_PROGRAM_IDS, {
+        message: "too many acknowledged-requirement programs",
+      })
+      // Additive field — older clients omit it. Default keeps the snapshot valid.
+      .default({}),
     stream: z.enum(STREAM_VALUES).nullable(),
     startTermId: z.number().int().nullable(),
     programScrapeVersion: z.string().max(MAX_SCRAPE_VERSION_LEN).nullable(),

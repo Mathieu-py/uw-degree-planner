@@ -44,6 +44,12 @@ const LocalPlanSchema = z.object({
   stream: StreamSchema,
   startTermId: z.number().nullable(),
   slots: z.array(PlanSlotSchema),
+  // Additive (no schemaVersion bump): plans saved before this field existed
+  // simply default to `{}` and keep loading. See LocalPlan.acknowledgedRequirements.
+  acknowledgedRequirements: z
+    .record(z.string(), z.array(z.string()))
+    .optional()
+    .default({}),
   updatedAt: z.string(),
 });
 
@@ -114,6 +120,7 @@ export function emptyPlan(): LocalPlan {
     stream: "regular",
     startTermId: null,
     slots: [],
+    acknowledgedRequirements: {},
     updatedAt: new Date().toISOString(),
   };
 }

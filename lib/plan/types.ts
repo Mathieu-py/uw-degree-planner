@@ -112,6 +112,14 @@ export interface LocalPlan {
   /** Calendar term ID of the student's 1A. Null until set during onboarding. */
   startTermId: TermId | null;
   slots: PlanSlot[];
+  /**
+   * Per-program acknowledgement of `unverifiedRequirements` (`programId → acked
+   * texts`): rules the scraper couldn't make machine-checkable, which the student
+   * confirms to clear the 100% headline. Keyed by verbatim text (the only stable
+   * id — re-wordings should re-prompt). Optional for pre-#116 plans; the server
+   * round-trip normalizes to `{}`, so `ServerPlan` has it required.
+   */
+  acknowledgedRequirements?: Record<string, string[]>;
   /** ISO-8601 timestamp of last save. */
   updatedAt: string;
 }

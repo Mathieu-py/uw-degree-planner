@@ -75,6 +75,60 @@ describe("AuditPanel", () => {
     expect(screen.queryByText(/pick a program/i)).not.toBeNull();
   });
 
+  it("surfaces unverified requirements as acknowledgeable rows and wires the toggle (#116)", () => {
+    // A real program that carries unverified requirements — keyed by verbatim
+    // text, surfaced near the headline (not buried in a macro).
+    const entry = Object.entries(PROGRAMS).find(
+      ([, p]) => (p.unverifiedRequirements?.length ?? 0) > 0,
+    );
+    if (!entry)
+      throw new Error("fixture: no program with unverifiedRequirements");
+    const [programId, program] = entry;
+    const text = program.unverifiedRequirements?.[0] as string;
+
+    const calls: Array<[string, string, boolean]> = [];
+    render(
+      <AuditPanel
+        plan={mkPlan({ programIds: [programId] })}
+        onAcknowledgeRequirement={(pid, t, acked) =>
+          calls.push([pid, t, acked])
+        }
+      />,
+    );
+
+    expect(screen.getByText(/unverified requirements/i)).toBeTruthy();
+    const row = screen.getByText(text).closest("label");
+    expect(row).not.toBeNull();
+    const box = row?.querySelector("input[type=checkbox]") as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    fireEvent.click(box);
+    expect(calls).toEqual([[programId, text, true]]);
+  });
+
+  it("shows an acknowledged requirement as checked when stored on the plan", () => {
+    const entry = Object.entries(PROGRAMS).find(
+      ([, p]) => (p.unverifiedRequirements?.length ?? 0) > 0,
+    );
+    if (!entry)
+      throw new Error("fixture: no program with unverifiedRequirements");
+    const [programId, program] = entry;
+    const text = program.unverifiedRequirements?.[0] as string;
+    render(
+      <AuditPanel
+        plan={mkPlan({
+          programIds: [programId],
+          acknowledgedRequirements: { [programId]: [text] },
+        })}
+        onAcknowledgeRequirement={() => {}}
+      />,
+    );
+    const box = screen
+      .getByText(text)
+      .closest("label")
+      ?.querySelector("input[type=checkbox]") as HTMLInputElement;
+    expect(box.checked).toBe(true);
+  });
+
   it("renders a master·detail panel (no combined score + one rail pip per program) for a double degree", () => {
     const engId = engineeringProgramId();
     const flexId = Object.entries(PROGRAMS).find(

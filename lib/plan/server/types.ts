@@ -26,6 +26,8 @@ export interface ServerPlan {
   name: string;
   programIds: string[];
   specializationIds: Record<string, string>;
+  /** Per-program acked unverified requirements (see LocalPlan). */
+  acknowledgedRequirements: Record<string, string[]>;
   stream: Stream | null;
   startTermId: TermId | null;
   programScrapeVersion: string | null;
@@ -41,6 +43,7 @@ export interface ServerPlan {
 export interface PlanSnapshot {
   programIds: string[];
   specializationIds: Record<string, string>;
+  acknowledgedRequirements: Record<string, string[]>;
   stream: Stream | null;
   startTermId: TermId | null;
   programScrapeVersion: string | null;
