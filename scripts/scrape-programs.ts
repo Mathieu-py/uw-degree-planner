@@ -201,6 +201,9 @@ export function buildSpecialization(
   const warnings: string[] = [];
   if (collisionWarning) warnings.push(collisionWarning);
 
+  // Like the runPhaseA call site: parseProgramRequirements uses module-level
+  // state reset per call, so it must stay synchronous and non-interleaved.
+  // buildSpecialization is invoked once per spec, sequentially.
   const result = parseProgramRequirements(detail, `spec:${slug}`);
   if (result.kind === "engineering") {
     // Specs are expected to be flexible-shaped; surface an engineering-shaped
@@ -442,6 +445,13 @@ async function runPhaseA(
       ),
     onResult: (detail, p) => {
       const slug = buildProgramSlug(p.code, conflictCounts);
+      // parseProgramRequirements resets and reads module-level state
+      // (namedLists, droppedFreeElectives) within a single SYNCHRONOUS call, so
+      // each program's parse is atomic under JS's single thread. Safe here only
+      // because fetchEachPaced runs onResult sequentially and this callback
+      // never awaits between the parse and its use. Do NOT parallelize the parse
+      // (e.g. Promise.all over programs) or make it async — that would interleave
+      // two programs' shared state and silently corrupt the audit.
       const result = parseProgramRequirements(detail, slug);
       warnings.push(...result.warnings);
       if (result.kind === "empty") {

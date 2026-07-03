@@ -16,6 +16,7 @@ import {
   parseSpecializationsList,
   parseUnitPlan,
 } from "../scrape/programs-parser";
+import { excludedCodes } from "../scrape/requirements";
 
 const rawJson = (slug: string): Record<string, string> =>
   JSON.parse(
@@ -677,13 +678,25 @@ describe("recover more unverified requirements (R1–R6)", () => {
     ]) {
       const r = parseProgramRequirements({ requirements: wrap(t) }, "test");
       expect(r.unverified).toContain(t);
-      const pools = r.kind === "flexible" ? [] : [];
-      expect(pools).toEqual([]);
       if (r.kind === "flexible")
         expect(
           findNode(r.rules, (n) => n.kind === "subjectPool"),
         ).toBeUndefined();
     }
+  });
+
+  it("reads a long exclusion clause (60 codes) correctly and fast (ReDoS guard)", () => {
+    // EXCLUSION_LIST_RE has no catastrophic backtracking today (each `+`
+    // iteration requires a mandatory code token), but this locks that in: a
+    // future edit that reintroduces ambiguity would blow far past the budget.
+    const excluded = Array.from({ length: 60 }, (_, i) => `CS${110 + i}`);
+    const clause = `Complete 3 CS courses, excluding ${excluded.join(", ")}`;
+    const start = performance.now();
+    const codes = excludedCodes(clause);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(50); // measured <1ms; a ReDoS would take seconds
+    expect(codes.size).toBe(60);
+    expect(codes.has("cs136")).toBe(true);
   });
 
   it("drops redundant genuinely-open free electives, not surfacing them (R7)", () => {

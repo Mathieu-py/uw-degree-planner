@@ -114,14 +114,19 @@ const MAX_PREFIX_LEN = 200;
 
 // This program's named course lists keyed by normalized heading — its
 // `courseListsNew` plus (added in parseFlexible) its titled requirement sections.
-// Reset per parseProgramRequirements call (synchronous, single-program →
-// reentrancy-safe). Joins a rule's "from List N" / "from the … list" reference to
-// its courses. See #117 (bucket D).
+// Joins a rule's "from List N" / "from the … list" reference to its courses.
+// See #117 (bucket D).
+//
+// MODULE-LEVEL STATE — safe only because parseProgramRequirements resets then
+// reads this within a single SYNCHRONOUS call (no await between reset and last
+// use), so each program's parse is atomic under JS's single thread. Callers must
+// keep the parse synchronous and non-interleaved (no Promise.all over programs);
+// see the call-site notes in scrape-programs.ts.
 let namedLists = new Map<string, string[]>();
 
 // Free electives this program dropped from its rule tree — collected so the
 // assembler can re-surface them for programs with no totalUnits denominator.
-// Reset per parseProgramRequirements call (single-program → reentrancy-safe).
+// Same synchronous-atomicity contract as `namedLists` above.
 let droppedFreeElectives: string[] = [];
 
 // "List A, B, C, or D" / "List 1" — captures the enumeration after "List".
@@ -250,8 +255,9 @@ const EXCLUSION_LIST_RE =
   /\b(?:excluding|except|exclusive\s+of)\b(?:\s*(?:,|and)?\s*[A-Za-z]{2,8}\s?\d{3,4}[A-Za-z]?(?:\s*[-–—]\s*(?:[A-Za-z]{2,8}\s?)?\d{3,4}[A-Za-z]?)?)+/gi;
 
 /** Every catalog code an exclusion clause names — its ranges expanded, then its
- *  bare literals — so they can be subtracted from an overlapping included band. */
-function excludedCodes(text: string): Set<string> {
+ *  bare literals — so they can be subtracted from an overlapping included band.
+ *  Exported for a ReDoS regression test on EXCLUSION_LIST_RE. */
+export function excludedCodes(text: string): Set<string> {
   const out = new Set<string>();
   for (const clause of text.match(EXCLUSION_LIST_RE) ?? []) {
     const noRanges = clause.replace(CODE_RANGE_RE_G, (m) => {

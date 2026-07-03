@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Faculty } from "../../lib/programs";
 import {
   facultyFromName,
+  SUBJECT_FACULTY,
   subjectsForFaculties,
 } from "../scrape/data/subjectFaculty";
 
@@ -39,4 +40,29 @@ describe("subjectsForFaculties — no faculty silently resolves to an empty pool
       expect(subjectsForFaculties([f as Faculty]).length).toBeGreaterThan(0);
     }
   });
+});
+
+describe("SUBJECT_FACULTY — data integrity", () => {
+  const entries = Object.entries(SUBJECT_FACULTY);
+
+  it("keys are all lowercase (poolMatch/coursePrefix compare lowercase)", () => {
+    for (const [key] of entries) expect(key).toBe(key.toLowerCase());
+  });
+
+  it("omits subjects whose owner isn't a single faculty", () => {
+    // Interdisciplinary Studies (SE, PD, STV), Wilfrid Laurier (BUS), and
+    // Renison (BASE, EMLS, SWREN) are intentionally NOT mapped (file header), so
+    // a "Faculty of X" pool never wrongly claims them.
+    for (const omitted of ["se", "pd", "stv", "bus", "base", "emls", "swren"])
+      expect(Object.hasOwn(SUBJECT_FACULTY, omitted)).toBe(false);
+  });
+
+  it("every value is one of the six real faculties", () => {
+    const valid = new Set<Faculty>(FACULTIES);
+    for (const [, faculty] of entries) expect(valid.has(faculty)).toBe(true);
+  });
+
+  // NOTE: key uniqueness is NOT runtime-testable — a JS object literal silently
+  // drops duplicate keys, so `Object.keys` is already deduped here. Biome's
+  // noDuplicateObjectKeys catches duplicates in the source instead.
 });
