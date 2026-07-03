@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import { PROGRAMS, type Program } from "../../programs";
 import { compileAudit, creditExclusionKeys } from "../compile";
+import { deriveElectiveSections } from "../electives";
 import { foldFiniteElectivesIntoRules } from "../foldElectives";
 import { computeDegreeProgress } from "../progress";
 
@@ -839,5 +840,84 @@ describe("computeDegreeProgress — degenerate inputs", () => {
     expect(p.denom).toBe(0);
     expect(p.pct).toBe(0);
     expect(Number.isNaN(p.pct)).toBe(false);
+  });
+});
+
+describe("computeDegreeProgress — threaded electiveSections", () => {
+  // buildProgramAudit derives the elective sections once and passes the SAME
+  // array to both computeDegreeProgress and deriveMacros, so electiveCredit[i]
+  // stays aligned to the i-th elective. Passing that array must be identical to
+  // deriving it internally (transparency), and the param must actually be used.
+  const program = Object.values(PROGRAMS).find((p) =>
+    deriveElectiveSections(p).some(
+      (s) => s.kind === "finite" || s.kind === "subjectPool",
+    ),
+  );
+  const auditFor = (p: Program, codes: string[]) =>
+    compileAudit(
+      p,
+      makePlan(codes),
+      null,
+      new Set(),
+      null,
+      undefined,
+      () => 0.5,
+    );
+
+  it("passing the derived sections matches internal derivation", () => {
+    if (!program)
+      throw new Error("snapshot has no program with elective buckets");
+    const sections = deriveElectiveSections(program);
+    // Touch a few finite-elective options so the elective buckets are exercised.
+    const codes = [
+      ...new Set(
+        sections.flatMap((s) =>
+          s.kind === "finite" ? s.options.slice(0, 2) : [],
+        ),
+      ),
+    ].slice(0, 6);
+    const audit = auditFor(program, codes);
+    const passed = computeDegreeProgress(
+      audit,
+      program,
+      () => 0.5,
+      new Set(),
+      undefined,
+      new Set(),
+      sections,
+    );
+    const derived = computeDegreeProgress(
+      audit,
+      program,
+      () => 0.5,
+      new Set(),
+      undefined,
+      new Set(),
+    );
+    expect(passed).toEqual(derived);
+  });
+
+  it("honors the passed array — empty sections drop the elective buckets", () => {
+    if (!program)
+      throw new Error("snapshot has no program with elective buckets");
+    const audit = auditFor(program, []);
+    const empty = computeDegreeProgress(
+      audit,
+      program,
+      () => 0.5,
+      new Set(),
+      undefined,
+      new Set(),
+      [],
+    );
+    const derived = computeDegreeProgress(
+      audit,
+      program,
+      () => 0.5,
+      new Set(),
+      undefined,
+      new Set(),
+    );
+    expect(empty).not.toEqual(derived);
   });
 });

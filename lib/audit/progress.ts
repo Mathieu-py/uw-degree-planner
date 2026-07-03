@@ -13,7 +13,11 @@ import {
   isSatisfied,
   placementLegalityKey,
 } from "./compile";
-import { deriveElectiveSections, subjectPoolEligible } from "./electives";
+import {
+  deriveElectiveSections,
+  type ElectiveSection,
+  subjectPoolEligible,
+} from "./electives";
 import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
 import { maxBipartiteMatch } from "./matching";
 
@@ -282,6 +286,13 @@ export function computeDegreeProgress(
    * acknowledged one stops gating the 100% headline ("not unmet, just unverified").
    */
   acknowledged: ReadonlySet<string> = new Set(),
+  /**
+   * The program's elective sections. Optional so callers/tests can omit it; when
+   * present it MUST be the same array `deriveMacros` receives, so the credit at
+   * `electiveCredit[i]` lines up with the i-th elective. buildProgramAudit
+   * computes it once and threads it to both; omit to derive locally.
+   */
+  electiveSections?: ElectiveSection[],
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -345,7 +356,7 @@ export function computeDegreeProgress(
   const electiveBucketIndex = new Map<number, number>();
   const electivePool = new Map<number, UnitPool>();
   if (program) {
-    deriveElectiveSections(program).forEach((e, i) => {
+    (electiveSections ?? deriveElectiveSections(program)).forEach((e, i) => {
       if (e.kind === "finite") {
         electiveBucketIndex.set(i, buckets.length);
         buckets.push({

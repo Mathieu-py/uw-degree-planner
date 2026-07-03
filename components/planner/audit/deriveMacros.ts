@@ -99,11 +99,18 @@ export function deriveMacros(
    */
   nodeFill?: NodeFill,
   /**
-   * Per-elective headline credit (index-aligned to `deriveElectiveSections`).
-   * Present → the chip reflects the match credit; omitted → it counts placed
-   * options independently (read-only view).
+   * Per-elective headline credit (index-aligned to `electiveSections`). Present →
+   * the chip reflects the match credit; omitted → it counts placed options
+   * independently (read-only view).
    */
   electiveCredit?: number[],
+  /**
+   * The program's elective sections. MUST be the same array passed to
+   * `computeDegreeProgress` so `electiveCredit[i]` maps to the i-th elective;
+   * buildProgramAudit computes it once and threads it to both. Omit to derive
+   * locally (credit alignment then rests on identical ordering).
+   */
+  electiveSections?: ElectiveSection[],
 ): { macros: Macro[] } {
   // Count like the headline: illegally-placed courses don't credit, keeping the
   // elective/communication counts consistent with the degree rows.
@@ -204,12 +211,12 @@ export function deriveMacros(
   // ---- Electives: program electives + faculty breadth + free-elective volume.
   // Browse / unit-based electives carry no honest count → surfaced as a
   // "+N to plan" hint on the macro.
-  const electiveSections: Section[] = [];
+  const electiveRows: Section[] = [];
   let elecNeeded = 0;
   let elecSatisfied = 0;
   let untrackedCount = 0;
   if (program) {
-    deriveElectiveSections(program)
+    (electiveSections ?? deriveElectiveSections(program))
       .map((e, i) =>
         toElectiveSection(e, i, placedCodes, unitsOf, electiveCredit?.[i]),
       )
@@ -223,19 +230,19 @@ export function deriveMacros(
         } else {
           untrackedCount += 1;
         }
-        electiveSections.push(s);
+        electiveRows.push(s);
       });
     breadthRequirements.forEach((b, i) => {
       elecNeeded += 1;
       elecSatisfied += unitsMet(b.placedUnits, b.needUnits) ? 1 : 0;
-      electiveSections.push(breadthSection(b, i));
+      electiveRows.push(breadthSection(b, i));
     });
     // Free electives — open volume after the named requirements. Units live on
     // this row, not the macro heading (a program with big named electives has a
     // tiny free remainder a heading would understate).
     if (freeElectiveUnits > 0) {
       const u = Math.round(freeElectiveUnits * 100) / 100;
-      electiveSections.push({
+      electiveRows.push({
         kind: "info",
         key: "free-electives",
         title: "Free electives",
@@ -314,7 +321,7 @@ export function deriveMacros(
       defaultOpen: true,
       nodeFill,
     });
-  if (electiveSections.length > 0)
+  if (electiveRows.length > 0)
     macros.push({
       key: "electives",
       label: "Electives",
@@ -329,7 +336,7 @@ export function deriveMacros(
       blocks: [
         {
           subLabel: null,
-          content: { kind: "sections", sections: electiveSections },
+          content: { kind: "sections", sections: electiveRows },
         },
       ],
       defaultOpen: false,

@@ -4,6 +4,7 @@ import {
   creditExclusionKeys,
   placementLegalityKey,
 } from "@/lib/audit/compile";
+import { deriveElectiveSections } from "@/lib/audit/electives";
 import { foldFiniteElectivesIntoRules } from "@/lib/audit/foldElectives";
 import type { DegreeProgress } from "@/lib/audit/progress";
 import { computeDegreeProgress } from "@/lib/audit/progress";
@@ -134,6 +135,12 @@ export function buildProgramAudit(
   const acknowledged = new Set(
     plan.acknowledgedRequirements?.[programId] ?? [],
   );
+  // Derive the elective sections ONCE and thread them to both consumers, so the
+  // headline's `electiveCredit[i]` maps to the same i-th elective the panel
+  // renders (and the parse/classify/consolidate isn't run twice).
+  const electiveSections = auditedProgram
+    ? deriveElectiveSections(auditedProgram)
+    : undefined;
   const progress = computeDegreeProgress(
     audit,
     auditedProgram,
@@ -141,6 +148,7 @@ export function buildProgramAudit(
     legality,
     equiv,
     acknowledged,
+    electiveSections,
   );
   const { macros } = deriveMacros(
     audit,
@@ -152,6 +160,7 @@ export function buildProgramAudit(
     legality,
     progress.nodeFill,
     progress.electiveCredit,
+    electiveSections,
   );
 
   // Unverified requirements, surfaced near the headline (not buried in a macro)
