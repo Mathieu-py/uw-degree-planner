@@ -214,6 +214,10 @@ export function buildSpecialization(
   }
   const rules = result.kind === "flexible" ? result.rules : undefined;
   if (result.kind === "flexible") warnings.push(...result.warnings);
+  // result.unverified / result.freeElectives are intentionally NOT surfaced:
+  // Specialization has no `unverifiedRequirements` field and the audit gates only
+  // on the PROGRAM's (buildProgramAudit). Spec-level owed requirements are
+  // unsupported by design — see issue #123.
 
   const electivesResult = parseElectives(detail, `spec:${slug}`);
   warnings.push(...electivesResult.warnings);
@@ -622,6 +626,28 @@ function attachDegreeRequirements(
   return attached;
 }
 
+/**
+ * Re-surface free electives the parser dropped from a program's rule tree
+ * (redundant with the unit headline's free remainder) as `unverifiedRequirements`
+ * — but ONLY for programs that ended up with no `totalUnits` denominator, where
+ * the headline has no free remainder to gate them and the audit could otherwise
+ * read 100% with the electives unaccounted. Mutates `programs` in place; merges
+ * with any existing entries and dedupes. Call AFTER the total is final (post
+ * {@link attachDegreeRequirements}), so a degree-supplied total suppresses them. #117.
+ */
+export function foldFreeElectivesIntoUnverified(
+  programs: Record<string, Program>,
+  freeElectivesBySlug: ReadonlyMap<string, string[]>,
+): void {
+  for (const [slug, freeElectives] of freeElectivesBySlug) {
+    const program = programs[slug];
+    if (!program || program.unitPlan?.totalUnits != null) continue;
+    program.unverifiedRequirements = [
+      ...new Set([...(program.unverifiedRequirements ?? []), ...freeElectives]),
+    ];
+  }
+}
+
 interface PhaseBResult {
   specById: Map<string, Specialization>;
   failedSpecs: string[];
@@ -744,18 +770,9 @@ async function main() {
     degreesByPid,
   );
 
-  // Re-surface free electives dropped from the rule tree for programs that ended
-  // up with no totalUnits denominator: there the unit headline has no free
-  // remainder to gate them, so without this the audit could read 100% with the
-  // electives unaccounted. Done here, after resolveDegreeTotalUnits, so a
-  // degree-supplied total still suppresses them (no redundant advisory row). #117.
-  for (const [slug, freeElectives] of phaseA.freeElectivesBySlug) {
-    const program = phaseA.programs[slug];
-    if (!program || program.unitPlan?.totalUnits != null) continue;
-    program.unverifiedRequirements = [
-      ...new Set([...(program.unverifiedRequirements ?? []), ...freeElectives]),
-    ];
-  }
+  // Re-surface dropped free electives for programs with no totalUnits (after
+  // resolveDegreeTotalUnits, so a degree-supplied total still suppresses them).
+  foldFreeElectivesIntoUnverified(phaseA.programs, phaseA.freeElectivesBySlug);
 
   // Stamp the term span now that `totalUnits` is final (#105).
   for (const program of Object.values(phaseA.programs)) {
