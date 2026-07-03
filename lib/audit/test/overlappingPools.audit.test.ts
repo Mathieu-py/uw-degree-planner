@@ -145,9 +145,10 @@ describe("English – Literature and Rhetoric (3-year): real program", () => {
     // 3 more distinct ENGL @200+ not used by any named requirement above.
     const better = run([...namedOnly, "engl210e", "engl340", "engl361"]);
     expect(better.progress.pct).toBeGreaterThan(base.progress.pct);
-    // The 3 distinct ENGL courses fill the 3 previously-stranded rule slots
-    // (the two ENGL pools). Any residual gap is the separate, legitimately-unmet
-    // communication requirement — not the overlap bug.
-    expect(better.degree?.satisfied).toBe((base.degree?.satisfied ?? 0) + 3);
+    // The 3 distinct ENGL courses fill the two previously-stranded ENGL pools,
+    // which are unit-stated (#101): needUnits 1.0 + 0.5 = 1.5 units, so the
+    // degree row's satisfied total rises by 1.5 (units), not by 3 (courses). Any
+    // residual gap is the separate communication requirement — not the overlap bug.
+    expect(better.degree?.satisfied).toBe((base.degree?.satisfied ?? 0) + 1.5);
   });
 });

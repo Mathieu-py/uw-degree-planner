@@ -50,9 +50,10 @@ function rootsOf(audit: AuditRoot): AuditNode[] {
   ].filter((n): n is AuditNode => n != null);
 }
 
-describe("real subjectPool — Anthropology '6 ANTH courses at the 300-level'", () => {
-  // 3g-anthropology rules include: subjectPool { selectCount: 6, subjectCodes:
-  // ["ANTH"], minLevel: 300 }. A 200-level ANTH course must NOT satisfy it.
+describe("real subjectPool — Anthropology '3.0 units of ANTH at the 300-level'", () => {
+  // 3g-anthropology rules include: subjectPool { selectCount: 6, needUnits: 3.0,
+  // subjectCodes: ["ANTH"], minLevel: 300 } — a unit-stated pool (#101), so it
+  // scores by UNITS. A 200-level ANTH course must NOT satisfy it.
   const program = PROGRAMS["3g-anthropology"];
 
   it("the program and its 300-level ANTH pool exist as expected", () => {
@@ -79,9 +80,10 @@ describe("real subjectPool — Anthropology '6 ANTH courses at the 300-level'", 
       .map((r) => findNode(r, "subjectPool"))
       .find(Boolean);
     expect(pool).toBeDefined();
-    // Exactly the six 300-level ANTH courses satisfy it; the 200-levels don't.
-    expect(pool?.satisfiedCount).toBe(6);
+    // Exactly the six 300-level ANTH courses satisfy it (the 200-levels don't).
     expect(pool?.satisfiers.length).toBe(6);
+    // Unit-stated pool → satisfiedCount is placed UNITS: 6 × 0.5 = 3.0.
+    expect(pool?.satisfiedCount).toBe(3);
   });
 
   it("poolMatch enforces the 300-level floor on the real filter", () => {
