@@ -6,7 +6,7 @@
  * `/ClassSchedules/{term}/{subject}/{catalogNumber}` per course.
  */
 
-import type { CourseSection } from "../../../lib/courses/types";
+import type { CatalogCourse, CourseSection } from "../../../lib/courses/types";
 import { sleep } from "../util/fetch";
 
 const BASE = "https://openapi.data.uwaterloo.ca/v3";
@@ -87,6 +87,27 @@ function apiKey(): string {
     );
   }
   return key;
+}
+
+/** Whether Open Data seating can be fetched (key present). When false, the build
+ *  holds seating steady from the last snapshot instead of aborting. #120. */
+export const hasOpenDataKey = (): boolean =>
+  Boolean(process.env.UW_OPENDATA_KEY);
+
+/**
+ * Rebuild the seating map from an existing snapshot's courses — last-known
+ * `sections` keyed by code, empties dropped (to match {@link fetchSeating}, which
+ * omits courses with no sections). Lets the build reuse committed seating when
+ * Open Data is unavailable rather than wiping it. #120.
+ */
+export function seatingFromSnapshot(
+  courses: Pick<CatalogCourse, "code" | "sections">[],
+): Record<string, CourseSection[]> {
+  const seating: Record<string, CourseSection[]> = {};
+  for (const c of courses) {
+    if (c.sections.length > 0) seating[c.code] = c.sections;
+  }
+  return seating;
 }
 
 /**

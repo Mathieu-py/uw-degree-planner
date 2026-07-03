@@ -29,7 +29,13 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Seating comes from UW Open Data, which needs UW_OPENDATA_KEY. Add it as a
+      # repo secret (Settings → Secrets and variables → Actions). If it's absent,
+      # build-catalog degrades to a partial refresh (keeps last-known seating)
+      # rather than failing — see scripts/build-catalog.ts (#120).
       - run: pnpm fetch-courses
+        env:
+          UW_OPENDATA_KEY: ${{ secrets.UW_OPENDATA_KEY }}
       - name: Commit refreshed snapshot to main
         run: |
           git config user.name "github-actions[bot]"
