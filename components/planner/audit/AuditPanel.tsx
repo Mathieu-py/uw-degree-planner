@@ -134,9 +134,14 @@ export const AuditPanel = memo(function AuditPanel({
       <div className="card pw-audit overflow-hidden lg:h-full lg:flex lg:flex-col">
         {/*
          * No combined %: hand-picked programs have no authoritative joint
-         * denominator, so each is audited on its own (rail + detail). UW's
-         * packaged double degrees (e.g. `bba-and-bmath-double-degree`) are single
-         * programs picked directly. Suggesting that swap is tracked in #103.
+         * denominator, so each is audited on its own (rail + detail) over the full
+         * plan — credit follows the calendar's requirements, not term of
+         * completion. Keeping the audits independent also honours the calendar's
+         * double-counting cap ("a course can be used to satisfy requirements for a
+         * maximum of two credentials"): no single course is summed into a shared
+         * denominator across programs. UW's packaged double degrees (e.g.
+         * `bba-and-bmath-double-degree`) are single programs picked directly.
+         * Suggesting that swap is tracked in #103.
          */}
         <div className="pw-audit-top">
           <div className="flex items-baseline justify-between gap-2">
@@ -220,7 +225,6 @@ export const AuditPanel = memo(function AuditPanel({
             <AuditAdvisoryNotes
               estimatedDenom={detail.estimatedDenom}
               blockingIssueCount={blockingIssueCount}
-              outOfSpanCount={detail.outOfSpanCodes.length}
             />
             <UnverifiedRequirements
               programId={activeId}

@@ -11,15 +11,10 @@ import { computeDegreeProgress } from "@/lib/audit/progress";
 import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits } from "@/lib/format";
-import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
+import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import type { Program } from "@/lib/programs";
-import {
-  PROGRAMS,
-  programReferencedCodes,
-  programTermSpan,
-  TERM_LETTERS,
-} from "@/lib/programs";
+import { PROGRAMS, programReferencedCodes } from "@/lib/programs";
 import { deriveMacros } from "./deriveMacros";
 import type { Macro } from "./types";
 
@@ -41,11 +36,6 @@ export interface ProgramAuditData {
    * 100%→99% is explained, not a silent regression.
    */
   staleAcknowledgements: string[];
-  /**
-   * Codes in slots span-scoping dropped (a 4A/4B course on a program ending at
-   * 3B) — on the timeline but not credited here; surfaced as a note (#105).
-   */
-  outOfSpanCodes: string[];
   /** Every code with a placement (shown on its row). */
   placedCodes: Set<string>;
   /** Placed-but-illegal codes — flagged and excluded from ring counts/headline. */
@@ -56,22 +46,6 @@ export interface ProgramAuditData {
   estimatedDenom: boolean;
   /** e.g. "8.0/40.0 units" (a "~" prefixes the denominator when estimated). */
   headlineFraction: string;
-}
-
-/**
- * Restrict a plan to slots within a program's span, so a short leg of a
- * multi-program plan doesn't credit courses past its end (3-year ignores 4A/4B).
- * Keeps "pre" + everything up to the span's last term. No-op when that term
- * isn't in the plan (span ≥ plan length).
- */
-function scopePlanToSpan(plan: LocalPlan, span: number): LocalPlan {
-  const endTerm = TERM_LETTERS[span - 1];
-  const endIdx = plan.slots.findIndex((s) => s.position === endTerm);
-  if (endIdx === -1) return plan;
-  const slots: PlanSlot[] = plan.slots.filter(
-    (s, i) => i <= endIdx || s.position === "pre",
-  );
-  return { ...plan, slots };
 }
 
 /**
@@ -104,28 +78,26 @@ export function buildProgramAudit(
   );
   const legality = creditExclusionKeys(issues, { referenced, unitsOf });
 
-  // Audit only this program's span, so a short leg of a mixed double degree
-  // doesn't credit courses in 4A/4B (#105).
-  const scopedPlan = program
-    ? scopePlanToSpan(plan, programTermSpan(program))
-    : plan;
-  // Courses span-scoping dropped still show on the timeline but never credit this
-  // (shorter) program. Surface a count so the exclusion isn't a silent mystery.
-  const scopedSlotIds = new Set(scopedPlan.slots.map((s) => s.id));
-  const outOfSpanCodes = [
-    ...new Set(
-      plan.slots
-        .filter((s) => !scopedSlotIds.has(s.id))
-        .flatMap((s) => s.courses.map((c) => c.code)),
-    ),
-  ];
+  // Credit follows the calendar's requirements, NOT the term a course is taken
+  // in. An academic plan is "a defined set of requirements that leads to a
+  // particular credential" (UW Undergraduate Calendar, Glossary of Terms), with
+  // no provision tying degree credit to term of completion — so we audit the full
+  // plan. Overlap between credentials is instead governed by the double-counting
+  // cap: "a course can be used to satisfy requirements for a maximum of two
+  // credentials (degrees, diplomas, or certificates)" (UW Undergraduate Calendar,
+  // Academic Regulations → Double Counting of Courses). That cap is satisfied
+  // structurally here — within a program maxBipartiteMatch binds each course to a
+  // single requirement, and hand-picked programs are audited independently
+  // (AuditPanel), never summed into a shared denominator — so no term partition
+  // is needed. A 3-year leg on an 8-term double-degree grid now correctly credits
+  // its required courses wherever they are placed (replaces the #105 span gate).
 
   // One index for BOTH passes: the audit tree and the progress headline must
   // agree on what a placed cross-listed twin satisfies (#21).
   const equiv = equivalenceForCatalog(catalogByCode);
   const audit = compileAudit(
     auditedProgram,
-    scopedPlan,
+    plan,
     plan.specializationIds[programId] ?? null,
     legality,
     programId,
@@ -198,7 +170,6 @@ export function buildProgramAudit(
     macros,
     unverifiedItems,
     staleAcknowledgements,
-    outOfSpanCodes,
     placedCodes,
     illegalCodes,
     headlinePct,
