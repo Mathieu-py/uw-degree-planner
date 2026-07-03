@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { toSections } from "../scrape/sources/openData";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  hasOpenDataKey,
+  seatingFromSnapshot,
+  toSections,
+} from "../scrape/sources/openData";
 
 // Shape mirrors UW Open Data /ClassSchedules entries.
 const sched = (
@@ -59,5 +63,37 @@ describe("toSections", () => {
     expect(toSections([sched(1, "LEC", 50, null)], "LEC")).toEqual([
       { id: 1, enrollment_total: 0, enrollment_capacity: 50 },
     ]);
+  });
+});
+
+describe("seatingFromSnapshot — reuse last-known seating (#120)", () => {
+  const section = { id: 1, enrollment_total: 10, enrollment_capacity: 20 };
+
+  it("keeps courses with sections, keyed by code", () => {
+    const map = seatingFromSnapshot([{ code: "cs245", sections: [section] }]);
+    expect(map).toEqual({ cs245: [section] });
+  });
+
+  it("drops courses with no sections (matches fetchSeating's omission)", () => {
+    const map = seatingFromSnapshot([
+      { code: "cs245", sections: [section] },
+      { code: "cs241", sections: [] },
+    ]);
+    expect(Object.keys(map)).toEqual(["cs245"]);
+  });
+});
+
+describe("hasOpenDataKey — gates the seating fetch (#120)", () => {
+  const original = process.env.UW_OPENDATA_KEY;
+  afterEach(() => {
+    if (original === undefined) delete process.env.UW_OPENDATA_KEY;
+    else process.env.UW_OPENDATA_KEY = original;
+  });
+
+  it("is true when the key is set, false when unset", () => {
+    process.env.UW_OPENDATA_KEY = "test-key";
+    expect(hasOpenDataKey()).toBe(true);
+    delete process.env.UW_OPENDATA_KEY;
+    expect(hasOpenDataKey()).toBe(false);
   });
 });

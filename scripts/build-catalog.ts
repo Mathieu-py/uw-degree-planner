@@ -6,7 +6,7 @@
  * Usage: `pnpm tsx scripts/build-catalog.ts [term...]` (default PINNED_TERM).
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { CatalogCourse, CourseSection } from "../lib/courses/types";
 import {
@@ -20,7 +20,11 @@ import {
   fetchKualiData,
   type KualiCourseData,
 } from "./scrape/sources/kualiCourses";
-import { fetchSeating } from "./scrape/sources/openData";
+import {
+  fetchSeating,
+  hasOpenDataKey,
+  seatingFromSnapshot,
+} from "./scrape/sources/openData";
 import {
   fetchUWFlowCourses,
   type UWFlowCourse,
@@ -91,6 +95,32 @@ async function writeSnapshot(
   return { coursesPath, descriptionsPath };
 }
 
+/**
+ * Last-known seating from the committed snapshot, for a partial refresh when
+ * Open Data is unavailable (no `UW_OPENDATA_KEY`) — holds `sections` steady
+ * rather than wiping them. Absent/unreadable snapshot → empty seating. #120.
+ */
+async function loadExistingSeating(
+  termId: number,
+): Promise<Record<string, CourseSection[]>> {
+  const snapshotPath = path.resolve(
+    process.cwd(),
+    "data",
+    `courses.${termId}.json`,
+  );
+  try {
+    const file = validateCoursesFile(
+      JSON.parse(await readFile(snapshotPath, "utf-8")),
+    );
+    return seatingFromSnapshot(file.courses);
+  } catch (err) {
+    console.warn(
+      `No reusable seating for term ${termId} (${err instanceof Error ? err.message : err}) — writing empty seating.`,
+    );
+    return {};
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   // Whole-string numeric only — parseInt would silently accept "1261foo".
@@ -135,8 +165,19 @@ async function main() {
   );
 
   for (const term of terms) {
-    process.stdout.write(`Term ${term}: seating from Open Data... `);
-    const seating = await fetchSeating(term);
+    // Missing key (e.g. CI without the secret) is non-fatal: keep last-known
+    // seating from the committed snapshot so ratings/prose/Kuali still refresh
+    // instead of the build aborting or wiping seating. #120.
+    let seating: Record<string, CourseSection[]>;
+    if (hasOpenDataKey()) {
+      process.stdout.write(`Term ${term}: seating from Open Data... `);
+      seating = await fetchSeating(term);
+    } else {
+      console.warn(
+        `Term ${term}: UW_OPENDATA_KEY unset — reusing seating from the existing snapshot (partial refresh).`,
+      );
+      seating = await loadExistingSeating(term);
+    }
     const { coursesPath, descriptionsPath } = await writeSnapshot(
       term,
       courses,
