@@ -11,10 +11,11 @@ import {
 import {
   deriveElectiveSections,
   type ElectiveSection,
-  subjectPoolEligible as electivePoolEligible,
+  subjectPoolFilter,
 } from "@/lib/audit/electives";
 import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
 import type { NodeFill } from "@/lib/audit/progress";
+import { poolMatch } from "@/lib/courses/code";
 import {
   countNoun,
   fmtUnits,
@@ -383,10 +384,10 @@ function toElectiveSection(
   }
   if (e.kind === "subjectPool") {
     // A trackable unit-based subject filter → render like breadth (ring + subject
-    // tags), counting any in-scope placed course.
-    const satisfiers = [...placedCodes].filter((c) =>
-      electivePoolEligible(c, e),
-    );
+    // tags), counting any in-scope placed course. Build the pool filter once and
+    // reuse it across every code — don't rebuild the subject Set per iteration.
+    const filter = subjectPoolFilter(e);
+    const satisfiers = [...placedCodes].filter((c) => poolMatch(c, filter));
     // Match credit (post-match units) when available, else the raw eligible sum.
     const placedUnits =
       credit ?? satisfiers.reduce((sum, c) => sum + unitsOf(c), 0);
