@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { RuleNode } from "../../lib/programs";
-import { catalogCodesInRange } from "../scrape/catalog";
-import { parseCodeRange } from "../scrape/normalize";
-import { parseChooseAnyPool, parseSubjectPool } from "../scrape/subjectPool";
+import {
+  parseChooseAnyPool,
+  parseSubjectPool,
+} from "../scrape/requirements/subjectPool";
+import { catalogCodesInRange } from "../scrape/util/catalog";
+import { parseCodeRange } from "../scrape/util/normalize";
 
 function pool(node: RuleNode | null) {
   if (!node || node.kind !== "subjectPool")

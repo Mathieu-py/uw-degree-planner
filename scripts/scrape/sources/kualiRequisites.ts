@@ -7,9 +7,9 @@
  */
 
 import * as cheerio from "cheerio";
-import type { PrereqNode } from "../../lib/prereqs/parse";
-import { RULE_RESULT_SELECTOR } from "./dom";
-import { normalizeCourseCode } from "./normalize";
+import type { PrereqNode } from "../../../lib/prereqs/parse";
+import { RULE_RESULT_SELECTOR } from "../util/dom";
+import { normalizeCourseCode } from "../util/normalize";
 
 /** A Kuali requisite anchor that links to a course (not a program). */
 const COURSE_ANCHOR_SELECTOR = 'a[href*="#/courses/view/"]';

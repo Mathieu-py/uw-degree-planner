@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { RuleNode } from "../../lib/programs";
 import { walkRule } from "../../lib/programs";
-import { buildNamedListIndex, normalizeListName } from "../scrape/electives";
+import {
+  buildNamedListIndex,
+  normalizeListName,
+} from "../scrape/program/electives";
 import { parseProgramRequirements } from "../scrape/programs-parser";
 
 // A courseListsNew section: <h2> heading + anchor course links.

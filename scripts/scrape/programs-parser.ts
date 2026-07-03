@@ -4,21 +4,21 @@
  * pools, electives, unit plan, degree-level requirements, slugs). This file is
  * the stable entry point the scraper and its tests import from.
  */
-export { parseAdditionalConstraints } from "./additionalConstraints";
+export { parseAdditionalConstraints } from "./program/additionalConstraints";
 export {
   type DegreeParseResult,
   parseDegreeRequirements,
-} from "./degree";
-export { parseElectives } from "./electives";
-export { normalizeCourseCode } from "./normalize";
-export { parseProgramRequirements } from "./requirements";
+} from "./program/degree";
+export { parseElectives } from "./program/electives";
 export {
   buildConflictCounts,
   buildProgramSlug,
   buildSpecializationSlug,
   parseSpecializationsList,
-} from "./slugs";
+} from "./program/slugs";
 export {
   dropPureUnitBucketElectives,
   parseUnitPlan,
-} from "./unitPlan";
+} from "./program/unitPlan";
+export { parseProgramRequirements } from "./requirements";
+export { normalizeCourseCode } from "./util/normalize";

@@ -4,7 +4,7 @@
  * a dropped requirement — never edits or removes what the parser found. Keep
  * this map tiny: fix the parser for general patterns; override only one-off typos.
  */
-import type { RuleNode } from "../../lib/programs";
+import type { RuleNode } from "../../../lib/programs";
 
 const RULE_OVERRIDES: Record<string, RuleNode[]> = {
   // Kuali emits the BSc Communication Requirement as "Complete of the following:

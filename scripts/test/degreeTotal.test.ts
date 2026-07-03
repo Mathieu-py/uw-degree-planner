@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveDegreeTotalUnits } from "../scrape/degreeTotal";
+import { resolveDegreeTotalUnits } from "../scrape/program/degreeTotal";
 
 describe("resolveDegreeTotalUnits", () => {
   it("overrides an honours major subtotal with the whole-degree total", () => {

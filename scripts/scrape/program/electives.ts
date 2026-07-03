@@ -1,12 +1,12 @@
 import * as cheerio from "cheerio";
-import type { ElectiveCategory } from "../../lib/programs";
-import { wordToNumber } from "./counts";
+import type { ElectiveCategory } from "../../../lib/programs";
+import { wordToNumber } from "../util/counts";
 import {
   anchorCourseCodes,
   cleanText,
   RULE_RESULT_SELECTOR,
   SECTION_HEADING_SELECTOR,
-} from "./dom";
+} from "../util/dom";
 
 export interface ElectivesDetailFields {
   graduationRequirements?: string;

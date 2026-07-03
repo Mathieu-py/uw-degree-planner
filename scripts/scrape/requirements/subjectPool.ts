@@ -1,7 +1,7 @@
-import type { Faculty, RuleNode } from "../../lib/programs";
-import { WORD_NUMBERS } from "./counts";
-import { facultyFromName, subjectsForFaculties } from "./data/subjectFaculty";
-import { extractSubjectCodes } from "./normalize";
+import type { Faculty, RuleNode } from "../../../lib/programs";
+import { facultyFromName, subjectsForFaculties } from "../data/subjectFaculty";
+import { WORD_NUMBERS } from "../util/counts";
+import { extractSubjectCodes } from "../util/normalize";
 
 // A genuine pool-narrowing clause ("excluding CS100", "exclusive of …", "except
 // …") — clarifying parentheticals ("0.5 unit", "see Additional Constraints") are not.

@@ -3,9 +3,9 @@ import type {
   DegreeRequirements,
   InformationalItem,
   UnitConstraint,
-} from "../../lib/programs";
-import { cleanText } from "./dom";
-import { extractSubjectCodes } from "./normalize";
+} from "../../../lib/programs";
+import { cleanText } from "../util/dom";
+import { extractSubjectCodes } from "../util/normalize";
 
 interface DegreeDetailFields {
   title?: string;

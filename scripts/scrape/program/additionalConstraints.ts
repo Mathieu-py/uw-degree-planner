@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
-import type { InformationalItem } from "../../lib/programs";
-import { cleanText } from "./dom";
+import type { InformationalItem } from "../../../lib/programs";
+import { cleanText } from "../util/dom";
 
 /**
  * Parse Kuali's `additionalConstraints` HTML into progress-untracked

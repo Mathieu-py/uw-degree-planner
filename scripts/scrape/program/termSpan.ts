@@ -1,4 +1,4 @@
-import type { Program } from "../../lib/programs";
+import type { Program } from "../../../lib/programs";
 
 /**
  * Academic-term span from total units: a full-time year ≈ 5.0 units (two terms),

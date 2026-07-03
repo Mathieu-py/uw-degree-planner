@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { validateCoursesFile } from "../../lib/courses/validation";
+import { validateCoursesFile } from "../../../lib/courses/validation";
 
 interface CatalogEntry {
   num: number;
