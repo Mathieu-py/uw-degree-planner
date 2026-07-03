@@ -36,7 +36,9 @@ describe("parseProgramRequirements — surfaces owed rules instead of dropping (
     // level; a level floor is a real gate, so it must surface rather than drop as
     // an open free elective (else the audit reads 100% with the gate unaccounted).
     const r = parseProgramRequirements({
-      requirements: rule("Complete 2.0 units of approved electives at the 300-level"),
+      requirements: rule(
+        "Complete 2.0 units of approved electives at the 300-level",
+      ),
     });
     expect(r.unverified).toContain(
       "Complete 2.0 units of approved electives at the 300-level",

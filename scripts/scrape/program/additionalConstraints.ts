@@ -27,9 +27,7 @@ export function parseAdditionalConstraints(
   // Top-level blocks in document order: a `<p>` or `<li>` not nested inside an
   // `<li>` (a nested sub-list stays in its parent's text). Emitting both keeps
   // intro prose that precedes a list, not just the list items.
-  const blocks = $("p, li").filter(
-    (_, el) => $(el).parents("li").length === 0,
-  );
+  const blocks = $("p, li").filter((_, el) => $(el).parents("li").length === 0);
   if (blocks.length > 0) {
     blocks.each((_, el) => push($(el).text()));
     return items;

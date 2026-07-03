@@ -475,7 +475,9 @@ function parseLi(
   // level"), is a real requirement: fall through to unverified so it isn't lost
   // ("Complete 4 approved electives from List 2"). The `approved electives` branch
   // of FREE_ELECTIVE_RE matches regardless of level, so guard the floor here.
-  const hasScope = /\bList\s+[A-Za-z0-9]|\bfrom the following\b/i.test(fullText);
+  const hasScope = /\bList\s+[A-Za-z0-9]|\bfrom the following\b/i.test(
+    fullText,
+  );
   const hasLevelFloor =
     /\b\d00-?\s*level\b/i.test(fullText) && !/\bany\s+level\b/i.test(fullText);
   if (FREE_ELECTIVE_RE.test(fullText) && !hasScope && !hasLevelFloor) {
