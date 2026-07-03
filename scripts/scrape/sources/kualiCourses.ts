@@ -6,7 +6,7 @@
  */
 
 import type { PrereqNode } from "../../../lib/prereqs/parse";
-import { withRetry } from "../util/fetch";
+import { fetchJson, withRetry } from "../util/fetch";
 import { discoverCatalogId } from "./kualiCatalog";
 import {
   parseKualiAntireqCodes,
@@ -104,14 +104,10 @@ function buildRecord(
 export async function fetchKualiData(): Promise<
   Record<string, KualiCourseData>
 > {
-  // A timed-out attempt throws TimeoutError, which withRetry retries like any
-  // other failure — no separate abort handling needed.
+  // fetchJson does one timed GET+parse; withRetry retries any failure (a timeout
+  // aborts and throws like any other error). 30s — Kuali's detail API is slow.
   const getJson = <T>(url: string): Promise<T> =>
-    withRetry(async () => {
-      const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as T;
-    });
+    withRetry(() => fetchJson<T>(url, 30_000));
 
   const catalogId = await discoverCatalogId();
   const list = await getJson<

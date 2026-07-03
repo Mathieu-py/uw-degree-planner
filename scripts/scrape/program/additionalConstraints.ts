@@ -8,8 +8,9 @@ import { cleanText } from "../util/dom";
  * "List 1") is *defined* and where discretionary "see your advisor" rules live —
  * unstructurable, but dropping it lost the one sentence the student needs. See #117.
  *
- * One item per top-level `<li>` (a nested sub-list stays with its parent),
- * falling back to `<p>` paragraphs then the whole blob. Empty fragments dropped.
+ * One item per top-level `<p>`/`<li>` in document order (a nested sub-list stays
+ * with its parent) — so intro prose that precedes a list isn't lost — falling
+ * back to the whole blob when there's neither. Empty fragments dropped.
  */
 export function parseAdditionalConstraints(
   html: string | undefined,
@@ -23,20 +24,18 @@ export function parseAdditionalConstraints(
     if (t) items.push({ label: "Additional constraint", text: t });
   };
 
-  // Top-level list items: an `<li>` not nested inside another `<li>`.
-  const topLevel = $("li").filter((_, li) => $(li).parents("li").length === 0);
-  if (topLevel.length > 0) {
-    topLevel.each((_, li) => push($(li).text()));
+  // Top-level blocks in document order: a `<p>` or `<li>` not nested inside an
+  // `<li>` (a nested sub-list stays in its parent's text). Emitting both keeps
+  // intro prose that precedes a list, not just the list items.
+  const blocks = $("p, li").filter(
+    (_, el) => $(el).parents("li").length === 0,
+  );
+  if (blocks.length > 0) {
+    blocks.each((_, el) => push($(el).text()));
     return items;
   }
 
-  // No list — fall back to paragraphs, then the whole blob.
-  const paras = $("p");
-  if (paras.length > 0) {
-    paras.each((_, p) => push($(p).text()));
-    return items;
-  }
-
+  // Neither <p> nor <li> — fall back to the whole blob.
   push($.root().text());
   return items;
 }

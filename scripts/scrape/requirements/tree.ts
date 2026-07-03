@@ -471,12 +471,14 @@ function parseLi(
 
   // A genuinely-open free elective — drop it (the units headline tracks the room)
   // rather than add a redundant "confirm with your advisor" row. But a LIST /
-  // "from the following" scope is a real requirement: fall through to unverified
-  // so its scope isn't lost ("Complete 4 approved electives from List 2").
-  if (
-    FREE_ELECTIVE_RE.test(fullText) &&
-    !/\bList\s+[A-Za-z0-9]|\bfrom the following\b/i.test(fullText)
-  ) {
+  // "from the following" scope, or a specific level floor ("300-level", not "any
+  // level"), is a real requirement: fall through to unverified so it isn't lost
+  // ("Complete 4 approved electives from List 2"). The `approved electives` branch
+  // of FREE_ELECTIVE_RE matches regardless of level, so guard the floor here.
+  const hasScope = /\bList\s+[A-Za-z0-9]|\bfrom the following\b/i.test(fullText);
+  const hasLevelFloor =
+    /\b\d00-?\s*level\b/i.test(fullText) && !/\bany\s+level\b/i.test(fullText);
+  if (FREE_ELECTIVE_RE.test(fullText) && !hasScope && !hasLevelFloor) {
     // Redundant with the unit headline's free remainder — but only when the
     // program has a totalUnits denominator. Record it so the assembler can
     // re-surface it as unverified for programs that lack one (else the audit

@@ -31,6 +31,18 @@ describe("parseProgramRequirements — surfaces owed rules instead of dropping (
     expect(r.unverified).toContain("Complete 4 approved electives from List 2");
   });
 
+  it("keeps a level-scoped 'approved electives at the 300-level' rule as unverified", () => {
+    // The `approved electives` branch of FREE_ELECTIVE_RE matches regardless of
+    // level; a level floor is a real gate, so it must surface rather than drop as
+    // an open free elective (else the audit reads 100% with the gate unaccounted).
+    const r = parseProgramRequirements({
+      requirements: rule("Complete 2.0 units of approved electives at the 300-level"),
+    });
+    expect(r.unverified).toContain(
+      "Complete 2.0 units of approved electives at the 300-level",
+    );
+  });
+
   it("still drops a genuinely-open free elective (no scope)", () => {
     const r = parseProgramRequirements({
       requirements: rule("Complete 4 approved electives"),

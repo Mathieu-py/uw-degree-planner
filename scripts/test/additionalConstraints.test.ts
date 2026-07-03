@@ -48,6 +48,19 @@ describe("parseAdditionalConstraints", () => {
     expect(items.map((i) => i.text)).toEqual(["First note.", "Second note."]);
   });
 
+  it("keeps intro <p> prose alongside a following <li> list, in order", () => {
+    // A leading <p> before the list used to be dropped once any <li> existed.
+    const html =
+      "<p>The following limits apply:</p>" +
+      "<ol><li>No 600-level courses.</li><li>List 1: see advisor.</li></ol>";
+    const items = parseAdditionalConstraints(html);
+    expect(items.map((i) => i.text)).toEqual([
+      "The following limits apply:",
+      "No 600-level courses.",
+      "List 1: see advisor.",
+    ]);
+  });
+
   it("falls back to the whole cleaned blob when there is neither list nor <p>", () => {
     const items = parseAdditionalConstraints("Just  some   prose.");
     expect(items).toHaveLength(1);
