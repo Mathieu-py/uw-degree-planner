@@ -37,8 +37,11 @@ export function SectionRow({
           <p className="u-small">{section.items[0]}</p>
         ) : (
           <ul className="flex flex-col gap-1 list-disc pl-4 marker:text-ink-3">
-            {section.items.map((text) => (
-              <li key={text} className="u-small">
+            {section.items.map((text, i) => (
+              // Static, non-reordering note list → index key is stable and
+              // can't collide when two notes share identical text.
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list, order fixed
+              <li key={i} className="u-small">
                 {text}
               </li>
             ))}

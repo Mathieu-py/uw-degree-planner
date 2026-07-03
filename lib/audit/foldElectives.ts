@@ -68,8 +68,17 @@ function attach(root: RuleNode | undefined, folded: RuleNode[]): RuleNode {
  *
  * Applied LOCALLY per audit (global `PROGRAMS` untouched); the referenced-code set
  * is preserved because the courses now live in a pick instead of an elective.
+ *
+ * Memoized by `program` identity (mirrors `catalogIndexCache` in
+ * lib/courses/equivalence.ts): the fold depends only on the stable `program`
+ * object, so repeated builds (e.g. every plan edit re-audits each program) reuse
+ * the first result instead of re-running foldGroups across all specializations.
  */
+const foldCache = new WeakMap<Program, Program>();
+
 export function foldFiniteElectivesIntoRules(program: Program): Program {
+  const cached = foldCache.get(program);
+  if (cached) return cached;
   let next = program;
 
   // Program level (flexible only — engineering has no `program.rules`).
@@ -97,5 +106,6 @@ export function foldFiniteElectivesIntoRules(program: Program): Program {
     if (specsChanged) next = { ...next, specializations: foldedSpecs };
   }
 
+  foldCache.set(program, next);
   return next;
 }

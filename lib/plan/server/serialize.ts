@@ -203,13 +203,21 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
  * entry is dropped, not the whole snapshot — else a single >512-char acknowledged
  * requirement would fail validation and silently reject the entire plan save.
  * Common (<512-char) acks are untouched.
+ *
+ * Also drops entries for programs no longer in the plan: acks are never pruned
+ * when a program is removed, so over many add/ack/remove cycles they accumulate
+ * and can push the record past the MAX_PROGRAM_IDS cap on acked-program count,
+ * which would reject the whole save.
  */
 function sanitizeAcknowledged(
   acked: Record<string, string[]> | undefined,
+  programIds: readonly string[],
 ): Record<string, string[]> {
   if (!acked) return {};
+  const active = new Set(programIds);
   const out: Record<string, string[]> = {};
   for (const [programId, texts] of Object.entries(acked)) {
+    if (!active.has(programId)) continue; // stale ack for a removed program
     const kept = [
       ...new Set(
         texts.filter((t) => t.length > 0 && t.length <= MAX_ACKED_TEXT_LEN),
@@ -239,6 +247,7 @@ export function toSnapshot(plan: {
     specializationIds: plan.specializationIds,
     acknowledgedRequirements: sanitizeAcknowledged(
       plan.acknowledgedRequirements,
+      plan.programIds,
     ),
     stream: plan.stream,
     startTermId: plan.startTermId,

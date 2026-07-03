@@ -1,4 +1,4 @@
-import { poolMatch } from "@/lib/courses/code";
+import { type PoolFilter, poolMatch } from "@/lib/courses/code";
 import { countNoun, truncate } from "@/lib/format";
 import type { ElectiveCategory, Program } from "@/lib/programs";
 import { LEVEL_BOUND_RE, subjectList } from "./constraints";
@@ -112,16 +112,24 @@ function parseSubjectPoolElective(
   return section;
 }
 
-/** Whether a placed course satisfies a subject-pool section's subject + level. */
+/** A subject-pool elective section as a {@link PoolFilter}. Build once per
+ *  section (the `subjects` Set is reused across every placed code tested). */
+export function subjectPoolFilter(s: SubjectPoolElectiveSection): PoolFilter {
+  return {
+    subjects: new Set(s.subjects),
+    minLevel: s.minLevel,
+    maxLevel: s.maxLevel,
+  };
+}
+
+/** Whether a placed course satisfies a subject-pool section's subject + level.
+ *  For a hot loop over many codes, build the filter once via
+ *  {@link subjectPoolFilter} and call `poolMatch` directly instead. */
 export function subjectPoolEligible(
   code: string,
   s: SubjectPoolElectiveSection,
 ): boolean {
-  return poolMatch(code, {
-    subjects: new Set(s.subjects),
-    minLevel: s.minLevel,
-    maxLevel: s.maxLevel,
-  });
+  return poolMatch(code, subjectPoolFilter(s));
 }
 
 /**

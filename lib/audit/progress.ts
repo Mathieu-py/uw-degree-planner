@@ -16,7 +16,7 @@ import {
 import {
   deriveElectiveSections,
   type ElectiveSection,
-  subjectPoolEligible,
+  subjectPoolFilter,
 } from "./electives";
 import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
 import { maxBipartiteMatch } from "./matching";
@@ -364,9 +364,10 @@ export function computeDegreeProgress(
           eligible: [...new Set(e.options.flatMap(placedMatches))],
         });
       } else if (e.kind === "subjectPool") {
+        const filter = subjectPoolFilter(e); // build the subjects Set once
         const pool: UnitPool = {
           needUnits: e.needUnits,
-          eligible: placedList.filter((c) => subjectPoolEligible(c, e)),
+          eligible: placedList.filter((c) => poolMatch(c, filter)),
         };
         electivePool.set(i, pool);
         unitPools.push(pool);
