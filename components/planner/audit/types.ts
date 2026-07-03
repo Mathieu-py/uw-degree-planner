@@ -97,6 +97,15 @@ export type Section =
       key: string;
       title: string;
       caption: string;
+    }
+  | {
+      // Several same-titled notes folded into one collapsible row ("Additional
+      // constraints · 7") so a wall of identical "Additional constraint" labels
+      // reads as one group, not many.
+      kind: "infoGroup";
+      key: string;
+      title: string;
+      items: string[];
     };
 
 /** True when a section still has unmet requirements (used to default it open). */

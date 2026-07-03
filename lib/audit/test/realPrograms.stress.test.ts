@@ -85,7 +85,7 @@ describe("real subjectPool — Anthropology '6 ANTH courses at the 300-level'", 
   });
 
   it("poolMatch enforces the 300-level floor on the real filter", () => {
-    const f = { subjects: ["anth"], minLevel: 300 };
+    const f = { subjects: new Set(["anth"]), minLevel: 300 };
     expect(poolMatch("anth300", f)).toBe(true);
     expect(poolMatch("anth320", f)).toBe(true);
     expect(poolMatch("anth201", f)).toBe(false);

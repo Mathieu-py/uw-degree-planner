@@ -490,6 +490,122 @@ describe("AuditPanel", () => {
     expect(labels).toContain("Electives");
   });
 
+  const macroByLabel = (container: HTMLElement, re: RegExp) =>
+    [...container.querySelectorAll<HTMLElement>(".av-macro")].find((m) =>
+      re.test(m.querySelector(".av-macro-label")?.textContent ?? ""),
+    );
+
+  it("folds a finite 'Approved Courses List' into a pick under Degree requirements, not Electives", () => {
+    // Biochemistry carries its "Approved Courses List" (choose 8 of ~60) in
+    // program.electives. buildProgramAudit folds it into the rule tree as a pick
+    // (foldFiniteElectivesIntoRules), so it renders under Degree requirements —
+    // like Chemistry's rules-parsed list — with selectable option chips, and NOT
+    // under Electives.
+    if (!("biochemistry" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programIds: ["biochemistry"] })}
+        onDrillToRequirement={() => {}}
+      />,
+    );
+
+    const degree = macroByLabel(container, /^Degree requirements$/i);
+    expect(degree, "expected a Degree requirements macro").toBeTruthy();
+    if (!degree) return;
+    // Rendered as a named sub-group with the list's title…
+    expect(
+      within(degree).queryAllByText(/Approved Courses List/i).length,
+    ).toBeGreaterThan(0);
+    // …and as a real pick (draggable option chips), not a static electives row.
+    expect(degree.querySelectorAll(".av-chip").length).toBeGreaterThan(0);
+
+    // If an Electives macro exists (free electives etc.), it must NOT hold the list.
+    const electives = macroByLabel(container, /^Electives$/i);
+    if (electives)
+      expect(
+        within(electives).queryAllByText(/Approved Courses List/i).length,
+      ).toBe(0);
+  });
+
+  it("counts a specialization's finite 'Approved Courses List' under the Specialization macro", () => {
+    // The Restorative Justice spec's "Approved Courses List" (choose 2 of 30)
+    // lives in spec.electives and was previously counted nowhere. With the spec
+    // selected it folds into spec.rules → renders/counts under Specialization.
+    if (!("h-peace-and-conflict-studies" in PROGRAMS)) return;
+    const id = "h-peace-and-conflict-studies";
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({
+          programIds: [id],
+          specializationIds: { [id]: "pacs-restorative-justice" },
+        })}
+      />,
+    );
+    const spec = macroByLabel(container, /^Specialization$/i);
+    expect(spec, "expected a Specialization macro").toBeTruthy();
+    if (!spec) return;
+    expect(
+      within(spec).queryAllByText(/Approved Courses List/i).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("keeps engineering's 'Technical Electives List' in the Electives tab", () => {
+    // Technical electives ARE electives (the name says so) and engineering has no
+    // rule tree to fold into, so the list stays under Electives — never Degree
+    // requirements.
+    if (!("systems-design-engineering" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programIds: ["systems-design-engineering"] })}
+      />,
+    );
+    const electives = macroByLabel(container, /^Electives$/i);
+    expect(electives, "expected an Electives macro").toBeTruthy();
+    if (!electives) return;
+    expect(
+      within(electives).queryAllByText(/Technical Electives List/i).length,
+    ).toBeGreaterThan(0);
+    const degree = macroByLabel(container, /^Degree requirements$/i);
+    if (degree)
+      expect(
+        within(degree).queryAllByText(/Technical Electives List/i).length,
+      ).toBe(0);
+  });
+
+  it("renders the mandatory 'Required Courses' bucket flat, only choice-lists as dropdowns", () => {
+    // A named group carrying its OWN required courses (Kuali's "Required
+    // Courses" bucket) is the core the "Degree requirements" macro already names,
+    // so it renders flat — never behind a redundant dropdown. Only a pure
+    // choice-list ("Approved Courses List") earns its own collapsible sub-group.
+    if (!("h-chemistry" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programIds: ["h-chemistry"] })} />,
+    );
+    const subLabels = [...container.querySelectorAll(".av-substrata-text")].map(
+      (l) => l.textContent?.trim(),
+    );
+    expect(subLabels).toContain("Approved Courses List");
+    expect(subLabels).not.toContain("Required Courses");
+  });
+
+  it("surfaces a flexible program's section headings (List 1/2/3) as sub-labels", () => {
+    // Computational Mathematics splits its requirements across titled <section>s
+    // ("Required Courses", "List 1", …). Those headings render as sub-groups so
+    // the "In List 1, …" constraints have a visible anchor in the audit.
+    if (!("computational-mathematics" in PROGRAMS)) return;
+    const { container } = render(
+      <AuditPanel
+        plan={mkPlan({ programIds: ["computational-mathematics"] })}
+      />,
+    );
+    const subLabels = [...container.querySelectorAll(".av-substrata-text")].map(
+      (l) => l.textContent?.trim(),
+    );
+    expect(subLabels).toContain("List 1");
+    expect(subLabels).toContain("List 2");
+    expect(subLabels).toContain("List 3");
+  });
+
   it("flattens the rule tree under Degree requirements (no 'Complete all of the following' wall)", () => {
     if (!("data-science-bcs" in PROGRAMS)) return;
     const { container } = render(
@@ -522,6 +638,45 @@ describe("AuditPanel", () => {
     );
     expect(other, "expected a Co-op & other macro").toBeTruthy();
     expect(other?.textContent ?? "").toMatch(/work term/i);
+  });
+
+  it("folds repeated 'Additional constraint' notes into one collapsible group row", () => {
+    // A real program (e.g. Computational Mathematics) carries several notes all
+    // labelled "Additional constraint". They must collapse into ONE grouped row
+    // ("Additional constraints · N"), not N stacked icon-rows.
+    const entry = Object.entries(PROGRAMS).find(
+      ([, p]) =>
+        (p.informational ?? []).filter(
+          (x) => x.label === "Additional constraint",
+        ).length > 1,
+    );
+    if (!entry) return;
+    const [programId, program] = entry;
+    const n = (program.informational ?? []).filter(
+      (x) => x.label === "Additional constraint",
+    ).length;
+    const { container } = render(
+      <AuditPanel plan={mkPlan({ programIds: [programId] })} />,
+    );
+    const other = [...container.querySelectorAll(".av-macro")].find((m) =>
+      /co-op & other/i.test(
+        m.querySelector(".av-macro-label")?.textContent ?? "",
+      ),
+    );
+    expect(other, "expected a Co-op & other macro").toBeTruthy();
+    const labels = [...(other?.querySelectorAll(".av-sec-label") ?? [])].map(
+      (l) => l.textContent ?? "",
+    );
+    // Exactly one row for the repeated label, titled with the count.
+    expect(labels.filter((t) => /^Additional constraint/.test(t))).toHaveLength(
+      1,
+    );
+    expect(labels).toContain(`Additional constraints · ${n}`);
+    // Each note's verbatim text is still present (folded into the group body).
+    const firstNote = program.informational?.find(
+      (x) => x.label === "Additional constraint",
+    )?.text as string;
+    expect(other?.textContent ?? "").toContain(firstNote);
   });
 
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {

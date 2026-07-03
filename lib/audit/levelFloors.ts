@@ -85,10 +85,10 @@ function matches(
   f: Omit<LevelFloor, "placedUnits" | "satisfiers">,
 ): boolean {
   return poolMatch(code, {
-    subjects: f.subjects,
+    subjects: f.subjects && new Set(f.subjects),
     minLevel: f.minLevel,
     maxLevel: f.maxLevel,
-    excludeSubjects: f.excludeSubjects,
+    excludeSubjects: f.excludeSubjects && new Set(f.excludeSubjects),
   });
 }
 

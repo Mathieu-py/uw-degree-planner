@@ -3,6 +3,18 @@ import { compileAudit } from "@/lib/audit/compile";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { Program } from "@/lib/programs";
 import { deriveMacros } from "../deriveMacros";
+import type { Section } from "../types";
+
+/** Flatten every macro's rendered Section rows. */
+function sectionsOf(
+  macros: ReturnType<typeof deriveMacros>["macros"],
+): Section[] {
+  return macros.flatMap((m) =>
+    m.blocks.flatMap((b) =>
+      b.content.kind === "sections" ? b.content.sections : [],
+    ),
+  );
+}
 
 function makePlan(codes: string[]): LocalPlan {
   return {
@@ -63,6 +75,56 @@ describe("deriveMacros", () => {
     expect(partial?.count).toEqual({ satisfied: 2, needed: 3 });
   });
 
+  it("uses headline elective credit for the finite chip, not an independent count (#8)", () => {
+    const program: Program = {
+      ...PROGRAM,
+      electives: [
+        {
+          description: "Technical Electives",
+          requiredCount: 1,
+          approvedCourses: ["te1", "te2"],
+        },
+      ],
+    };
+    const audit = compileAudit(
+      program,
+      makePlan(["te1", "te2"]),
+      null,
+      new Set(),
+    );
+    const finiteOf = (m: ReturnType<typeof deriveMacros>["macros"]) =>
+      sectionsOf(m).find((s) => s.kind === "electiveFinite");
+
+    // Both te1 and te2 are placed. The independent count is 2 (over-counts an
+    // option a named requirement may have claimed); the headline credited only 1.
+    const withCredit = deriveMacros(
+      audit,
+      program,
+      0,
+      [],
+      [],
+      () => 0.5,
+      new Set(),
+      undefined,
+      [1], // electiveCredit index-aligned to deriveElectiveSections
+    ).macros;
+    const s = finiteOf(withCredit);
+    expect(s && s.kind === "electiveFinite" ? s.placed : null).toBe(1);
+
+    // Without a credit array (read-only view), it falls back to the raw count.
+    const noCredit = deriveMacros(
+      audit,
+      program,
+      0,
+      [],
+      [],
+      () => 0.5,
+      new Set(),
+    ).macros;
+    const s2 = finiteOf(noCredit);
+    expect(s2 && s2.kind === "electiveFinite" ? s2.placed : null).toBe(2);
+  });
+
   it("does NOT surface unverified requirements in a macro", () => {
     // Unverified rules are now rendered near the headline as acknowledgeable
     // rows (buildProgramAudit → UnverifiedRequirements), not buried in a macro.
@@ -71,13 +133,60 @@ describe("deriveMacros", () => {
       unverifiedRequirements: ["Complete a co-op work term."],
     };
     const { macros } = macrosOf(program, []);
-    const sections = macros.flatMap((m) =>
-      m.blocks.flatMap((b) =>
-        b.content.kind === "sections" ? b.content.sections : [],
-      ),
-    );
+    const sections = sectionsOf(macros);
     expect(
-      sections.some((s) => s.caption === "Complete a co-op work term."),
+      sections.some(
+        (s) =>
+          ("caption" in s && s.caption === "Complete a co-op work term.") ||
+          (s.kind === "infoGroup" &&
+            s.items.includes("Complete a co-op work term.")),
+      ),
     ).toBe(false);
+  });
+
+  it("folds same-titled informational notes into one collapsible infoGroup", () => {
+    const program: Program = {
+      ...PROGRAM,
+      informational: [
+        { label: "Additional constraint", text: "Note A." },
+        { label: "Additional constraint", text: "Note B." },
+        { label: "Additional constraint", text: "Note C." },
+        { label: "Minimum average", text: "60% overall." },
+      ],
+    };
+    const groups = sectionsOf(macrosOf(program, []).macros).filter(
+      (s): s is Extract<Section, { kind: "infoGroup" }> =>
+        s.kind === "infoGroup",
+    );
+    // One group per distinct title, in first-seen order; the repeated title
+    // carries all three notes instead of three separate rows.
+    expect(groups.map((g) => g.title)).toEqual([
+      "Additional constraint",
+      "Minimum average",
+    ]);
+    expect(groups[0].items).toEqual(["Note A.", "Note B.", "Note C."]);
+    expect(groups[1].items).toEqual(["60% overall."]);
+  });
+
+  it("dedupes identical notes folded under one title (no duplicate rows/keys)", () => {
+    // Two notes with the same title AND text (e.g. both defaulting to the same
+    // advisory) must collapse to a single item — else SectionRow renders (and
+    // keys) it twice. Regression for #117 review.
+    const program: Program = {
+      ...PROGRAM,
+      informational: [
+        { label: "Additional constraint", text: "Verify with your advisor." },
+        { label: "Additional constraint", text: "Verify with your advisor." },
+        { label: "Additional constraint", text: "A distinct note." },
+      ],
+    };
+    const groups = sectionsOf(macrosOf(program, []).macros).filter(
+      (s): s is Extract<Section, { kind: "infoGroup" }> =>
+        s.kind === "infoGroup",
+    );
+    expect(groups[0].items).toEqual([
+      "Verify with your advisor.",
+      "A distinct note.",
+    ]);
   });
 });

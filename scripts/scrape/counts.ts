@@ -22,3 +22,9 @@ export function wordToNumber(tok: string): number | undefined {
   const n = WORD_NUMBERS[tok.toLowerCase()] ?? Number(tok);
   return Number.isFinite(n) ? n : undefined;
 }
+
+/** A unit total → an approximate course count (÷ 0.5, min 1). The unit audit
+ *  re-weights the real amount later; this is only a display/pick count. */
+export function unitsToCount(units: number): number {
+  return Math.max(1, Math.round(units / 0.5));
+}

@@ -227,7 +227,13 @@ export function buildNamedListIndex(
   const $ = cheerio.load(courseListsNewHtml);
   $("section").each((_, section) => {
     const $section = $(section);
-    const heading = cleanText($section.find(SECTION_HEADING_SELECTOR).text());
+    // Only the outer section carries Kuali's `grouping-label` testid; nested
+    // "List 1"/"List 2" sub-lists use a bare <h2>, so fall back to it (as
+    // parseFlexible does) — else "from List 1" never resolves. R1/R2.
+    const heading = cleanText(
+      $section.find(SECTION_HEADING_SELECTOR).first().text() ||
+        $section.find("h2").first().text(),
+    );
     if (!heading) return;
     const courses = [...new Set(anchorCourseCodes($, $section))].sort();
     if (courses.length === 0) return;

@@ -6,6 +6,9 @@ interface Props {
   programId: string;
   /** Every unverified requirement with whether it's been manually confirmed. */
   items: { text: string; acked: boolean }[];
+  /** Prior acknowledgements no longer matching a current requirement (a re-scrape
+   * changed the rule) — surfaced so a slip from 100% to 99% is explained. */
+  staleCount?: number;
   /**
    * Toggle handler. When absent (read-only shared view) rows render as static
    * text with no checkbox.
@@ -26,6 +29,7 @@ interface Props {
 export function UnverifiedRequirements({
   programId,
   items,
+  staleCount = 0,
   onAcknowledge,
 }: Props) {
   if (items.length === 0) return null;
@@ -50,6 +54,12 @@ export function UnverifiedRequirements({
         These couldn&apos;t be auto-verified — check each with your advisor,
         then confirm it to count toward 100%.
       </p>
+      {staleCount > 0 && (
+        <p className="u-small mt-1.5 text-partial">
+          {countNoun(staleCount, "requirement")} you previously confirmed
+          changed in a calendar update — re-confirm any that still apply.
+        </p>
+      )}
       <ul className="mt-1.5 flex flex-col gap-1">
         {items.map((it) => (
           <li key={it.text}>

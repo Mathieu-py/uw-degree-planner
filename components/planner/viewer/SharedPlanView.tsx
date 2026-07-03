@@ -17,9 +17,9 @@ import { logError } from "@/lib/log";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ServerPlan } from "@/lib/plan/server/types";
 import { savePlan } from "@/lib/plan/storage";
+import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
-import { PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { joinProgramNames } from "@/lib/programs";
 
@@ -41,20 +41,9 @@ export function SharedPlanView({ plan, catalog, programOptions }: Props) {
   const { create } = usePlanList({ isAuthed });
   const [busy, setBusy] = useState(false);
 
-  // Adapter: ServerPlan → LocalPlan. Only schemaVersion + stream defaulting
-  // differ (server stream can be null; LocalPlan's enum can't).
-  const localPlan = useMemo<LocalPlan>(
-    () => ({
-      schemaVersion: PLAN_SCHEMA_VERSION,
-      programIds: plan.programIds,
-      specializationIds: plan.specializationIds,
-      stream: plan.stream ?? "regular",
-      startTermId: plan.startTermId,
-      slots: plan.slots,
-      updatedAt: plan.updatedAt,
-    }),
-    [plan],
-  );
+  // Shared projection keeps every audited field — notably acknowledgedRequirements,
+  // without which an owner's acknowledged-to-100% plan reads 99% for viewers.
+  const localPlan = useMemo<LocalPlan>(() => serverPlanToLocal(plan), [plan]);
 
   const catalogByCode = useMemo(
     () => new Map(catalog.map((c) => [c.code, c])),

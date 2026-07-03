@@ -8,6 +8,7 @@ import {
   planRowToSummary,
   toSnapshot,
 } from "../serialize";
+import { snapshotError } from "../validate";
 
 const PLAN: PlanRow = {
   id: "plan-1",
@@ -237,6 +238,30 @@ describe("toSnapshot", () => {
       slots: [],
     });
     expect(snap.programScrapeVersion).toBeNull();
+  });
+
+  it("clamps an over-cap acknowledgement so one bad entry doesn't fail the whole save (#11)", () => {
+    const long = "x".repeat(600); // exceeds MAX_ACKED_TEXT_LEN (512)
+    const snap = toSnapshot({
+      programIds: ["h-cs"],
+      specializationIds: {},
+      acknowledgedRequirements: {
+        "h-cs": ["A real acknowledged requirement.", long],
+      },
+      stream: "regular",
+      startTermId: null,
+      slots: [],
+    });
+    // The over-long text is dropped; the valid one survives, and the snapshot
+    // now passes validation instead of the whole plan silently failing to save.
+    expect(snap.acknowledgedRequirements).toEqual({
+      "h-cs": ["A real acknowledged requirement."],
+    });
+    expect(snapshotError(snap)).toBeNull();
+    // Sanity: the same snapshot WITH the raw over-long text would be rejected.
+    expect(
+      snapshotError({ ...snap, acknowledgedRequirements: { "h-cs": [long] } }),
+    ).toBe("invalid_snapshot");
   });
 });
 

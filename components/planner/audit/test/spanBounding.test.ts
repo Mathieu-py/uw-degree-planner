@@ -64,6 +64,26 @@ describe("audit bounding to program span", () => {
     expect(data.placedCodes.has(REQUIRED)).toBe(false);
   });
 
+  it("surfaces a course dropped past the span so the exclusion isn't silent (#7)", () => {
+    const data = buildProgramAudit(
+      planWithCourseAt("4A"),
+      THREE_YEAR,
+      EMPTY_CATALOG,
+      [],
+    );
+    expect(data.outOfSpanCodes).toContain(REQUIRED);
+  });
+
+  it("reports no out-of-span courses when everything fits the span", () => {
+    const data = buildProgramAudit(
+      planWithCourseAt("3A"),
+      THREE_YEAR,
+      EMPTY_CATALOG,
+      [],
+    );
+    expect(data.outOfSpanCodes).toEqual([]);
+  });
+
   it("placing past the span credits strictly less than within it", () => {
     const inSpan = buildProgramAudit(
       planWithCourseAt("3A"),

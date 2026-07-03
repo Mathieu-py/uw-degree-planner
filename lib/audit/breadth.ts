@@ -1,3 +1,4 @@
+import { poolMatch } from "@/lib/courses/code";
 import type { Program, UnitConstraint } from "@/lib/programs";
 import { programConstraints, UNIT_RE } from "./constraints";
 
@@ -27,11 +28,6 @@ export interface BreadthRequirement {
 
 /** A subject code: 1–10 letters, optionally with an internal slash/ampersand. */
 const SUBJECT_RE = /^[A-Z][A-Z/&]{0,9}$/;
-
-/** Subject prefix of a catalog code: leading letters, uppercased ("hist250" → "HIST"). */
-export function subjectOf(code: string): string {
-  return (code.match(/^[a-z]+/i)?.[0] ?? "").toUpperCase();
-}
 
 /**
  * Parse a breadth constraint into a trackable requirement, or null when it isn't
@@ -77,8 +73,8 @@ export function deriveBreadthRequirements(
   for (const c of programConstraints(program)) {
     const parsed = parseBreadthConstraint(c);
     if (!parsed) continue;
-    const set = new Set(parsed.subjects);
-    const satisfiers = placed.filter((code) => set.has(subjectOf(code)));
+    const subjects = new Set(parsed.subjects.map((s) => s.toLowerCase()));
+    const satisfiers = placed.filter((code) => poolMatch(code, { subjects }));
     const placedUnits = satisfiers.reduce(
       (sum, code) => sum + unitsOf(code),
       0,

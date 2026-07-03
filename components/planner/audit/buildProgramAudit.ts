@@ -4,6 +4,7 @@ import {
   creditExclusionKeys,
   placementLegalityKey,
 } from "@/lib/audit/compile";
+import { foldFiniteElectivesIntoRules } from "@/lib/audit/foldElectives";
 import type { DegreeProgress } from "@/lib/audit/progress";
 import { computeDegreeProgress } from "@/lib/audit/progress";
 import { equivalenceForCatalog } from "@/lib/courses/equivalence";
@@ -33,6 +34,17 @@ export interface ProgramAuditData {
    * "confirm manually" rows; acknowledging one lets the headline reach 100%.
    */
   unverifiedItems: { text: string; acked: boolean }[];
+  /**
+   * Acknowledgements no longer matching any current `unverifiedRequirements` text
+   * (a re-scrape reworded/removed the rule). Surfaced so a headline that slipped
+   * 100%→99% is explained, not a silent regression.
+   */
+  staleAcknowledgements: string[];
+  /**
+   * Codes in slots span-scoping dropped (a 4A/4B course on a program ending at
+   * 3B) — on the timeline but not credited here; surfaced as a note (#105).
+   */
+  outOfSpanCodes: string[];
   /** Every code with a placement (shown on its row). */
   placedCodes: Set<string>;
   /** Placed-but-illegal codes — flagged and excluded from ring counts/headline. */
@@ -75,6 +87,11 @@ export function buildProgramAudit(
   issues: readonly ValidationIssue[],
 ): ProgramAuditData {
   const program = PROGRAMS[programId] ?? null;
+  // Fold finite "choose N of a list" requirements (e.g. an "Approved Courses
+  // List") into the rule tree as picks, so they render/count under Degree
+  // requirements — not as a separate Electives row. Local to this audit; global
+  // PROGRAMS is untouched, so `programReferencedCodes` still sees the same codes.
+  const auditedProgram = program ? foldFiniteElectivesIntoRules(program) : null;
   const unitsOf = (code: string) => catalogByCode.get(code)?.units ?? 0.5;
 
   // Credit one member of each antireq conflict (program-required, else higher
@@ -91,24 +108,35 @@ export function buildProgramAudit(
   const scopedPlan = program
     ? scopePlanToSpan(plan, programTermSpan(program))
     : plan;
+  // Courses span-scoping dropped still show on the timeline but never credit this
+  // (shorter) program. Surface a count so the exclusion isn't a silent mystery.
+  const scopedSlotIds = new Set(scopedPlan.slots.map((s) => s.id));
+  const outOfSpanCodes = [
+    ...new Set(
+      plan.slots
+        .filter((s) => !scopedSlotIds.has(s.id))
+        .flatMap((s) => s.courses.map((c) => c.code)),
+    ),
+  ];
 
   // One index for BOTH passes: the audit tree and the progress headline must
   // agree on what a placed cross-listed twin satisfies (#21).
   const equiv = equivalenceForCatalog(catalogByCode);
   const audit = compileAudit(
-    program,
+    auditedProgram,
     scopedPlan,
     plan.specializationIds[programId] ?? null,
     legality,
     programId,
     equiv,
+    unitsOf,
   );
   const acknowledged = new Set(
     plan.acknowledgedRequirements?.[programId] ?? [],
   );
   const progress = computeDegreeProgress(
     audit,
-    program,
+    auditedProgram,
     unitsOf,
     legality,
     equiv,
@@ -116,23 +144,28 @@ export function buildProgramAudit(
   );
   const { macros } = deriveMacros(
     audit,
-    program,
+    auditedProgram,
     progress.freeUnits,
     progress.breadthRequirements,
     progress.levelFloors,
     unitsOf,
     legality,
     progress.nodeFill,
+    progress.electiveCredit,
   );
 
   // Unverified requirements, surfaced near the headline (not buried in a macro)
   // so "confirm with your advisor" is actionable. Each carries its acked state;
   // the still-owed ones (progress.owedUnverified) hold the headline below 100%.
-  const unverifiedItems = (program?.unverifiedRequirements ?? []).map(
-    (text) => ({
-      text,
-      acked: acknowledged.has(text),
-    }),
+  const unverifiedRequirements = program?.unverifiedRequirements ?? [];
+  const unverifiedItems = unverifiedRequirements.map((text) => ({
+    text,
+    acked: acknowledged.has(text),
+  }));
+  // Acked text matching no current requirement → the rule changed on re-scrape.
+  const unverifiedSet = new Set(unverifiedRequirements);
+  const staleAcknowledgements = [...acknowledged].filter(
+    (text) => !unverifiedSet.has(text),
   );
 
   // Whole-degree completion, not a sum of overlapping slots. See computeDegreeProgress.
@@ -155,6 +188,8 @@ export function buildProgramAudit(
     progress,
     macros,
     unverifiedItems,
+    staleAcknowledgements,
+    outOfSpanCodes,
     placedCodes,
     illegalCodes,
     headlinePct,

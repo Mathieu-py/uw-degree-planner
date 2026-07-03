@@ -7,6 +7,15 @@ import { extractSubjectCodes } from "./normalize";
 // …") — clarifying parentheticals ("0.5 unit", "see Additional Constraints") are not.
 const EXCLUSION_RE = /^(?:exclud|exclusive\s+of|except)/i;
 
+// A cap ("at most N", "a maximum of N", "no more than N", "up to N") is a CEILING
+// on how much of a pool may count, NOT a requirement. The audit's subjectPool
+// models only floors (met when have >= need), so parsing a cap as one would
+// wrongly demand the student max the pool out. Reject it up front so the rule
+// falls through to unverified. (Pick caps are handled by the rule tree's
+// COMPLETE_NO_MORE_THAN_RE, which sets selectMax with no floor.)
+const POOL_CAP_RE =
+  /^Complete\s+(?:at\s+most|a\s+maximum\s+of|no\s+more\s+than|up\s+to)\b/i;
+
 interface PoolHead {
   amount: number;
   isUnits: boolean;
@@ -14,20 +23,45 @@ interface PoolHead {
   rest: string;
 }
 
+// A unit total stated as a trailing clause ("… to a total of 8.0 units"). Both
+// forms of parseHead strip it from `rest` so it doesn't leak into subject parsing.
+const TOTAL_UNITS_RE = /\bto a total of\s+(\d+(?:\.\d+)?)\s+units?\b/i;
+
 /**
  * Match the "Complete N [units] [of|in]" lead-in. Count may be a digit, a word,
- * or "a"/"an". Null when not a "Complete N" rule.
+ * or "a"/"an". Only floor lead-ins ("at least", "a minimum of") are accepted;
+ * caps are rejected up front by {@link POOL_CAP_RE}. Falls back to a count-less
+ * "Complete [additional] units of …" whose amount is a trailing "to a total of
+ * N units" (R5). Null when neither.
  */
 function parseHead(fullText: string): PoolHead | null {
   const head = fullText.match(
-    /^Complete\s+(?:at\s+least\s+|at\s+most\s+|a\s+(?:minimum|maximum)\s+of\s+)?(\d+(?:\.\d+)?|an?|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:additional\s+)?(units?\b\s*)?(?:of\s+|in\s+)?/i,
+    /^Complete\s+(?:at\s+least\s+|a\s+minimum\s+of\s+)?(\d+(?:\.\d+)?|an?|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:additional\s+)?(units?\b\s*)?(?:of\s+|in\s+)?/i,
   );
-  if (!head) return null;
-  return {
-    amount: WORD_NUMBERS[head[1].toLowerCase()] ?? Number(head[1]),
-    isUnits: head[2] != null,
-    rest: fullText.slice(head[0].length).trim(),
-  };
+  if (head) {
+    return {
+      amount: WORD_NUMBERS[head[1].toLowerCase()] ?? Number(head[1]),
+      isUnits: head[2] != null,
+      rest: fullText.slice(head[0].length).replace(TOTAL_UNITS_RE, " ").trim(),
+    };
+  }
+  // No leading count ("Complete additional units of PSCI courses … to a total of
+  // 8.0 units") — take the amount from the trailing total. R5.
+  const noCount = fullText.match(
+    /^Complete\s+(?:additional\s+)?units?\s+(?:of\s+|in\s+)?/i,
+  );
+  const total = TOTAL_UNITS_RE.exec(fullText);
+  if (noCount && total) {
+    return {
+      amount: Number(total[1]),
+      isUnits: true,
+      rest: fullText
+        .slice(noCount[0].length)
+        .replace(TOTAL_UNITS_RE, " ")
+        .trim(),
+    };
+  }
+  return null;
 }
 
 /**
@@ -68,13 +102,22 @@ interface SubjectMatch {
  */
 function parseSubjects(rest: string): SubjectMatch {
   // All-caps codes joined by and/or/comma; case-sensitive so prose words aren't
-  // mistaken for codes. A descriptor adjective ("lecture", "lab") may precede "courses".
+  // mistaken for codes. A descriptor adjective ("lecture", "lab") may precede the
+  // noun, which is "courses" or "electives" ("Complete 2 PHARM electives"). R5.
   const codesMatch = rest.match(
-    /^([A-Z]{2,8}(?:\s*(?:,\s*(?:or|and)|and\/or|,|and|or)\s*[A-Z]{2,8})*)\s+(?:(?:lecture|laboratory|lab|elective|approved)\s+)*courses?\b/,
+    /^([A-Z]{2,8}(?:\s*(?:,\s*(?:or|and)|and\/or|,|and|or)\s*[A-Z]{2,8})*)\s+(?:(?:lecture|laboratory|lab|elective|approved)\s+)*(?:courses?|electives?)\b/,
   );
   if (codesMatch) {
     const subjectCodes = extractSubjectCodes(codesMatch[1], "upper");
     return { subjectCodes, rest: rest.slice(codesMatch[0].length).trim() };
+  }
+  // A bare code sized by units, no "courses" noun ("BIOL 0.5 unit, any level"). R5.
+  const sized = rest.match(/^([A-Z]{2,8})\s+[\d.]+[\s-]units?\b/);
+  if (sized) {
+    return {
+      subjectCodes: extractSubjectCodes(sized[1], "upper"),
+      rest: rest.slice(sized[0].length).trim(),
+    };
   }
   if (/^[A-Za-z]+\s+courses?\b/.test(rest)) {
     // A non-code noun ("Science courses") — subjects must come from "from: …".
@@ -143,8 +186,11 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
  */
 function parseFacultyClause(text: string): Faculty[] {
   if (!/facult/i.test(text)) return [];
+  // Stop the capture before a "from" clause (with or without a leading "or"), so
+  // "Faculty of Arts from: CS, MATH" yields "Arts", not "Arts from: CS, MATH"
+  // (whose "MATH" would wrongly pull in the whole Math faculty). See #117 (B).
   const m = text.match(
-    /facult(?:y\s+of|ies)\b\s*:?\s*([\s\S]+?)(?=;|\.|$|,?\s+or\s+from\b)/i,
+    /facult(?:y\s+of|ies)\b\s*:?\s*([\s\S]+?)(?=;|\.|$|,?\s+(?:or\s+)?from\b)/i,
   );
   if (!m) return [];
   const found = new Set<Faculty>();
@@ -160,7 +206,15 @@ function parseFacultyClause(text: string): Faculty[] {
  * descriptor + optional level + "from:" list). Shared by {@link parseSubjectPool}
  * and {@link parseChooseAnyPool}. Null when no enumerable subject set survives.
  */
-function buildPool(restIn: string, selectCount: number): RuleNode | null {
+function buildPool(
+  restIn: string,
+  selectCount: number,
+  needUnits?: number,
+): RuleNode | null {
+  // A pool selects whole courses, never a fraction (a fractional `selectCount`
+  // means a unit-stated pool, floored to one course). When units were stated,
+  // `needUnits` carries the real requirement and the audit scores by units.
+  const count = Math.max(1, Math.round(selectCount));
   const exclusions: string[] = [];
   let rest = stripExclusionsAndQualifiers(restIn, exclusions);
 
@@ -204,7 +258,8 @@ function buildPool(restIn: string, selectCount: number): RuleNode | null {
 
   return {
     kind: "subjectPool",
-    selectCount,
+    selectCount: count,
+    ...(needUnits !== undefined ? { needUnits } : {}),
     subjectCodes,
     ...(level.minLevel !== undefined ? { minLevel: level.minLevel } : {}),
     ...(level.maxLevel !== undefined ? { maxLevel: level.maxLevel } : {}),
@@ -214,18 +269,22 @@ function buildPool(restIn: string, selectCount: number): RuleNode | null {
 
 /**
  * Parse a "Complete N …" subject-pool rule into a `subjectPool` node, or null if
- * no enumerable subject set is named. A unit amount becomes an approximate count
- * (units / 0.5) — the unit audit re-weights by real catalog units, so the
- * approximation only affects the count fallback.
+ * no enumerable subject set is named. A unit amount keeps its real value in
+ * `needUnits` (the audit scores by additive credit weights — a 1.0-unit course
+ * counts as 1.0 toward the total); the ÷0.5 `selectCount` is only a display
+ * approximation. Per the UW Undergraduate Calendar Glossary ("Credit"): "A
+ * credit weight of 0.5 is normally assigned to a one-term course … Most courses
+ * have credit weights of 0.5, but some have weights such as 0.25, 1.0, 2.0."
  */
 export function parseSubjectPool(fullText: string): RuleNode | null {
+  if (POOL_CAP_RE.test(fullText)) return null;
   const head = parseHead(fullText);
   if (!head) return null;
   const { amount, isUnits } = head;
-  // Unit-stated pool has no per-course units at parse time; approximate the count
-  // assuming 0.5-unit courses.
+  // ÷0.5 gives a display count; `needUnits` carries the real amount so the audit
+  // gates on units, not the count.
   const selectCount = isUnits ? Math.max(1, Math.round(amount / 0.5)) : amount;
-  return buildPool(head.rest, selectCount);
+  return buildPool(head.rest, selectCount, isUnits ? amount : undefined);
 }
 
 /**

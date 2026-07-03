@@ -402,6 +402,9 @@ interface PhaseAResult {
   specRefsByParent: Map<string, SpecializationRef[]>;
   /** Each program's referenced "Bachelor of X degree-level requirements" pid. */
   degreeRefBySlug: Map<string, { pid: string; name: string }>;
+  /** Free electives dropped from a program's rule tree, re-surfaced later for
+   *  programs that end up with no totalUnits denominator. See FREE_ELECTIVE_RE. */
+  freeElectivesBySlug: Map<string, string[]>;
   withData: number;
   skippedNoData: string[];
   failed: string[];
@@ -424,6 +427,7 @@ async function runPhaseA(
   const programs: Record<string, Program> = {};
   const specRefsByParent = new Map<string, SpecializationRef[]>();
   const degreeRefBySlug = new Map<string, { pid: string; name: string }>();
+  const freeElectivesBySlug = new Map<string, string[]>();
   const skippedNoData: string[] = [];
   const failed: string[] = [];
   const warnings: string[] = [];
@@ -444,6 +448,9 @@ async function runPhaseA(
         skippedNoData.push(slug);
         return "skipped (no data)";
       }
+      if (result.freeElectives?.length)
+        freeElectivesBySlug.set(slug, result.freeElectives);
+
       const electivesResult = parseElectives(detail, slug);
       warnings.push(...electivesResult.warnings);
 
@@ -524,6 +531,7 @@ async function runPhaseA(
     programs,
     specRefsByParent,
     degreeRefBySlug,
+    freeElectivesBySlug,
     withData,
     skippedNoData,
     failed,
@@ -725,6 +733,19 @@ async function main() {
     phaseA.degreeRefBySlug,
     degreesByPid,
   );
+
+  // Re-surface free electives dropped from the rule tree for programs that ended
+  // up with no totalUnits denominator: there the unit headline has no free
+  // remainder to gate them, so without this the audit could read 100% with the
+  // electives unaccounted. Done here, after resolveDegreeTotalUnits, so a
+  // degree-supplied total still suppresses them (no redundant advisory row). #117.
+  for (const [slug, freeElectives] of phaseA.freeElectivesBySlug) {
+    const program = phaseA.programs[slug];
+    if (!program || program.unitPlan?.totalUnits != null) continue;
+    program.unverifiedRequirements = [
+      ...new Set([...(program.unverifiedRequirements ?? []), ...freeElectives]),
+    ];
+  }
 
   // Stamp the term span now that `totalUnits` is final (#105).
   for (const program of Object.values(phaseA.programs)) {

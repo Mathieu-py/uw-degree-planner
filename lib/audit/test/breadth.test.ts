@@ -4,7 +4,6 @@ import {
   deriveBreadthRequirements,
   nonBreadthConstraints,
   parseBreadthConstraint,
-  subjectOf,
 } from "../breadth";
 
 const hum: UnitConstraint = {
@@ -57,14 +56,6 @@ describe("parseBreadthConstraint", () => {
 
   it("returns null for a level-only minimum (no subject list)", () => {
     expect(parseBreadthConstraint(levelOnly)).toBeNull();
-  });
-});
-
-describe("subjectOf", () => {
-  it("extracts the uppercase subject prefix", () => {
-    expect(subjectOf("hist250")).toBe("HIST");
-    expect(subjectOf("easia220r")).toBe("EASIA");
-    expect(subjectOf("CS246")).toBe("CS");
   });
 });
 

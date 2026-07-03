@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import { PROGRAMS, type Program } from "../../programs";
 import { compileAudit, creditExclusionKeys } from "../compile";
+import { foldFiniteElectivesIntoRules } from "../foldElectives";
 import { computeDegreeProgress } from "../progress";
 
 function makePlan(codes: string[]): LocalPlan {
@@ -33,7 +34,15 @@ function progressOf(
   acknowledged: ReadonlySet<string> = new Set(),
 ) {
   const plan = makePlan(codes);
-  const audit = compileAudit(program, plan, null, legality);
+  const audit = compileAudit(
+    program,
+    plan,
+    null,
+    legality,
+    null,
+    undefined,
+    unitsOf,
+  );
   return computeDegreeProgress(
     audit,
     program,
@@ -43,6 +52,59 @@ function progressOf(
     acknowledged,
   );
 }
+
+describe("computeDegreeProgress — folding a finite list is headline-neutral", () => {
+  // A finite "Approved Courses List" counts the same whether it lives in
+  // program.electives (a finite bucket) or is folded into the rule tree as a
+  // pick (foldFiniteElectivesIntoRules) — same need, same eligible set, so the
+  // matcher credits identical units. Options are 0.5-unit here, so the unfilled-
+  // slot reservation (uniformUnit vs flat 0.5) is also identical.
+  const base: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [{ kind: "courses", courses: ["cs115", "math115"] }],
+    },
+    electives: [
+      {
+        description: "Approved Courses List",
+        requiredCount: 2,
+        approvedCourses: ["chem101", "chem102", "chem103", "chem104"],
+      },
+    ],
+    unitPlan: { totalUnits: 3.0 }, // 2 required + 2 picked + 2 free courses
+  };
+  const folded = foldFiniteElectivesIntoRules(base);
+
+  it("folds (so this is a real before/after comparison)", () => {
+    expect(folded).not.toBe(base);
+    expect(folded.electives).toEqual([]);
+  });
+
+  it.each([
+    { label: "empty", codes: [] },
+    { label: "partial", codes: ["cs115", "chem101"] },
+    {
+      label: "named-complete",
+      codes: ["cs115", "math115", "chem101", "chem102"],
+    },
+    {
+      label: "over-placed",
+      codes: ["cs115", "math115", "chem101", "chem102", "chem103", "chem104"],
+    },
+  ])("matches pct/creditedUnits/freeUnits/allComplete ($label)", ({
+    codes,
+  }) => {
+    const a = progressOf(base, codes);
+    const b = progressOf(folded, codes);
+    expect(b.pct).toBe(a.pct);
+    expect(b.creditedUnits).toBe(a.creditedUnits);
+    expect(b.freeUnits).toBe(a.freeUnits);
+    expect(b.allComplete).toBe(a.allComplete);
+  });
+});
 
 describe("computeDegreeProgress — required courses", () => {
   const program: Program = {
@@ -227,6 +289,46 @@ describe("computeDegreeProgress — compound pick (option is an `all` group)", (
   });
 });
 
+describe("computeDegreeProgress — compound pick credits the heavier group", () => {
+  // "Complete 1 of: {light} or {heavy}", light listed first but heavy is 1.0 unit.
+  // Heaviest-first keeps heavy as the NAMED requirement, so free room is the
+  // remainder after 1.0 (not after light's 0.5) and heavy is the group shown to
+  // count — instead of arbitrarily crediting whichever Kuali listed first.
+  const program: Program = {
+    kind: "flexible",
+    name: "Compound heavier",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [
+            {
+              kind: "all",
+              children: [{ kind: "courses", courses: ["light1"] }],
+            },
+            {
+              kind: "all",
+              children: [{ kind: "courses", courses: ["heavy1"] }],
+            },
+          ],
+        },
+      ],
+    },
+    unitPlan: { totalUnits: 2.0 }, // one named group + free room
+  };
+  const unitsOf = (c: string) => (c === "heavy1" ? 1.0 : 0.5);
+
+  it("names the 1.0-unit group even though the 0.5-unit one is listed first", () => {
+    const p = progressOf(program, ["light1", "heavy1"], unitsOf);
+    expect(p.freeUnits).toBe(1.0); // 2.0 − heavy's 1.0 named, not − light's 0.5
+    expect(p.creditedUnits).toBe(1.5); // both placed courses still credit (1.0 + 0.5)
+  });
+});
+
 describe("computeDegreeProgress — overlapping elective pools (BME shape)", () => {
   // Three sub-lists whose union is exactly the aggregate "Technical Electives
   // List". Naive counting needs 1+1+3 = 5 courses; the real requirement is 3.
@@ -390,6 +492,79 @@ describe("computeDegreeProgress — unit fidelity for pool/elective slots (T1.3)
   it("estimates an unfilled elective slot at ~0.5 unit", () => {
     const p = progressOf(program, [], unitsOf);
     expect(p.freeUnits).toBe(1.5); // 2.0 − 0.5 estimate (option unknown until picked)
+  });
+});
+
+describe("computeDegreeProgress — unit-stated subjectPool scores by units", () => {
+  // "Complete 2.0 units of STAT courses" — a unit-stated pool. A 1.0-unit STAT
+  // course counts as 1.0 toward the 2.0 need (not as one 0.5 slot), so two
+  // 1.0-unit courses satisfy it. The old count model (÷0.5 → selectCount 4)
+  // demanded four courses AND let a heavy course eat free-elective budget.
+  const program: Program = {
+    kind: "flexible",
+    name: "Unit pool",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "subjectPool",
+          selectCount: 4, // ÷0.5 display approximation
+          needUnits: 2.0,
+          subjectCodes: ["STAT"],
+          minLevel: 200,
+        },
+      ],
+    },
+    unitPlan: { totalUnits: 2.0 }, // the pool is the whole (tiny) degree
+  };
+  const unitsOf = (c: string) => (c.startsWith("stat") ? 1.0 : 0.5);
+
+  it("is satisfied by two 1.0-unit courses (not four), reaching 100%", () => {
+    const p = progressOf(program, ["stat230", "stat231"], unitsOf);
+    expect(p.creditedUnits).toBe(2.0);
+    expect(p.pct).toBe(100);
+    expect(p.allComplete).toBe(true);
+  });
+
+  it("reads partial progress by units, not by a ÷0.5 course count", () => {
+    const p = progressOf(program, ["stat230"], unitsOf); // 1.0 of 2.0 units
+    expect(p.creditedUnits).toBe(1.0);
+    expect(p.pct).toBe(50);
+    expect(p.allComplete).toBe(false);
+  });
+});
+
+describe("computeDegreeProgress — overlapping unit pools met regardless of order", () => {
+  // Two unit-pool electives sharing a course: "0.5 unit of CS or MATH" and
+  // "0.5 unit of CS". With cs300 + math300 placed, both are jointly satisfiable
+  // (CS → the CS-only pool, MATH → the other). Most-constrained-first assignment
+  // reaches 100% no matter which pool is declared first; the old list-order
+  // greedy stranded the second pool at 99%.
+  const csOrMath = {
+    description:
+      "Complete a minimum of 0.5 unit of CS or MATH courses at the 200-level or above",
+  };
+  const csOnly = {
+    description:
+      "Complete a minimum of 0.5 unit of CS courses at the 200-level or above",
+  };
+  const build = (electives: { description: string }[]): Program => ({
+    kind: "flexible",
+    name: "Overlap pools",
+    asOf: "2026",
+    rules: { kind: "all", children: [] },
+    electives,
+    unitPlan: { totalUnits: 1.0 }, // two 0.5-unit pools, no free room
+  });
+
+  it.each([
+    { label: "cs-or-math first", electives: [csOrMath, csOnly] },
+    { label: "cs-only first", electives: [csOnly, csOrMath] },
+  ])("reaches 100% with the shared course ($label)", ({ electives }) => {
+    const p = progressOf(build(electives), ["cs300", "math300"]);
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
   });
 });
 
@@ -608,6 +783,34 @@ describe("computeDegreeProgress — several gates owed at once", () => {
     const p = progressOf(program, ["m1"], () => 0.5, new Set(), acked);
     expect(p.pct).toBe(99);
     expect(p.owedUnverified).toHaveLength(1);
+  });
+});
+
+describe("computeDegreeProgress — 100% requires full volume, not just gates", () => {
+  // `allComplete` can hold while free-elective units are still unplaced; the
+  // headline must NOT round a ~99.5% plan up to a false 100. A near-full single
+  // credit against a slightly larger denom reproduces the Math.round edge.
+  const program: Program = {
+    kind: "flexible",
+    name: "Rounding",
+    asOf: "2026",
+    rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+    unitPlan: { totalUnits: 100.5 }, // m1 (100.0) + 0.5 free room
+  };
+  const unitsOf = (c: string) => (c === "m1" ? 100.0 : 0.5);
+
+  it("holds at 99% when volume is short even though every gate is met", () => {
+    const p = progressOf(program, ["m1"], unitsOf);
+    expect(p.allComplete).toBe(true); // the sole named bucket is filled
+    expect(p.creditedUnits).toBe(100.0);
+    expect(p.denom).toBe(100.5); // 0.5 unit of volume still owed
+    expect(p.pct).toBe(99); // not the rounded-up 100
+  });
+
+  it("reaches 100% once the remaining free unit is placed", () => {
+    const p = progressOf(program, ["m1", "free1"], unitsOf);
+    expect(p.creditedUnits).toBe(100.5);
+    expect(p.pct).toBe(100);
   });
 });
 

@@ -5,6 +5,8 @@ interface Props {
   estimatedDenom: boolean;
   /** Plan-wide prereq/antireq placement issues (shown the same on each program). */
   blockingIssueCount: number;
+  /** Courses in terms past this program's span (excluded from its credit). */
+  outOfSpanCount?: number;
 }
 
 /**
@@ -17,9 +19,19 @@ interface Props {
 export function AuditAdvisoryNotes({
   estimatedDenom,
   blockingIssueCount,
+  outOfSpanCount = 0,
 }: Props) {
   return (
     <>
+      {outOfSpanCount > 0 ? (
+        <div className="av-note text-partial">
+          ⚠ {countNoun(outOfSpanCount, "course")} in{" "}
+          {outOfSpanCount === 1 ? "a later term falls" : "later terms fall"}{" "}
+          outside this program&apos;s length, so{" "}
+          {outOfSpanCount === 1 ? "it doesn't" : "they don't"} count toward its
+          bar.
+        </div>
+      ) : null}
       {estimatedDenom ? (
         <div className="av-note">
           This program&apos;s calendar entry states no total unit count, so the

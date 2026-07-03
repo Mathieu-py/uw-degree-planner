@@ -220,10 +220,12 @@ export const AuditPanel = memo(function AuditPanel({
             <AuditAdvisoryNotes
               estimatedDenom={detail.estimatedDenom}
               blockingIssueCount={blockingIssueCount}
+              outOfSpanCount={detail.outOfSpanCodes.length}
             />
             <UnverifiedRequirements
               programId={activeId}
               items={detail.unverifiedItems}
+              staleCount={detail.staleAcknowledgements.length}
               onAcknowledge={onAcknowledgeRequirement}
             />
             <AuditMacroList

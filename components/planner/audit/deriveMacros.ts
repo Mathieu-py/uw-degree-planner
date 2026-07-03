@@ -22,7 +22,7 @@ import {
   pluralize,
   unitsMet,
 } from "@/lib/format";
-import { type Program, TERM_LETTERS } from "@/lib/programs";
+import { type Program, requiredCoursesIn, TERM_LETTERS } from "@/lib/programs";
 import { nodeProgress } from "./nodeProgress";
 import {
   GENERIC_ALL,
@@ -31,13 +31,19 @@ import {
   type Section,
 } from "./types";
 
-/** A child's name iff it's a *named* "all of" sub-group ("Core Courses"); else null. */
+/**
+ * A child's heading iff it's a distinct *selection* list ("Approved Courses
+ * List", "List 1") worth its own collapsible sub-group. A named `all` that
+ * carries its OWN required courses (e.g. Kuali's "Required Courses" bucket) is
+ * the mandatory core — the "Degree requirements" macro already names it — so it
+ * renders flat, not behind a redundant dropdown. `requiredCoursesIn` is empty
+ * only when every course sits inside a pick (a pure choice list). Null for a
+ * leaf, an unlabeled group, or the generic wrapper.
+ */
 function namedGroupLabel(node: AuditNode): string | null {
-  return node.ruleNode.kind === "all" &&
-    node.description != null &&
-    node.description !== GENERIC_ALL
-    ? node.description
-    : null;
+  if (node.ruleNode.kind !== "all" || node.description == null) return null;
+  if (node.description === GENERIC_ALL) return null;
+  return requiredCoursesIn(node.ruleNode).length > 0 ? null : node.description;
 }
 
 /**
@@ -92,6 +98,12 @@ export function deriveMacros(
    * per-node count.
    */
   nodeFill?: NodeFill,
+  /**
+   * Per-elective headline credit (index-aligned to `deriveElectiveSections`).
+   * Present → the chip reflects the match credit; omitted → it counts placed
+   * options independently (read-only view).
+   */
+  electiveCredit?: number[],
 ): { macros: Macro[] } {
   // Count like the headline: illegally-placed courses don't credit, keeping the
   // elective/communication counts consistent with the degree rows.
@@ -198,7 +210,9 @@ export function deriveMacros(
   let untrackedCount = 0;
   if (program) {
     deriveElectiveSections(program)
-      .map((e, i) => toElectiveSection(e, i, placedCodes, unitsOf))
+      .map((e, i) =>
+        toElectiveSection(e, i, placedCodes, unitsOf, electiveCredit?.[i]),
+      )
       .forEach((s) => {
         if (s.kind === "electiveFinite") {
           elecNeeded += s.need;
@@ -234,31 +248,42 @@ export function deriveMacros(
   // unstructured requirements. Purely informational (not trackable) → no count.
   const otherSections: Section[] = [];
   if (program) {
-    nonBreadthConstraints(program)
-      .filter((c) => !isLevelFloor(c))
-      .forEach((c, i) => {
-        otherSections.push({
-          kind: "info",
-          key: `constraint-${i}`,
-          title: c.label,
-          caption:
-            c.sourceText && c.sourceText !== c.label
-              ? c.sourceText
-              : "Verify with your advisor.",
-        });
-      });
-    const items = [
+    // Fold notes by title so 7 identical "Additional constraint" labels collapse
+    // into one "Additional constraints · 7" row instead of a wall. Map preserves
+    // first-seen order.
+    const byTitle = new Map<string, string[]>();
+    const addNote = (title: string, text: string) => {
+      const list = byTitle.get(title);
+      // Skip a note already folded under this title: two constraints that both
+      // fall back to "Verify with your advisor." must not render (or key) twice.
+      if (list) {
+        if (!list.includes(text)) list.push(text);
+      } else byTitle.set(title, [text]);
+    };
+    for (const c of nonBreadthConstraints(program).filter(
+      (c) => !isLevelFloor(c),
+    ))
+      addNote(
+        c.label,
+        c.sourceText && c.sourceText !== c.label
+          ? c.sourceText
+          : "Verify with your advisor.",
+      );
+    for (const it of [
       ...(program.informational ?? []),
       ...(program.degreeRequirements?.informational ?? []),
-    ];
-    items.forEach((it, i) => {
+    ])
+      addNote(it.label, it.text);
+
+    let i = 0;
+    for (const [title, notes] of byTitle) {
       otherSections.push({
-        kind: "info",
-        key: `info-${i}`,
-        title: it.label,
-        caption: it.text,
+        kind: "infoGroup",
+        key: `info-${i++}`,
+        title,
+        items: notes,
       });
-    });
+    }
   }
   // `unverifiedRequirements` are NOT emitted here — they're surfaced near the
   // headline as acknowledgeable "confirm manually" rows (buildProgramAudit →
@@ -332,9 +357,13 @@ function toElectiveSection(
   index: number,
   placedCodes: ReadonlySet<string>,
   unitsOf: (code: string) => number,
+  /** Headline match credit for this elective (filled count / credited units). */
+  credit?: number,
 ): Section {
   if (e.kind === "finite") {
-    const placed = e.options.filter((c) => placedCodes.has(c)).length;
+    // Match credit when available (so a claimed course isn't re-counted here);
+    // else a raw placed-option count.
+    const placed = credit ?? e.options.filter((c) => placedCodes.has(c)).length;
     return {
       kind: "electiveFinite",
       key: `elec-${index}`,
@@ -351,7 +380,9 @@ function toElectiveSection(
     const satisfiers = [...placedCodes].filter((c) =>
       electivePoolEligible(c, e),
     );
-    const placedUnits = satisfiers.reduce((sum, c) => sum + unitsOf(c), 0);
+    // Match credit (post-match units) when available, else the raw eligible sum.
+    const placedUnits =
+      credit ?? satisfiers.reduce((sum, c) => sum + unitsOf(c), 0);
     const done = Math.min(placedUnits, e.needUnits);
     const met = unitsMet(placedUnits, e.needUnits);
     return {

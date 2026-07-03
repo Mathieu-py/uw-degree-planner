@@ -118,7 +118,7 @@ export function subjectPoolEligible(
   s: SubjectPoolElectiveSection,
 ): boolean {
   return poolMatch(code, {
-    subjects: s.subjects,
+    subjects: new Set(s.subjects),
     minLevel: s.minLevel,
     maxLevel: s.maxLevel,
   });
