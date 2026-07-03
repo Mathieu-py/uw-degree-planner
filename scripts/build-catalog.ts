@@ -171,7 +171,16 @@ async function main() {
     let seating: Record<string, CourseSection[]>;
     if (hasOpenDataKey()) {
       process.stdout.write(`Term ${term}: seating from Open Data... `);
-      seating = await fetchSeating(term);
+      try {
+        seating = await fetchSeating(term);
+      } catch (err) {
+        // A present-but-invalid key or an Open Data outage shouldn't abort the
+        // whole build either — keep last-known seating and refresh the rest. #120.
+        console.warn(
+          `\nTerm ${term}: Open Data seating fetch failed (${err instanceof Error ? err.message : err}) — reusing seating from the existing snapshot.`,
+        );
+        seating = await loadExistingSeating(term);
+      }
     } else {
       console.warn(
         `Term ${term}: UW_OPENDATA_KEY unset — reusing seating from the existing snapshot (partial refresh).`,
