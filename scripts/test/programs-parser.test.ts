@@ -16,6 +16,7 @@ import {
   parseSpecializationsList,
   parseUnitPlan,
 } from "../scrape/programs-parser";
+import { excludedCodes } from "../scrape/requirements";
 
 const rawJson = (slug: string): Record<string, string> =>
   JSON.parse(
@@ -217,7 +218,7 @@ describe("parseProgramRequirements — engineering 'Complete N of' → pick node
     expect(r.warnings).toEqual([]);
   });
 
-  it("surfaces 'Complete N approved electives' as unverified, not a rule (no warning, no code)", () => {
+  it("drops 'Complete N approved electives' entirely (redundant with the units headline)", () => {
     const html = `
       <section>
         <header><h2 data-testid="grouping-label"><span>4A Term</span></h2></header>
@@ -233,9 +234,10 @@ describe("parseProgramRequirements — engineering 'Complete N of' → pick node
     expect(requiredCoursesIn(r.terms["4A"])).toEqual([]);
     expect(leafPickGroups(r.terms["4A"])).toEqual([]);
     expect(r.warnings).toEqual([]);
-    // It's a real owed requirement we can't structure → kept as unverified so
-    // the student still sees it, rather than silently vanishing.
-    expect(r.unverified).toEqual(["Complete 3 approved electives"]);
+    // A genuinely-open free elective: its volume is already the free-unit
+    // remainder in the units headline (progress.ts), so it is NOT surfaced as a
+    // redundant "confirm with your advisor" row. See FREE_ELECTIVE_RE (R7).
+    expect(r.unverified).toEqual([]);
   });
 });
 
@@ -461,6 +463,270 @@ describe("'Complete no more than N' with N > 1", () => {
   });
 });
 
+describe("multi-section list headings (#117 follow-up)", () => {
+  it("wraps each titled section in a named `all` so 'List 1/2/3' render", () => {
+    // Mirrors Computational Mathematics: an outer "Required Courses" section that
+    // NESTS List 1/List 2 sections; only the first heading carries Kuali's
+    // `grouping-label` testid, the List headings are bare <h2>. Each section's
+    // heading becomes a named `all` so the audit can show it as a sub-group — it's
+    // what the "In List 1, …" / "from List 2 or List 3" constraints refer to.
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">
+            Complete all of the following: <a href="#">CS230</a> <a href="#">CS234</a>
+          </div></li>
+        </ul></div></div>
+        <section>
+          <h2><span>List 1</span></h2>
+          <div><div><ul>
+            <li data-test="ruleView-B"><div data-test="ruleView-B-result">
+              Complete 1 of the following: <a href="#">AMATH250</a> <a href="#">AMATH251</a>
+            </div></li>
+          </ul></div></div>
+        </section>
+        <section>
+          <h2><span>List 2</span></h2>
+          <div><div><ul>
+            <li data-test="ruleView-C"><div data-test="ruleView-C-result">
+              Complete 1 of the following: <a href="#">CO353</a> <a href="#">CO367</a>
+            </div></li>
+          </ul></div></div>
+        </section>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const groups = r.rules.kind === "all" ? r.rules.children : [];
+    const byDesc = (d: string) =>
+      groups.find((n) => n.kind === "all" && n.description === d);
+    expect(byDesc("Required Courses")).toBeDefined();
+    expect(byDesc("List 1")).toBeDefined();
+    expect(byDesc("List 2")).toBeDefined();
+    // describeRule surfaces the wrapper description, so the audit renders "List 1".
+    expect(describeRule(byDesc("List 1") as RuleNode)).toBe("List 1");
+    // No cross-contamination: each section keeps only its own rules. "Required
+    // Courses" holds CS230/CS234 (the picks aren't all-required, so they don't
+    // appear here), and List 1 carries its pick — not the required courses.
+    expect(
+      requiredCoursesIn(byDesc("Required Courses") as RuleNode).sort(),
+    ).toEqual(["cs230", "cs234"]);
+    expect(
+      findNode(byDesc("List 1") as RuleNode, (n) => n.kind === "pick"),
+    ).toBeDefined();
+    expect(requiredCoursesIn(byDesc("List 1") as RuleNode)).not.toContain(
+      "cs230",
+    );
+  });
+
+  it("flattens a single titled section (the heading adds nothing)", () => {
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">
+            Complete all of the following: <a href="#">CS230</a> <a href="#">CS234</a>
+          </div></li>
+        </ul></div></div>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const wrapped = (r.rules.kind === "all" ? r.rules.children : []).some(
+      (n) => n.kind === "all" && n.description === "Required Courses",
+    );
+    expect(wrapped).toBe(false);
+  });
+});
+
+describe("recover more unverified requirements (R1–R6)", () => {
+  const allCourses = (root: RuleNode): string[] => {
+    const out: string[] = [];
+    walkRule(root, (n) => {
+      if (n.kind === "courses") out.push(...n.courses);
+    });
+    return out;
+  };
+  const descriptions = (root: RuleNode): string[] => {
+    const out: string[] = [];
+    walkRule(root, (n) => {
+      if ((n.kind === "all" || n.kind === "pick") && n.description)
+        out.push(n.description);
+    });
+    return out;
+  };
+
+  it("drops a phantom pointer to a captured List section (R3)", () => {
+    // "Complete 4 … from the options in List 1" points at the very next "List 1"
+    // section, which carries its own pick-4 — the pointer is a redundant duplicate.
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">
+            Complete 4 additional courses from the options in List 1
+          </div></li>
+        </ul></div></div>
+        <section>
+          <h2><span>List 1</span></h2>
+          <div><div><ul>
+            <li data-test="ruleView-B"><div data-test="ruleView-B-result">
+              Complete 4 of the following: <a href="#/c">AMATH342</a> <a href="#/c">AMATH345</a> <a href="#/c">AMATH382</a> <a href="#/c">AMATH383</a> <a href="#/c">CS370</a>
+            </div></li>
+          </ul></div></div>
+        </section>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(r.unverified).toEqual([]); // pointer dropped, not surfaced
+    const pick = findNode(r.rules, (n) => n.kind === "pick");
+    if (pick?.kind !== "pick") throw new Error("expected List 1 pick");
+    expect(pick.selectMin).toBe(4);
+  });
+
+  it("keeps a phantom pointer when its List section was NOT captured (R3 guard)", () => {
+    // No "List 1" section exists, so the count lives only in the pointer — it must
+    // stay verbatim rather than being silently dropped.
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">
+            Complete 4 additional courses from the options in List 1
+          </div></li>
+        </ul></div></div>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    expect(r.unverified).toEqual([
+      "Complete 4 additional courses from the options in List 1",
+    ]);
+  });
+
+  it("drops a grade-average wrapper and keeps its sibling's courses (R4a)", () => {
+    // "…with a minimum cumulative Economics average of 70.0%" is a phantom sibling
+    // of "Complete all: ECON101 …". Grades aren't tracked, so drop the wrapper.
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result"><div>Complete the following courses with a minimum cumulative Economics average of 70.0%.</div></div></li>
+          <li data-test="ruleView-B"><div data-test="ruleView-B-result">Complete all the following: <a href="#/c">ECON101</a> <a href="#/c">ECON102</a></div></li>
+        </ul></div></div>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(allCourses(r.rules).sort()).toEqual(["econ101", "econ102"]);
+    expect(r.unverified).toEqual([]);
+    expect(descriptions(r.rules).some((d) => d.includes("%"))).toBe(false);
+  });
+
+  it("binds a unit quota onto its sibling open pick, not swallowing later rules (R4b)", () => {
+    // "Complete 2.5 units from the following list" (5 courses) gates the adjacent
+    // "Choose any: …" open pick; the trailing required MATH237 stays separate.
+    const html = `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-B"><div data-test="ruleView-B-result"><div>Complete 2.5 units from the following list of courses</div></div></li>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">Choose any of the following: <a href="#/c">CHEM209</a> <a href="#/c">CHEM220</a> <a href="#/c">CHEM254</a> <a href="#/c">CHEM266</a> <a href="#/c">CHEM310</a> <a href="#/c">CHEM356</a></div></li>
+          <li data-test="ruleView-C"><div data-test="ruleView-C-result">Complete all the following: <a href="#/c">MATH237</a></div></li>
+        </ul></div></div>
+      </section>`;
+    const r = parseProgramRequirements({ requirements: html }, "test");
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(r.unverified).toEqual([]);
+    const pick = findNode(r.rules, (n) => n.kind === "pick");
+    if (pick?.kind !== "pick") throw new Error("expected bound pick");
+    expect(pick.selectMin).toBe(5); // 2.5 ÷ 0.5
+    expect(pick.selectMax).toBe(5);
+    // The bound pick lists the CHEM courses; MATH237 is NOT swept into it.
+    expect(allCourses(pick).sort()).not.toContain("math237");
+    expect(allCourses(r.rules)).toContain("math237");
+  });
+
+  it("reads 'Complete of the following: X, Y' as a pick of 1 (R4c)", () => {
+    const r = parseProgramRequirements(
+      {
+        requirements: `
+          <section>
+            <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+            <div><div><ul>
+              <li data-test="ruleView-A"><div data-test="ruleView-A-result">Complete of the following: <a href="#/c">COMMST193</a> <a href="#/c">ENGL193</a></div></li>
+            </ul></div></div>
+          </section>`,
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pick = findNode(r.rules, (n) => n.kind === "pick");
+    if (pick?.kind !== "pick") throw new Error("expected pick");
+    expect(pick.selectMin).toBe(1);
+    expect(allCourses(r.rules).sort()).toEqual(["commst193", "engl193"]);
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("keeps type-filter / diversity rules verbatim (R6 KEEP guard)", () => {
+    const wrap = (t: string) => `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">${t}</div></li>
+        </ul></div></div>
+      </section>`;
+    for (const t of [
+      "Complete 2 additional PSCI seminars or field courses at the 400-level",
+      "Complete 3 non-math courses, all from the same subject code, from the following choices: AE, BIOL, CHEM",
+    ]) {
+      const r = parseProgramRequirements({ requirements: wrap(t) }, "test");
+      expect(r.unverified).toContain(t);
+      if (r.kind === "flexible")
+        expect(
+          findNode(r.rules, (n) => n.kind === "subjectPool"),
+        ).toBeUndefined();
+    }
+  });
+
+  it("reads a long exclusion clause (60 codes) correctly and fast (ReDoS guard)", () => {
+    // EXCLUSION_LIST_RE has no catastrophic backtracking today (each `+`
+    // iteration requires a mandatory code token), but this locks that in: a
+    // future edit that reintroduces ambiguity would blow far past the budget.
+    const excluded = Array.from({ length: 60 }, (_, i) => `CS${110 + i}`);
+    const clause = `Complete 3 CS courses, excluding ${excluded.join(", ")}`;
+    const start = performance.now();
+    const codes = excludedCodes(clause);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(50); // measured <1ms; a ReDoS would take seconds
+    expect(codes.size).toBe(60);
+    expect(codes.has("cs136")).toBe(true);
+  });
+
+  it("drops redundant genuinely-open free electives, not surfacing them (R7)", () => {
+    const wrap = (t: string) => `
+      <section>
+        <header><h2 data-testid="grouping-label"><span>Required Courses</span></h2></header>
+        <div><div><ul>
+          <li data-test="ruleView-A"><div data-test="ruleView-A-result">${t}</div></li>
+        </ul></div></div>
+      </section>`;
+    // Volume is already the free-unit remainder in the units headline → not a row.
+    for (const t of [
+      "Complete 4 approved electives",
+      "Complete 2 additional courses",
+      "Complete 4.0 units of elective courses",
+      "Complete 1.5 additional units at any level",
+    ]) {
+      const r = parseProgramRequirements({ requirements: wrap(t) }, "test");
+      expect(r.unverified).toEqual([]);
+    }
+    // But a level floor or a scope is NOT unit-tracked, so it stays verbatim.
+    const floored =
+      "Complete 3.0 additional units of approved courses at the 200-level or above";
+    expect(
+      parseProgramRequirements({ requirements: wrap(floored) }, "test")
+        .unverified,
+    ).toContain(floored);
+  });
+});
+
 describe("unverified requirements — owed prose we can't structure", () => {
   const wrapLeaf = (ruleText: string) => `
     <section>
@@ -528,9 +794,11 @@ describe("unverified requirements — owed prose we can't structure", () => {
     expect(r.warnings).toEqual([]);
   });
 
-  it("does NOT scrape a course-number range as literal codes (stays unverified)", () => {
-    // "CS440-CS498" is a SET of courses, not a 2-course list — pulling its
-    // endpoints would be wrong, so the rule is left unstructured (unverified).
+  it("expands a course-number range against the catalog (no longer unverified)", () => {
+    // "CS440-CS498" is a SET of courses, not a 2-course list. We expand it to the
+    // real catalog codes in that inclusive subject band (never synthesizing
+    // endpoints), so the rule structures instead of dropping to unverified.
+    // See #117 (bucket C).
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(
@@ -539,11 +807,136 @@ describe("unverified requirements — owed prose we can't structure", () => {
       },
       "test",
     );
-    if (r.kind === "flexible")
-      expect(findNode(r.rules, (n) => n.kind === "courses")).toBeUndefined();
-    expect(r.unverified).toEqual([
-      "Choose any course from the following: CS440-CS498",
-    ]);
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses node");
+    expect(node.courses).toContain("cs486"); // a real in-band code
+    expect(node.courses).not.toContain("cs440"); // doesn't exist → not synthesized
+    expect(node.courses.every((c) => /^cs\d/.test(c))).toBe(true);
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("expands a plain-text range alongside an anchored literal in the same rule", () => {
+    // Ranges are never hyperlinked, so a mixed "anchored literal + plain-text
+    // range" list must keep both halves rather than trusting only the anchors.
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          'Choose any course from the following: <a href="#/courses/x">CS135</a>, CS440-CS498',
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses node");
+    expect(node.courses).toContain("cs135"); // the anchored literal
+    expect(node.courses).toContain("cs486"); // expanded from the CS440-CS498 range
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("reads 'Complete N … from <course-range>' as a pick over the range, not a 'CSCS' pool", () => {
+    // The from-list names course RANGES, not subjects. parseSubjectPool's "from:"
+    // handling would strip "CS340-CS398" to a bogus "CSCS" subject (an
+    // unsatisfiable pool); we instead expand the ranges to a `selectMin` pick.
+    // Regression for the CS-family majors whose calendar prose tightened from
+    // "N CS courses" to specific upper-year bands.
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Complete 3 additional CS courses chosen from CS340-CS398, CS440-CS489",
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    // No bogus subject anywhere in the tree.
+    const badPool = findNode(
+      r.rules,
+      (n) =>
+        n.kind === "subjectPool" && n.subjectCodes.some((s) => /CSCS/i.test(s)),
+    );
+    expect(badPool).toBeUndefined();
+    const pick = findNode(r.rules, (n) => n.kind === "pick");
+    if (pick?.kind !== "pick") throw new Error("expected pick");
+    expect(pick.selectMin).toBe(3);
+    const courses = findNode(r.rules, (n) => n.kind === "courses");
+    if (courses?.kind !== "courses") throw new Error("expected courses");
+    expect(courses.courses).toContain("cs486"); // expanded from CS440-CS489
+    expect(courses.courses.every((c) => /^cs\d/.test(c))).toBe(true);
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("does NOT turn an excluded course range into a pick (stays a subject pool)", () => {
+    // "(excluding CS340-CS398)" is a narrowing clause, not a selectable set — the
+    // range branch must ignore exclusion contexts so it never builds a pick over
+    // excluded courses; the rule stays a CS subject pool with the exclusion noted.
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf("Complete 2 CS courses (excluding CS340-CS398)"),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    expect(findNode(r.rules, (n) => n.kind === "pick")).toBeUndefined();
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["CS"]);
+  });
+
+  it("recovers the pool half of a Choose-any rule with no literal codes", () => {
+    // "any CS course at the 600-/700-level" has no extractable codes; the
+    // Choose-any branch now falls through to a subject pool. See #117 (bucket C).
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Choose any course from the following: any CS course at the 600- or 700-level",
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const pool = findNode(r.rules, (n) => n.kind === "subjectPool");
+    if (pool?.kind !== "subjectPool") throw new Error("expected subjectPool");
+    expect(pool.subjectCodes).toEqual(["CS"]);
+    expect(pool.minLevel).toBe(600);
+    expect(pool.maxLevel).toBe(700);
+    expect(r.unverified).toEqual([]);
+  });
+
+  it("keeps a range re-introduced after an exclusion clause (no greedy drop)", () => {
+    // The old `.*$` strip deleted everything after "except", losing the trailing
+    // CS440-CS489. Only the excluded band drops; the later range survives. #117.
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Complete 2 courses chosen from CS100-CS110, except CS330-CS340, and then CS440-CS489",
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses");
+    expect(node.courses).toContain("cs486"); // from CS440-CS489, survived "except"
+  });
+
+  it("subtracts an excluded course that sits INSIDE an included band (colon list)", () => {
+    // "CS440-CS498, excluding CS486" — CS486 is within the included band, so it
+    // must be removed, not merely left unmatched by the range regex. #117 (C).
+    const r = parseProgramRequirements(
+      {
+        requirements: wrapLeaf(
+          "Choose any course from the following: CS440-CS498, excluding CS486",
+        ),
+      },
+      "test",
+    );
+    if (r.kind !== "flexible") throw new Error("expected flexible");
+    const node = findNode(r.rules, (n) => n.kind === "courses");
+    if (node?.kind !== "courses") throw new Error("expected courses");
+    expect(node.courses.length).toBeGreaterThan(0); // rest of the band survives
+    expect(node.courses).not.toContain("cs486"); // excluded, though in-band
   });
 });
 

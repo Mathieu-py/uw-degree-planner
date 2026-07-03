@@ -1,12 +1,12 @@
 import * as cheerio from "cheerio";
-import type { ElectiveCategory } from "../../lib/programs";
-import { wordToNumber } from "./counts";
+import type { ElectiveCategory } from "../../../lib/programs";
+import { wordToNumber } from "../util/counts";
 import {
   anchorCourseCodes,
   cleanText,
   RULE_RESULT_SELECTOR,
   SECTION_HEADING_SELECTOR,
-} from "./dom";
+} from "../util/dom";
 
 export interface ElectivesDetailFields {
   graduationRequirements?: string;
@@ -195,4 +195,58 @@ function parseCourseListsSections(
     DESCRIPTION_COLLATOR.compare(a.description, b.description),
   );
   return out;
+}
+
+/**
+ * Normalize a list name (a `courseListsNew` heading or a rule's reference) to a
+ * join key: lowercase, drop parentheticals/punctuation, strip "list(s)"/"approved"
+ * so "Technical Electives List" and "the Technical Electives lists" both key to
+ * "technical electives", and "List A" to "a". See #117 (bucket D).
+ */
+export function normalizeListName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(?:lists?|approved)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^the\s+/, "");
+}
+
+/**
+ * Index `courseListsNew` by normalized heading → its course codes, so a rule
+ * referencing a list by name can be joined to its definition. Only sections with
+ * both a heading and linked courses are indexed. See #117 (bucket D).
+ */
+export function buildNamedListIndex(
+  courseListsNewHtml: string | undefined,
+): Map<string, string[]> {
+  const index = new Map<string, string[]>();
+  if (!courseListsNewHtml?.trim()) return index;
+  const $ = cheerio.load(courseListsNewHtml);
+  $("section").each((_, section) => {
+    const $section = $(section);
+    // Only the outer section carries Kuali's `grouping-label` testid; nested
+    // "List 1"/"List 2" sub-lists use a bare <h2>, so fall back to it (as
+    // parseFlexible does) — else "from List 1" never resolves. R1/R2.
+    const heading = cleanText(
+      $section.find(SECTION_HEADING_SELECTOR).first().text() ||
+        $section.find("h2").first().text(),
+    );
+    if (!heading) return;
+    const courses = [...new Set(anchorCourseCodes($, $section))].sort();
+    if (courses.length === 0) return;
+    const key = normalizeListName(heading);
+    if (!key) return;
+    // Merge, don't overwrite: two sections whose headings normalize to the same
+    // key (e.g. "Technical Electives List" + "the Technical Electives lists")
+    // contribute to one list rather than the later silently dropping the earlier.
+    const existing = index.get(key);
+    index.set(
+      key,
+      existing ? [...new Set([...existing, ...courses])].sort() : courses,
+    );
+  });
+  return index;
 }

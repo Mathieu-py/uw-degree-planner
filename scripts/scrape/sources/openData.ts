@@ -6,14 +6,16 @@
  * `/ClassSchedules/{term}/{subject}/{catalogNumber}` per course.
  */
 
-import type { CourseSection } from "../../lib/courses/types";
+import type { CourseSection } from "../../../lib/courses/types";
+import { sleep } from "../util/fetch";
 
 const BASE = "https://openapi.data.uwaterloo.ca/v3";
 // Open Data rate-limits by burst, not total: sequential calls are fine, but a
 // dozen concurrent ones trip 429s. Stay low and back off on 429.
+// This module keeps its own fetch loop (not withRetry): it honours Retry-After
+// on 429 and treats an allowed 404 as a null result, neither of which fits the
+// generic throw-or-return retry.
 const CONCURRENCY = 4;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Backoff for a 429: honour an integer `Retry-After` (delta-seconds) when the

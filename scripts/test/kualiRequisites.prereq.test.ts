@@ -4,7 +4,7 @@ import {
   isCoreqReference,
   parseKualiRequisite,
   spliceCoreqReferences,
-} from "../scrape/kualiRequisites";
+} from "../scrape/sources/kualiRequisites";
 
 // Builders mirroring real Kuali prereq/coreq markup.
 const cLink = (code: string) =>

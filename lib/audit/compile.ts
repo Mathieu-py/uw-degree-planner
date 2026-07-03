@@ -10,11 +10,12 @@
  *  - `excluded`: never gates status; violations surface as UI warnings.
  */
 
-import { courseLevel, coursePrefix, levelBucket } from "@/lib/courses/code";
+import { poolMatch } from "@/lib/courses/code";
 import {
   EMPTY_EQUIVALENCE,
   type EquivalenceIndex,
 } from "@/lib/courses/equivalence";
+import { unitsMet } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import {
   describeRule,
@@ -153,6 +154,7 @@ function compile(
   placement: PlacementMap,
   legality: ReadonlySet<string>,
   equiv: EquivalenceIndex,
+  unitsOf: (code: string) => number,
 ): AuditNode {
   switch (node.kind) {
     case "courses": {
@@ -182,7 +184,7 @@ function compile(
     }
     case "all": {
       const children = node.children.map((c) =>
-        compile(c, placement, legality, equiv),
+        compile(c, placement, legality, equiv, unitsOf),
       );
       return withIllegal(
         {
@@ -197,9 +199,9 @@ function compile(
       );
     }
     case "pick":
-      return compilePick(node, placement, legality, equiv);
+      return compilePick(node, placement, legality, equiv, unitsOf);
     case "subjectPool":
-      return compileSubjectPool(node, placement, legality);
+      return compileSubjectPool(node, placement, legality, unitsOf);
     case "excluded": {
       const { satisfiers: violations } = partitionByPlacement(
         node.courses,
@@ -230,6 +232,7 @@ function compilePick(
   placement: PlacementMap,
   legality: ReadonlySet<string>,
   equiv: EquivalenceIndex,
+  unitsOf: (code: string) => number,
 ): AuditNode {
   const allCoursesLeaves =
     node.children.length > 0 &&
@@ -270,7 +273,7 @@ function compilePick(
   }
   // Mixed/nested children: each must be independently met to count as 1.
   const children = node.children.map((c) =>
-    compile(c, placement, legality, equiv),
+    compile(c, placement, legality, equiv, unitsOf),
   );
   // Require ≥1 satisfier: an optional child is vacuously "met" with nothing
   // placed, inflating the parent on an empty plan (issue #95).
@@ -317,31 +320,44 @@ function compileSubjectPool(
   node: Extract<RuleNode, { kind: "subjectPool" }>,
   placement: PlacementMap,
   legality: ReadonlySet<string>,
+  unitsOf: (code: string) => number,
 ): AuditNode {
-  const subjects = new Set(node.subjectCodes.map((s) => s.toLowerCase()));
+  const filter = {
+    subjects: new Set(node.subjectCodes.map((s) => s.toLowerCase())),
+    minLevel: node.minLevel,
+    maxLevel: node.maxLevel,
+  };
   const satisfiers: Placement[] = [];
   for (const [code, p] of placement) {
-    if (!subjects.has(coursePrefix(code))) continue;
-    const lvl = levelBucket(courseLevel(code));
-    if (node.minLevel !== undefined && lvl < node.minLevel) continue;
-    if (node.maxLevel !== undefined && lvl > node.maxLevel) continue;
-    satisfiers.push(p);
+    if (poolMatch(code, filter)) satisfiers.push(p);
   }
+  // Unit-stated pool ("2.0 units of X"): gate on real units (a 1.0-unit course
+  // counts as 1.0), so `satisfiedCount` holds placed units. Count-stated pools
+  // gate on `selectCount` exactly. Units are additive credit weights — UW
+  // Undergraduate Calendar Glossary ("Credit"): "A credit weight of 0.5 is
+  // normally assigned to a one-term course … some have weights such as … 1.0, 2.0."
+  const unitBased = node.needUnits !== undefined;
+  const need = node.needUnits ?? node.selectCount;
+  const have = unitBased
+    ? satisfiers.reduce((u, p) => u + unitsOf(p.code), 0)
+    : satisfiers.length;
+  const status: AuditStatus = unitBased
+    ? unitsMet(have, need)
+      ? "met"
+      : have > 0
+        ? "partial"
+        : "unmet"
+    : statusFromPickCount(have, need, need, false);
   return withIllegal(
     {
       ruleNode: node,
-      status: statusFromPickCount(
-        satisfiers.length,
-        node.selectCount,
-        node.selectCount,
-        false,
-      ),
+      status,
       description: describeRule(node),
       satisfiers,
       missingCodes: [],
-      satisfiedCount: satisfiers.length,
-      selectMin: node.selectCount,
-      selectMax: node.selectCount,
+      satisfiedCount: have,
+      selectMin: need,
+      selectMax: need,
       children: [],
     },
     illegalAmong(satisfiers, legality),
@@ -503,6 +519,11 @@ export function compileAudit(
    * a placed cross-listed equivalent. Omitted → exact-code matching only.
    */
   equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
+  /**
+   * Units of a placed course (default 0.5). Used only to score unit-stated
+   * `subjectPool` rules ("2.0 units of X") by real units instead of a 0.5 count.
+   */
+  unitsOf: (code: string) => number = () => 0.5,
 ): AuditRoot {
   const placement = buildPlacementMap(plan);
   if (!program) {
@@ -521,18 +542,24 @@ export function compileAudit(
     byTerm = Object.fromEntries(
       TERM_LETTERS.map((t) => [
         t,
-        compile(program.terms[t], placement, legality, equiv),
+        compile(program.terms[t], placement, legality, equiv, unitsOf),
       ]),
     ) as Record<TermLetter, AuditNode>;
   } else {
-    flexibleRoot = compile(program.rules, placement, legality, equiv);
+    flexibleRoot = compile(program.rules, placement, legality, equiv, unitsOf);
   }
   let specializationRoot: AuditNode | null = null;
   if (specializationId) {
     const spec: Specialization | null =
       program.specializations?.find((s) => s.slug === specializationId) ?? null;
     if (spec?.rules) {
-      specializationRoot = compile(spec.rules, placement, legality, equiv);
+      specializationRoot = compile(
+        spec.rules,
+        placement,
+        legality,
+        equiv,
+        unitsOf,
+      );
     }
   }
   return {
@@ -601,12 +628,11 @@ export function summarize(node: AuditNode): {
       return { needed: min, satisfied: got, excludedViolationCount };
     }
     case "subjectPool": {
-      const got = Math.min(node.satisfiedCount ?? 0, r.selectCount);
-      return {
-        needed: r.selectCount,
-        satisfied: got,
-        excludedViolationCount: 0,
-      };
+      // Unit-stated pools report in units (satisfiedCount holds placed units);
+      // count-stated pools in courses.
+      const need = r.needUnits ?? r.selectCount;
+      const got = Math.min(node.satisfiedCount ?? 0, need);
+      return { needed: need, satisfied: got, excludedViolationCount: 0 };
     }
     case "excluded":
       return {

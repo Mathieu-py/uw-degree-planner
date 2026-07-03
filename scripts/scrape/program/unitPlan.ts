@@ -4,7 +4,7 @@ import type {
   InformationalItem,
   UnitConstraint,
   UnitPlan,
-} from "../../lib/programs";
+} from "../../../lib/programs";
 
 // A degree total ("Complete a total of 20.0 units:"). The optional "academic"
 // qualifier covers engineering's "…21.25 academic units". The negative

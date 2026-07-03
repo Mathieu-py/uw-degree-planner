@@ -212,37 +212,39 @@ describe("AuditPanel", () => {
     );
   });
 
-  it("flattens a 1-of-1 pick over nested single-course choices into one card", () => {
-    // jh-applied-mathematics has a pick: "choose 1 of { AMATH 271, one-of{AMATH
-    // 333, …} }". That's a flat 1-of-N, so it must render as ONE "choose one"
-    // card containing AMATH 271 alongside AMATH 333 — not a course row plus a
-    // separate nested choice card.
-    if (!("jh-applied-mathematics" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel
-        plan={mkPlan({ programIds: ["jh-applied-mathematics"] })}
-        onDrillToRequirement={() => {}}
-      />,
-    );
-    const norm = (t: string) => t.replace(/\s+/g, "").toUpperCase();
-    const grouped = [...container.querySelectorAll(".av-choose")].some(
-      (row) => {
-        const chips = [...row.querySelectorAll(".av-chip")].map((c) =>
-          norm(c.textContent ?? ""),
-        );
-        return chips.includes("AMATH271") && chips.includes("AMATH333");
-      },
-    );
-    expect(
-      grouped,
-      "AMATH 271 and AMATH 333 should share one choose-one card",
-    ).toBe(true);
-    // And AMATH 271 must NOT also appear as a standalone required course row.
-    const rowCodes = [...container.querySelectorAll(".av-item-code")].map((c) =>
-      norm(c.textContent ?? ""),
-    );
-    expect(rowCodes).not.toContain("AMATH271");
-  });
+  it.skipIf(!("jh-applied-mathematics" in PROGRAMS))(
+    "flattens a 1-of-1 pick over nested single-course choices into one card",
+    () => {
+      // jh-applied-mathematics has a pick: "choose 1 of { AMATH 271, one-of{AMATH
+      // 333, …} }". That's a flat 1-of-N, so it must render as ONE "choose one"
+      // card containing AMATH 271 alongside AMATH 333 — not a course row plus a
+      // separate nested choice card.
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["jh-applied-mathematics"] })}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      const norm = (t: string) => t.replace(/\s+/g, "").toUpperCase();
+      const grouped = [...container.querySelectorAll(".av-choose")].some(
+        (row) => {
+          const chips = [...row.querySelectorAll(".av-chip")].map((c) =>
+            norm(c.textContent ?? ""),
+          );
+          return chips.includes("AMATH271") && chips.includes("AMATH333");
+        },
+      );
+      expect(
+        grouped,
+        "AMATH 271 and AMATH 333 should share one choose-one card",
+      ).toBe(true);
+      // And AMATH 271 must NOT also appear as a standalone required course row.
+      const rowCodes = [...container.querySelectorAll(".av-item-code")].map(
+        (c) => norm(c.textContent ?? ""),
+      );
+      expect(rowCodes).not.toContain("AMATH271");
+    },
+  );
 
   it("shows a count-based percent-complete headline", () => {
     const engId = engineeringProgramId();
@@ -333,187 +335,366 @@ describe("AuditPanel", () => {
     expect(container.querySelector(".av-item.dim")).not.toBeNull();
   });
 
-  it("uses a count-based headline and no unit-allocation breakdown", () => {
-    // Option A: the reliable rule-tree count drives the headline; the leaky
-    // per-bucket unit layer (Degree units / Distribution rings / verify-manually
-    // markers) is gone, so nothing on screen can contradict the count.
-    if (!("psychology-bsc" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: ["psychology-bsc"] })} />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
-    expect(within(aside).queryByText(/of degree units/i)).toBeNull();
-    expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
-    expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
-    expect(container.querySelector('[title*="check it by hand"]')).toBeNull();
-  });
+  it.skipIf(!("psychology-bsc" in PROGRAMS))(
+    "uses a count-based headline and no unit-allocation breakdown",
+    () => {
+      // Option A: the reliable rule-tree count drives the headline; the leaky
+      // per-bucket unit layer (Degree units / Distribution rings / verify-manually
+      // markers) is gone, so nothing on screen can contradict the count.
+      const { container } = render(
+        <AuditPanel plan={mkPlan({ programIds: ["psychology-bsc"] })} />,
+      );
+      const aside = container.querySelector("aside");
+      if (!aside) throw new Error("no aside");
+      expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
+      expect(within(aside).queryByText(/of degree units/i)).toBeNull();
+      expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
+      expect(
+        within(aside).queryByText(/Distribution requirements/i),
+      ).toBeNull();
+      expect(container.querySelector('[title*="check it by hand"]')).toBeNull();
+    },
+  );
 
-  it("drives the unified headline fraction (units) from placed courses", () => {
-    // The headline IS the units bar now (no separate "courses planned" gauge):
-    // two placed 0.5-unit free electives read as "1/<total> units" of progress.
-    if (!("psychology-bsc" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel
-        plan={oneSlotPlan("psychology-bsc", ["aaa101", "aaa102"])}
-        catalog={[mkCourse("aaa101", 0.5), mkCourse("aaa102", 0.5)]}
-      />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    // Units fraction "1/NN units", and the old "courses planned" gauge is gone.
-    expect(within(aside).queryByText(/^1\/\d+(\.\d+)? units$/)).not.toBeNull();
-    expect(within(aside).queryByText(/courses planned/i)).toBeNull();
-  });
+  it.skipIf(!("psychology-bsc" in PROGRAMS))(
+    "drives the unified headline fraction (units) from placed courses",
+    () => {
+      // The headline IS the units bar now (no separate "courses planned" gauge):
+      // two placed 0.5-unit free electives read as "1/<total> units" of progress.
+      const { container } = render(
+        <AuditPanel
+          plan={oneSlotPlan("psychology-bsc", ["aaa101", "aaa102"])}
+          catalog={[mkCourse("aaa101", 0.5), mkCourse("aaa102", 0.5)]}
+        />,
+      );
+      const aside = container.querySelector("aside");
+      if (!aside) throw new Error("no aside");
+      // Units fraction "1/NN units", and the old "courses planned" gauge is gone.
+      expect(
+        within(aside).queryByText(/^1\/\d+(\.\d+)? units$/),
+      ).not.toBeNull();
+      expect(within(aside).queryByText(/courses planned/i)).toBeNull();
+    },
+  );
 
-  it("tracks faculty breadth as a course count, not a unit note", () => {
-    // h-history's "Humanities — 1.0 unit" breadth becomes a tracked "0 of 1
-    // unit" requirement (in units, as the calendar states it) under "Degree
-    // requirements", with its eligible subjects shown.
-    if (!("h-history" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: ["h-history"] })} />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    expect(within(aside).queryByText(/degree requirements/i)).not.toBeNull();
-    expect(within(aside).queryAllByText(/Humanities/i).length).toBeGreaterThan(
-      0,
-    );
-    // Tracked in units (multiple 1.0-unit breadths share this text).
-    expect(within(aside).queryAllByText(/0 of 1 unit/i).length).toBeGreaterThan(
-      0,
-    );
-    // Eligible subjects surface in the pool card's criteria summary.
-    const poolSub = aside.querySelector(".av-poolbtn-sub");
-    expect(poolSub?.textContent ?? "").not.toBe("");
-    expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
-    expect(within(aside).queryByText(/Distribution requirements/i)).toBeNull();
-  });
+  it.skipIf(!("h-history" in PROGRAMS))(
+    "tracks faculty breadth as a course count, not a unit note",
+    () => {
+      // h-history's "Humanities — 1.0 unit" breadth becomes a tracked "0 of 1
+      // unit" requirement (in units, as the calendar states it) under "Degree
+      // requirements", with its eligible subjects shown.
+      const { container } = render(
+        <AuditPanel plan={mkPlan({ programIds: ["h-history"] })} />,
+      );
+      const aside = container.querySelector("aside");
+      if (!aside) throw new Error("no aside");
+      expect(within(aside).queryByText(/degree requirements/i)).not.toBeNull();
+      expect(
+        within(aside).queryAllByText(/Humanities/i).length,
+      ).toBeGreaterThan(0);
+      // Tracked in units (multiple 1.0-unit breadths share this text).
+      expect(
+        within(aside).queryAllByText(/0 of 1 unit/i).length,
+      ).toBeGreaterThan(0);
+      // Eligible subjects surface in the pool card's criteria summary.
+      const poolSub = aside.querySelector(".av-poolbtn-sub");
+      expect(poolSub?.textContent ?? "").not.toBe("");
+      expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
+      expect(
+        within(aside).queryByText(/Distribution requirements/i),
+      ).toBeNull();
+    },
+  );
 
-  it("counts placed breadth units toward the requirement", () => {
-    // Two 0.5-unit PHIL courses (a Humanities subject in h-history, outside the
-    // major picks) make 1.0 unit → satisfies the 1.0-unit Humanities breadth.
-    if (!("h-history" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={oneSlotPlan("h-history", ["phil100", "phil101"])} />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    expect(within(aside).queryAllByText(/PHIL\s*100/i).length).toBeGreaterThan(
-      0,
-    );
-    expect(within(aside).queryAllByText(/PHIL\s*101/i).length).toBeGreaterThan(
-      0,
-    );
-    expect(within(aside).queryAllByText(/1 of 1 unit/i).length).toBeGreaterThan(
-      0,
-    );
-  });
+  it.skipIf(!("h-history" in PROGRAMS))(
+    "counts placed breadth units toward the requirement",
+    () => {
+      // Two 0.5-unit PHIL courses (a Humanities subject in h-history, outside the
+      // major picks) make 1.0 unit → satisfies the 1.0-unit Humanities breadth.
+      const { container } = render(
+        <AuditPanel plan={oneSlotPlan("h-history", ["phil100", "phil101"])} />,
+      );
+      const aside = container.querySelector("aside");
+      if (!aside) throw new Error("no aside");
+      expect(
+        within(aside).queryAllByText(/PHIL\s*100/i).length,
+      ).toBeGreaterThan(0);
+      expect(
+        within(aside).queryAllByText(/PHIL\s*101/i).length,
+      ).toBeGreaterThan(0);
+      expect(
+        within(aside).queryAllByText(/1 of 1 unit/i).length,
+      ).toBeGreaterThan(0);
+    },
+  );
 
-  it("represents the degree's open volume as a 'Free electives' row", () => {
-    // h-biology pins its named requirements out of a larger degree; the
-    // remainder surfaces as a "Free electives" row. It now COUNTS toward the
-    // unified headline (named + free = degree total), so the bar reflects the
-    // whole degree, not just named requirements.
-    if (!("h-biology" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: ["h-biology"] })} />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    expect(within(aside).queryByText(/free electives/i)).not.toBeNull();
-    expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
-  });
+  it.skipIf(!("h-biology" in PROGRAMS))(
+    "represents the degree's open volume as a 'Free electives' row",
+    () => {
+      // h-biology pins its named requirements out of a larger degree; the
+      // remainder surfaces as a "Free electives" row. It now COUNTS toward the
+      // unified headline (named + free = degree total), so the bar reflects the
+      // whole degree, not just named requirements.
+      const { container } = render(
+        <AuditPanel plan={mkPlan({ programIds: ["h-biology"] })} />,
+      );
+      const aside = container.querySelector("aside");
+      if (!aside) throw new Error("no aside");
+      expect(within(aside).queryByText(/free electives/i)).not.toBeNull();
+      expect(within(aside).queryByText(/of degree planned/i)).not.toBeNull();
+    },
+  );
 
-  it("renders a compound 'choose one option' as a selectable option group", () => {
-    // data-science-bcs has a pick whose options are multi-course `all` bundles.
-    // It must render as A/B/C selectable options with "or" separators and a
-    // "Choose 1 of 3 options" header — not undifferentiated stacked blocks — and
-    // the redundant "Complete all of the following" heading is dropped inside.
-    if (!("data-science-bcs" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel
-        plan={mkPlan({ programIds: ["data-science-bcs"] })}
-        onDrillToRequirement={() => {}}
-      />,
+  it.skipIf(!("data-science-bcs" in PROGRAMS))(
+    "renders a compound 'choose one option' as a selectable option group",
+    () => {
+      // data-science-bcs has a pick whose options are multi-course `all` bundles.
+      // It must render as A/B/C selectable options with "or" separators and a
+      // "Choose 1 of 3 options" header — not undifferentiated stacked blocks — and
+      // the redundant "Complete all of the following" heading is dropped inside.
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["data-science-bcs"] })}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      const opts = container.querySelectorAll(".av-choice-opt");
+      expect(opts.length).toBeGreaterThanOrEqual(3);
+      expect(container.querySelector(".av-choice-or")).not.toBeNull();
+      expect(
+        within(container).queryAllByText(/choose 1 of 3 options/i).length,
+      ).toBeGreaterThan(0);
+      for (const opt of opts) {
+        expect(opt.textContent ?? "").not.toMatch(
+          /complete all of the following/i,
+        );
+      }
+    },
+  );
+
+  it.skipIf(!("data-science-bcs" in PROGRAMS))(
+    "collapses a satisfied compound pick to a summary, expandable to the cards",
+    () => {
+      // cs480 + cs448 satisfies Option A of the data-science-bcs pick → it collapses
+      // to a summary of the completed path; the full cards hide behind a toggle.
+      const { container } = render(
+        <AuditPanel
+          plan={oneSlotPlan("data-science-bcs", ["cs480", "cs448"])}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      expect(
+        within(container).queryAllByText(/completed.*option a/i).length,
+      ).toBeGreaterThan(0);
+      expect(container.querySelector(".av-opt-summary")).not.toBeNull();
+      // Collapsed: the option group is not in the DOM until the toggle is clicked.
+      expect(container.querySelector(".av-choice-opt")).toBeNull();
+      const toggle = within(container).getByText(/show 2 other options/i);
+      fireEvent.click(toggle);
+      expect(container.querySelector(".av-choice-opt")).not.toBeNull();
+    },
+  );
+
+  it.skipIf(!("data-science-bcs" in PROGRAMS))(
+    "organizes the audit into Degree / Electives / Co-op macro-sections",
+    () => {
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["data-science-bcs"] })}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      const labels = [...container.querySelectorAll(".av-macro-label")].map(
+        (l) => l.textContent?.trim(),
+      );
+      expect(labels).toContain("Degree requirements");
+      expect(labels).toContain("Co-op & other");
+      // Electives is its own top-level macro.
+      expect(labels).toContain("Electives");
+    },
+  );
+
+  const macroByLabel = (container: HTMLElement, re: RegExp) =>
+    [...container.querySelectorAll<HTMLElement>(".av-macro")].find((m) =>
+      re.test(m.querySelector(".av-macro-label")?.textContent ?? ""),
     );
-    const opts = container.querySelectorAll(".av-choice-opt");
-    expect(opts.length).toBeGreaterThanOrEqual(3);
-    expect(container.querySelector(".av-choice-or")).not.toBeNull();
-    expect(
-      within(container).queryAllByText(/choose 1 of 3 options/i).length,
-    ).toBeGreaterThan(0);
-    for (const opt of opts) {
-      expect(opt.textContent ?? "").not.toMatch(
+
+  it.skipIf(!("biochemistry" in PROGRAMS))(
+    "folds a finite 'Approved Courses List' into a pick under Degree requirements, not Electives",
+    () => {
+      // Biochemistry carries its "Approved Courses List" (choose 8 of ~60) in
+      // program.electives. buildProgramAudit folds it into the rule tree as a pick
+      // (foldFiniteElectivesIntoRules), so it renders under Degree requirements —
+      // like Chemistry's rules-parsed list — with selectable option chips, and NOT
+      // under Electives.
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["biochemistry"] })}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+
+      const degree = macroByLabel(container, /^Degree requirements$/i);
+      expect(degree, "expected a Degree requirements macro").toBeTruthy();
+      if (!degree) return;
+      // Rendered as a named sub-group with the list's title…
+      expect(
+        within(degree).queryAllByText(/Approved Courses List/i).length,
+      ).toBeGreaterThan(0);
+      // …and as a real pick (draggable option chips), not a static electives row.
+      expect(degree.querySelectorAll(".av-chip").length).toBeGreaterThan(0);
+
+      // If an Electives macro exists (free electives etc.), it must NOT hold the list.
+      const electives = macroByLabel(container, /^Electives$/i);
+      if (electives)
+        expect(
+          within(electives).queryAllByText(/Approved Courses List/i).length,
+        ).toBe(0);
+    },
+  );
+
+  it.skipIf(!("h-peace-and-conflict-studies" in PROGRAMS))(
+    "counts a specialization's finite 'Approved Courses List' under the Specialization macro",
+    () => {
+      // The Restorative Justice spec's "Approved Courses List" (choose 2 of 30)
+      // lives in spec.electives and was previously counted nowhere. With the spec
+      // selected it folds into spec.rules → renders/counts under Specialization.
+      const id = "h-peace-and-conflict-studies";
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({
+            programIds: [id],
+            specializationIds: { [id]: "pacs-restorative-justice" },
+          })}
+        />,
+      );
+      const spec = macroByLabel(container, /^Specialization$/i);
+      expect(spec, "expected a Specialization macro").toBeTruthy();
+      if (!spec) return;
+      expect(
+        within(spec).queryAllByText(/Approved Courses List/i).length,
+      ).toBeGreaterThan(0);
+    },
+  );
+
+  it.skipIf(!("systems-design-engineering" in PROGRAMS))(
+    "keeps engineering's 'Technical Electives List' in the Electives tab",
+    () => {
+      // Technical electives ARE electives (the name says so) and engineering has no
+      // rule tree to fold into, so the list stays under Electives — never Degree
+      // requirements.
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["systems-design-engineering"] })}
+        />,
+      );
+      const electives = macroByLabel(container, /^Electives$/i);
+      expect(electives, "expected an Electives macro").toBeTruthy();
+      if (!electives) return;
+      expect(
+        within(electives).queryAllByText(/Technical Electives List/i).length,
+      ).toBeGreaterThan(0);
+      const degree = macroByLabel(container, /^Degree requirements$/i);
+      if (degree)
+        expect(
+          within(degree).queryAllByText(/Technical Electives List/i).length,
+        ).toBe(0);
+    },
+  );
+
+  it.skipIf(!("h-chemistry" in PROGRAMS))(
+    "renders the mandatory 'Required Courses' bucket flat, only choice-lists as dropdowns",
+    () => {
+      // A named group carrying its OWN required courses (Kuali's "Required
+      // Courses" bucket) is the core the "Degree requirements" macro already names,
+      // so it renders flat — never behind a redundant dropdown. Only a pure
+      // choice-list ("Approved Courses List") earns its own collapsible sub-group.
+      const { container } = render(
+        <AuditPanel plan={mkPlan({ programIds: ["h-chemistry"] })} />,
+      );
+      const subLabels = [
+        ...container.querySelectorAll(".av-substrata-text"),
+      ].map((l) => l.textContent?.trim());
+      expect(subLabels).toContain("Approved Courses List");
+      expect(subLabels).not.toContain("Required Courses");
+    },
+  );
+
+  it.skipIf(!("computational-mathematics" in PROGRAMS))(
+    "surfaces a flexible program's section headings (List 1/2/3) as sub-labels",
+    () => {
+      // Computational Mathematics splits its requirements across titled <section>s
+      // ("Required Courses", "List 1", …). Those headings render as sub-groups so
+      // the "In List 1, …" constraints have a visible anchor in the audit.
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["computational-mathematics"] })}
+        />,
+      );
+      const subLabels = [
+        ...container.querySelectorAll(".av-substrata-text"),
+      ].map((l) => l.textContent?.trim());
+      expect(subLabels).toContain("List 1");
+      expect(subLabels).toContain("List 2");
+      expect(subLabels).toContain("List 3");
+    },
+  );
+
+  it.skipIf(!("data-science-bcs" in PROGRAMS))(
+    "flattens the rule tree under Degree requirements (no 'Complete all of the following' wall)",
+    () => {
+      const { container } = render(
+        <AuditPanel
+          plan={mkPlan({ programIds: ["data-science-bcs"] })}
+          onDrillToRequirement={() => {}}
+        />,
+      );
+      const aside = container.querySelector("aside");
+      if (!aside) throw new Error("no aside");
+      // The generic wrapper title is gone; required courses render as direct rows.
+      expect(aside.textContent ?? "").not.toMatch(
         /complete all of the following/i,
       );
-    }
-  });
+      const codes = [...container.querySelectorAll(".av-item-code")].map((c) =>
+        c.textContent?.replace(/\s+/g, "").toUpperCase(),
+      );
+      expect(codes).toContain("CS341"); // a known core requirement
+    },
+  );
 
-  it("collapses a satisfied compound pick to a summary, expandable to the cards", () => {
-    // cs480 + cs448 satisfies Option A of the data-science-bcs pick → it collapses
-    // to a summary of the completed path; the full cards hide behind a toggle.
-    if (!("data-science-bcs" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel
-        plan={oneSlotPlan("data-science-bcs", ["cs480", "cs448"])}
-        onDrillToRequirement={() => {}}
-      />,
-    );
-    expect(
-      within(container).queryAllByText(/completed.*option a/i).length,
-    ).toBeGreaterThan(0);
-    expect(container.querySelector(".av-opt-summary")).not.toBeNull();
-    // Collapsed: the option group is not in the DOM until the toggle is clicked.
-    expect(container.querySelector(".av-choice-opt")).toBeNull();
-    const toggle = within(container).getByText(/show 2 other options/i);
-    fireEvent.click(toggle);
-    expect(container.querySelector(".av-choice-opt")).not.toBeNull();
-  });
+  it.skipIf(!("data-science-bcs" in PROGRAMS))(
+    "places the co-op requirement note under the 'Co-op & other' macro",
+    () => {
+      const { container } = render(
+        <AuditPanel plan={mkPlan({ programIds: ["data-science-bcs"] })} />,
+      );
+      const other = [...container.querySelectorAll(".av-macro")].find((m) =>
+        /co-op & other/i.test(
+          m.querySelector(".av-macro-label")?.textContent ?? "",
+        ),
+      );
+      expect(other, "expected a Co-op & other macro").toBeTruthy();
+      expect(other?.textContent ?? "").toMatch(/work term/i);
+    },
+  );
 
-  it("organizes the audit into Degree / Electives / Co-op macro-sections", () => {
-    if (!("data-science-bcs" in PROGRAMS)) return;
+  it("folds repeated 'Additional constraint' notes into one collapsible group row", () => {
+    // A real program (e.g. Computational Mathematics) carries several notes all
+    // labelled "Additional constraint". They must collapse into ONE grouped row
+    // ("Additional constraints · N"), not N stacked icon-rows.
+    const entry = Object.entries(PROGRAMS).find(
+      ([, p]) =>
+        (p.informational ?? []).filter(
+          (x) => x.label === "Additional constraint",
+        ).length > 1,
+    );
+    if (!entry) return;
+    const [programId, program] = entry;
+    const n = (program.informational ?? []).filter(
+      (x) => x.label === "Additional constraint",
+    ).length;
     const { container } = render(
-      <AuditPanel
-        plan={mkPlan({ programIds: ["data-science-bcs"] })}
-        onDrillToRequirement={() => {}}
-      />,
-    );
-    const labels = [...container.querySelectorAll(".av-macro-label")].map((l) =>
-      l.textContent?.trim(),
-    );
-    expect(labels).toContain("Degree requirements");
-    expect(labels).toContain("Co-op & other");
-    // Electives is its own top-level macro.
-    expect(labels).toContain("Electives");
-  });
-
-  it("flattens the rule tree under Degree requirements (no 'Complete all of the following' wall)", () => {
-    if (!("data-science-bcs" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel
-        plan={mkPlan({ programIds: ["data-science-bcs"] })}
-        onDrillToRequirement={() => {}}
-      />,
-    );
-    const aside = container.querySelector("aside");
-    if (!aside) throw new Error("no aside");
-    // The generic wrapper title is gone; required courses render as direct rows.
-    expect(aside.textContent ?? "").not.toMatch(
-      /complete all of the following/i,
-    );
-    const codes = [...container.querySelectorAll(".av-item-code")].map((c) =>
-      c.textContent?.replace(/\s+/g, "").toUpperCase(),
-    );
-    expect(codes).toContain("CS341"); // a known core requirement
-  });
-
-  it("places the co-op requirement note under the 'Co-op & other' macro", () => {
-    if (!("data-science-bcs" in PROGRAMS)) return;
-    const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: ["data-science-bcs"] })} />,
+      <AuditPanel plan={mkPlan({ programIds: [programId] })} />,
     );
     const other = [...container.querySelectorAll(".av-macro")].find((m) =>
       /co-op & other/i.test(
@@ -521,7 +702,19 @@ describe("AuditPanel", () => {
       ),
     );
     expect(other, "expected a Co-op & other macro").toBeTruthy();
-    expect(other?.textContent ?? "").toMatch(/work term/i);
+    const labels = [...(other?.querySelectorAll(".av-sec-label") ?? [])].map(
+      (l) => l.textContent ?? "",
+    );
+    // Exactly one row for the repeated label, titled with the count.
+    expect(labels.filter((t) => /^Additional constraint/.test(t))).toHaveLength(
+      1,
+    );
+    expect(labels).toContain(`Additional constraints · ${n}`);
+    // Each note's verbatim text is still present (folded into the group body).
+    const firstNote = program.informational?.find(
+      (x) => x.label === "Additional constraint",
+    )?.text as string;
+    expect(other?.textContent ?? "").toContain(firstNote);
   });
 
   it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {

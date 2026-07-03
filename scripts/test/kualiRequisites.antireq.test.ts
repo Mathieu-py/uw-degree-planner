@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseKualiAntireqCodes } from "../scrape/kualiRequisites";
+import { parseKualiAntireqCodes } from "../scrape/sources/kualiRequisites";
 
 // Markup mirrors real Kuali `antirequisites` payloads (see CS245, CS136, CS200).
 const courseLink = (id: string, code: string) =>

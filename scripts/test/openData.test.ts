@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toSections } from "../scrape/openData";
+import { toSections } from "../scrape/sources/openData";
 
 // Shape mirrors UW Open Data /ClassSchedules entries.
 const sched = (

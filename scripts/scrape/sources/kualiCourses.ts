@@ -5,8 +5,9 @@
  * in `./kualiRequisites`; this module only fetches and assembles the record.
  */
 
-import type { PrereqNode } from "../../lib/prereqs/parse";
-import { discoverCatalogId } from "../scrape-programs";
+import type { PrereqNode } from "../../../lib/prereqs/parse";
+import { fetchJson, withRetry } from "../util/fetch";
+import { discoverCatalogId } from "./kualiCatalog";
 import {
   parseKualiAntireqCodes,
   parseKualiRequisite,
@@ -15,8 +16,6 @@ import {
 
 const KUALI_BASE = "https://uwaterloocm.kuali.co/api/v1/catalog";
 const CONCURRENCY = 12;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Authoritative per-course data Kuali supplies that UWFlow lacks. */
 export interface KualiCourseData {
@@ -105,21 +104,10 @@ function buildRecord(
 export async function fetchKualiData(): Promise<
   Record<string, KualiCourseData>
 > {
-  const getJson = async <T>(url: string): Promise<T> => {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        // A timed-out attempt throws TimeoutError, which retries like any
-        // other failure here — no separate abort handling needed.
-        const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as T;
-      } catch (err) {
-        if (attempt === 2) throw err;
-        await sleep(500 * 2 ** attempt);
-      }
-    }
-    throw new Error("unreachable");
-  };
+  // fetchJson does one timed GET+parse; withRetry retries any failure (a timeout
+  // aborts and throws like any other error). 30s — Kuali's detail API is slow.
+  const getJson = <T>(url: string): Promise<T> =>
+    withRetry(() => fetchJson<T>(url, 30_000));
 
   const catalogId = await discoverCatalogId();
   const list = await getJson<

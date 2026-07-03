@@ -13,7 +13,11 @@ import {
   isSatisfied,
   placementLegalityKey,
 } from "./compile";
-import { deriveElectiveSections, subjectPoolEligible } from "./electives";
+import {
+  deriveElectiveSections,
+  type ElectiveSection,
+  subjectPoolFilter,
+} from "./electives";
 import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
 import { maxBipartiteMatch } from "./matching";
 
@@ -64,6 +68,12 @@ export interface DegreeProgress {
    * named requirements, not re-counted. (`needed` comes from `summarize`.)
    */
   nodeFill: NodeFill;
+  /**
+   * Per-elective credit (index-aligned to `deriveElectiveSections`): a finite
+   * elective's filled count or a pool's credited units, so the Electives chip
+   * reads the same match credit as the headline. Sparse — no entry for "browse".
+   */
+  electiveCredit: number[];
 }
 
 /** Filled-slot count per owning rule-tree node (see {@link DegreeProgress.nodeFill}). */
@@ -88,6 +98,17 @@ interface Bucket {
    * instead of an independent per-node count that double-credits overlapping
    * pools (#21 follow-up).
    */
+  owner?: AuditNode;
+}
+
+/**
+ * A units-scored requirement (a unit-stated `subjectPool`, or an elective unit
+ * pool): a 1.0-unit course counts as 1.0, unlike a count {@link Bucket}. `owner`
+ * is set for rule-tree pools so their row matches the headline.
+ */
+interface UnitPool {
+  needUnits: number;
+  eligible: string[];
   owner?: AuditNode;
 }
 
@@ -123,7 +144,7 @@ function poolFilterOf(
   node: Extract<RuleNode, { kind: "subjectPool" }>,
 ): PoolFilter {
   return {
-    subjects: node.subjectCodes.map((s) => s.toLowerCase()),
+    subjects: new Set(node.subjectCodes.map((s) => s.toLowerCase())),
     minLevel: node.minLevel,
     maxLevel: node.maxLevel,
   };
@@ -144,6 +165,7 @@ function collect(
   placed: ReadonlySet<string>,
   placedMatches: (code: string) => string[],
   buckets: Bucket[],
+  unitPools: UnitPool[],
   required: Map<string, AuditNode>,
   unitsOf: (code: string) => number,
 ): void {
@@ -179,21 +201,30 @@ function collect(
         });
         break;
       }
-      // Compound pick ("1 of: {A and B} or {C and D}", or nested picks/pools):
-      // a single course must NOT satisfy a whole option-group. Credit only the
-      // genuinely-satisfied children (per the compiled audit), up to `min`, so
-      // their real units flow through the matcher; reserve the rest at the flat
-      // per-slot estimate (an empty-eligible bucket), exactly as before.
-      // Satisfied groups credit in tree order; total credit is order-independent
-      // (an uncredited group's courses fall to free electives) unless free room
-      // is already saturated — a rare edge we accept over re-ranking by units.
+      // Compound pick ("1 of: {A and B} or {C and D}"): a single course must NOT
+      // satisfy a whole group. Credit genuinely-satisfied children up to `min`,
+      // heaviest-first so a tight free pool keeps the higher-unit group named;
+      // reserve the rest at the flat per-slot estimate.
+      const satisfiedChildren = node.children
+        .filter(isSatisfied)
+        .map((child) => ({
+          child,
+          units: child.satisfiers.reduce((u, p) => u + unitsOf(p.code), 0),
+        }))
+        .sort((a, b) => b.units - a.units);
       let credited = 0;
-      for (const child of node.children) {
+      for (const { child } of satisfiedChildren) {
         if (credited >= min) break;
-        if (isSatisfied(child)) {
-          collect(child, placed, placedMatches, buckets, required, unitsOf);
-          credited += 1;
-        }
+        collect(
+          child,
+          placed,
+          placedMatches,
+          buckets,
+          unitPools,
+          required,
+          unitsOf,
+        );
+        credited += 1;
       }
       if (credited < min)
         buckets.push({ need: min - credited, eligible: [], owner: node });
@@ -201,16 +232,26 @@ function collect(
     }
     case "subjectPool": {
       const f = poolFilterOf(r);
-      buckets.push({
-        need: r.selectCount,
-        eligible: [...placed].filter((c) => poolMatch(c, f)),
-        owner: node,
-      });
+      const eligible = [...placed].filter((c) => poolMatch(c, f));
+      // Unit-stated pool ("2.0 units of X"): score by real units (a 1.0-unit
+      // course counts as 1.0, never doubling the count). Count-stated pools stay
+      // slot-based.
+      if (r.needUnits !== undefined)
+        unitPools.push({ needUnits: r.needUnits, eligible, owner: node });
+      else buckets.push({ need: r.selectCount, eligible, owner: node });
       break;
     }
     case "all":
       for (const c of node.children)
-        collect(c, placed, placedMatches, buckets, required, unitsOf);
+        collect(
+          c,
+          placed,
+          placedMatches,
+          buckets,
+          unitPools,
+          required,
+          unitsOf,
+        );
       break;
     // excluded: never consumes slots.
   }
@@ -245,6 +286,13 @@ export function computeDegreeProgress(
    * acknowledged one stops gating the 100% headline ("not unmet, just unverified").
    */
   acknowledged: ReadonlySet<string> = new Set(),
+  /**
+   * The program's elective sections. Optional so callers/tests can omit it; when
+   * present it MUST be the same array `deriveMacros` receives, so the credit at
+   * `electiveCredit[i]` lines up with the i-th elective. buildProgramAudit
+   * computes it once and threads it to both; omit to derive locally.
+   */
+  electiveSections?: ElectiveSection[],
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -278,10 +326,20 @@ export function computeDegreeProgress(
   };
 
   const buckets: Bucket[] = [];
+  const unitPools: UnitPool[] = [];
   const required = new Map<string, AuditNode>();
 
   for (const root of roots)
-    if (root) collect(root, placed, placedMatches, buckets, required, unitsOf);
+    if (root)
+      collect(
+        root,
+        placed,
+        placedMatches,
+        buckets,
+        unitPools,
+        required,
+        unitsOf,
+      );
 
   // Finite electives (consolidated upstream so overlapping pools count once)
   // and unit-based subject pools ("0.5 unit of BIOL/CHEM/… at 200+").
@@ -291,21 +349,30 @@ export function computeDegreeProgress(
   // Subject pools are scored by UNITS, not a 0.5-derived course count: a single
   // 1.0-unit course satisfies "1.0 unit of X", and a 0.25 lab counts for what it
   // weighs. They're assigned in a units pass after the count-based matcher
-  // (below), like breadth/level floors. (Issue #101.)
-  const unitPools: { needUnits: number; eligible: string[] }[] = [];
+  // (below), like breadth/level floors. (Issue #101.) `unitPools` already holds
+  // any unit-stated `subjectPool` from the tree. Map each elective to the
+  // bucket/pool it becomes (keyed by identity, robust to the sort below) so the
+  // chip reads the same match credit as the headline, not a double-count.
+  const electiveBucketIndex = new Map<number, number>();
+  const electivePool = new Map<number, UnitPool>();
   if (program) {
-    for (const e of deriveElectiveSections(program)) {
-      if (e.kind === "finite")
+    (electiveSections ?? deriveElectiveSections(program)).forEach((e, i) => {
+      if (e.kind === "finite") {
+        electiveBucketIndex.set(i, buckets.length);
         buckets.push({
           need: e.need,
           eligible: [...new Set(e.options.flatMap(placedMatches))],
         });
-      else if (e.kind === "subjectPool")
-        unitPools.push({
+      } else if (e.kind === "subjectPool") {
+        const filter = subjectPoolFilter(e); // build the subjects Set once
+        const pool: UnitPool = {
           needUnits: e.needUnits,
-          eligible: placedList.filter((c) => subjectPoolEligible(c, e)),
-        });
-    }
+          eligible: placedList.filter((c) => poolMatch(c, filter)),
+        };
+        electivePool.set(i, pool);
+        unitPools.push(pool);
+      }
+    });
 
     // Communication — a pick-one named course. Skip when the rules already
     // include the option, else its units double-count.
@@ -355,18 +422,26 @@ export function computeDegreeProgress(
     nodeFill.set(owner, (nodeFill.get(owner) ?? 0) + filledByBucket[bi]);
   }
 
-  // Unit-based subject-pool electives (issue #101): greedily assign leftover
-  // (not-yet-matched) eligible courses until their REAL units cover needUnits.
-  // Assigned courses join `matched` so they credit their real units once and a
-  // free elective can't reuse them; any shortfall reserves named space (like an
-  // unfilled count slot) so it shrinks free room and gates completion. Pools run
-  // after the matcher, so named rule requirements keep first claim on a course.
-  // Greedy ACROSS pools (unlike the count buckets' optimal match): two pools
-  // sharing an eligible course resolve in list order, which can under-credit when
-  // a different split satisfies both — rare, as these pools seldom overlap.
+  // Unit pools (a unit-stated `subjectPool` rule, or a unit-based elective pool,
+  // issue #101): assign leftover (not-yet-matched) eligible courses until their
+  // REAL units cover needUnits. Assigned courses join `matched` so they credit
+  // their real units once and a free elective can't reuse them; any shortfall
+  // reserves named space (like an unfilled count slot) so it shrinks free room
+  // and gates completion. Pools run after the matcher, so named rule requirements
+  // keep first claim on a course.
+  //
+  // Most-constrained-first (fewest still-available courses) so overlapping pools
+  // don't strand each other: "0.5 unit of CS" claims the shared course before
+  // "0.5 unit of CS or MATH" (which falls back to MATH); list order left it at 99%.
   let allPoolsMet = true;
   let poolShortfall = 0;
-  for (const pool of unitPools) {
+  const availCount = (p: UnitPool) =>
+    p.eligible.filter((c) => !matched.has(c)).length;
+  const orderedPools = [...unitPools].sort(
+    (a, b) => availCount(a) - availCount(b),
+  );
+  const poolCredit = new Map<UnitPool, number>();
+  for (const pool of orderedPools) {
     let got = 0;
     for (const code of pool.eligible) {
       if (got >= pool.needUnits) break;
@@ -374,11 +449,27 @@ export function computeDegreeProgress(
       matched.add(code);
       got += unitsOf(code);
     }
+    poolCredit.set(pool, Math.min(got, pool.needUnits));
+    // Rule-tree pools own a node → record credited units (capped at need) so the
+    // row matches the headline; elective pools have no owner.
+    if (pool.owner)
+      nodeFill.set(
+        pool.owner,
+        (nodeFill.get(pool.owner) ?? 0) + Math.min(got, pool.needUnits),
+      );
     if (got < pool.needUnits) {
       poolShortfall += pool.needUnits - got;
       allPoolsMet = false;
     }
   }
+
+  // Per-elective credit for the panel chip: a finite elective's filled count, a
+  // pool's credited units — both post-match, so a claimed course isn't re-counted.
+  const electiveCredit: number[] = [];
+  for (const [i, bi] of electiveBucketIndex)
+    electiveCredit[i] = filledByBucket[bi];
+  for (const [i, pool] of electivePool)
+    electiveCredit[i] = poolCredit.get(pool) ?? 0;
 
   // Roll up: real units of matched courses + per-slot estimate for unfilled
   // slots, so a 1.0-unit pick costs the free pool a full unit, not a flat 0.5.
@@ -444,7 +535,13 @@ export function computeDegreeProgress(
     allFloorsMet &&
     owedUnverified.length === 0;
   const raw = denom > 0 ? Math.round((creditedUnits / denom) * 100) : 0;
-  const pct = allComplete ? Math.min(raw, 100) : Math.min(raw, 99);
+  // Require full VOLUME for 100, not just the structured gates: `allComplete` can
+  // hold with free-elective units unplaced (creditedUnits < denom), where
+  // `Math.round` would otherwise round ~99.6% up to a false 100.
+  const pct =
+    allComplete && unitsMet(creditedUnits, denom)
+      ? Math.min(raw, 100)
+      : Math.min(raw, 99);
 
   return {
     totalUnits,
@@ -457,5 +554,6 @@ export function computeDegreeProgress(
     levelFloors,
     owedUnverified,
     nodeFill,
+    electiveCredit,
   };
 }

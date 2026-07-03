@@ -55,6 +55,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
     program,
     macros,
     unverifiedItems,
+    staleAcknowledgements,
     placedCodes,
     illegalCodes,
     headlinePct,
@@ -93,6 +94,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
         <UnverifiedRequirements
           programId={programId}
           items={unverifiedItems}
+          staleCount={staleAcknowledgements.length}
           onAcknowledge={onAcknowledgeRequirement}
         />
       </div>

@@ -153,6 +153,24 @@ describe("SharedPlanView", () => {
     expect(auditProps.current?.drag).toBeUndefined();
   });
 
+  it("preserves acknowledgedRequirements when adapting the shared plan", () => {
+    // Regression: the inline adapter used to drop acknowledgedRequirements, so a
+    // plan its owner acknowledged to 100% rendered 99% (all rules un-acked) for
+    // every viewer. The shared projection must carry them through to the audit.
+    const acks = { "h-cs": ["A co-op work-term sequence (not audited here)."] };
+    render(
+      <SharedPlanView
+        plan={makePlan({ acknowledgedRequirements: acks })}
+        catalog={[]}
+        programOptions={PROGRAM_OPTIONS}
+      />,
+    );
+    const passedPlan = auditProps.current?.plan as
+      | { acknowledgedRequirements?: Record<string, string[]> }
+      | undefined;
+    expect(passedPlan?.acknowledgedRequirements).toEqual(acks);
+  });
+
   it("renders without crashing when plan.stream is null (defaults to regular)", () => {
     render(
       <SharedPlanView

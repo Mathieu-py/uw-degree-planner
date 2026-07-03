@@ -5,7 +5,8 @@
  */
 
 import { z } from "zod";
-import { CourseSchema } from "../../lib/courses/validation";
+import { CourseSchema } from "../../../lib/courses/validation";
+import { withRetry } from "../util/fetch";
 
 const GRAPHQL_ENDPOINT = "https://uwflow.com/graphql";
 
@@ -44,35 +45,25 @@ const GraphQLResponseSchema = z.object({
   errors: z.array(z.object({ message: z.string() })).optional(),
 });
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 /**
  * Fetch every UWFlow course (term-independent: name, prose, crowd ratings).
  * One critical call whose failure aborts the build, so retry 3× with a 30s
  * per-attempt timeout and exponential backoff (matches kualiCourses.ts).
  */
-export async function fetchUWFlowCourses(): Promise<UWFlowCourse[]> {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(GRAPHQL_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: COURSES_QUERY }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!res.ok) throw new Error(`UWFlow HTTP ${res.status}`);
-      const json = GraphQLResponseSchema.parse(await res.json());
-      if (json.errors?.length) {
-        throw new Error(
-          `UWFlow GraphQL errors: ${JSON.stringify(json.errors)}`,
-        );
-      }
-      if (!json.data) throw new Error("UWFlow returned no data");
-      return json.data.course;
-    } catch (err) {
-      if (attempt === 2) throw err;
-      await sleep(500 * 2 ** attempt);
+export function fetchUWFlowCourses(): Promise<UWFlowCourse[]> {
+  return withRetry(async () => {
+    const res = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: COURSES_QUERY }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`UWFlow HTTP ${res.status}`);
+    const json = GraphQLResponseSchema.parse(await res.json());
+    if (json.errors?.length) {
+      throw new Error(`UWFlow GraphQL errors: ${JSON.stringify(json.errors)}`);
     }
-  }
-  throw new Error("unreachable");
+    if (!json.data) throw new Error("UWFlow returned no data");
+    return json.data.course;
+  });
 }

@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { SLOT_POSITIONS, STREAM_VALUES } from "../types";
-import { MAX_COURSES_PER_SLOT, MAX_SLOTS } from "./serialize";
+import {
+  MAX_ACKED_PER_PROGRAM,
+  MAX_ACKED_TEXT_LEN,
+  MAX_COURSES_PER_SLOT,
+  MAX_SLOTS,
+} from "./serialize";
 import type { PlanSnapshot } from "./types";
 
 // Field caps applied before the `save_plan_state` RPC (migrations/0002). These
@@ -14,11 +19,8 @@ export const MAX_ID_LEN = 128;
 const MAX_SCRAPE_VERSION_LEN = 64;
 const MAX_COURSE_CODE_LEN = 32;
 const MAX_GRADE_LEN = 16;
-// Acknowledged unverified requirements: keyed by program (≤ MAX_PROGRAM_IDS),
-// each a small list of verbatim requirement texts. Texts are calendar prose, so
-// allow a generous per-string length but cap the count to bound the payload.
-const MAX_ACKED_PER_PROGRAM = 64;
-const MAX_ACKED_TEXT_LEN = 512;
+// Acknowledged-requirement caps live in ./serialize (single source of truth,
+// also applied by toSnapshot's clamp).
 
 /**
  * Size-only caps, checked first so genuine resource-exhaustion payloads keep the

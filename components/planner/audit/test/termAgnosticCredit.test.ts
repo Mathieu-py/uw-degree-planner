@@ -4,13 +4,17 @@ import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
 import { buildProgramAudit } from "../buildProgramAudit";
 
 /**
- * Per-program audit bounding (#105). A Three-Year General program spans 6 terms
- * (1A–3B). On a multi-program timeline that runs the full 8 terms, a course
- * placed in 4A/4B must NOT credit the 3-year leg — those terms are past its span.
+ * Degree credit is term-agnostic. The UW Undergraduate Calendar defines an
+ * academic plan as "a defined set of requirements that leads to a particular
+ * credential" (Glossary of Terms) and ties credit to completing those
+ * requirements, not to the term a course is taken in. So a required course
+ * credits its program wherever it sits on the timeline — including terms past a
+ * short program's nominal length on a mixed double-degree grid. (Replaces the
+ * former term-span gate, #105, which was not calendar-backed.)
  */
 
 const EMPTY_CATALOG = new Map<string, Course>();
-const THREE_YEAR = "3g-anthropology"; // numberOfTerms = 6
+const THREE_YEAR = "3g-anthropology"; // 6-term Three-Year General
 // anth204 is a required course of the Anthropology Three-Year General program.
 const REQUIRED = "anth204";
 
@@ -43,8 +47,8 @@ function planWithCourseAt(position: SlotPosition): LocalPlan {
   };
 }
 
-describe("audit bounding to program span", () => {
-  it("credits a required course placed within the 6-term span (3A)", () => {
+describe("term-agnostic degree credit", () => {
+  it("credits a required course placed within the nominal span (3A)", () => {
     const data = buildProgramAudit(
       planWithCourseAt("3A"),
       THREE_YEAR,
@@ -54,17 +58,17 @@ describe("audit bounding to program span", () => {
     expect(data.placedCodes.has(REQUIRED)).toBe(true);
   });
 
-  it("ignores the same course placed past the span (4A)", () => {
+  it("credits the same course placed past the nominal span (4A)", () => {
     const data = buildProgramAudit(
       planWithCourseAt("4A"),
       THREE_YEAR,
       EMPTY_CATALOG,
       [],
     );
-    expect(data.placedCodes.has(REQUIRED)).toBe(false);
+    expect(data.placedCodes.has(REQUIRED)).toBe(true);
   });
 
-  it("placing past the span credits strictly less than within it", () => {
+  it("credits the same units regardless of term placed (3A vs 4A)", () => {
     const inSpan = buildProgramAudit(
       planWithCourseAt("3A"),
       THREE_YEAR,
@@ -77,8 +81,7 @@ describe("audit bounding to program span", () => {
       EMPTY_CATALOG,
       [],
     );
-    expect(pastSpan.progress.creditedUnits).toBeLessThan(
-      inSpan.progress.creditedUnits,
-    );
+    expect(pastSpan.progress.creditedUnits).toBe(inSpan.progress.creditedUnits);
+    expect(pastSpan.progress.creditedUnits).toBeGreaterThan(0);
   });
 });

@@ -16,9 +16,15 @@ import {
   validateDescriptionsFile,
 } from "../lib/courses/validation";
 import { PINNED_TERM } from "../lib/terms";
-import { fetchKualiData, type KualiCourseData } from "./scrape/kualiCourses";
-import { fetchSeating } from "./scrape/openData";
-import { fetchUWFlowCourses, type UWFlowCourse } from "./scrape/uwflowCourses";
+import {
+  fetchKualiData,
+  type KualiCourseData,
+} from "./scrape/sources/kualiCourses";
+import { fetchSeating } from "./scrape/sources/openData";
+import {
+  fetchUWFlowCourses,
+  type UWFlowCourse,
+} from "./scrape/sources/uwflowCourses";
 
 // Load .env.local for UW_OPENDATA_KEY (Next.js does this for the app; this script
 // doesn't). Tolerate a missing file — CI may set the var directly.

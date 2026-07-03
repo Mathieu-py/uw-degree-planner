@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseKualiAntireqCodes,
   parseKualiRequisite,
-} from "../scrape/kualiRequisites";
+} from "../scrape/sources/kualiRequisites";
 
 /**
  * Golden fixtures: whole-document Kuali requisite HTML (under fixtures/kuali/),

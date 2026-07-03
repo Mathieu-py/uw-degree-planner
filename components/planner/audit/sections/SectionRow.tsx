@@ -27,6 +27,30 @@ export function SectionRow({
   onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
+  if (section.kind === "infoGroup") {
+    // Collapsible group: one row "Additional constraints · 7" expanding to the
+    // notes. Single-note groups drop the count and show a plain paragraph.
+    const count = section.items.length;
+    return (
+      <SectionShell title={groupTitle(section.title, count)} open={open}>
+        {count === 1 ? (
+          <p className="u-small">{section.items[0]}</p>
+        ) : (
+          <ul className="flex flex-col gap-1 list-disc pl-4 marker:text-ink-3">
+            {section.items.map((text, i) => (
+              // Static, non-reordering note list → index key is stable and
+              // can't collide when two notes share identical text.
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list, order fixed
+              <li key={i} className="u-small">
+                {text}
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionShell>
+    );
+  }
+
   if (section.kind === "info") {
     return (
       <div className="av-row">
@@ -209,6 +233,19 @@ export function SectionRow({
   );
 }
 
+/** "Additional constraint" + 7 → "Additional constraints · 7"; pluralizes the
+ *  last word so a folded group reads naturally. A last word that is ALREADY
+ *  plural ("Failed units") is left alone, else it double-"s"es ("unitss").
+ *  Single note → bare title. Exported for unit testing. */
+export function groupTitle(title: string, count: number): string {
+  if (count <= 1) return title;
+  const sp = title.lastIndexOf(" ");
+  const lastWord = sp === -1 ? title : title.slice(sp + 1);
+  const head = sp === -1 ? "" : title.slice(0, sp + 1);
+  const plural = /s$/i.test(lastWord) ? lastWord : pluralize(count, lastWord);
+  return `${head}${plural} · ${count}`;
+}
+
 function SectionShell({
   title,
   caption,
@@ -219,7 +256,7 @@ function SectionShell({
   children,
 }: {
   title: string;
-  caption: string;
+  caption?: string;
   /** Present → progress ring; absent → neutral doc glyph (unit/browse rows). */
   ring?: { pct: number; num: number; tone?: "neutral" };
   excludedViolationCount?: number;
@@ -243,7 +280,7 @@ function SectionShell({
         )}
         <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
           <span className="av-sec-label">{title}</span>
-          <span className="u-small truncate">{caption}</span>
+          {caption ? <span className="u-small truncate">{caption}</span> : null}
         </span>
         {/* Two distinct flags: red cross = a course that can't count here at
             all; amber triangle = one that counts here but is excluded from the

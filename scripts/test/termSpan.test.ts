@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Program } from "../../lib/programs";
-import { deriveNumberOfTerms, termSpanFromUnits } from "../scrape/termSpan";
+import {
+  deriveNumberOfTerms,
+  termSpanFromUnits,
+} from "../scrape/program/termSpan";
 
 /** Minimal flexible-program stub — derivation only reads name + unitPlan. */
 function flex(name: string, totalUnits?: number): Program {

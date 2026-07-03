@@ -29,20 +29,22 @@ export function coursePrefix(code: string): string {
  * be lowercase (callers normalize once per pool, not per code).
  */
 export interface PoolFilter {
-  /** Subject prefixes that qualify. Present-but-no-match excludes; omit for any. */
-  subjects?: readonly string[];
+  /** Subject prefixes that qualify (a Set so membership is O(1) across the many
+   *  placed codes a pool is tested against). Present-but-no-match excludes;
+   *  omit for any. */
+  subjects?: ReadonlySet<string>;
   /** Inclusive level bounds, bucketed to the hundred. */
   minLevel?: number;
   maxLevel?: number;
   /** Subject prefixes to exclude. */
-  excludeSubjects?: readonly string[];
+  excludeSubjects?: ReadonlySet<string>;
 }
 
 /** Whether a placed `code` satisfies a {@link PoolFilter}'s subject + level bounds. */
 export function poolMatch(code: string, f: PoolFilter): boolean {
   const prefix = coursePrefix(code);
-  if (f.subjects && !f.subjects.includes(prefix)) return false;
-  if (f.excludeSubjects?.includes(prefix)) return false;
+  if (f.subjects && !f.subjects.has(prefix)) return false;
+  if (f.excludeSubjects?.has(prefix)) return false;
   const lvl = levelBucket(courseLevel(code));
   if (f.minLevel != null && lvl < f.minLevel) return false;
   if (f.maxLevel != null && lvl > f.maxLevel) return false;

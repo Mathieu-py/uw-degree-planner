@@ -6,6 +6,11 @@ import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 // full structural validation that consumes these lives in `./validate`.
 export const MAX_SLOTS = 50;
 export const MAX_COURSES_PER_SLOT = 100;
+// Acknowledged unverified requirements: keyed by program, each a small list of
+// verbatim requirement texts. `./validate` enforces these on the write path;
+// `toSnapshot` also clamps to them so one over-cap entry degrades gracefully.
+export const MAX_ACKED_PER_PROGRAM = 64;
+export const MAX_ACKED_TEXT_LEN = 512;
 
 /**
  * jsonb from the DB isn't type-checked by PostgREST, so coerce it to a
@@ -194,6 +199,36 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
 }
 
 /**
+ * Clamp `acknowledgedRequirements` to the server caps: an over-long/over-count
+ * entry is dropped, not the whole snapshot — else a single >512-char acknowledged
+ * requirement would fail validation and silently reject the entire plan save.
+ * Common (<512-char) acks are untouched.
+ *
+ * Also drops entries for programs no longer in the plan: acks are never pruned
+ * when a program is removed, so over many add/ack/remove cycles they accumulate
+ * and can push the record past the MAX_PROGRAM_IDS cap on acked-program count,
+ * which would reject the whole save.
+ */
+function sanitizeAcknowledged(
+  acked: Record<string, string[]> | undefined,
+  programIds: readonly string[],
+): Record<string, string[]> {
+  if (!acked) return {};
+  const active = new Set(programIds);
+  const out: Record<string, string[]> = {};
+  for (const [programId, texts] of Object.entries(acked)) {
+    if (!active.has(programId)) continue; // stale ack for a removed program
+    const kept = [
+      ...new Set(
+        texts.filter((t) => t.length > 0 && t.length <= MAX_ACKED_TEXT_LEN),
+      ),
+    ].slice(0, MAX_ACKED_PER_PROGRAM);
+    if (kept.length > 0) out[programId] = kept;
+  }
+  return out;
+}
+
+/**
  * Convert a `ServerPlan` (or `LocalPlan`-shaped value) into the snapshot
  * payload for `save_plan_state`. Omits server-managed fields (id, name,
  * updatedAt) owned by the plans row.
@@ -210,7 +245,10 @@ export function toSnapshot(plan: {
   return {
     programIds: plan.programIds,
     specializationIds: plan.specializationIds,
-    acknowledgedRequirements: plan.acknowledgedRequirements ?? {},
+    acknowledgedRequirements: sanitizeAcknowledged(
+      plan.acknowledgedRequirements,
+      plan.programIds,
+    ),
     stream: plan.stream,
     startTermId: plan.startTermId,
     programScrapeVersion: plan.programScrapeVersion ?? null,
