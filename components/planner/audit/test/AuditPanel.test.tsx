@@ -607,10 +607,7 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const box = screen
-      .getByText(found.text)
-      .closest("label")
-      ?.querySelector("input[type=checkbox]") as HTMLInputElement;
+    const box = screen.getByLabelText(found.text) as HTMLInputElement;
     expect(box).toBeTruthy();
     fireEvent.click(box);
     // Keyed by the PROGRAM id + verbatim text — the spec item rides the program's
