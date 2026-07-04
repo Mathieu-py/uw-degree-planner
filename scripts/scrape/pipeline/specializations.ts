@@ -91,10 +91,13 @@ export function buildSpecialization(
   }
   const rules = result.kind === "flexible" ? result.rules : undefined;
   if (result.kind === "flexible") warnings.push(...result.warnings);
-  // result.unverified / result.freeElectives are intentionally NOT surfaced:
-  // Specialization has no `unverifiedRequirements` field and the audit gates only
-  // on the PROGRAM's (buildProgramAudit). Spec-level owed requirements are
-  // unsupported by design — see issue #123.
+  // Spec-level owed requirements now surface (#123). `unverified` is carried as-is;
+  // `freeElectives` is stored raw and re-surfaced conditionally at audit time
+  // (buildProgramAudit) — a spec is shared by reference across parents that may
+  // differ in whether they have a totalUnits denominator, so the fold can't be
+  // baked in here the way the program path does it (foldFreeElectivesIntoUnverified).
+  const unverified = [...new Set(result.unverified)];
+  const freeElectives = result.freeElectives ?? [];
 
   const electivesResult = parseElectives(detail, `spec:${slug}`);
   warnings.push(...electivesResult.warnings);
@@ -108,6 +111,8 @@ export function buildSpecialization(
     ...(electivesResult.electives.length > 0
       ? { electives: electivesResult.electives }
       : {}),
+    ...(unverified.length > 0 ? { unverifiedRequirements: unverified } : {}),
+    ...(freeElectives.length > 0 ? { freeElectives } : {}),
   };
   takenSlugs.set(slug, id);
 

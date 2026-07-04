@@ -577,6 +577,47 @@ describe("AuditPanel", () => {
     },
   );
 
+  it("surfaces a selected specialization's unverified requirements, folded under the program's dimension (#123)", () => {
+    // Fixture: any program whose spec carries unverifiedRequirements. Present only
+    // once data/programs.json is regenerated with spec-level owed items, so this
+    // is a no-op guard before the refresh lands (matches the file's skipIf style).
+    const found = Object.entries(PROGRAMS)
+      .flatMap(([programId, p]) =>
+        (p.specializations ?? [])
+          .filter((s) => (s.unverifiedRequirements?.length ?? 0) > 0)
+          .map((s) => ({
+            programId,
+            slug: s.slug,
+            text: s.unverifiedRequirements?.[0] as string,
+          })),
+      )
+      .at(0);
+    if (!found) return; // no such fixture yet — skip
+
+    const calls: Array<[string, string, boolean]> = [];
+    render(
+      <AuditPanel
+        plan={mkPlan({
+          programIds: [found.programId],
+          specializationIds: { [found.programId]: found.slug },
+        })}
+        onAcknowledgeRequirement={(pid, t, acked) =>
+          calls.push([pid, t, acked])
+        }
+      />,
+    );
+
+    const box = screen
+      .getByText(found.text)
+      .closest("label")
+      ?.querySelector("input[type=checkbox]") as HTMLInputElement;
+    expect(box).toBeTruthy();
+    fireEvent.click(box);
+    // Keyed by the PROGRAM id + verbatim text — the spec item rides the program's
+    // acknowledgment dimension, so no new persistence key is introduced.
+    expect(calls).toEqual([[found.programId, found.text, true]]);
+  });
+
   it.skipIf(!("systems-design-engineering" in PROGRAMS))(
     "keeps engineering's 'Technical Electives List' in the Electives tab",
     () => {

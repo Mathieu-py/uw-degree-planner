@@ -13,7 +13,7 @@ import type { Course } from "@/lib/courses/types";
 import { fmtUnits } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
-import type { Program } from "@/lib/programs";
+import type { Program, Specialization } from "@/lib/programs";
 import { PROGRAMS, programReferencedCodes } from "@/lib/programs";
 import { deriveMacros } from "./deriveMacros";
 import type { Macro } from "./types";
@@ -107,6 +107,24 @@ export function buildProgramAudit(
   const acknowledged = new Set(
     plan.acknowledgedRequirements?.[programId] ?? [],
   );
+  // A selected specialization's owed requirements are folded into this program's
+  // acknowledgment dimension (same programId + verbatim text), so they gate the
+  // headline and are acknowledgeable exactly like the program's own (#123).
+  // Resolved here, not at scrape time: a spec is shared by reference across parents
+  // that may differ in whether they have a totalUnits denominator.
+  const specId = plan.specializationIds[programId] ?? null;
+  const noTotal = program?.unitPlan?.totalUnits == null;
+  // A spec's owed requirements: its unstructurable rules, plus its dropped free
+  // electives ONLY when the parent has no total to absorb them (else they're
+  // redundant with the free remainder — mirrors foldFreeElectivesIntoUnverified, #117).
+  const specOwed = (spec: Specialization): string[] => [
+    ...(spec.unverifiedRequirements ?? []),
+    ...(noTotal ? (spec.freeElectives ?? []) : []),
+  ];
+  const selectedSpec = specId
+    ? (program?.specializations?.find((s) => s.slug === specId) ?? null)
+    : null;
+  const specUnverified = selectedSpec ? specOwed(selectedSpec) : [];
   // Derive the elective sections ONCE and thread them to both consumers, so the
   // headline's `electiveCredit[i]` maps to the same i-th elective the panel
   // renders (and the parse/classify/consolidate isn't run twice).
@@ -121,6 +139,7 @@ export function buildProgramAudit(
     equiv,
     acknowledged,
     electiveSections,
+    specUnverified,
   );
   const { macros } = deriveMacros(
     audit,
@@ -138,13 +157,22 @@ export function buildProgramAudit(
   // Unverified requirements, surfaced near the headline (not buried in a macro)
   // so "confirm with your advisor" is actionable. Each carries its acked state;
   // the still-owed ones (progress.owedUnverified) hold the headline below 100%.
-  const unverifiedRequirements = program?.unverifiedRequirements ?? [];
-  const unverifiedItems = unverifiedRequirements.map((text) => ({
+  // The selected spec's owed items fold in here under the same programId.
+  const effectiveUnverified = [
+    ...new Set([...(program?.unverifiedRequirements ?? []), ...specUnverified]),
+  ];
+  const unverifiedItems = effectiveUnverified.map((text) => ({
     text,
     acked: acknowledged.has(text),
   }));
   // Acked text matching no current requirement → the rule changed on re-scrape.
-  const unverifiedSet = new Set(unverifiedRequirements);
+  // The known set spans ALL specs (not just the selected one) so switching specs
+  // doesn't flag the prior spec's confirmations as a stale calendar regression;
+  // they persist quietly and are remembered if that spec is re-selected (#123).
+  const unverifiedSet = new Set([
+    ...(program?.unverifiedRequirements ?? []),
+    ...(program?.specializations ?? []).flatMap(specOwed),
+  ]);
   const staleAcknowledgements = [...acknowledged].filter(
     (text) => !unverifiedSet.has(text),
   );

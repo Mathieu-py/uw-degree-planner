@@ -293,6 +293,12 @@ export function computeDegreeProgress(
    * computes it once and threads it to both; omit to derive locally.
    */
   electiveSections?: ElectiveSection[],
+  /**
+   * A selected specialization's owed requirements (its `unverifiedRequirements`
+   * plus any free electives the caller chose to re-surface). Merged with the
+   * program's so a spec can't read 100% with real requirements dropped (#123).
+   */
+  specUnverified: readonly string[] = [],
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -515,10 +521,11 @@ export function computeDegreeProgress(
     unitsMet(b.placedUnits, b.needUnits),
   );
   // "Couldn't auto-verify" ≠ "unmet": an acknowledged requirement no longer gates
-  // the headline. Only still-owed (unacknowledged) ones do.
-  const owedUnverified = (program?.unverifiedRequirements ?? []).filter(
-    (r) => !acknowledged.has(r),
-  );
+  // the headline. Only still-owed (unacknowledged) ones do. A selected spec's owed
+  // items gate alongside the program's (deduped — a text could coincide) (#123).
+  const owedUnverified = [
+    ...new Set([...(program?.unverifiedRequirements ?? []), ...specUnverified]),
+  ].filter((r) => !acknowledged.has(r));
 
   // Level floors ("X units at the 200-level+") gate completion like breadth:
   // an overlapping filter that blocks 100% without inflating the denominator.
