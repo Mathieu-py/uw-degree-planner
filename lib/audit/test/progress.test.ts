@@ -45,6 +45,10 @@ function progressOf(
     undefined,
     unitsOf,
   );
+  // Mirror buildProgramAudit: pass the pre-merged (program + spec) owed list.
+  const owed = [
+    ...new Set([...(program.unverifiedRequirements ?? []), ...specUnverified]),
+  ];
   return computeDegreeProgress(
     audit,
     program,
@@ -53,7 +57,7 @@ function progressOf(
     undefined,
     acknowledged,
     undefined,
-    specUnverified,
+    owed,
   );
 }
 

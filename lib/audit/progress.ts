@@ -294,11 +294,12 @@ export function computeDegreeProgress(
    */
   electiveSections?: ElectiveSection[],
   /**
-   * A selected specialization's owed requirements (its `unverifiedRequirements`
-   * plus any free electives the caller chose to re-surface). Merged with the
-   * program's so a spec can't read 100% with real requirements dropped (#123).
+   * The owed `unverifiedRequirements` to gate on — already merged by the caller
+   * (the program's own PLUS any selected specialization's owed items, deduped;
+   * buildProgramAudit does this once). Omitted ⇒ fall back to the program's own,
+   * so callers with no specialization keep program-level gating for free (#123).
    */
-  specUnverified: readonly string[] = [],
+  unverifiedRequirements?: readonly string[],
 ): DegreeProgress {
   const roots: (AuditNode | null)[] = [
     audit.flexibleRoot,
@@ -521,11 +522,13 @@ export function computeDegreeProgress(
     unitsMet(b.placedUnits, b.needUnits),
   );
   // "Couldn't auto-verify" ≠ "unmet": an acknowledged requirement no longer gates
-  // the headline. Only still-owed (unacknowledged) ones do. A selected spec's owed
-  // items gate alongside the program's (deduped — a text could coincide) (#123).
-  const owedUnverified = [
-    ...new Set([...(program?.unverifiedRequirements ?? []), ...specUnverified]),
-  ].filter((r) => !acknowledged.has(r));
+  // the headline. Only still-owed (unacknowledged) ones do. The owed list is the
+  // caller's pre-merged one (program + selected spec); absent it, the program's own.
+  const owedUnverified = (
+    unverifiedRequirements ??
+    program?.unverifiedRequirements ??
+    []
+  ).filter((r) => !acknowledged.has(r));
 
   // Level floors ("X units at the 200-level+") gate completion like breadth:
   // an overlapping filter that blocks 100% without inflating the denominator.

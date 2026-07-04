@@ -62,6 +62,7 @@ export function buildProgramAudit(
   issues: readonly ValidationIssue[],
 ): ProgramAuditData {
   const program = PROGRAMS[programId] ?? null;
+  const specId = plan.specializationIds[programId] ?? null;
   // Fold finite "choose N of a list" requirements (e.g. an "Approved Courses
   // List") into the rule tree as picks, so they render/count under Degree
   // requirements — not as a separate Electives row. Local to this audit; global
@@ -72,10 +73,7 @@ export function buildProgramAudit(
   // Credit one member of each antireq conflict (program-required, else higher
   // units); hold out prereq-misplaced courses. Per-program: "required" is
   // program-specific.
-  const referenced = programReferencedCodes(
-    programId,
-    plan.specializationIds[programId] ?? null,
-  );
+  const referenced = programReferencedCodes(programId, specId);
   const legality = creditExclusionKeys(issues, { referenced, unitsOf });
 
   // Credit follows the calendar's requirements, NOT the term a course is taken
@@ -98,7 +96,7 @@ export function buildProgramAudit(
   const audit = compileAudit(
     auditedProgram,
     plan,
-    plan.specializationIds[programId] ?? null,
+    specId,
     legality,
     programId,
     equiv,
@@ -112,7 +110,6 @@ export function buildProgramAudit(
   // headline and are acknowledgeable exactly like the program's own (#123).
   // Resolved here, not at scrape time: a spec is shared by reference across parents
   // that may differ in whether they have a totalUnits denominator.
-  const specId = plan.specializationIds[programId] ?? null;
   const noTotal = program?.unitPlan?.totalUnits == null;
   // A spec's owed requirements: its unstructurable rules, plus its dropped free
   // electives ONLY when the parent has no total to absorb them (else they're
@@ -124,7 +121,15 @@ export function buildProgramAudit(
   const selectedSpec = specId
     ? (program?.specializations?.find((s) => s.slug === specId) ?? null)
     : null;
-  const specUnverified = selectedSpec ? specOwed(selectedSpec) : [];
+  // Merge the program's own owed requirements with the selected spec's ONCE
+  // (deduped): this single list drives both the acknowledgeable UI rows and the
+  // headline gate, so computeDegreeProgress no longer re-merges internally (#123).
+  const effectiveUnverified = [
+    ...new Set([
+      ...(program?.unverifiedRequirements ?? []),
+      ...(selectedSpec ? specOwed(selectedSpec) : []),
+    ]),
+  ];
   // Derive the elective sections ONCE and thread them to both consumers, so the
   // headline's `electiveCredit[i]` maps to the same i-th elective the panel
   // renders (and the parse/classify/consolidate isn't run twice).
@@ -139,7 +144,7 @@ export function buildProgramAudit(
     equiv,
     acknowledged,
     electiveSections,
-    specUnverified,
+    effectiveUnverified,
   );
   const { macros } = deriveMacros(
     audit,
@@ -157,10 +162,7 @@ export function buildProgramAudit(
   // Unverified requirements, surfaced near the headline (not buried in a macro)
   // so "confirm with your advisor" is actionable. Each carries its acked state;
   // the still-owed ones (progress.owedUnverified) hold the headline below 100%.
-  // The selected spec's owed items fold in here under the same programId.
-  const effectiveUnverified = [
-    ...new Set([...(program?.unverifiedRequirements ?? []), ...specUnverified]),
-  ];
+  // Reuses the single merged list also fed to the headline gate above.
   const unverifiedItems = effectiveUnverified.map((text) => ({
     text,
     acked: acknowledged.has(text),
