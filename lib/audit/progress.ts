@@ -19,7 +19,7 @@ import {
   subjectPoolFilter,
 } from "./electives";
 import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
-import { maxBipartiteMatch } from "./matching";
+import { assignUnitPools, maxBipartiteMatch } from "./matching";
 
 /**
  * The degree headline as a single UNITS bar: `creditedUnits / totalUnits`.
@@ -415,7 +415,13 @@ export function computeDegreeProgress(
   // Optimal unique assignment of courses to slots (maxBipartiteMatch): each
   // matched course credits exactly one bucket, so overlapping pools can't
   // double-count and a satisfiable set is never left spuriously unfilled.
-  const { filledByBucket, matched } = maxBipartiteMatch(buckets);
+  // Courses a unit pool could use are matched LAST, so buckets consume as few
+  // of them as a maximum matching allows — a pick must not burn a pool's only
+  // course when a non-pool alternative fills the same slot.
+  const poolEligible = new Set(unitPools.flatMap((p) => p.eligible));
+  const { filledByBucket, matched } = maxBipartiteMatch(buckets, {
+    matchLast: poolEligible,
+  });
 
   // Per-node distinct credit: roll each owning rule-node's filled-slot total up,
   // so the panel's requirement rows reflect this match (one course → one slot)
@@ -430,45 +436,42 @@ export function computeDegreeProgress(
   }
 
   // Unit pools (a unit-stated `subjectPool` rule, or a unit-based elective pool,
-  // issue #101): assign leftover (not-yet-matched) eligible courses until their
-  // REAL units cover needUnits. Assigned courses join `matched` so they credit
-  // their real units once and a free elective can't reuse them; any shortfall
-  // reserves named space (like an unfilled count slot) so it shrinks free room
-  // and gates completion. Pools run after the matcher, so named rule requirements
-  // keep first claim on a course.
+  // issue #101): credit leftover (not-yet-matched) courses toward each pool's REAL
+  // unit target, after the matcher so named requirements keep first claim. Consumed
+  // courses join `matched` (credited once, not reusable by a free elective); any
+  // shortfall reserves named space so it shrinks free room and gates completion.
   //
-  // Most-constrained-first (fewest still-available courses) so overlapping pools
-  // don't strand each other: "0.5 unit of CS" claims the shared course before
-  // "0.5 unit of CS or MATH" (which falls back to MATH); list order left it at 99%.
+  // `assignUnitPools` (#121) is weight-aware and order-independent over the
+  // leftovers, and the matcher above consumes as few pool-eligible courses as
+  // possible. Known residual: a bucket forced to choose BETWEEN two
+  // pool-eligible courses still picks by list order (resolving that needs a
+  // joint solve); >32-contested overlaps degrade to the old greedy (`exact`
+  // deliberately unobserved — never worse than pre-#121).
+  const poolAssign = assignUnitPools(
+    unitPools.map((p) => ({
+      needUnits: p.needUnits,
+      eligible: p.eligible.filter((c) => !matched.has(c)),
+    })),
+    unitsOf,
+  );
+  for (const code of poolAssign.used) matched.add(code);
+
   let allPoolsMet = true;
   let poolShortfall = 0;
-  const availCount = (p: UnitPool) =>
-    p.eligible.filter((c) => !matched.has(c)).length;
-  const orderedPools = [...unitPools].sort(
-    (a, b) => availCount(a) - availCount(b),
-  );
   const poolCredit = new Map<UnitPool, number>();
-  for (const pool of orderedPools) {
-    let got = 0;
-    for (const code of pool.eligible) {
-      if (got >= pool.needUnits) break;
-      if (matched.has(code)) continue;
-      matched.add(code);
-      got += unitsOf(code);
-    }
-    poolCredit.set(pool, Math.min(got, pool.needUnits));
+  unitPools.forEach((pool, i) => {
+    const got = poolAssign.got[i];
+    const credit = Math.min(got, pool.needUnits);
+    poolCredit.set(pool, credit);
     // Rule-tree pools own a node → record credited units (capped at need) so the
     // row matches the headline; elective pools have no owner.
     if (pool.owner)
-      nodeFill.set(
-        pool.owner,
-        (nodeFill.get(pool.owner) ?? 0) + Math.min(got, pool.needUnits),
-      );
-    if (got < pool.needUnits) {
+      nodeFill.set(pool.owner, (nodeFill.get(pool.owner) ?? 0) + credit);
+    if (!unitsMet(got, pool.needUnits)) {
       poolShortfall += pool.needUnits - got;
       allPoolsMet = false;
     }
-  }
+  });
 
   // Per-elective credit for the panel chip: a finite elective's filled count, a
   // pool's credited units — both post-match, so a claimed course isn't re-counted.
