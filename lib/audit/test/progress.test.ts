@@ -33,6 +33,7 @@ function progressOf(
   unitsOf: (code: string) => number = () => 0.5,
   legality: ReadonlySet<string> = new Set(),
   acknowledged: ReadonlySet<string> = new Set(),
+  specUnverified: readonly string[] = [],
 ) {
   const plan = makePlan(codes);
   const audit = compileAudit(
@@ -44,6 +45,10 @@ function progressOf(
     undefined,
     unitsOf,
   );
+  // Mirror buildProgramAudit: pass the pre-merged (program + spec) owed list.
+  const owed = [
+    ...new Set([...(program.unverifiedRequirements ?? []), ...specUnverified]),
+  ];
   return computeDegreeProgress(
     audit,
     program,
@@ -51,6 +56,8 @@ function progressOf(
     legality,
     undefined,
     acknowledged,
+    undefined,
+    owed,
   );
 }
 
@@ -784,6 +791,55 @@ describe("computeDegreeProgress — several gates owed at once", () => {
     const p = progressOf(program, ["m1"], () => 0.5, new Set(), acked);
     expect(p.pct).toBe(99);
     expect(p.owedUnverified).toHaveLength(1);
+  });
+});
+
+describe("computeDegreeProgress — a selected spec's owed requirements gate too (#123)", () => {
+  // Volume is full, but the SELECTED specialization carries an owed requirement
+  // the parser couldn't structure. It must gate the headline exactly like the
+  // program's own would, so the spec can't read 100% with a real requirement lost.
+  const program: Program = {
+    kind: "flexible",
+    name: "Toy",
+    asOf: "2026",
+    rules: { kind: "all", children: [{ kind: "courses", courses: ["m1"] }] },
+    unitPlan: { totalUnits: 0.5 },
+  };
+  const SPEC_REQ =
+    "Complete the specialization capstone (confirm with advisor).";
+
+  it("stays below 100% while a spec requirement is owed", () => {
+    const p = progressOf(program, ["m1"], () => 0.5, new Set(), new Set(), [
+      SPEC_REQ,
+    ]);
+    expect(p.creditedUnits).toBe(0.5); // volume full
+    expect(p.allComplete).toBe(false);
+    expect(p.pct).toBe(99);
+    expect(p.owedUnverified).toEqual([SPEC_REQ]);
+  });
+
+  it("reaches 100% once the spec requirement is acknowledged", () => {
+    const p = progressOf(
+      program,
+      ["m1"],
+      () => 0.5,
+      new Set(),
+      new Set([SPEC_REQ]),
+      [SPEC_REQ],
+    );
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
+    expect(p.owedUnverified).toEqual([]);
+  });
+
+  it("dedupes a spec text that coincides with the program's own", () => {
+    // Same verbatim text on both → one owed entry (and one checkbox upstream),
+    // not a double-count.
+    const withOwn: Program = { ...program, unverifiedRequirements: [SPEC_REQ] };
+    const p = progressOf(withOwn, ["m1"], () => 0.5, new Set(), new Set(), [
+      SPEC_REQ,
+    ]);
+    expect(p.owedUnverified).toEqual([SPEC_REQ]);
   });
 });
 
