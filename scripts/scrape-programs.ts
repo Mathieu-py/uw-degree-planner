@@ -11,8 +11,8 @@
  * and Kuali catalog discovery in `scripts/scrape/sources/kualiCatalog.ts`. The
  * re-exports below keep the `../scrape-programs` import path the tests use.
  */
-import { pathToFileURL } from "node:url";
 import { main } from "./scrape/pipeline/run";
+import { isDirectInvocation } from "./scrape/util/entry";
 
 export {
   foldFreeElectivesIntoUnverified,
@@ -35,11 +35,7 @@ export {
 } from "./scrape/sources/kualiCatalog";
 
 // Run main() only when invoked directly (not when imported by tests).
-const isDirectInvocation =
-  process.argv[1] != null &&
-  import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (isDirectInvocation) {
+if (isDirectInvocation(import.meta.url)) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);

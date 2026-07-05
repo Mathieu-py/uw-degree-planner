@@ -16,6 +16,7 @@
     "knip": "knip",
     "fetch-courses": "tsx scripts/build-catalog.ts",
     "scrape-programs": "tsx scripts/scrape-programs.ts",
+    "check-subjects": "tsx scripts/diagnostic/check-subjects.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
