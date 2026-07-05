@@ -1,65 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { LocalPlan } from "../../plan/types";
 import { PROGRAMS, type Program } from "../../programs";
 import { compileAudit, creditExclusionKeys } from "../compile";
 import { deriveElectiveSections } from "../electives";
 import { foldFiniteElectivesIntoRules } from "../foldElectives";
 import { computeDegreeProgress } from "../progress";
-
-function makePlan(codes: string[]): LocalPlan {
-  return {
-    schemaVersion: 3,
-    programIds: ["test"],
-    specializationIds: {},
-    stream: "regular",
-    startTermId: 1239,
-    slots: [
-      {
-        id: "s1",
-        termId: 1239,
-        position: "1A",
-        isCoop: false,
-        courses: codes.map((c) => ({ code: c })),
-      },
-    ],
-    updatedAt: "2026-05-23T12:00:00.000Z",
-  };
-}
-
-/** Compile + score a plan against a program, treating every course as 0.5 unit. */
-function progressOf(
-  program: Program,
-  codes: string[],
-  unitsOf: (code: string) => number = () => 0.5,
-  legality: ReadonlySet<string> = new Set(),
-  acknowledged: ReadonlySet<string> = new Set(),
-  specUnverified: readonly string[] = [],
-) {
-  const plan = makePlan(codes);
-  const audit = compileAudit(
-    program,
-    plan,
-    null,
-    legality,
-    null,
-    undefined,
-    unitsOf,
-  );
-  // Mirror buildProgramAudit: pass the pre-merged (program + spec) owed list.
-  const owed = [
-    ...new Set([...(program.unverifiedRequirements ?? []), ...specUnverified]),
-  ];
-  return computeDegreeProgress(
-    audit,
-    program,
-    unitsOf,
-    legality,
-    undefined,
-    acknowledged,
-    undefined,
-    owed,
-  );
-}
+import { makePlan, progressOf } from "./helpers";
 
 describe("computeDegreeProgress — folding a finite list is headline-neutral", () => {
   // A finite "Approved Courses List" counts the same whether it lives in
@@ -573,6 +518,87 @@ describe("computeDegreeProgress — overlapping unit pools met regardless of ord
     const p = progressOf(build(electives), ["cs300", "math300"]);
     expect(p.allComplete).toBe(true);
     expect(p.pct).toBe(100);
+  });
+});
+
+describe("computeDegreeProgress — weighted-tie unit pools route the heavy course", () => {
+  // Three pools, need 0.5 CS + 1.0 CS-or-MATH + 0.5 MATH = 2.0. The only satisfying
+  // assignment sends the 1.0-unit cs300 to the pool that needs a whole unit; the
+  // 0.5s fill the rest. A weight-blind greedy lets the 0.5-unit CS pool grab cs300
+  // (over-filling it) and strands the 1.0 pool at 0.5 → stuck at 99% (issue #121).
+  const csOnly = {
+    description:
+      "Complete a minimum of 0.5 unit of CS courses at the 200-level or above",
+  };
+  const csOrMath = {
+    description:
+      "Complete a minimum of 1.0 unit of CS or MATH courses at the 200-level or above",
+  };
+  const mathOnly = {
+    description:
+      "Complete a minimum of 0.5 unit of MATH courses at the 200-level or above",
+  };
+  const build = (electives: { description: string }[]): Program => ({
+    kind: "flexible",
+    name: "Weighted overlap",
+    asOf: "2026",
+    rules: { kind: "all", children: [] },
+    electives,
+    unitPlan: { totalUnits: 2.0 }, // 0.5 + 1.0 + 0.5, no free room
+  });
+  const units = (c: string) => (c === "cs300" ? 1.0 : 0.5); // cs300 is full-year
+
+  it.each([
+    { label: "cs-only first", electives: [csOnly, csOrMath, mathOnly] },
+    { label: "big pool first", electives: [csOrMath, csOnly, mathOnly] },
+    { label: "reversed", electives: [mathOnly, csOrMath, csOnly] },
+  ])("reaches 100% independent of order ($label)", ({ electives }) => {
+    const p = progressOf(
+      build(electives),
+      ["cs300", "cs310", "math300"],
+      units,
+    );
+    expect(p.allComplete).toBe(true);
+    expect(p.pct).toBe(100);
+  });
+});
+
+describe("computeDegreeProgress — a pick doesn't burn a unit pool's course", () => {
+  // #121 phase boundary: "1 of {cs300, engl100}" + "0.5 unit of CS", cs300 the
+  // pool's ONLY eligible course. The matcher defers pool-eligible courses
+  // (matchLast), so the pick takes engl100 whichever way its options are
+  // ordered — previously list order decided between 99% and 100%.
+  const build = (options: string[]): Program => ({
+    kind: "flexible",
+    name: "Phase boundary",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: [{ kind: "courses", courses: options }],
+        },
+      ],
+    },
+    electives: [
+      {
+        description:
+          "Complete a minimum of 0.5 unit of CS courses at the 200-level or above",
+      },
+    ],
+    unitPlan: { totalUnits: 1.0 },
+  });
+
+  it.each([
+    { label: "pool course first", options: ["cs300", "engl100"] },
+    { label: "pool course last", options: ["engl100", "cs300"] },
+  ])("reaches 100% ($label)", ({ options }) => {
+    const p = progressOf(build(options), ["cs300", "engl100"]);
+    expect(p.pct).toBe(100);
+    expect(p.allComplete).toBe(true);
   });
 });
 

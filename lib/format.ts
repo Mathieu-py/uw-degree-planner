@@ -13,12 +13,15 @@ export function fmtUnits(n: number): string {
   return String(Math.round(n * 100) / 100);
 }
 
+/** Tolerance for comparing summed unit floats (see {@link unitsMet}). */
+export const UNIT_EPS = 1e-9;
+
 /**
  * Has a unit-based requirement been met? Unit totals are summed floats, so an
  * exact `>=` can miss by a rounding epsilon — compare with tolerance.
  */
 export function unitsMet(placedUnits: number, needUnits: number): boolean {
-  return placedUnits >= needUnits - 1e-9;
+  return placedUnits >= needUnits - UNIT_EPS;
 }
 
 /** `noun` pluralized by `count`: pluralize(1, "course")→"course", (2)→"courses". */
