@@ -282,6 +282,72 @@ describe("computeDegreeProgress — compound pick credits the heavier group", ()
   });
 });
 
+describe("computeDegreeProgress — over-satisfied compound pick, saturated free allotment (#104)", () => {
+  // #104 finding (3): "1 of {light 0.5} or {heavy 1.0}", BOTH placed, with the
+  // free-elective room already full from other courses (leftovers 1.5 > 1.0 room).
+  // `creditedUnits` is provably order-independent (= min(placed, total): the
+  // uncredited group just spills to the saturated free pool), but heaviest-first
+  // still names the 1.0 group — so `freeUnits` is the remainder after 1.0, not 0.5.
+  // The old tree-order code (light listed first) reported freeUnits = 1.5.
+  const build = (heavyFirst: boolean): Program => ({
+    kind: "flexible",
+    name: "Saturated compound",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "pick",
+          selectMin: 1,
+          selectMax: 1,
+          children: heavyFirst
+            ? [
+                {
+                  kind: "all",
+                  children: [{ kind: "courses", courses: ["heavy1"] }],
+                },
+                {
+                  kind: "all",
+                  children: [{ kind: "courses", courses: ["light1"] }],
+                },
+              ]
+            : [
+                {
+                  kind: "all",
+                  children: [{ kind: "courses", courses: ["light1"] }],
+                },
+                {
+                  kind: "all",
+                  children: [{ kind: "courses", courses: ["heavy1"] }],
+                },
+              ],
+        },
+      ],
+    },
+    unitPlan: { totalUnits: 2.0 }, // 1.0 named group + 1.0 free room
+  });
+  const unitsOf = (c: string) => (c === "heavy1" ? 1.0 : 0.5);
+
+  it.each([
+    { label: "light listed first", heavyFirst: false },
+    { label: "heavy listed first", heavyFirst: true },
+  ])("names the heavy group and credits min(placed,total), regardless of order ($label)", ({
+    heavyFirst,
+  }) => {
+    // f1+f2 (1.0) saturate the free room, so the uncredited group overflows a
+    // full pool — the case tree-order could have mis-scored.
+    const p = progressOf(
+      build(heavyFirst),
+      ["light1", "heavy1", "f1", "f2"],
+      unitsOf,
+    );
+    expect(p.freeUnits).toBe(1.0); // 2.0 − heavy's 1.0 named (not − light's 0.5)
+    expect(p.creditedUnits).toBe(2.0); // min(placed 2.5, total 2.0), order-independent
+    expect(p.pct).toBe(100);
+    expect(p.allComplete).toBe(true);
+  });
+});
+
 describe("computeDegreeProgress — overlapping elective pools (BME shape)", () => {
   // Three sub-lists whose union is exactly the aggregate "Technical Electives
   // List". Naive counting needs 1+1+3 = 5 courses; the real requirement is 3.
