@@ -84,4 +84,12 @@ function main(): void {
 }
 
 // Run main() only when invoked directly, so tests can import findUnclassified.
-if (isDirectInvocation(import.meta.url)) main();
+// Advisory by design (file header): swallow any failure — e.g. an unwritable
+// GITHUB_STEP_SUMMARY — so the check still exits 0 and never fails the refresh.
+if (isDirectInvocation(import.meta.url)) {
+  try {
+    main();
+  } catch (err) {
+    console.error("check-subjects skipped (non-fatal):", err);
+  }
+}
