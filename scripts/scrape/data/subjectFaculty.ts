@@ -10,10 +10,9 @@ import type { Faculty } from "../../../lib/programs";
  *   https://uwaterloocm.kuali.co/api/v1/catalog/content/67e557ed6ed2fe2bd3a38964
  *
  * The "Owner" column maps onto {@link Faculty} ("Faculty of Arts with <College>"
- * → arts). Subjects whose owner is NOT a single faculty — Interdisciplinary
- * Studies (SE, PD, STV, …), Wilfrid Laurier (BUS), affiliated colleges (Renison:
- * BASE, EMLS, SWREN) — are intentionally OMITTED, so a "Faculty of X" pool never
- * wrongly claims them (an unrecognized faculty expands to nothing → unverified).
+ * → arts). Subjects whose owner is NOT a single faculty are intentionally OMITTED
+ * (see {@link OMITTED_SUBJECTS}), so a "Faculty of X" pool never wrongly claims
+ * them (an unrecognized faculty expands to nothing → unverified).
  */
 export const SUBJECT_FACULTY: Record<string, Faculty> = {
   // mathematics
@@ -138,6 +137,36 @@ export const SUBJECT_FACULTY: Record<string, Faculty> = {
   integ: "environment", // Knowledge Integration
   plan: "environment", // Planning
 };
+
+/**
+ * Subject codes deliberately excluded from {@link SUBJECT_FACULTY}: the Course
+ * Subjects Offered table (Kuali node above) lists an owner that isn't one of the
+ * six faculties, so a "Faculty of X" pool must never claim them. Single source of
+ * truth — the data-integrity test asserts none leak into the map, and the drift
+ * check (scripts/diagnostic/check-subjects.ts) counts them as classified.
+ */
+export const OMITTED_SUBJECTS = [
+  // Interdisciplinary Studies (Vice-President, Academic) — the owner the table
+  // lists for all of these: cross-faculty/joint programs (CFM, SFM, AVIA), the
+  // undergraduate communications requirement (UCR), and co-op/general subjects
+  // (COOP, WKRPT, UNIV), alongside the long-standing SE/PD/STV.
+  "se",
+  "pd",
+  "stv",
+  "avia",
+  "cfm",
+  "coop",
+  "sfm",
+  "ucr",
+  "univ",
+  "wkrpt",
+  // Wilfrid Laurier
+  "bus",
+  // Renison (affiliated college)
+  "base",
+  "emls",
+  "swren",
+] as const;
 
 /**
  * Every subject code owned by any of the given faculties, lowercased. Turns a

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Faculty } from "../../lib/programs";
 import {
   facultyFromName,
+  OMITTED_SUBJECTS,
   SUBJECT_FACULTY,
   subjectsForFaculties,
 } from "../scrape/data/subjectFaculty";
@@ -50,10 +51,9 @@ describe("SUBJECT_FACULTY — data integrity", () => {
   });
 
   it("omits subjects whose owner isn't a single faculty", () => {
-    // Interdisciplinary Studies (SE, PD, STV), Wilfrid Laurier (BUS), and
-    // Renison (BASE, EMLS, SWREN) are intentionally NOT mapped (file header), so
-    // a "Faculty of X" pool never wrongly claims them.
-    for (const omitted of ["se", "pd", "stv", "bus", "base", "emls", "swren"])
+    // OMITTED_SUBJECTS (Interdisciplinary Studies, Wilfrid Laurier, Renison) must
+    // never leak into the map, or a "Faculty of X" pool would wrongly claim them.
+    for (const omitted of OMITTED_SUBJECTS)
       expect(Object.hasOwn(SUBJECT_FACULTY, omitted)).toBe(false);
   });
 
