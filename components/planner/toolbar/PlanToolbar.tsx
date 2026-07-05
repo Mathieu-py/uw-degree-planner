@@ -128,10 +128,9 @@ function PlanToolbarAuthed({
     setBusy(false);
     setPendingDeleteId(null);
     if (!ok) return;
-    if (planId === currentPlanId) {
-      const remaining = (plans ?? []).filter((p) => p.id !== planId);
-      navigateToPlan(remaining[0]?.id ?? null);
-    }
+    // Deleting the open plan returns to the plans list; deleting another plan
+    // from the dropdown leaves the current one open.
+    if (planId === currentPlanId) router.replace("/plans");
   }
 
   useEffect(() => {
@@ -214,8 +213,9 @@ function PlanToolbarAuthed({
     setBusy(false);
     setConfirmingDelete(false);
     if (!ok) return;
-    const remaining = (plans ?? []).filter((p) => p.id !== currentPlanId);
-    navigateToPlan(remaining[0]?.id ?? null);
+    // Deleting the open plan returns to the plans list, not the next plan —
+    // the user chose to leave this plan, not switch into another.
+    router.replace("/plans");
   }
 
   function handleCreate() {

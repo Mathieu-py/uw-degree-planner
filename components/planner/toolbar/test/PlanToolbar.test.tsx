@@ -204,7 +204,7 @@ describe("PlanToolbar — delete", () => {
     expect(removeMock).toHaveBeenCalledWith("a");
   });
 
-  it("navigates to the next plan when the active plan is deleted", async () => {
+  it("returns to the plans list when the active plan is deleted", async () => {
     const removeMock = vi.fn().mockResolvedValue(true);
     mount({
       plans: [
@@ -219,10 +219,11 @@ describe("PlanToolbar — delete", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     });
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan/b");
+    // Return to the plans list rather than auto-opening a remaining plan.
+    expect(routerReplaceMock).toHaveBeenCalledWith("/plans");
   });
 
-  it("routes to bare /plan when the last plan is deleted", async () => {
+  it("returns to the plans list when the last plan is deleted", async () => {
     const removeMock = vi.fn().mockResolvedValue(true);
     mount({
       plans: [mkSummary({ id: "a", name: "Only" })],
@@ -234,7 +235,7 @@ describe("PlanToolbar — delete", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     });
-    expect(routerReplaceMock).toHaveBeenCalledWith("/plan");
+    expect(routerReplaceMock).toHaveBeenCalledWith("/plans");
   });
 });
 

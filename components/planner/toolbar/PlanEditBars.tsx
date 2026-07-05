@@ -29,7 +29,10 @@ export function RenameBar({
     <div className={containerClass}>
       <form
         onSubmit={onSubmit}
-        className="flex items-center gap-1 flex-1 min-w-0"
+        // Pin the row to 48px — the height of the resting toolbar's tallest
+        // control, the size="lg" "Edit plan" ActionMenu — so renaming doesn't
+        // shrink the toolbar. (The delete bar's size="lg" buttons already match.) #99
+        className="flex items-center gap-1 flex-1 min-w-0 min-h-[48px]"
       >
         <input
           ref={focusOnMount}
