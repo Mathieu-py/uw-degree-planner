@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
@@ -139,7 +140,7 @@ export function DashboardView({
           </div>
           <Link
             href="/plan/new"
-            className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover"
+            className={buttonClasses({ variant: "primary", size: "md" })}
           >
             <Icon name="plusSign" size="sm" aria-hidden="true" />
             New plan
@@ -270,31 +271,31 @@ function PlanCard({
           <>
             <span className="u-small text-danger mr-1">Delete?</span>
             {/* check/close icons, matching the plan switcher + rename/delete bars */}
-            <button
-              type="button"
-              disabled={pending}
+            <Button
+              variant="iconDanger"
+              size="sm"
               onClick={onDelete}
+              disabled={pending}
               aria-label="Confirm delete"
               title="Delete"
-              className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-danger hover:bg-danger-soft disabled:opacity-50"
             >
               <Icon name="check" size="sm" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="icon"
+              size="sm"
               onClick={onCancelConfirm}
               aria-label="Cancel delete"
               title="Cancel"
-              className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
             >
               <Icon name="close" size="md" aria-hidden="true" />
-            </button>
+            </Button>
           </>
         ) : (
           <>
             <Link
               href={`/plan/${plan.id}`}
-              className="inline-flex h-[34px] items-center rounded-[8px] bg-primary px-3 text-[13px] font-semibold text-primary-ink hover:bg-primary-hover"
+              className={buttonClasses({ variant: "primary", size: "sm" })}
             >
               Open
             </Link>

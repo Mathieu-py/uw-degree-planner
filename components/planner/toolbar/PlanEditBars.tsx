@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 
 const focusOnMount = (el: HTMLInputElement | null) => el?.focus();
@@ -43,24 +44,26 @@ export function RenameBar({
           className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-3 py-2.5 text-sm"
           aria-label="New plan name"
         />
-        <button
+        {/* size="lg" to match the delete bar — both replace the full toolbar. */}
+        <Button
           type="submit"
+          variant="iconRaised"
+          size="lg"
           disabled={busy || !name.trim()}
           aria-label="Save rename"
           title="Save"
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 disabled:opacity-50"
         >
-          <Icon name="check" size="sm" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
+          <Icon name="check" size="md" aria-hidden="true" />
+        </Button>
+        <Button
+          variant="iconRaised"
+          size="lg"
           onClick={onCancel}
           aria-label="Cancel rename"
           title="Cancel"
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
         >
-          <Icon name="close" size="md" aria-hidden="true" />
-        </button>
+          <Icon name="close" size="lg" aria-hidden="true" />
+        </Button>
       </form>
     </div>
   );
@@ -89,26 +92,26 @@ export function DeleteConfirmBar({
       <div className="flex items-center justify-between gap-2 flex-1 min-w-0 min-h-[48px]">
         <span className="text-sm truncate">Delete "{planName}"?</span>
         <div className="flex items-center gap-1 shrink-0">
-          {/* Bigger than the dropdown/card icons — this bar spans the toolbar. */}
-          <button
-            type="button"
+          {/* size="lg" icon buttons — bigger than the dropdown/card; this bar spans the toolbar. */}
+          <Button
+            variant="iconDanger"
+            size="lg"
             disabled={busy}
             onClick={onConfirm}
             aria-label="Confirm delete"
             title="Delete"
-            className="h-11 w-11 inline-flex items-center justify-center rounded-lg text-base text-danger hover:bg-danger-soft disabled:opacity-50"
           >
             <Icon name="check" size="md" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="iconRaised"
+            size="lg"
             onClick={onCancel}
             aria-label="Cancel delete"
             title="Cancel"
-            className="h-11 w-11 inline-flex items-center justify-center rounded-lg text-base text-ink-3 hover:text-ink hover:bg-bg-3"
           >
             <Icon name="close" size="lg" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>
