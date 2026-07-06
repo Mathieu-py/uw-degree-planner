@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
@@ -139,7 +140,7 @@ export function DashboardView({
           </div>
           <Link
             href="/plan/new"
-            className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover"
+            className={buttonClasses({ variant: "primary", size: "md" })}
           >
             <Icon name="plusSign" size="sm" aria-hidden="true" />
             New plan
@@ -263,27 +264,38 @@ function PlanCard({
         <span className="u-small">{meta}</span>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      {/* Reserve a stable width + right-align so the resting↔confirm swap never
+          reflows the row and the safe cancel stays where the trash was. #129 */}
+      <div className="flex items-center justify-end gap-1 shrink-0 min-w-[152px] min-h-[34px]">
         {confirming ? (
           <>
             <span className="u-small text-danger mr-1">Delete?</span>
+            {/* check/close icons, matching the plan switcher + rename/delete bars */}
             <Button
-              variant="danger"
+              variant="iconDanger"
               size="sm"
               onClick={onDelete}
               disabled={pending}
+              aria-label="Confirm delete"
+              title="Delete"
             >
-              Yes
+              <Icon name="check" size="sm" aria-hidden="true" />
             </Button>
-            <Button variant="outline" size="sm" onClick={onCancelConfirm}>
-              No
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={onCancelConfirm}
+              aria-label="Cancel delete"
+              title="Cancel"
+            >
+              <Icon name="close" size="md" aria-hidden="true" />
             </Button>
           </>
         ) : (
           <>
             <Link
               href={`/plan/${plan.id}`}
-              className="inline-flex h-[34px] items-center rounded-[8px] bg-primary px-3 text-[13px] font-semibold text-primary-ink hover:bg-primary-hover"
+              className={buttonClasses({ variant: "primary", size: "sm" })}
             >
               Open
             </Link>

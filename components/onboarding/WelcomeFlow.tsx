@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useMemo, useState } from "react";
 import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSelect";
 import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { Picker } from "@/components/ui/Picker";
@@ -375,24 +376,24 @@ export function WelcomeFlow({
             Back
           </button>
           {step < STEPS.length - 1 ? (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => setStep((s) => s + 1)}
               disabled={programIds.length === 0}
-              className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-primary px-[18px] text-sm font-semibold text-primary-ink hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
               <Icon name="arrow" size="sm" aria-hidden="true" />
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
+            <Button
+              variant="brand"
+              size="md"
               onClick={build}
               disabled={busy || programIds.length === 0}
-              className="inline-flex h-[42px] items-center gap-2 rounded-[9px] bg-accent-bg px-[18px] text-sm font-semibold text-accent-ink hover:brightness-105 disabled:opacity-50"
             >
               {busy ? "Building…" : "Build my plan"}
-            </button>
+            </Button>
           )}
         </div>
       </div>

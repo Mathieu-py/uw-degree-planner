@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TermPicker } from "@/components/catalog/TermPicker";
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import type { Course } from "@/lib/courses/types";
 
@@ -26,14 +27,10 @@ export function AddInPlannerButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center gap-2 h-[42px] px-[18px] rounded-[9px] bg-primary text-primary-ink text-sm font-semibold hover:bg-primary-hover"
-      >
+      <Button variant="primary" size="md" onClick={() => setOpen(true)}>
         <Icon name="plusSign" size="sm" />
         Add to plan
-      </button>
+      </Button>
       {open ? (
         <TermPicker
           course={course}

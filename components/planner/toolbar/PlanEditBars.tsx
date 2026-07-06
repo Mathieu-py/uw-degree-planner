@@ -30,8 +30,8 @@ export function RenameBar({
       <form
         onSubmit={onSubmit}
         // Pin the row to 48px — the height of the resting toolbar's tallest
-        // control, the size="lg" "Edit plan" ActionMenu — so renaming doesn't
-        // shrink the toolbar. (The delete bar's size="lg" buttons already match.) #99
+        // control, the size="lg" "Edit plan" ActionMenu — so editing doesn't
+        // shrink the toolbar. The delete bar pins the same way. #99
         className="flex items-center gap-1 flex-1 min-w-0 min-h-[48px]"
       >
         <input
@@ -44,24 +44,26 @@ export function RenameBar({
           className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-3 py-2.5 text-sm"
           aria-label="New plan name"
         />
-        <button
+        {/* size="lg" to match the delete bar — both replace the full toolbar. */}
+        <Button
           type="submit"
+          variant="iconRaised"
+          size="lg"
           disabled={busy || !name.trim()}
           aria-label="Save rename"
           title="Save"
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 disabled:opacity-50"
         >
-          <Icon name="check" size="sm" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
+          <Icon name="check" size="md" aria-hidden="true" />
+        </Button>
+        <Button
+          variant="iconRaised"
+          size="lg"
           onClick={onCancel}
           aria-label="Cancel rename"
           title="Cancel"
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
         >
-          <Icon name="close" size="md" aria-hidden="true" />
-        </button>
+          <Icon name="close" size="lg" aria-hidden="true" />
+        </Button>
       </form>
     </div>
   );
@@ -86,19 +88,29 @@ export function DeleteConfirmBar({
 }) {
   return (
     <div className={containerClass}>
-      <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
+      {/* min-h pins the bar to 48px so the icon buttons don't shrink the toolbar. #99 */}
+      <div className="flex items-center justify-between gap-2 flex-1 min-w-0 min-h-[48px]">
         <span className="text-sm truncate">Delete "{planName}"?</span>
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="outline" size="lg" onClick={onCancel}>
-            Cancel
-          </Button>
+          {/* size="lg" icon buttons — bigger than the dropdown/card; this bar spans the toolbar. */}
           <Button
-            variant="danger"
+            variant="iconDanger"
             size="lg"
             disabled={busy}
             onClick={onConfirm}
+            aria-label="Confirm delete"
+            title="Delete"
           >
-            Delete
+            <Icon name="check" size="md" aria-hidden="true" />
+          </Button>
+          <Button
+            variant="iconRaised"
+            size="lg"
+            onClick={onCancel}
+            aria-label="Cancel delete"
+            title="Cancel"
+          >
+            <Icon name="close" size="lg" aria-hidden="true" />
           </Button>
         </div>
       </div>

@@ -391,8 +391,9 @@ function PlanToolbarAuthed({
                           className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-2 py-1 text-sm"
                           aria-label="New plan name"
                         />
-                        <button
-                          type="button"
+                        <Button
+                          variant="iconRaised"
+                          size="sm"
                           disabled={busy || !inlineRenameName.trim()}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -400,30 +401,30 @@ function PlanToolbarAuthed({
                           }}
                           aria-label="Save rename"
                           title="Save"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 disabled:opacity-50"
                         >
                           <Icon name="check" size="sm" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="iconRaised"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             setInlineRenameId(null);
                           }}
                           aria-label="Cancel rename"
                           title="Cancel"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
                         >
                           <Icon name="close" size="md" aria-hidden="true" />
-                        </button>
+                        </Button>
                       </>
                     ) : deletingThis ? (
                       <>
                         <span className="flex-1 truncate text-danger">
                           Delete "{p.name}"?
                         </span>
-                        <button
-                          type="button"
+                        <Button
+                          variant="iconDanger"
+                          size="sm"
                           disabled={busy}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -431,28 +432,28 @@ function PlanToolbarAuthed({
                           }}
                           aria-label="Confirm delete"
                           title="Delete"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-danger hover:bg-danger-soft disabled:opacity-50"
                         >
                           <Icon name="check" size="sm" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="iconRaised"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             setPendingDeleteId(null);
                           }}
                           aria-label="Cancel delete"
                           title="Cancel"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
                         >
                           <Icon name="close" size="md" aria-hidden="true" />
-                        </button>
+                        </Button>
                       </>
                     ) : (
                       <>
                         <span className="flex-1 truncate">{p.name}</span>
-                        <button
-                          type="button"
+                        <Button
+                          variant="iconRaised"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             setInlineRenameId(p.id);
@@ -460,12 +461,13 @@ function PlanToolbarAuthed({
                           }}
                           aria-label={`Rename ${p.name}`}
                           title="Rename"
-                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         >
                           <Icon name="rename" size="md" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="iconDanger"
+                          size="sm"
                           disabled={busy}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -473,10 +475,10 @@ function PlanToolbarAuthed({
                           }}
                           aria-label={`Delete ${p.name}`}
                           title="Delete"
-                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-8 w-8 inline-flex items-center justify-center rounded text-base text-danger hover:bg-danger-soft transition-opacity disabled:opacity-50"
+                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         >
                           <Icon name="delete" size="md" aria-hidden="true" />
-                        </button>
+                        </Button>
                       </>
                     )}
                   </div>

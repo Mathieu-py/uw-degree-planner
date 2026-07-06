@@ -9,7 +9,11 @@
 //   ghost         — text-only, subtle hover fill.
 //   danger        — solid destructive (delete/discard).
 //   dangerOutline — bordered destructive.
-//   icon          — square icon button (ignores size/text).
+//   icon          — square icon button, neutral tone (box comes from ICON_SIZES).
+//   iconRaised    — like icon, but hover bg is a step darker (bg-3) so the square
+//                   still shows when the button sits on a bg-2 surface (toolbar
+//                   bars, dropdown rows). Plain `icon` is right on the base bg.
+//   iconDanger    — square icon button, danger tone (destructive).
 export type ButtonVariant =
   | "primary"
   | "brand"
@@ -17,7 +21,9 @@ export type ButtonVariant =
   | "ghost"
   | "danger"
   | "dangerOutline"
-  | "icon";
+  | "icon"
+  | "iconRaised"
+  | "iconDanger";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -44,7 +50,10 @@ const VARIANTS: Record<ButtonVariant, string> = {
   ghost: "text-ink-2 hover:bg-bg-2 hover:text-ink",
   danger: "bg-danger text-bg hover:brightness-105",
   dangerOutline: "border-danger/40 text-danger hover:bg-danger-soft",
-  icon: "p-2 rounded-[7px] text-ink-3 hover:text-ink hover:bg-bg-2",
+  // Icon buttons take their box (size/radius) from ICON_SIZES; the variant sets tone only.
+  icon: "text-ink-3 hover:text-ink hover:bg-bg-2",
+  iconRaised: "text-ink-3 hover:text-ink hover:bg-bg-3",
+  iconDanger: "text-danger hover:bg-danger-soft",
 };
 
 // height + horizontal padding + text size + radius per size.
@@ -52,6 +61,14 @@ const SIZES: Record<ButtonSize, string> = {
   sm: "h-[34px] px-[13px] text-[13px] rounded-[8px]",
   md: "h-[42px] px-[18px] text-sm rounded-[9px]",
   lg: "h-[48px] px-6 text-[15px] rounded-[10px]",
+};
+
+// Square sizing for icon buttons: sm/lg are fixed boxes (dense rows / prominent
+// bars); md keeps the padding-based default that all existing icon buttons use.
+const ICON_SIZES: Record<ButtonSize, string> = {
+  sm: "h-8 w-8 rounded-[7px]",
+  md: "p-2 rounded-[7px]",
+  lg: "h-11 w-11 rounded-lg",
 };
 
 /**
@@ -67,7 +84,9 @@ export function buttonClasses({
   block = false,
   className,
 }: ButtonClassOptions = {}): string {
-  const sizing = variant === "icon" ? "" : SIZES[size];
+  const isIcon =
+    variant === "icon" || variant === "iconRaised" || variant === "iconDanger";
+  const sizing = isIcon ? ICON_SIZES[size] : SIZES[size];
   return `${BASE} ${VARIANTS[variant]} ${sizing} ${block ? "w-full" : ""} ${className ?? ""}`
     .replace(/\s+/g, " ")
     .trim();
