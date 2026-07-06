@@ -122,16 +122,19 @@ function PlanToolbarAuthed({
     setInlineRenameId(null);
   }
 
+  // Deleting the open plan returns to the plans list rather than auto-opening
+  // another; deleting a different plan (from the dropdown) leaves it open.
+  function returnToPlansList(deletedId: string) {
+    if (deletedId === currentPlanId) router.replace("/plans");
+  }
+
   async function confirmDeleteOf(planId: string) {
     setBusy(true);
     const ok = await remove(planId);
     setBusy(false);
     setPendingDeleteId(null);
     if (!ok) return;
-    if (planId === currentPlanId) {
-      const remaining = (plans ?? []).filter((p) => p.id !== planId);
-      navigateToPlan(remaining[0]?.id ?? null);
-    }
+    returnToPlansList(planId);
   }
 
   useEffect(() => {
@@ -214,8 +217,7 @@ function PlanToolbarAuthed({
     setBusy(false);
     setConfirmingDelete(false);
     if (!ok) return;
-    const remaining = (plans ?? []).filter((p) => p.id !== currentPlanId);
-    navigateToPlan(remaining[0]?.id ?? null);
+    returnToPlansList(currentPlanId);
   }
 
   function handleCreate() {
