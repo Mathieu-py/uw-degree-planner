@@ -263,21 +263,32 @@ function PlanCard({
         <span className="u-small">{meta}</span>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      {/* Reserve a stable width + right-align so the resting↔confirm swap never
+          reflows the row and the safe cancel stays where the trash was. #129 */}
+      <div className="flex items-center justify-end gap-1 shrink-0 min-w-[152px] min-h-[34px]">
         {confirming ? (
           <>
             <span className="u-small text-danger mr-1">Delete?</span>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={onDelete}
+            {/* check/close icons, matching the plan switcher + rename/delete bars */}
+            <button
+              type="button"
               disabled={pending}
+              onClick={onDelete}
+              aria-label="Confirm delete"
+              title="Delete"
+              className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-danger hover:bg-danger-soft disabled:opacity-50"
             >
-              Yes
-            </Button>
-            <Button variant="outline" size="sm" onClick={onCancelConfirm}>
-              No
-            </Button>
+              <Icon name="check" size="sm" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onCancelConfirm}
+              aria-label="Cancel delete"
+              title="Cancel"
+              className="h-8 w-8 inline-flex items-center justify-center rounded text-base text-ink-3 hover:text-ink hover:bg-bg-3"
+            >
+              <Icon name="close" size="md" aria-hidden="true" />
+            </button>
           </>
         ) : (
           <>

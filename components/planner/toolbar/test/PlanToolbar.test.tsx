@@ -199,7 +199,7 @@ describe("PlanToolbar — delete", () => {
     expect(removeMock).not.toHaveBeenCalled();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm delete/i }));
     });
     expect(removeMock).toHaveBeenCalledWith("a");
   });
@@ -217,7 +217,7 @@ describe("PlanToolbar — delete", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm delete/i }));
     });
     // Return to the plans list rather than auto-opening a remaining plan.
     expect(routerReplaceMock).toHaveBeenCalledWith("/plans");
@@ -233,7 +233,7 @@ describe("PlanToolbar — delete", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit plan/i }));
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+      fireEvent.click(screen.getByRole("button", { name: /confirm delete/i }));
     });
     expect(routerReplaceMock).toHaveBeenCalledWith("/plans");
   });
