@@ -13,6 +13,7 @@ import { useAuthState } from "@/lib/auth/store";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import { countNoun, pluralize } from "@/lib/format";
 import { logError } from "@/lib/log";
+import { defaultStreamFor } from "@/lib/plan/defaultStream";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
@@ -52,6 +53,8 @@ export function WelcomeFlow({
   const [step, setStep] = useState(0);
   const [programIds, setProgramIds] = useState<string[]>([]);
   const [stream, setStream] = useState<Stream>("regular");
+  // Once the user picks a stream by hand, stop auto-suggesting on program change.
+  const [streamTouched, setStreamTouched] = useState(false);
   const [startTermId, setStartTermId] = useState<number>(() => {
     const currentFall = makeTermId(new Date().getFullYear(), "Fall");
     if (fallTerms.some((t) => t.id === currentFall)) return currentFall;
@@ -111,6 +114,21 @@ export function WelcomeFlow({
     e.preventDefault();
     setDragActive(false);
     onFile(e.dataTransfer.files?.[0]);
+  }
+
+  function handleProgramChange(next: string[]) {
+    setProgramIds(next);
+    // Manual pick pre-fills the co-op stream from the program's default (#131).
+    // A transcript-detected stream (parseResult) and an explicit choice both win.
+    if (!parseResult && !streamTouched) {
+      const suggested = defaultStreamFor(next, startTermId);
+      if (suggested) setStream(suggested);
+    }
+  }
+
+  function handleStreamChange(next: Stream) {
+    setStream(next);
+    setStreamTouched(true);
   }
 
   const buildPlan = useCallback((): LocalPlan => {
@@ -277,7 +295,7 @@ export function WelcomeFlow({
                   <ProgramMultiSelect
                     programOptions={programOptions}
                     selected={programIds}
-                    onChange={setProgramIds}
+                    onChange={handleProgramChange}
                   />
                 )}
               </Field>
@@ -299,7 +317,7 @@ export function WelcomeFlow({
                   <SegmentedRadio
                     options={STREAM_OPTIONS}
                     value={stream}
-                    onChange={setStream}
+                    onChange={handleStreamChange}
                     ariaLabel="Co-op stream"
                   />
                 )}

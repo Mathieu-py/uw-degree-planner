@@ -8,7 +8,30 @@ import { PlanSettingsModal } from "../PlanSettingsModal";
 const OPTIONS: ProgramOption[] = [
   { id: "h-cs", name: "Computer Science", kind: "flexible" },
   { id: "h-math", name: "Mathematics", kind: "flexible" },
+  {
+    id: "software-engineering",
+    name: "Software Engineering",
+    kind: "engineering",
+  },
+  {
+    id: "systems-design-engineering",
+    name: "Systems Design Engineering",
+    kind: "engineering",
+  },
 ];
+
+/** Swap the plan's single program to `name` via the multi-select palette. */
+function swapProgramTo(removeName: RegExp, addName: RegExp) {
+  fireEvent.click(screen.getByRole("button", { name: removeName }));
+  fireEvent.click(screen.getByRole("button", { name: /add a program/i }));
+  fireEvent.click(screen.getByRole("option", { name: addName }));
+  fireEvent.click(screen.getByRole("button", { name: /^done$/i }));
+}
+
+/** aria-checked state of a co-op stream segment. */
+function streamChecked(name: RegExp): string | null {
+  return screen.getByRole("radio", { name }).getAttribute("aria-checked");
+}
 
 function mkPlan(overrides: Partial<LocalPlan> = {}): LocalPlan {
   return {
@@ -80,5 +103,47 @@ describe("PlanSettingsModal — min-one-program guard", () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ programIds: ["h-math"] }),
     );
+  });
+});
+
+describe("PlanSettingsModal — default stream on program change (#131)", () => {
+  it("suggests the new primary program's default stream", () => {
+    const onSave = renderModal(
+      mkPlan({ programIds: ["h-cs"], stream: "regular" }),
+    );
+    // CS (regular) → Software Engineering (Stream 8).
+    swapProgramTo(/remove computer science/i, /software engineering/i);
+
+    expect(streamChecked(/stream 8 co-op/i)).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        programIds: ["software-engineering"],
+        stream: "stream8",
+      }),
+    );
+  });
+
+  it("keeps a manually chosen stream when the program changes afterwards", () => {
+    const onSave = renderModal(
+      mkPlan({ programIds: ["h-cs"], stream: "regular" }),
+    );
+    // User explicitly picks Stream 4 first…
+    fireEvent.click(screen.getByRole("radio", { name: /stream 4 co-op/i }));
+    // …then swaps to a program that would otherwise suggest Stream 8.
+    swapProgramTo(/remove computer science/i, /software engineering/i);
+
+    expect(streamChecked(/stream 4 co-op/i)).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ stream: "stream4" }),
+    );
+  });
+
+  it("resolves Systems Design by the plan's start term", () => {
+    // mkPlan starts Fall 2023 (id 1239), a pre-2026 cohort → SYDE is Stream 4.
+    renderModal(mkPlan({ programIds: ["h-cs"], stream: "regular" }));
+    swapProgramTo(/remove computer science/i, /systems design engineering/i);
+    expect(streamChecked(/stream 4 co-op/i)).toBe("true");
   });
 });

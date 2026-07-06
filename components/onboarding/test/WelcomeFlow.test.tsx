@@ -37,11 +37,21 @@ vi.mock("@/lib/plan/transcriptApply", () => ({
 }));
 vi.mock("@/lib/plan/derive", () => ({ completedCoursesFromPlan: () => [] }));
 
+import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import { WelcomeFlow } from "../WelcomeFlow";
 
 const PROGRAMS = [
-  { id: "se", name: "Systems Design", kind: "engineering" as const },
+  {
+    id: "software-engineering",
+    name: "Software Engineering",
+    kind: "engineering" as const,
+  },
+  {
+    id: "electrical-engineering",
+    name: "Electrical Engineering",
+    kind: "engineering" as const,
+  },
 ];
 
 function renderFlow() {
@@ -93,5 +103,67 @@ describe("WelcomeFlow dropzone", () => {
     await waitFor(() =>
       expect(screen.getByText(/couldn't read that pdf/i)).toBeTruthy(),
     );
+  });
+});
+
+function streamChecked(name: RegExp): string | null {
+  return screen.getByRole("radio", { name }).getAttribute("aria-checked");
+}
+
+describe("WelcomeFlow default stream (#131)", () => {
+  beforeEach(() => {
+    vi.mocked(extractTextFromPdf).mockReset();
+  });
+  afterEach(cleanup);
+
+  it("pre-fills the co-op stream from a manually picked program", () => {
+    render(<WelcomeFlow programOptions={PROGRAMS} />);
+    // Manual setup (step 0): add a Stream 8 program.
+    fireEvent.click(screen.getByRole("button", { name: /add a program/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: /software engineering/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^done$/i }));
+
+    expect(streamChecked(/stream 8 co-op/i)).toBe("true");
+  });
+
+  it("does not override a transcript-derived stream when the program is corrected", async () => {
+    vi.mocked(extractTextFromPdf).mockResolvedValue("transcript text");
+    // A parsed transcript that names a program keeps the flow on its detected
+    // (here: regular) stream; correcting the program later must not re-suggest.
+    vi.mocked(parseTranscript).mockReturnValueOnce({
+      detectedProgramIds: ["electrical-engineering"],
+      detectedSpecializationsByProgramId: {},
+      detectedCurrentTerm: null,
+      detectedSystemOfStudy: "regular",
+      rawPlanText: null,
+      courses: [],
+      warnings: [],
+    });
+    const label = renderFlow();
+    fireEvent.drop(label, {
+      dataTransfer: {
+        files: [new File(["%PDF"], "t.pdf", { type: "application/pdf" })],
+      },
+    });
+    await waitFor(() =>
+      screen.getByRole("button", { name: /remove electrical engineering/i }),
+    );
+
+    // Advance to Review and swap in a Stream 8 program.
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /remove electrical engineering/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /add a program/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: /software engineering/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^done$/i }));
+
+    // parseResult guard holds: stream stays regular, not the SE default.
+    expect(streamChecked(/^regular$/i)).toBe("true");
+    expect(streamChecked(/stream 8 co-op/i)).toBe("false");
   });
 });
