@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ui/Icon";
 import { countNoun } from "@/lib/format";
 
 interface Props {
@@ -5,6 +6,8 @@ interface Props {
   estimatedDenom: boolean;
   /** Plan-wide prereq/antireq placement issues (shown the same on each program). */
   blockingIssueCount: number;
+  /** "Add a partner plan" copy when a lone Joint Honours plan is unpaired (#111). */
+  jointHonoursPartner?: string | null;
 }
 
 /**
@@ -17,9 +20,21 @@ interface Props {
 export function AuditAdvisoryNotes({
   estimatedDenom,
   blockingIssueCount,
+  jointHonoursPartner,
 }: Props) {
   return (
     <>
+      {jointHonoursPartner ? (
+        <div className="av-note text-partial flex items-start gap-1.5">
+          <Icon
+            name="warning"
+            size="xs"
+            aria-hidden="true"
+            className="mt-0.5 shrink-0"
+          />
+          <span>{jointHonoursPartner}</span>
+        </div>
+      ) : null}
       {estimatedDenom ? (
         <div className="av-note">
           This program&apos;s calendar entry states no total unit count, so the
@@ -27,10 +42,18 @@ export function AuditAdvisoryNotes({
         </div>
       ) : null}
       {blockingIssueCount > 0 ? (
-        <div className="av-note text-partial">
-          ⚠ {countNoun(blockingIssueCount, "placement issue")} (prereq/antireq)
-          — until resolved, an antireq conflict counts once toward the bar and a
-          course placed before its prereqs is held out.
+        <div className="av-note text-partial flex items-start gap-1.5">
+          <Icon
+            name="warning"
+            size="xs"
+            aria-hidden="true"
+            className="mt-0.5 shrink-0"
+          />
+          <span>
+            {countNoun(blockingIssueCount, "placement issue")} (prereq/antireq) —
+            until resolved, an antireq conflict counts once toward the bar and a
+            course placed before its prereqs is held out.
+          </span>
         </div>
       ) : null}
     </>

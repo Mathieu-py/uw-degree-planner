@@ -58,7 +58,10 @@ export function CourseTermModalShell({
       <footer className="border-t border-line px-4 py-2.5">
         <span className="u-small">
           {addedTo ? (
-            <span className="text-met">Added to {addedTo} ✓</span>
+            <span className="text-met inline-flex items-center gap-1">
+              Added to {addedTo}
+              <Icon name="check" size="xs" aria-hidden="true" />
+            </span>
           ) : (
             "Ineligible terms are disabled"
           )}

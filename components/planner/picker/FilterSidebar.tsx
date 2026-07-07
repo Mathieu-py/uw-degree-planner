@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import type { PickerFilters } from "./useFilteredCourses";
 
 const LEVEL_BUCKETS = [100, 200, 300, 400] as const;
@@ -165,7 +166,7 @@ function PrefixFilter({
   }
 
   const chipClass =
-    "rounded-full px-2 py-0.5 text-[10px] font-medium " +
+    "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium " +
     (tone === "include"
       ? "bg-accent-soft text-accent"
       : "bg-danger-soft text-danger");
@@ -185,7 +186,8 @@ function PrefixFilter({
               className={chipClass}
               title={`Remove ${p}`}
             >
-              {p} ×
+              {p}
+              <Icon name="close" size="xs" aria-hidden="true" />
             </button>
           ))}
         </div>

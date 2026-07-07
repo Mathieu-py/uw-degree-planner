@@ -15,6 +15,7 @@ import { countNoun, pluralize } from "@/lib/format";
 import { logError } from "@/lib/log";
 import { defaultStreamFor } from "@/lib/plan/defaultStream";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
+import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import { emptyPlan, savePlan } from "@/lib/plan/storage";
@@ -169,6 +170,19 @@ export function WelcomeFlow({
     (id) => programOptions.find((p) => p.id === id)?.name,
     "your program",
   );
+  // A lone Joint Honours plan is only half a degree — prompt for a partner (#111).
+  const jointHonoursPartner = jointHonoursWarning(programIds);
+  const partnerBanner = jointHonoursPartner ? (
+    <p className="flex items-start gap-1.5 rounded-[8px] border border-partial bg-partial-soft px-3 py-2 text-xs text-ink-2">
+      <Icon
+        name="warning"
+        size="xs"
+        aria-hidden="true"
+        className="mt-0.5 shrink-0 text-partial"
+      />
+      <span>{jointHonoursPartner}</span>
+    </p>
+  ) : null;
   // Build once, reused for both the review preview and the save.
   const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
   const placedCount = parseResult
@@ -299,6 +313,7 @@ export function WelcomeFlow({
                   />
                 )}
               </Field>
+              {partnerBanner}
               <Field label="Start term (1A)">
                 {(id) => (
                   <Picker
@@ -370,13 +385,17 @@ export function WelcomeFlow({
                     )}
                   </Field>
                 </div>
+                {partnerBanner}
               </>
             ) : (
-              <p className="u-body">
-                We'll create an empty <b>{streamText(stream)}</b>{" "}
-                <b>{programName}</b> plan starting{" "}
-                <b>{fallTerms.find((t) => t.id === startTermId)?.label}</b>.
-              </p>
+              <>
+                <p className="u-body">
+                  We'll create an empty <b>{streamText(stream)}</b>{" "}
+                  <b>{programName}</b> plan starting{" "}
+                  <b>{fallTerms.find((t) => t.id === startTermId)?.label}</b>.
+                </p>
+                {partnerBanner}
+              </>
             )}
           </div>
         ) : null}

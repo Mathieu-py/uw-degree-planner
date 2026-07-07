@@ -8,6 +8,7 @@ import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { defaultStreamFor } from "@/lib/plan/defaultStream";
+import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { termInfo } from "@/lib/terms";
 import { ProgramMultiSelect } from "./ProgramMultiSelect";
@@ -94,6 +95,8 @@ export function PlanSettingsModal({
     });
   }
 
+  const jointHonoursPartner = jointHonoursWarning(programIds);
+
   const programsDirty = !sameIds(programIds, plan.programIds);
   const specDirty = !sameSpecMap(specializationIds, plan.specializationIds);
   const streamDirty = stream !== plan.stream;
@@ -124,6 +127,8 @@ export function PlanSettingsModal({
             <span className="text-partial mt-0.5">
               Pick at least one program — your plan needs one to audit against.
             </span>
+          ) : jointHonoursPartner ? (
+            <span className="text-partial mt-0.5">{jointHonoursPartner}</span>
           ) : programIds.length > 1 ? (
             <span className="text-ink-3 mt-0.5">
               Double degree — your audit shows one section per program.
