@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { countNoun } from "@/lib/format";
 
@@ -24,17 +25,7 @@ export function AuditAdvisoryNotes({
 }: Props) {
   return (
     <>
-      {jointHonoursPartner ? (
-        <div className="av-note text-partial flex items-start gap-1.5">
-          <Icon
-            name="warning"
-            size="xs"
-            aria-hidden="true"
-            className="mt-0.5 shrink-0"
-          />
-          <span>{jointHonoursPartner}</span>
-        </div>
-      ) : null}
+      {jointHonoursPartner ? <WarningNote>{jointHonoursPartner}</WarningNote> : null}
       {estimatedDenom ? (
         <div className="av-note">
           This program&apos;s calendar entry states no total unit count, so the
@@ -42,20 +33,22 @@ export function AuditAdvisoryNotes({
         </div>
       ) : null}
       {blockingIssueCount > 0 ? (
-        <div className="av-note text-partial flex items-start gap-1.5">
-          <Icon
-            name="warning"
-            size="xs"
-            aria-hidden="true"
-            className="mt-0.5 shrink-0"
-          />
-          <span>
-            {countNoun(blockingIssueCount, "placement issue")} (prereq/antireq)
-            — until resolved, an antireq conflict counts once toward the bar and
-            a course placed before its prereqs is held out.
-          </span>
-        </div>
+        <WarningNote>
+          {countNoun(blockingIssueCount, "placement issue")} (prereq/antireq) —
+          until resolved, an antireq conflict counts once toward the bar and a
+          course placed before its prereqs is held out.
+        </WarningNote>
       ) : null}
     </>
+  );
+}
+
+/** Advisory `av-note` with the shared warning-icon leader. */
+function WarningNote({ children }: { children: ReactNode }) {
+  return (
+    <div className="av-note text-partial flex items-start gap-1.5">
+      <Icon name="warning" size="xs" aria-hidden="true" className="mt-0.5 shrink-0" />
+      <span>{children}</span>
+    </div>
   );
 }

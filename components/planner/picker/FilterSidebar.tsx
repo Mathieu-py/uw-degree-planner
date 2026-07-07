@@ -185,6 +185,7 @@ function PrefixFilter({
               onClick={() => toggle(p)}
               className={chipClass}
               title={`Remove ${p}`}
+              aria-label={`Remove ${p}`}
             >
               {p}
               <Icon name="close" size="xs" aria-hidden="true" />
