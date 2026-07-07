@@ -16,6 +16,7 @@ import { countNoun, pluralize } from "@/lib/format";
 import { logError } from "@/lib/log";
 import { defaultStreamFor } from "@/lib/plan/defaultStream";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
+import { specsAfterDoubleDegreeSwap } from "@/lib/plan/doubleDegree";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
@@ -146,12 +147,19 @@ export function WelcomeFlow({
         numAcademicTerms,
       });
       // Honour programs the user corrected in review; keep only detected
-      // specializations whose program is still on the plan.
+      // specializations whose program is still on the plan. A double-degree swap
+      // (#103) re-keys a still-valid spec onto the packaged plan first, so it
+      // isn't lost — parity with PlanSettingsModal.
+      const detectedSpecs = specsAfterDoubleDegreeSwap(
+        parseResult.detectedProgramIds,
+        plan.specializationIds,
+        programIds,
+      );
       return {
         ...plan,
         programIds,
         specializationIds: Object.fromEntries(
-          Object.entries(plan.specializationIds).filter(([pid]) =>
+          Object.entries(detectedSpecs).filter(([pid]) =>
             programIds.includes(pid),
           ),
         ),

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getSpecialization, PROGRAMS } from "@/lib/programs";
 import {
   doubleDegreeSuggestionMessage,
+  specsAfterDoubleDegreeSwap,
   suggestedDoubleDegree,
   swapToDoubleDegree,
 } from "../doubleDegree";
@@ -106,6 +107,41 @@ describe("swapToDoubleDegree", () => {
       DD,
     );
     expect(specializationIds).toEqual({});
+  });
+});
+
+describe("specsAfterDoubleDegreeSwap", () => {
+  const DD = "h-ba-sds-and-h-bsw-double-degree";
+  const detected = ["h-social-development-studies", "social-work"];
+
+  it("re-keys a detected spec the packaged plan offers when the pair is swapped", () => {
+    expect(
+      specsAfterDoubleDegreeSwap(
+        detected,
+        { "h-social-development-studies": "sds-education" },
+        [DD],
+      ),
+    ).toEqual({ [DD]: "sds-education" });
+  });
+
+  it("drops a detected spec the packaged plan does not offer on swap", () => {
+    expect(
+      specsAfterDoubleDegreeSwap(
+        detected,
+        { "h-social-development-studies": "sds-social-work" },
+        [DD],
+      ),
+    ).toEqual({});
+  });
+
+  it("leaves specs untouched when the selection is not the swapped double degree", () => {
+    const specs = { "h-social-development-studies": "sds-education" };
+    // Still the two standalones (no swap yet).
+    expect(specsAfterDoubleDegreeSwap(detected, specs, detected)).toBe(specs);
+    // An unrelated single-program selection.
+    expect(
+      specsAfterDoubleDegreeSwap(detected, specs, ["h-computer-science-bcs"]),
+    ).toBe(specs);
   });
 });
 

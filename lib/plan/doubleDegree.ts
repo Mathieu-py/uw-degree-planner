@@ -72,3 +72,30 @@ export function swapToDoubleDegree(
   }
   return { programIds: [doubleDegreeId], specializationIds: carried };
 }
+
+/**
+ * Onboarding builds specs from the transcript, keyed by the originally-detected
+ * program ids. When the student swaps that detected pair for its packaged double
+ * degree (#103), re-key any spec the packaged plan still offers so onboarding
+ * preserves it too — parity with PlanSettingsModal. No-op unless the selection is
+ * exactly that swap (the two-program detection collapsed to the single plan).
+ */
+export function specsAfterDoubleDegreeSwap(
+  detectedProgramIds: readonly string[],
+  detectedSpecializationIds: Record<string, string>,
+  selectedProgramIds: readonly string[],
+): Record<string, string> {
+  const swap = suggestedDoubleDegree(detectedProgramIds);
+  if (
+    swap &&
+    selectedProgramIds.length === 1 &&
+    selectedProgramIds[0] === swap.id
+  ) {
+    return swapToDoubleDegree(
+      detectedProgramIds,
+      detectedSpecializationIds,
+      swap.id,
+    ).specializationIds;
+  }
+  return detectedSpecializationIds;
+}
