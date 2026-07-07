@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useMemo, useState } from "react";
+import { DoubleDegreeSuggestion } from "@/components/planner/modals/DoubleDegreeSuggestion";
 import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSelect";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +16,7 @@ import { countNoun, pluralize } from "@/lib/format";
 import { logError } from "@/lib/log";
 import { defaultStreamFor } from "@/lib/plan/defaultStream";
 import { completedCoursesFromPlan } from "@/lib/plan/derive";
+import { specsAfterDoubleDegreeSwap } from "@/lib/plan/doubleDegree";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { buildEmptySlots } from "@/lib/plan/sequence";
 import { toSnapshot } from "@/lib/plan/server/serialize";
@@ -145,12 +147,19 @@ export function WelcomeFlow({
         numAcademicTerms,
       });
       // Honour programs the user corrected in review; keep only detected
-      // specializations whose program is still on the plan.
+      // specializations whose program is still on the plan. A double-degree swap
+      // (#103) re-keys a still-valid spec onto the packaged plan first, so it
+      // isn't lost — parity with PlanSettingsModal.
+      const detectedSpecs = specsAfterDoubleDegreeSwap(
+        parseResult.detectedProgramIds,
+        plan.specializationIds,
+        programIds,
+      );
       return {
         ...plan,
         programIds,
         specializationIds: Object.fromEntries(
-          Object.entries(plan.specializationIds).filter(([pid]) =>
+          Object.entries(detectedSpecs).filter(([pid]) =>
             programIds.includes(pid),
           ),
         ),
@@ -183,6 +192,14 @@ export function WelcomeFlow({
       <span>{jointHonoursPartner}</span>
     </p>
   ) : null;
+  // A hand-picked pair that packages into a single double degree — offer the swap
+  // (#103). handleProgramChange collapses to the single id and re-suggests stream.
+  const doubleDegreeSuggestion = (
+    <DoubleDegreeSuggestion
+      programIds={programIds}
+      onAccept={(id) => handleProgramChange([id])}
+    />
+  );
   // Build once, reused for both the review preview and the save.
   const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
   const placedCount = parseResult
@@ -314,6 +331,7 @@ export function WelcomeFlow({
                 )}
               </Field>
               {partnerBanner}
+              {doubleDegreeSuggestion}
               <Field label="Start term (1A)">
                 {(id) => (
                   <Picker
@@ -386,6 +404,7 @@ export function WelcomeFlow({
                   </Field>
                 </div>
                 {partnerBanner}
+                {doubleDegreeSuggestion}
               </>
             ) : (
               <>
@@ -395,6 +414,7 @@ export function WelcomeFlow({
                   <b>{fallTerms.find((t) => t.id === startTermId)?.label}</b>.
                 </p>
                 {partnerBanner}
+                {doubleDegreeSuggestion}
               </>
             )}
           </div>
