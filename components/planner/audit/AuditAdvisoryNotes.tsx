@@ -25,7 +25,9 @@ export function AuditAdvisoryNotes({
 }: Props) {
   return (
     <>
-      {jointHonoursPartner ? <WarningNote>{jointHonoursPartner}</WarningNote> : null}
+      {jointHonoursPartner ? (
+        <WarningNote>{jointHonoursPartner}</WarningNote>
+      ) : null}
       {estimatedDenom ? (
         <div className="av-note">
           This program&apos;s calendar entry states no total unit count, so the
@@ -47,7 +49,12 @@ export function AuditAdvisoryNotes({
 function WarningNote({ children }: { children: ReactNode }) {
   return (
     <div className="av-note text-partial flex items-start gap-1.5">
-      <Icon name="warning" size="xs" aria-hidden="true" className="mt-0.5 shrink-0" />
+      <Icon
+        name="warning"
+        size="xs"
+        aria-hidden="true"
+        className="mt-0.5 shrink-0"
+      />
       <span>{children}</span>
     </div>
   );
