@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useMemo, useState } from "react";
+import { DoubleDegreeSuggestion } from "@/components/planner/modals/DoubleDegreeSuggestion";
 import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSelect";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -183,6 +184,14 @@ export function WelcomeFlow({
       <span>{jointHonoursPartner}</span>
     </p>
   ) : null;
+  // A hand-picked pair that packages into a single double degree — offer the swap
+  // (#103). handleProgramChange collapses to the single id and re-suggests stream.
+  const doubleDegreeSuggestion = (
+    <DoubleDegreeSuggestion
+      programIds={programIds}
+      onAccept={(id) => handleProgramChange([id])}
+    />
+  );
   // Build once, reused for both the review preview and the save.
   const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
   const placedCount = parseResult
@@ -314,6 +323,7 @@ export function WelcomeFlow({
                 )}
               </Field>
               {partnerBanner}
+              {doubleDegreeSuggestion}
               <Field label="Start term (1A)">
                 {(id) => (
                   <Picker
@@ -386,6 +396,7 @@ export function WelcomeFlow({
                   </Field>
                 </div>
                 {partnerBanner}
+                {doubleDegreeSuggestion}
               </>
             ) : (
               <>
@@ -395,6 +406,7 @@ export function WelcomeFlow({
                   <b>{fallTerms.find((t) => t.id === startTermId)?.label}</b>.
                 </p>
                 {partnerBanner}
+                {doubleDegreeSuggestion}
               </>
             )}
           </div>

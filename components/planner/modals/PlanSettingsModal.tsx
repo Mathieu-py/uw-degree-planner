@@ -8,9 +8,11 @@ import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { defaultStreamFor } from "@/lib/plan/defaultStream";
+import { swapToDoubleDegree } from "@/lib/plan/doubleDegree";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { termInfo } from "@/lib/terms";
+import { DoubleDegreeSuggestion } from "./DoubleDegreeSuggestion";
 import { ProgramMultiSelect } from "./ProgramMultiSelect";
 
 interface SpecOption {
@@ -95,6 +97,22 @@ export function PlanSettingsModal({
     });
   }
 
+  // Collapse a hand-picked pair to its packaged double degree (#103), carrying
+  // over any specialization the packaged plan still offers.
+  function acceptDoubleDegree(doubleDegreeId: string) {
+    const next = swapToDoubleDegree(
+      programIds,
+      specializationIds,
+      doubleDegreeId,
+    );
+    setProgramIds(next.programIds);
+    setSpecializationIds(next.specializationIds);
+    if (!streamTouched) {
+      const suggested = defaultStreamFor(next.programIds, plan.startTermId);
+      if (suggested) setStream(suggested);
+    }
+  }
+
   const jointHonoursPartner = jointHonoursWarning(programIds);
 
   const programsDirty = !sameIds(programIds, plan.programIds);
@@ -134,6 +152,10 @@ export function PlanSettingsModal({
               Double degree — your audit shows one section per program.
             </span>
           ) : null}
+          <DoubleDegreeSuggestion
+            programIds={programIds}
+            onAccept={acceptDoubleDegree}
+          />
         </div>
 
         {specPrograms.length === 0 ? (
