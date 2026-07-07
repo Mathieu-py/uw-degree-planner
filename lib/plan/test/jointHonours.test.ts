@@ -51,6 +51,14 @@ describe("unpairedJointHonours", () => {
     expect(unpairedJointHonours(["jh-physics", "jh-mathematics"])).toBeNull();
   });
 
+  it("does not treat a duplicated id as its own partner", () => {
+    // Same plan listed twice is still half a degree — the second copy must not
+    // satisfy the honours-partner check.
+    expect(
+      unpairedJointHonours(["jh-physics", "jh-physics"])?.name,
+    ).toContain("Physics");
+  });
+
   it("stays unpaired when the only partner is a General plan", () => {
     // A Three-/Four-Year General plan is neither joint nor honours.
     expect(

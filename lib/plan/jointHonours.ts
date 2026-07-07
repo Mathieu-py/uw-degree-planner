@@ -26,10 +26,12 @@ export function isHonours(program: Program): boolean {
 export function unpairedJointHonours(
   programIds: readonly string[],
 ): Program | null {
-  const resolved = programIds
+  // Dedup ids first: a repeated id would otherwise pair with its own second
+  // copy at a different array index (the j !== i check only excludes the same
+  // position), letting a lone Joint Honours plan look partnered.
+  const resolved = [...new Set(programIds)]
     .map((id) => PROGRAMS[id])
     .filter((p): p is Program => Boolean(p));
-  // Compare by index, not reference, so a duplicated id can't pair with itself.
   for (let i = 0; i < resolved.length; i++) {
     if (!isJointHonours(resolved[i])) continue;
     if (!resolved.some((p, j) => j !== i && isHonours(p))) return resolved[i];
