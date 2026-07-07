@@ -119,17 +119,23 @@ describe("AuditPanel cross-program mapping audit", () => {
       />,
     );
 
-    // No "choose one" row may render without options.
-    for (const choose of container.querySelectorAll(".av-choose")) {
+    // No flat "choose one" card may render without options (compound picks —
+    // which carry `.cd-opt` sub-cards — are covered by the code check below).
+    for (const card of container.querySelectorAll(".cd-card")) {
+      if (
+        !card.querySelector(".cd-pill.decide") ||
+        card.querySelector(".cd-opt")
+      )
+        continue;
       expect(
-        choose.querySelectorAll(".av-chip").length,
-        `empty choose-one row in ${programId}`,
+        card.querySelectorAll(".cd-chip").length,
+        `empty choose-one card in ${programId}`,
       ).toBeGreaterThan(0);
     }
 
-    // Every expected code must appear somewhere in the panel.
+    // Every expected code must appear somewhere in the panel (as a chip).
     const rendered = new Set<string>();
-    for (const el of container.querySelectorAll(".av-item-code, .av-chip")) {
+    for (const el of container.querySelectorAll(".cd-chip")) {
       rendered.add(normalize(el.textContent ?? ""));
     }
     const missing: string[] = [];
@@ -167,15 +173,20 @@ describe("AuditPanel cross-program mapping audit", () => {
       />,
     );
 
-    for (const choose of container.querySelectorAll(".av-choose")) {
+    for (const card of container.querySelectorAll(".cd-card")) {
+      if (
+        !card.querySelector(".cd-pill.decide") ||
+        card.querySelector(".cd-opt")
+      )
+        continue;
       expect(
-        choose.querySelectorAll(".av-chip").length,
-        `empty choose-one row in ${programId}/${spec.slug}`,
+        card.querySelectorAll(".cd-chip").length,
+        `empty choose-one card in ${programId}/${spec.slug}`,
       ).toBeGreaterThan(0);
     }
 
     const rendered = new Set<string>();
-    for (const el of container.querySelectorAll(".av-item-code, .av-chip")) {
+    for (const el of container.querySelectorAll(".cd-chip")) {
       rendered.add(normalize(el.textContent ?? ""));
     }
     const expected = new Set<string>();

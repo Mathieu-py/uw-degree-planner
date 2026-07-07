@@ -105,7 +105,6 @@ export const AuditPanel = memo(function AuditPanel({
         <ProgramAuditCard
           plan={plan}
           programId={plan.programIds[0]}
-          catalog={catalog}
           catalogByCode={catalogByCode}
           issues={issues}
           blockingIssueCount={blockingIssueCount}
@@ -236,7 +235,6 @@ export const AuditPanel = memo(function AuditPanel({
               macros={detail.macros}
               placedCodes={detail.placedCodes}
               illegalCodes={detail.illegalCodes}
-              catalog={catalog}
               catalogByCode={catalogByCode}
               onDrill={onDrillToRequirement}
               drag={drag}

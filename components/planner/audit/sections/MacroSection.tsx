@@ -2,7 +2,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Ring } from "@/components/ui/Ring";
 import { NodeBody } from "../bodies/NodeBody";
 import { ringFor } from "../nodeProgress";
-import { isIncomplete, type Macro, type OptionRenderProps } from "../types";
+import type { Macro, OptionRenderProps } from "../types";
 import { SectionRow } from "./SectionRow";
 
 /**
@@ -14,7 +14,6 @@ export function MacroSection({
   macro,
   placedCodes,
   illegalCodes,
-  catalog,
   catalogByCode,
   onDrill,
   drag,
@@ -40,7 +39,6 @@ export function MacroSection({
                 node={block.content.node}
                 placedCodes={placedCodes}
                 illegalCodes={illegalCodes}
-                catalog={catalog}
                 catalogByCode={catalogByCode}
                 onDrill={onDrill}
                 drag={drag}
@@ -50,10 +48,8 @@ export function MacroSection({
                 <SectionRow
                   key={s.key}
                   section={s}
-                  open={isIncomplete(s)}
                   placedCodes={placedCodes}
                   illegalCodes={illegalCodes}
-                  catalog={catalog}
                   catalogByCode={catalogByCode}
                   onDrill={onDrill}
                   drag={drag}

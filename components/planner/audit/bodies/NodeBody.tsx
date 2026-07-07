@@ -1,9 +1,15 @@
-import type { AuditNode } from "@/lib/audit/compile";
+import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
+import { countNoun } from "@/lib/format";
+import { Recede } from "../cards/Recede";
+import { RingLead } from "../cards/RingLead";
+import { StatusCard } from "../cards/StatusCard";
+import { StatusPill } from "../cards/StatusPill";
+import { nodeProgress } from "../nodeProgress";
 import { type DragWiring, type DrillFn, GENERIC_ALL } from "../types";
 import { ChooseOneRow } from "./ChooseOneRow";
 import { CompoundPickBody } from "./CompoundPick";
-import { CourseRow } from "./CourseRow";
+import { OptionChip } from "./OptionChip";
 import { SubjectPoolBody } from "./SubjectPoolBody";
 
 /**
@@ -35,16 +41,88 @@ function asFlatChoiceOptions(node: AuditNode): string[] | null {
   return [...new Set(opts)];
 }
 
+/** Element A — a fixed set of required courses rendered as one Status Card of
+ *  met/warn/drag chips; recedes to a green confirmation once all are placed. */
+function RequiredCoursesCard({
+  node,
+  placedCodes,
+  illegalCodes,
+  catalogByCode,
+  onDrill,
+  drag,
+}: {
+  node: AuditNode;
+  placedCodes: ReadonlySet<string>;
+  illegalCodes: ReadonlySet<string>;
+  catalogByCode: Map<string, Course>;
+  onDrill?: DrillFn;
+  drag?: DragWiring;
+}) {
+  const r = node.ruleNode;
+  if (r.kind !== "courses") return null;
+  const { needed, satisfied } = nodeProgress(node);
+  const caption = countNoun(needed, "required course");
+  const chips = (
+    <div className="cd-chips">
+      {r.courses.map((code) => (
+        <OptionChip
+          key={code}
+          code={code}
+          placed={placedCodes.has(code)}
+          illegal={illegalCodes.has(code)}
+          catalogByCode={catalogByCode}
+          onDrill={onDrill}
+          drag={drag}
+        />
+      ))}
+    </div>
+  );
+
+  if (isSatisfied(node)) {
+    return (
+      <Recede
+        title="Required courses"
+        caption={caption}
+        meta={`${needed}/${needed}`}
+      >
+        {chips}
+      </Recede>
+    );
+  }
+  const pct =
+    needed > 0 ? Math.min(Math.round((satisfied / needed) * 100), 100) : 100;
+  return (
+    <StatusCard
+      tone={satisfied > 0 ? "partial" : "missing"}
+      lead={<RingLead pct={pct} num={satisfied} />}
+      title="Required courses"
+      caption={caption}
+      pill={
+        satisfied > 0 ? (
+          <StatusPill variant="progress" label="In progress" />
+        ) : undefined
+      }
+    >
+      <div className="cd-metaline">
+        <b>
+          {satisfied} of {needed}
+        </b>{" "}
+        required courses placed.
+      </div>
+      {chips}
+    </StatusCard>
+  );
+}
+
 /**
- * Renders an audit node's body, dispatching on rule-node kind: `courses` →
- * draggable rows; `pick` → "choose one" row; `subjectPool` → Browse (no drag);
- * `all` → recurse.
+ * Renders an audit node's body, dispatching on rule-node kind to the Status-Card
+ * grammar: `courses` → required-courses card; `pick` → choose-one / compound
+ * card; `subjectPool` → pool card; `all` → a stack of the above.
  */
 export function NodeBody({
   node,
   placedCodes,
   illegalCodes,
-  catalog,
   catalogByCode,
   onDrill,
   drag,
@@ -53,7 +131,6 @@ export function NodeBody({
   node: AuditNode;
   placedCodes: ReadonlySet<string>;
   illegalCodes: ReadonlySet<string>;
-  catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;
@@ -63,19 +140,14 @@ export function NodeBody({
 
   if (r.kind === "courses") {
     return (
-      <>
-        {r.courses.map((code) => (
-          <CourseRow
-            key={code}
-            code={code}
-            placed={placedCodes.has(code)}
-            illegal={illegalCodes.has(code)}
-            catalogByCode={catalogByCode}
-            onDrill={onDrill}
-            drag={drag}
-          />
-        ))}
-      </>
+      <RequiredCoursesCard
+        node={node}
+        placedCodes={placedCodes}
+        illegalCodes={illegalCodes}
+        catalogByCode={catalogByCode}
+        onDrill={onDrill}
+        drag={drag}
+      />
     );
   }
 
@@ -121,26 +193,31 @@ export function NodeBody({
         node={node}
         placedCodes={placedCodes}
         illegalCodes={illegalCodes}
-        catalog={catalog}
         catalogByCode={catalogByCode}
         onDrill={onDrill}
         drag={drag}
-        depth={depth}
       />
     );
   }
 
   if (r.kind === "subjectPool") {
-    return <SubjectPoolBody node={r} onDrill={onDrill} />;
+    return (
+      <SubjectPoolBody
+        node={node}
+        illegalCodes={illegalCodes}
+        catalogByCode={catalogByCode}
+        onDrill={onDrill}
+      />
+    );
   }
 
   if (r.kind === "all") {
     // Nested sub-groups show their own heading; the top-level group's is the
-    // section title. The parent never adds one (would double up on mixed picks).
+    // section title. Each child renders as its own card (self-spacing).
     return (
-      <div className="flex flex-col gap-1.5">
+      <div>
         {depth > 0 && node.description && node.description !== GENERIC_ALL ? (
-          <span className="u-small mt-1">{node.description}</span>
+          <span className="u-small mt-1 mb-1.5 block">{node.description}</span>
         ) : null}
         {node.children.map((child, i) => (
           <NodeBody
@@ -149,7 +226,6 @@ export function NodeBody({
             node={child}
             placedCodes={placedCodes}
             illegalCodes={illegalCodes}
-            catalog={catalog}
             catalogByCode={catalogByCode}
             onDrill={onDrill}
             drag={drag}

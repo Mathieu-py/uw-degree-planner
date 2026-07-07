@@ -1,148 +1,156 @@
-import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { Ring } from "@/components/ui/Ring";
 import type { Course } from "@/lib/courses/types";
-import { countNoun, pluralize } from "@/lib/format";
+import { fmtUnits, pluralize, unitsMet } from "@/lib/format";
 import { BreadthBody } from "../bodies/BreadthBody";
-import { NodeBody } from "../bodies/NodeBody";
 import { OptionChip } from "../bodies/OptionChip";
+import { MetChip } from "../cards/Chip";
+import { FindRow } from "../cards/FindRow";
+import { Recede } from "../cards/Recede";
+import { GlyphLead, RingLead } from "../cards/RingLead";
+import { StatusCard } from "../cards/StatusCard";
+import { StatusPill } from "../cards/StatusPill";
 import type { DragWiring, DrillFn, Section } from "../types";
 
+/**
+ * One requirement section rendered in the Status-Cards grammar. The `elective*`
+ * / breadth / levelFloor / info kinds each render their own collapsible card
+ * (or a green recede row once satisfied).
+ */
 export function SectionRow({
   section,
-  open,
   placedCodes,
   illegalCodes,
-  catalog,
   catalogByCode,
   onDrill,
   drag,
 }: {
   section: Section;
-  open: boolean;
   placedCodes: ReadonlySet<string>;
   illegalCodes: ReadonlySet<string>;
-  catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
+  // I · Notes & constraints — advisory, no ring/progress.
   if (section.kind === "infoGroup") {
-    // Collapsible group: one row "Additional constraints · 7" expanding to the
-    // notes. Single-note groups drop the count and show a plain paragraph.
     const count = section.items.length;
     return (
-      <SectionShell title={groupTitle(section.title, count)} open={open}>
-        {count === 1 ? (
-          <p className="u-small">{section.items[0]}</p>
-        ) : (
-          <ul className="flex flex-col gap-1 list-disc pl-4 marker:text-ink-3">
-            {section.items.map((text, i) => (
-              // Static, non-reordering note list → index key is stable and
-              // can't collide when two notes share identical text.
-              // biome-ignore lint/suspicious/noArrayIndexKey: static list, order fixed
-              <li key={i} className="u-small">
-                {text}
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionShell>
+      <StatusCard
+        tone="missing"
+        lead={<GlyphLead name="warning" />}
+        title={groupTitle(section.title, count)}
+        pill={<StatusPill variant="note" label="Note" />}
+      >
+        <ul className="cd-notes">
+          {section.items.map((text, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list, order fixed
+            <li key={i}>{text}</li>
+          ))}
+        </ul>
+      </StatusCard>
     );
   }
 
+  // A single informational row — the open "Free electives" volume today. Any
+  // course counts, so it ends with a Find-courses row into the full catalog.
   if (section.kind === "info") {
     return (
-      <div className="av-row">
-        <div className="av-row-head items-start">
-          <span className="av-unit-ring shrink-0">
-            <Icon name="doc" size="sm" aria-hidden="true" />
-          </span>
-          <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
-            <span className="av-sec-label">{section.title}</span>
-            <span className="u-small">{section.caption}</span>
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (section.kind === "node") {
-    // An optional group (needed === 0) has no target, so the ring reflects what's
-    // *chosen*: grey 0 when empty, green count once anything is picked. Required
-    // groups (needed > 0) keep their normal progress ring.
-    const optional = section.summary.needed === 0;
-    const chosen = optional
-      ? section.node.satisfiers.length
-      : section.summary.satisfied;
-    const pct = optional
-      ? chosen > 0
-        ? 100
-        : 0
-      : Math.min(
-          Math.round(
-            (section.summary.satisfied / section.summary.needed) * 100,
-          ),
-          100,
-        );
-    return (
-      <SectionShell
-        // Tag "(optional)" and use a neutral ring tone so a pick doesn't read as
-        // a met *required* group.
-        title={optional ? `${section.title} (optional)` : section.title}
-        caption={section.caption}
-        ring={{ pct, num: chosen, tone: optional ? "neutral" : undefined }}
-        excludedViolationCount={section.summary.excludedViolationCount}
-        legalityIssueCount={section.node.illegalSatisfiers?.length ?? 0}
-        open={open}
+      <StatusCard
+        tone="missing"
+        lead={<RingLead pct={0} num={0} tone="neutral" />}
+        title={section.title}
+        pill={<StatusPill variant="none" label="Open" />}
       >
-        <NodeBody
-          node={section.node}
-          placedCodes={placedCodes}
-          illegalCodes={illegalCodes}
-          catalog={catalog}
-          catalogByCode={catalogByCode}
-          onDrill={onDrill}
-          drag={drag}
-        />
-      </SectionShell>
+        <div className="cd-metaline">{section.caption}</div>
+        {onDrill ? (
+          <FindRow label="Add electives" onFind={() => onDrill([], {})} />
+        ) : null}
+      </StatusCard>
     );
   }
 
+  // F · Finite elective list — pick N from a fixed set of draggable chips.
   if (section.kind === "electiveFinite") {
+    const placed = Math.min(section.placed, section.need);
+    if (section.placed >= section.need) {
+      return (
+        <Recede title={section.title} meta={`${section.need}/${section.need}`}>
+          <div className="cd-chips">
+            {section.options
+              .filter((c) => placedCodes.has(c))
+              .map((code) => (
+                <MetChip
+                  key={code}
+                  code={code}
+                  name={catalogByCode.get(code)?.name}
+                />
+              ))}
+          </div>
+        </Recede>
+      );
+    }
     const pct =
       section.need > 0
         ? Math.min(Math.round((section.placed / section.need) * 100), 100)
         : 100;
     return (
-      <SectionShell
+      <StatusCard
+        tone={placed > 0 ? "partial" : "missing"}
+        lead={<RingLead pct={pct} num={placed} />}
         title={section.title}
         caption={section.caption}
-        ring={{ pct, num: Math.min(section.placed, section.need) }}
-        open={open}
+        pill={
+          placed > 0 ? (
+            <StatusPill variant="progress" label="In progress" />
+          ) : undefined
+        }
       >
-        <p className="av-hint mb-1.5">
-          Pick {section.need} from this list — drag any in, or click to browse.
-        </p>
-        <div className="av-chips">
+        <div className="cd-metaline">
+          <b>
+            {placed} of {section.need}
+          </b>{" "}
+          chosen from this fixed list.
+        </div>
+        <div className="cd-chips">
           {section.options.map((code) => (
             <OptionChip
               key={code}
               code={code}
               placed={placedCodes.has(code)}
+              illegal={illegalCodes.has(code)}
               catalogByCode={catalogByCode}
               onDrill={onDrill}
               drag={drag}
             />
           ))}
         </div>
-      </SectionShell>
+      </StatusCard>
     );
   }
 
+  // E · Breadth — unit-based distribution (owns its own card + recede).
   if (section.kind === "breadth") {
-    // Breadth is unit-based; ring fills on units, the number counts contributing
-    // placed courses.
+    return <BreadthBody section={section} onDrill={onDrill} />;
+  }
+
+  // H · Level floor — a unit minimum tracked across the whole plan; no picker.
+  if (section.kind === "levelFloor") {
+    const done = Math.min(section.placedUnits, section.needUnits);
+    const complete = unitsMet(section.placedUnits, section.needUnits);
+    if (complete) {
+      return (
+        <Recede
+          title={section.title}
+          meta={`${fmtUnits(section.needUnits)}/${fmtUnits(section.needUnits)}`}
+        >
+          <div className="cd-chips">
+            {section.satisfiers.map((code) => (
+              <MetChip key={code} code={code} />
+            ))}
+          </div>
+        </Recede>
+      );
+    }
     const pct =
       section.needUnits > 0
         ? Math.min(
@@ -151,85 +159,85 @@ export function SectionRow({
           )
         : 100;
     return (
-      <SectionShell
+      <StatusCard
+        tone={section.placedUnits > 0 ? "partial" : "missing"}
+        lead={<RingLead pct={pct} num={fmtUnits(done)} />}
         title={section.title}
         caption={section.caption}
-        ring={{ pct, num: section.satisfiers.length }}
-        open={open}
+        pill={
+          section.placedUnits > 0 ? (
+            <StatusPill variant="progress" label="In progress" />
+          ) : undefined
+        }
       >
-        <BreadthBody section={section} onDrill={onDrill} />
-      </SectionShell>
-    );
-  }
-
-  if (section.kind === "levelFloor") {
-    // A unit-based minimum ("X units at the 200-level or above"). Ring fills on
-    // units, the number counts contributing placed courses. Static row — no
-    // courses to drag, so a dropdown would only restate the requirement.
-    const pct =
-      section.needUnits > 0
-        ? Math.min(
-            Math.round((section.placedUnits / section.needUnits) * 100),
-            100,
-          )
-        : 100;
-    return (
-      <div className="av-row">
-        <div className="av-row-head">
-          <span className="av-ring-wrap">
-            <Ring pct={pct} />
-            <span className="av-ring-num">{section.satisfiers.length}</span>
-          </span>
-          <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
-            <span className="av-sec-label">{section.title}</span>
-            <span className="u-small truncate">{section.caption}</span>
-          </span>
+        <div className="cd-metaline">
+          <b>
+            {fmtUnits(done)} of {fmtUnits(section.needUnits)} units
+          </b>{" "}
+          — counted automatically as you place upper-year courses.
         </div>
-      </div>
+        <div className="cd-auto">
+          <span className="cd-auto-ico">
+            <Icon name="lock" size="xs" aria-hidden="true" />
+          </span>
+          No list to pick from — tracked across your whole plan, so there's
+          nothing to drag.
+        </div>
+      </StatusCard>
     );
   }
 
-  // electiveBrowse: a concrete eligible list → draggable chips (no target →
-  // neutral ring); only a unit-based / open pool falls back to "browse catalog".
+  // G · Open elective / Explore — electiveBrowse. A concrete eligible list →
+  // draggable chips; a listless / unit-based pool → browse the catalog.
   const hasList = section.eligibleCodes.length > 0;
   if (hasList) {
     const placed = section.eligibleCodes.filter((c) =>
       placedCodes.has(c),
     ).length;
     return (
-      <SectionShell
+      <StatusCard
+        tone={placed > 0 ? "partial" : "missing"}
+        lead={<RingLead pct={0} num={placed} tone="neutral" />}
         title={section.title}
         caption={section.caption}
-        ring={{ pct: 0, num: placed }}
-        open={open}
+        pill={<StatusPill variant="none" label="Open" />}
       >
-        <p className="av-hint mb-1.5">
+        <div className="cd-metaline">
           Drag any from this list, or click to add.
-        </p>
-        <div className="av-chips">
+        </div>
+        <div className="cd-chips">
           {section.eligibleCodes.map((code) => (
             <OptionChip
               key={code}
               code={code}
               placed={placedCodes.has(code)}
+              illegal={illegalCodes.has(code)}
               catalogByCode={catalogByCode}
               onDrill={onDrill}
               drag={drag}
             />
           ))}
         </div>
-      </SectionShell>
+      </StatusCard>
     );
   }
-  // No fixed list — unit-based or an open pool: browse the catalog.
   return (
-    <SectionShell title={section.title} caption={section.caption} open={open}>
-      <p className="av-hint mb-1.5">
+    <StatusCard
+      tone="missing"
+      lead={<RingLead pct={0} num={0} tone="neutral" />}
+      title={section.title}
+      caption={section.caption}
+      pill={<StatusPill variant="none" label="Open" />}
+    >
+      <div className="cd-metaline">
         {section.unitBased
-          ? "Measured in units — there's no fixed list to drag, so browse the catalog."
-          : "There's no fixed list to drag, so browse the catalog."}
-      </p>
-    </SectionShell>
+          ? "Measured in units — no fixed list to drag, so browse the catalog."
+          : "No fixed list to drag — browse the catalog for eligible courses."}
+      </div>
+      {onDrill ? (
+        <FindRow label="Add electives" onFind={() => onDrill([], {})} />
+      ) : null}
+    </StatusCard>
   );
 }
 
@@ -244,74 +252,4 @@ export function groupTitle(title: string, count: number): string {
   const head = sp === -1 ? "" : title.slice(0, sp + 1);
   const plural = /s$/i.test(lastWord) ? lastWord : pluralize(count, lastWord);
   return `${head}${plural} · ${count}`;
-}
-
-function SectionShell({
-  title,
-  caption,
-  ring,
-  excludedViolationCount = 0,
-  legalityIssueCount = 0,
-  open,
-  children,
-}: {
-  title: string;
-  caption?: string;
-  /** Present → progress ring; absent → neutral doc glyph (unit/browse rows). */
-  ring?: { pct: number; num: number; tone?: "neutral" };
-  excludedViolationCount?: number;
-  /** Satisfiers here that are placed illegally (met-but-flagged). */
-  legalityIssueCount?: number;
-  open: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <details className="av-row group" open={open}>
-      <summary className="av-row-head list-none select-none [&::-webkit-details-marker]:hidden">
-        {ring ? (
-          <span className="av-ring-wrap">
-            <Ring pct={ring.pct} tone={ring.tone} />
-            <span className="av-ring-num">{ring.num}</span>
-          </span>
-        ) : (
-          <span className="av-unit-ring">
-            <Icon name="doc" size="sm" aria-hidden="true" />
-          </span>
-        )}
-        <span className="flex flex-col gap-0.5 flex-1 min-w-0 text-left">
-          <span className="av-sec-label">{title}</span>
-          {caption ? <span className="u-small truncate">{caption}</span> : null}
-        </span>
-        {/* Two distinct flags: red cross = a course that can't count here at
-            all; amber triangle = one that counts here but is excluded from the
-            top bar until its prereq/antireq is resolved. */}
-        {excludedViolationCount > 0 ? (
-          <span
-            role="img"
-            className="inline-flex items-center gap-0.5 rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
-            aria-label={`${excludedViolationCount} placed ${pluralize(excludedViolationCount, "course")} excluded — can't count toward this requirement`}
-            title={`${excludedViolationCount} placed ${pluralize(excludedViolationCount, "course")} can't count toward this requirement (excluded by the rule)`}
-          >
-            <Icon name="close" size="xs" aria-hidden="true" />
-            {excludedViolationCount}
-          </span>
-        ) : null}
-        {legalityIssueCount > 0 ? (
-          <span
-            role="img"
-            className="inline-flex items-center gap-0.5 rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium tabular-nums shrink-0"
-            aria-label={`${countNoun(legalityIssueCount, "course")} flagged — placed before prereqs or in antireq conflict`}
-            title={`${countNoun(legalityIssueCount, "course")} here ${pluralize(legalityIssueCount, "is", "are")} placed before prereqs or in antireq conflict — shown on this row, but excluded from the degree bar until fixed`}
-          >
-            <Icon name="warning" size="xs" aria-hidden="true" />
-            {legalityIssueCount}
-          </span>
-        ) : null}
-        <span className="text-ink-3 inline-flex transition-transform group-open:rotate-90 shrink-0">
-          <Icon name="chevronRight" size="xs" aria-hidden="true" />
-        </span>
-      </summary>
-      <div className="av-row-body">{children}</div>
-    </details>
-  );
 }
