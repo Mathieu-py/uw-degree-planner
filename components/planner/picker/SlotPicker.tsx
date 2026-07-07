@@ -375,7 +375,7 @@ function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
           className="inline-flex items-center justify-center w-6 h-6 rounded text-ink-3 hover:text-ink hover:bg-bg-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <span aria-hidden="true">↗</span>
+          <Icon name="external" size="sm" aria-hidden="true" />
         </Link>
       </td>
     </tr>

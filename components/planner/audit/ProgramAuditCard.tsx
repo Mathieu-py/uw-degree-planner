@@ -2,6 +2,7 @@
 
 import { memo, useMemo } from "react";
 import type { Course } from "@/lib/courses/types";
+import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
@@ -51,6 +52,13 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
     [plan, programId, catalogByCode, issues],
   );
 
+  // A lone Joint Honours plan is only half a degree (#111). Plan-level, so keyed
+  // on the whole selection — never fires in the multi-program pane.
+  const jointHonoursPartner = useMemo(
+    () => jointHonoursWarning(plan.programIds),
+    [plan.programIds],
+  );
+
   const {
     program,
     macros,
@@ -90,6 +98,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
         <AuditAdvisoryNotes
           estimatedDenom={estimatedDenom}
           blockingIssueCount={blockingIssueCount}
+          jointHonoursPartner={jointHonoursPartner}
         />
         <UnverifiedRequirements
           programId={programId}
