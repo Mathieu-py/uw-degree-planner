@@ -50,9 +50,9 @@ export function AuditAdvisoryNotes({
             className="mt-0.5 shrink-0"
           />
           <span>
-            {countNoun(blockingIssueCount, "placement issue")} (prereq/antireq) —
-            until resolved, an antireq conflict counts once toward the bar and a
-            course placed before its prereqs is held out.
+            {countNoun(blockingIssueCount, "placement issue")} (prereq/antireq)
+            — until resolved, an antireq conflict counts once toward the bar and
+            a course placed before its prereqs is held out.
           </span>
         </div>
       ) : null}
