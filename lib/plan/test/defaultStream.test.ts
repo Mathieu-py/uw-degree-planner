@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { PROGRAMS } from "@/lib/programs";
 import { makeTermId } from "@/lib/terms";
-import { defaultStreamFor, programDefaultStream } from "../defaultStream";
+import {
+  defaultStreamFor,
+  programDefaultStream,
+  STREAMED_PROGRAM_IDS,
+} from "../defaultStream";
 
 describe("programDefaultStream", () => {
   it("maps the Stream 4 engineering programs", () => {
@@ -47,6 +52,9 @@ describe("programDefaultStream", () => {
       "stream4",
     );
     expect(programDefaultStream(syde, makeTermId(2026, "Winter"))).toBe(
+      "stream4",
+    );
+    expect(programDefaultStream(syde, makeTermId(2026, "Spring"))).toBe(
       "stream4",
     );
     // Fall 2026 and later: Stream 8.
@@ -96,5 +104,13 @@ describe("defaultStreamFor", () => {
         makeTermId(2026, "Fall"),
       ),
     ).toBe("stream8");
+  });
+});
+
+describe("STREAMED_PROGRAM_IDS", () => {
+  it("keys every curated id to a real program (guards against slug drift)", () => {
+    for (const id of STREAMED_PROGRAM_IDS) {
+      expect(PROGRAMS[id], `${id} missing from programs.json`).toBeDefined();
+    }
   });
 });

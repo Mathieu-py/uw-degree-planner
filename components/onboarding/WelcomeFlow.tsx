@@ -364,7 +364,7 @@ export function WelcomeFlow({
                       <SegmentedRadio
                         options={STREAM_OPTIONS}
                         value={stream}
-                        onChange={setStream}
+                        onChange={handleStreamChange}
                         ariaLabel="Co-op stream"
                       />
                     )}

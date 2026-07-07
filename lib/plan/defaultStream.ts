@@ -39,6 +39,20 @@ const ENGINEERING_DEFAULT_STREAM: Record<string, Stream> = {
   "mechatronics-engineering": "stream8",
 };
 
+/** Resolved by cohort start term below, so it's not in the static map above. */
+const SYDE_PROGRAM_ID = "systems-design-engineering";
+
+/**
+ * Every program id this module keys off, for a test that asserts each still
+ * resolves to a real program (a renamed slug would silently fall back to
+ * "regular" otherwise). Not typed against a program-id union — none exists;
+ * ids are `programs.json` keys — so the drift guard is a runtime test instead.
+ */
+export const STREAMED_PROGRAM_IDS: readonly string[] = [
+  ...Object.keys(ENGINEERING_DEFAULT_STREAM),
+  SYDE_PROGRAM_ID,
+];
+
 /** Systems Design flipped Stream 4 → Stream 8 for the Fall 2026 intake onward. */
 const SYDE_STREAM8_FROM: TermId = makeTermId(2026, "Fall");
 
@@ -58,7 +72,7 @@ export function programDefaultStream(
   programId: string,
   startTermId?: TermId | null,
 ): Stream {
-  if (programId === "systems-design-engineering") {
+  if (programId === SYDE_PROGRAM_ID) {
     return sydeDefault(startTermId);
   }
   return ENGINEERING_DEFAULT_STREAM[programId] ?? "regular";
