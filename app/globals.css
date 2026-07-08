@@ -1137,6 +1137,10 @@ body {
   font-size: 10.5px;
   font-weight: 700;
 }
+/* Here (not inline on the <circle>) so the reduced-motion override can win. */
+.av-ring-fill {
+  transition: stroke-dashoffset 0.4s ease;
+}
 .av-sec-label {
   font-size: 13px;
   font-weight: 600;
@@ -1157,7 +1161,9 @@ body {
   line-height: 1.45;
 }
 
-/* Macro sections — the three top-level collapsible groups in the audit panel. */
+/* Macro sections — the top-level collapsible groups in the audit panel.
+   Section-shell handoff: icon tile · label · done/total count · chevron,
+   2px rule under the head; `is-complete` flips tile/label/rule to green. */
 .av-macro {
   border-bottom: 1px solid var(--line);
 }
@@ -1167,36 +1173,75 @@ body {
 .av-macro-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   cursor: pointer;
-  padding: 11px 10px;
+  padding: 14px 14px 12px;
+}
+.av-macro-tile {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .av-macro-label {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  letter-spacing: -0.015em;
+  color: var(--ink);
 }
 .av-macro-count {
   flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-family: var(--font-mono);
+}
+.av-macro-count .big {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.av-macro-count .small {
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
+}
+/* Standalone check that replaces the count once the section is complete. */
+.av-macro-done {
+  flex: none;
+  display: inline-flex;
+  color: var(--met);
 }
 .av-macro-chev {
   flex: none;
+  display: inline-flex;
   color: var(--ink-3);
+  transition: transform 0.15s ease;
+}
+.av-macro[open] > .av-macro-head .av-macro-chev {
+  transform: rotate(90deg);
+}
+/* Flush hairline between head and body; grey until complete, then solid
+   green — never a partial fill. Sibling of the summary, so hidden when
+   collapsed (matches the reference). */
+.av-macro-rule {
+  height: 2px;
+  background: var(--line);
 }
 .av-macro-body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 0 6px 10px;
+  padding: 12px 12px 8px;
 }
 .av-macro-block {
   display: flex;
@@ -1205,6 +1250,16 @@ body {
 }
 .av-macro-hint {
   margin-top: 2px;
+}
+.av-macro.is-complete .av-macro-tile {
+  background: var(--met-soft);
+  color: var(--met);
+}
+.av-macro.is-complete .av-macro-label {
+  color: var(--met);
+}
+.av-macro.is-complete .av-macro-rule {
+  background: var(--met);
 }
 /* A quiet sub-stratum heading inside a macro (Term 1A, "Specialization", a
    named rule sub-group). */
@@ -1293,11 +1348,13 @@ details.cd-card[open] .cd-chev {
   min-width: 0;
 }
 .cd-ct-title {
+  display: block;
   font-size: 13.5px;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 .cd-ct-sub {
+  display: block;
   font-size: 11.5px;
   color: var(--ink-3);
   margin-top: 2px;
@@ -1638,7 +1695,8 @@ details.cd-card[open] .cd-chev {
 }
 @media (prefers-reduced-motion: reduce) {
   .sat-a-chev,
-  .cd-chev {
+  .cd-chev,
+  .av-macro-chev {
     transition: none;
   }
   .av-ring-fill {

@@ -154,6 +154,7 @@ export function NodeBody({
         <ChooseOneRow
           node={node}
           options={options}
+          illegalCodes={illegalCodes}
           catalogByCode={catalogByCode}
           onDrill={onDrill}
           drag={drag}
@@ -168,6 +169,7 @@ export function NodeBody({
         <ChooseOneRow
           node={node}
           options={flat}
+          illegalCodes={illegalCodes}
           catalogByCode={catalogByCode}
           onDrill={onDrill}
           drag={drag}

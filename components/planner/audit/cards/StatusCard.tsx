@@ -34,9 +34,10 @@ export function StatusCard({
     >
       <summary className="cd-cardhead">
         {lead}
+        {/* Spans (block via CSS): <div> inside <span>/<summary> is invalid HTML. */}
         <span className="cd-ct">
-          <div className="cd-ct-title">{title}</div>
-          {caption ? <div className="cd-ct-sub">{caption}</div> : null}
+          <span className="cd-ct-title">{title}</span>
+          {caption ? <span className="cd-ct-sub">{caption}</span> : null}
         </span>
         {pill ? <span className="br2-headright">{pill}</span> : null}
         <span className="cd-chev">

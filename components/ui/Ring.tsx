@@ -51,7 +51,6 @@ export function Ring({
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
         className="av-ring-fill"
-        style={{ transition: "stroke-dashoffset .4s ease" }}
       />
     </svg>
   );

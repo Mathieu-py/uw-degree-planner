@@ -1,7 +1,7 @@
 import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import { pluralize, progressPct } from "@/lib/format";
-import { MetChip } from "../cards/Chip";
+import { MetChip, WarnChip } from "../cards/Chip";
 import { Recede } from "../cards/Recede";
 import { RingLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
@@ -15,12 +15,14 @@ import { OptionChip } from "./OptionChip";
 export function ChooseOneRow({
   node,
   options,
+  illegalCodes,
   catalogByCode,
   onDrill,
   drag,
 }: {
   node: AuditNode;
   options: string[];
+  illegalCodes: ReadonlySet<string>;
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;
@@ -41,13 +43,21 @@ export function ChooseOneRow({
     return (
       <Recede title={title} caption={caption}>
         <div className="cd-chips">
-          {[...satisfierCodes].map((code) => (
-            <MetChip
-              key={code}
-              code={code}
-              name={catalogByCode.get(code)?.name}
-            />
-          ))}
+          {[...satisfierCodes].map((code) =>
+            illegalCodes.has(code) ? (
+              <WarnChip
+                key={code}
+                code={code}
+                name={catalogByCode.get(code)?.name}
+              />
+            ) : (
+              <MetChip
+                key={code}
+                code={code}
+                name={catalogByCode.get(code)?.name}
+              />
+            ),
+          )}
         </div>
       </Recede>
     );
@@ -76,6 +86,7 @@ export function ChooseOneRow({
             key={code}
             code={code}
             placed={satisfierCodes.has(code)}
+            illegal={illegalCodes.has(code)}
             catalogByCode={catalogByCode}
             onDrill={onDrill}
             drag={drag}
