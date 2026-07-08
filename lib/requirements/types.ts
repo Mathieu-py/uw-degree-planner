@@ -75,5 +75,3 @@ export type RuleNode =
     }
   | { kind: "courses"; courses: string[] }
   | { kind: "excluded"; description?: string; courses: string[] };
-
-export type SubjectPoolNode = Extract<RuleNode, { kind: "subjectPool" }>;

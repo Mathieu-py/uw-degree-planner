@@ -1,4 +1,4 @@
-export type PillVariant = "done" | "progress" | "none" | "decide" | "note";
+export type PillVariant = "progress" | "none" | "decide" | "note";
 
 /** The status pill parked top-right in a Status Card header. */
 export function StatusPill({

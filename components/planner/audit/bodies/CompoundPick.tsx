@@ -2,9 +2,11 @@
 
 import { Fragment, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
-import { pluralize } from "@/lib/format";
-import type { RuleNode } from "@/lib/programs";
+import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
+import { fmtUnits, pluralize, progressPct } from "@/lib/format";
+import { walkRule } from "@/lib/requirements/walk";
+import { MetChip, WarnChip } from "../cards/Chip";
+import { FindRow } from "../cards/FindRow";
 import { Recede } from "../cards/Recede";
 import { RingLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
@@ -12,23 +14,30 @@ import { StatusPill } from "../cards/StatusPill";
 import { nodeProgress } from "../nodeProgress";
 import { GENERIC_ALL, type OptionRenderProps } from "../types";
 import { OptionChip } from "./OptionChip";
+import { poolLevels } from "./SubjectPoolBody";
 
 /** A→Z badge for an option's position in the choice. */
 function optionBadge(index: number): string {
   return String.fromCharCode(65 + index);
 }
 
-/** All course codes an option's subtree names. Walks the RULE tree, not the
- *  compiled node: the compiler empties a pick's `children` (options move onto
- *  the rule), so a nested pick's codes would otherwise be dropped. Pools /
- *  excluded leaves carry no fixed list. */
+/** The fixed course codes an option's subtree names, walking the RULE tree (the
+ *  compiler unions a flat pick's leaves onto the rule, so its codes only live
+ *  there). Pools carry no fixed list — they're handled by {@link collectPools}. */
 function collectCourses(node: AuditNode): string[] {
-  const walk = (r: RuleNode): string[] => {
-    if (r.kind === "courses") return r.courses;
-    if (r.kind === "subjectPool" || r.kind === "excluded") return [];
-    return r.children.flatMap(walk);
-  };
-  return [...new Set(walk(node.ruleNode))];
+  const codes: string[] = [];
+  walkRule(node.ruleNode, (r) => {
+    if (r.kind === "courses") codes.push(...r.courses);
+  });
+  return [...new Set(codes)];
+}
+
+/** The compiled subjectPool nodes inside an option (bare pool, or nested under an
+ *  `all` bundle) — each keeps its `subjectCodes`/levels and its placed
+ *  `satisfiers`, so it can render met chips + a scoped "Find courses" row. */
+function collectPools(node: AuditNode): AuditNode[] {
+  if (node.ruleNode.kind === "subjectPool") return [node];
+  return node.children.flatMap(collectPools);
 }
 
 function optionName(option: AuditNode, badge: string): string {
@@ -37,10 +46,93 @@ function optionName(option: AuditNode, badge: string): string {
     : `Option ${badge}`;
 }
 
+/** Placed satisfier chips for a met/receded option (met, or warn if illegal). */
+function satisfierChips(
+  codes: string[],
+  illegalCodes: ReadonlySet<string>,
+  catalogByCode: OptionRenderProps["catalogByCode"],
+) {
+  return [...new Set(codes)].map((code) =>
+    illegalCodes.has(code) ? (
+      <WarnChip key={code} code={code} name={catalogByCode.get(code)?.name} />
+    ) : (
+      <MetChip key={code} code={code} name={catalogByCode.get(code)?.name} />
+    ),
+  );
+}
+
+/** One subject-pool part of an option: its placed chips + a scoped browse row. */
+function PoolPart({
+  pool,
+  illegalCodes,
+  catalogByCode,
+  onDrill,
+}: { pool: AuditNode } & Omit<OptionRenderProps, "placedCodes" | "drag">) {
+  const r = pool.ruleNode;
+  if (r.kind !== "subjectPool") return null;
+  const subjects = r.subjectCodes.map((s) => s.toUpperCase());
+  const chosen = pool.satisfiers.map((p) => p.code);
+  const { needed, satisfied } = nodeProgress(pool);
+  const remaining = Math.max(0, needed - satisfied);
+  return (
+    <>
+      {satisfierChips(chosen, illegalCodes, catalogByCode)}
+      {onDrill && remaining > 0 ? (
+        <FindRow
+          label={`Add ${fmtUnits(remaining)} more`}
+          onFind={() =>
+            onDrill([], {
+              includePrefixes: subjects,
+              levels: poolLevels(r.minLevel, r.maxLevel),
+            })
+          }
+        />
+      ) : null}
+    </>
+  );
+}
+
+/** An option's body: fixed courses as chips, plus each pool's chips + browse. */
+function OptionBody({
+  opt,
+  placedCodes,
+  illegalCodes,
+  catalogByCode,
+  onDrill,
+  drag,
+}: { opt: AuditNode } & OptionRenderProps) {
+  return (
+    <div className="cd-opt-body">
+      {collectCourses(opt).map((code) => (
+        <OptionChip
+          key={code}
+          code={code}
+          placed={placedCodes.has(code)}
+          illegal={illegalCodes.has(code)}
+          catalogByCode={catalogByCode}
+          onDrill={onDrill}
+          drag={drag}
+        />
+      ))}
+      {collectPools(opt).map((pool, pi) => (
+        <PoolPart
+          // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
+          key={`pool-${pi}`}
+          pool={pool}
+          illegalCodes={illegalCodes}
+          catalogByCode={catalogByCode}
+          onDrill={onDrill}
+        />
+      ))}
+    </div>
+  );
+}
+
 /**
  * Element C — a compound `pick` whose options are multi-course bundles (A / B /
  * …), rendered as `.cd-opt` sub-cards separated by "or". Collapses to a green
- * recede row once one stream is complete, expandable to the other options.
+ * recede row once the required number of streams is complete, expandable to the
+ * others.
  */
 export function CompoundPickBody({
   node,
@@ -61,36 +153,26 @@ export function CompoundPickBody({
   const { needed, satisfied } = nodeProgress(node);
   const metOptions = options
     .map((opt, index) => ({ opt, index }))
-    .filter(({ opt }) => isSatisfied(opt));
+    .filter(({ opt }) => isLegallyMet(opt));
   const decided = metOptions.length >= selectMin;
   const title = node.description ?? "Choose one option";
   const caption = `choose ${selectMin} of ${options.length} ${pluralize(options.length, "option")}`;
 
-  const chipsFor = (option: AuditNode) => {
-    const codes = [...new Set(collectCourses(option))];
-    return codes.map((code) => (
-      <OptionChip
-        key={code}
-        code={code}
-        placed={placedCodes.has(code)}
-        illegal={illegalCodes.has(code)}
-        catalogByCode={catalogByCode}
-        onDrill={onDrill}
-        drag={drag}
-      />
-    ));
-  };
-
-  // Satisfied → recede to the completed path; the others hide behind a toggle.
+  // Satisfied → recede to the completed path(s); the rest hide behind a toggle.
   if (decided && !showAll) {
     const others = options.length - metOptions.length;
-    const win = metOptions[0];
+    const recedeCaption =
+      metOptions.length > 1
+        ? `Completed — Options ${metOptions.map((m) => optionBadge(m.index)).join(", ")}`
+        : `Completed — Option ${optionBadge(metOptions[0].index)}`;
+    const doneCodes = metOptions.flatMap(({ opt }) =>
+      opt.satisfiers.map((p) => p.code),
+    );
     return (
-      <Recede
-        title={title}
-        caption={`Completed — Option ${optionBadge(win.index)}`}
-      >
-        <div className="cd-chips">{chipsFor(win.opt)}</div>
+      <Recede title={title} caption={recedeCaption}>
+        <div className="cd-chips">
+          {satisfierChips(doneCodes, illegalCodes, catalogByCode)}
+        </div>
         {others > 0 ? (
           <button
             type="button"
@@ -105,13 +187,16 @@ export function CompoundPickBody({
     );
   }
 
-  const anyPartial = options.some((o) => o.status === "partial");
-  const pct =
-    needed > 0 ? Math.min(Math.round((satisfied / needed) * 100), 100) : 0;
   return (
     <StatusCard
-      tone={anyPartial ? "partial" : "missing"}
-      lead={<RingLead pct={pct} num={satisfied} tone="neutral" />}
+      tone={satisfied > 0 ? "partial" : "missing"}
+      lead={
+        <RingLead
+          pct={progressPct(satisfied, needed, 0)}
+          num={satisfied}
+          tone="neutral"
+        />
+      }
       title={title}
       caption={caption}
       pill={
@@ -126,10 +211,7 @@ export function CompoundPickBody({
       </div>
       {options.map((opt, i) => {
         const badge = optionBadge(i);
-        const codes = [...new Set(collectCourses(opt))];
-        const met = codes.filter(
-          (c) => placedCodes.has(c) && !illegalCodes.has(c),
-        ).length;
+        const { needed: oNeed, satisfied: oSat } = nodeProgress(opt);
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
           <Fragment key={i}>
@@ -139,10 +221,17 @@ export function CompoundPickBody({
                 <span className="cd-opt-badge">{badge}</span>
                 <span className="cd-opt-name">{optionName(opt, badge)}</span>
                 <span className="cd-opt-mini">
-                  {met}/{codes.length}
+                  {fmtUnits(oSat)}/{fmtUnits(oNeed)}
                 </span>
               </div>
-              <div className="cd-opt-body">{chipsFor(opt)}</div>
+              <OptionBody
+                opt={opt}
+                placedCodes={placedCodes}
+                illegalCodes={illegalCodes}
+                catalogByCode={catalogByCode}
+                onDrill={onDrill}
+                drag={drag}
+              />
             </div>
           </Fragment>
         );

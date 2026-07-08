@@ -6,6 +6,7 @@ import {
   compileAudit,
   countPlacementIssues,
   creditExclusionKeys,
+  isLegallyMet,
   summarize,
 } from "../compile";
 import { buildPlacementMap } from "../placement";
@@ -643,5 +644,73 @@ describe("compileAudit — legality overlay (met-but-flagged)", () => {
     const plan = makePlan([slot("s1", 1239, ["cs115", "cs350"])]);
     const audit = compileAudit(program, plan, null, new Set());
     expect(audit.flexibleRoot?.illegalSatisfiers).toBeUndefined();
+  });
+
+  it("is not legallyMet when a required course is held up by an illegal placement", () => {
+    const plan = makePlan([
+      slot("s1", 1239, ["cs115"]),
+      slot("s2", 1241, ["cs350"]),
+    ]);
+    const audit = compileAudit(program, plan, null, new Set(["s2::cs350"]));
+    if (!audit.flexibleRoot) throw new Error("expected flexibleRoot");
+    // Status is still "met" (met-but-flagged), but not legally met — the card
+    // must stay active/amber rather than recede to a green "done".
+    expect(audit.flexibleRoot.status).toBe("met");
+    expect(isLegallyMet(audit.flexibleRoot)).toBe(false);
+  });
+
+  it("stays legallyMet when every required course is placed legally", () => {
+    const plan = makePlan([slot("s1", 1239, ["cs115", "cs350"])]);
+    const audit = compileAudit(program, plan, null, new Set());
+    if (!audit.flexibleRoot) throw new Error("expected flexibleRoot");
+    expect(isLegallyMet(audit.flexibleRoot)).toBe(true);
+  });
+});
+
+describe("compileAudit — legallyMet on subject pools (load-bearing vs overflow)", () => {
+  const poolProgram: Program = {
+    kind: "flexible",
+    name: "Pool",
+    asOf: "2026",
+    rules: {
+      kind: "all",
+      children: [
+        {
+          kind: "subjectPool",
+          selectCount: 2,
+          subjectCodes: ["cs"],
+          minLevel: 300,
+        },
+      ],
+    },
+  };
+  const poolNode = (audit: ReturnType<typeof compileAudit>) => {
+    const pool = audit.flexibleRoot?.children[0];
+    if (!pool) throw new Error("expected pool node");
+    return pool;
+  };
+
+  it("is NOT legally met when a load-bearing satisfier is illegal (2 placed, 1 illegal)", () => {
+    const plan = makePlan([
+      slot("s1", 1239, ["cs341"]),
+      slot("s2", 1241, ["cs350"]),
+    ]);
+    const pool = poolNode(
+      compileAudit(poolProgram, plan, null, new Set(["s2::cs350"])),
+    );
+    expect(pool.status).toBe("met"); // counts the flagged placement
+    expect(isLegallyMet(pool)).toBe(false); // …but only 1 of 2 is legal
+  });
+
+  it("stays legally met when the illegal placement is mere overflow (3 placed, 1 illegal)", () => {
+    const plan = makePlan([
+      slot("s1", 1239, ["cs341", "cs360"]),
+      slot("s2", 1241, ["cs350"]),
+    ]);
+    const pool = poolNode(
+      compileAudit(poolProgram, plan, null, new Set(["s2::cs350"])),
+    );
+    // 2 legal placements already meet the pool; the illegal 3rd is extra.
+    expect(isLegallyMet(pool)).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import { type AuditNode, summarize } from "@/lib/audit/compile";
 import type { NodeFill } from "@/lib/audit/progress";
+import { progressPct } from "@/lib/format";
 
 /**
  * Distinct-credit satisfied count for `node`'s whole subtree: the sum of the
@@ -56,7 +57,7 @@ export function ringFor(
   const { needed, satisfied } = nodeProgress(node, fill);
   const optional = needed === 0;
   return {
-    pct: optional ? 0 : Math.min(Math.round((satisfied / needed) * 100), 100),
+    pct: progressPct(satisfied, needed, 0),
     num: satisfied,
     optional,
   };

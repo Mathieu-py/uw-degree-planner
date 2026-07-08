@@ -3,10 +3,10 @@ import type { Course } from "@/lib/courses/types";
 import { fmtUnits, pluralize, unitsMet } from "@/lib/format";
 import { BreadthBody } from "../bodies/BreadthBody";
 import { OptionChip } from "../bodies/OptionChip";
-import { MetChip } from "../cards/Chip";
+import { MetChip, WarnChip } from "../cards/Chip";
+import { CountedCard, OpenCard } from "../cards/CountedCard";
 import { FindRow } from "../cards/FindRow";
-import { Recede } from "../cards/Recede";
-import { GlyphLead, RingLead } from "../cards/RingLead";
+import { GlyphLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
 import { StatusPill } from "../cards/StatusPill";
 import type { DragWiring, DrillFn, Section } from "../types";
@@ -55,54 +55,47 @@ export function SectionRow({
   // course counts, so it ends with a Find-courses row into the full catalog.
   if (section.kind === "info") {
     return (
-      <StatusCard
-        tone="missing"
-        lead={<RingLead pct={0} num={0} tone="neutral" />}
-        title={section.title}
-        pill={<StatusPill variant="none" label="Open" />}
-      >
+      <OpenCard title={section.title} num={0}>
         <div className="cd-metaline">{section.caption}</div>
         {onDrill ? (
           <FindRow label="Add electives" onFind={() => onDrill([], {})} />
         ) : null}
-      </StatusCard>
+      </OpenCard>
     );
   }
 
   // F · Finite elective list — pick N from a fixed set of draggable chips.
   if (section.kind === "electiveFinite") {
     const placed = Math.min(section.placed, section.need);
-    if (section.placed >= section.need) {
-      return (
-        <Recede title={section.title} meta={`${section.need}/${section.need}`}>
+    return (
+      <CountedCard
+        title={section.title}
+        caption={section.caption}
+        done={placed}
+        need={section.need}
+        num={placed}
+        complete={section.placed >= section.need}
+        recedeMeta={`${section.need}/${section.need}`}
+        recedeChildren={
           <div className="cd-chips">
             {section.options
               .filter((c) => placedCodes.has(c))
-              .map((code) => (
-                <MetChip
-                  key={code}
-                  code={code}
-                  name={catalogByCode.get(code)?.name}
-                />
-              ))}
+              .map((code) =>
+                illegalCodes.has(code) ? (
+                  <WarnChip
+                    key={code}
+                    code={code}
+                    name={catalogByCode.get(code)?.name}
+                  />
+                ) : (
+                  <MetChip
+                    key={code}
+                    code={code}
+                    name={catalogByCode.get(code)?.name}
+                  />
+                ),
+              )}
           </div>
-        </Recede>
-      );
-    }
-    const pct =
-      section.need > 0
-        ? Math.min(Math.round((section.placed / section.need) * 100), 100)
-        : 100;
-    return (
-      <StatusCard
-        tone={placed > 0 ? "partial" : "missing"}
-        lead={<RingLead pct={pct} num={placed} />}
-        title={section.title}
-        caption={section.caption}
-        pill={
-          placed > 0 ? (
-            <StatusPill variant="progress" label="In progress" />
-          ) : undefined
         }
       >
         <div className="cd-metaline">
@@ -124,7 +117,7 @@ export function SectionRow({
             />
           ))}
         </div>
-      </StatusCard>
+      </CountedCard>
     );
   }
 
@@ -136,38 +129,21 @@ export function SectionRow({
   // H · Level floor — a unit minimum tracked across the whole plan; no picker.
   if (section.kind === "levelFloor") {
     const done = Math.min(section.placedUnits, section.needUnits);
-    const complete = unitsMet(section.placedUnits, section.needUnits);
-    if (complete) {
-      return (
-        <Recede
-          title={section.title}
-          meta={`${fmtUnits(section.needUnits)}/${fmtUnits(section.needUnits)}`}
-        >
+    return (
+      <CountedCard
+        title={section.title}
+        caption={section.caption}
+        done={done}
+        need={section.needUnits}
+        num={fmtUnits(done)}
+        complete={unitsMet(section.placedUnits, section.needUnits)}
+        recedeMeta={`${fmtUnits(section.needUnits)}/${fmtUnits(section.needUnits)}`}
+        recedeChildren={
           <div className="cd-chips">
             {section.satisfiers.map((code) => (
               <MetChip key={code} code={code} />
             ))}
           </div>
-        </Recede>
-      );
-    }
-    const pct =
-      section.needUnits > 0
-        ? Math.min(
-            Math.round((section.placedUnits / section.needUnits) * 100),
-            100,
-          )
-        : 100;
-    return (
-      <StatusCard
-        tone={section.placedUnits > 0 ? "partial" : "missing"}
-        lead={<RingLead pct={pct} num={fmtUnits(done)} />}
-        title={section.title}
-        caption={section.caption}
-        pill={
-          section.placedUnits > 0 ? (
-            <StatusPill variant="progress" label="In progress" />
-          ) : undefined
         }
       >
         <div className="cd-metaline">
@@ -183,7 +159,7 @@ export function SectionRow({
           No list to pick from — tracked across your whole plan, so there's
           nothing to drag.
         </div>
-      </StatusCard>
+      </CountedCard>
     );
   }
 
@@ -195,13 +171,7 @@ export function SectionRow({
       placedCodes.has(c),
     ).length;
     return (
-      <StatusCard
-        tone={placed > 0 ? "partial" : "missing"}
-        lead={<RingLead pct={0} num={placed} tone="neutral" />}
-        title={section.title}
-        caption={section.caption}
-        pill={<StatusPill variant="none" label="Open" />}
-      >
+      <OpenCard title={section.title} caption={section.caption} num={placed}>
         <div className="cd-metaline">
           Drag any from this list, or click to add.
         </div>
@@ -218,17 +188,11 @@ export function SectionRow({
             />
           ))}
         </div>
-      </StatusCard>
+      </OpenCard>
     );
   }
   return (
-    <StatusCard
-      tone="missing"
-      lead={<RingLead pct={0} num={0} tone="neutral" />}
-      title={section.title}
-      caption={section.caption}
-      pill={<StatusPill variant="none" label="Open" />}
-    >
+    <OpenCard title={section.title} caption={section.caption} num={0}>
       <div className="cd-metaline">
         {section.unitBased
           ? "Measured in units — no fixed list to drag, so browse the catalog."
@@ -237,7 +201,7 @@ export function SectionRow({
       {onDrill ? (
         <FindRow label="Add electives" onFind={() => onDrill([], {})} />
       ) : null}
-    </StatusCard>
+    </OpenCard>
   );
 }
 

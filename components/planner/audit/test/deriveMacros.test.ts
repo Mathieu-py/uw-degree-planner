@@ -125,6 +125,41 @@ describe("deriveMacros", () => {
     expect(s2 && s2.kind === "electiveFinite" ? s2.placed : null).toBe(2);
   });
 
+  it("excludes an illegally-placed option from the finite count (a flagged placement can't complete it)", () => {
+    const program: Program = {
+      ...PROGRAM,
+      electives: [
+        {
+          description: "Technical Electives",
+          requiredCount: 2,
+          approvedCourses: ["te1", "te2", "te3"],
+        },
+      ],
+    };
+    // te1 legal, te2 placed before its prereqs (illegal). Both land in slot s1.
+    const legality = new Set(["s1::te2"]);
+    const audit = compileAudit(
+      program,
+      makePlan(["te1", "te2"]),
+      null,
+      legality,
+    );
+    const { macros } = deriveMacros(
+      audit,
+      program,
+      0,
+      [],
+      [],
+      () => 0.5,
+      legality,
+    );
+    const s = sectionsOf(macros).find((x) => x.kind === "electiveFinite");
+    if (!s || s.kind !== "electiveFinite") throw new Error("expected finite");
+    // Only te1 counts — the illegal te2 is excluded, so 1 of 2 (won't recede).
+    expect(s.placed).toBe(1);
+    expect(s.placed).toBeLessThan(s.need);
+  });
+
   it("does NOT surface unverified requirements in a macro", () => {
     // Unverified rules are now rendered near the headline as acknowledgeable
     // rows (buildProgramAudit → UnverifiedRequirements), not buried in a macro.

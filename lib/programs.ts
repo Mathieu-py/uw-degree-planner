@@ -1,22 +1,12 @@
 import { z } from "zod";
 import programsData from "../data/programs.json";
 import { describeRule } from "./requirements/describe";
-import {
-  type RuleNode,
-  RuleNodeSchema,
-  type SubjectPoolNode,
-} from "./requirements/types";
+import { type RuleNode, RuleNodeSchema } from "./requirements/types";
 import { requiredCoursesIn, walkRule } from "./requirements/walk";
 
 // The requirement AST (RuleNode) and helpers live in `lib/requirements`;
 // re-export so `@/lib/programs` stays the stable entry point.
-export {
-  describeRule,
-  type RuleNode,
-  requiredCoursesIn,
-  type SubjectPoolNode,
-  walkRule,
-};
+export { describeRule, type RuleNode, requiredCoursesIn, walkRule };
 
 export const TERM_LETTERS = [
   "1A",

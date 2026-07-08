@@ -1,10 +1,7 @@
 import { fmtUnits, joinWithOverflow, pluralize, unitsMet } from "@/lib/format";
 import { MetChip } from "../cards/Chip";
+import { CountedCard } from "../cards/CountedCard";
 import { FindRow } from "../cards/FindRow";
-import { Recede } from "../cards/Recede";
-import { RingLead } from "../cards/RingLead";
-import { StatusCard } from "../cards/StatusCard";
-import { StatusPill } from "../cards/StatusPill";
 import type { DrillFn, Section } from "../types";
 
 /**
@@ -22,11 +19,6 @@ export function BreadthBody({
   const { needUnits, placedUnits, subjects, satisfiers, title } = section;
   const done = Math.min(placedUnits, needUnits);
   const remaining = Math.max(0, needUnits - placedUnits);
-  const complete = unitsMet(placedUnits, needUnits);
-  const pct =
-    needUnits > 0
-      ? Math.min(Math.round((placedUnits / needUnits) * 100), 100)
-      : 100;
 
   const chips = (
     <div className="cd-chips">
@@ -36,26 +28,15 @@ export function BreadthBody({
     </div>
   );
 
-  if (complete) {
-    return (
-      <Recede
-        title={title}
-        meta={`${fmtUnits(needUnits)}/${fmtUnits(needUnits)}`}
-      >
-        {chips}
-      </Recede>
-    );
-  }
   return (
-    <StatusCard
-      tone={placedUnits > 0 ? "partial" : "missing"}
-      lead={<RingLead pct={pct} num={fmtUnits(done)} />}
+    <CountedCard
       title={title}
-      pill={
-        placedUnits > 0 ? (
-          <StatusPill variant="progress" label="In progress" />
-        ) : undefined
-      }
+      done={done}
+      need={needUnits}
+      num={fmtUnits(done)}
+      complete={unitsMet(placedUnits, needUnits)}
+      recedeMeta={`${fmtUnits(needUnits)}/${fmtUnits(needUnits)}`}
+      recedeChildren={chips}
     >
       <div className="cd-metaline">
         <b>
@@ -71,6 +52,6 @@ export function BreadthBody({
           onFind={() => onDrill([], { includePrefixes: subjects })}
         />
       ) : null}
-    </StatusCard>
+    </CountedCard>
   );
 }

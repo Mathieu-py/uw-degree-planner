@@ -1,17 +1,14 @@
-import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
+import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits, formatLevelRange, joinWithOverflow } from "@/lib/format";
 import { MetChip, WarnChip } from "../cards/Chip";
+import { CountedCard } from "../cards/CountedCard";
 import { FindRow } from "../cards/FindRow";
-import { Recede } from "../cards/Recede";
-import { RingLead } from "../cards/RingLead";
-import { StatusCard } from "../cards/StatusCard";
-import { StatusPill } from "../cards/StatusPill";
 import { nodeProgress } from "../nodeProgress";
 import type { DrillFn } from "../types";
 
 /** Level buckets within a pool's [min,max] range (bucketed values). [] = all. */
-function poolLevels(min?: number, max?: number): number[] {
+export function poolLevels(min?: number, max?: number): number[] {
   const all = [100, 200, 300, 400];
   const sub = all.filter(
     (b) => (min == null || b >= min) && (max == null || b <= max),
@@ -70,26 +67,15 @@ export function SubjectPoolBody({
     </div>
   );
 
-  if (isSatisfied(node)) {
-    return (
-      <Recede title={title} meta={`${fmt(needed)}/${fmt(needed)}`}>
-        {chips}
-      </Recede>
-    );
-  }
-
-  const pct =
-    needed > 0 ? Math.min(Math.round((satisfied / needed) * 100), 100) : 100;
   return (
-    <StatusCard
-      tone={satisfied > 0 ? "partial" : "missing"}
-      lead={<RingLead pct={pct} num={fmt(satisfied)} />}
+    <CountedCard
       title={title}
-      pill={
-        satisfied > 0 ? (
-          <StatusPill variant="progress" label="In progress" />
-        ) : undefined
-      }
+      done={satisfied}
+      need={needed}
+      num={fmt(satisfied)}
+      complete={isLegallyMet(node)}
+      recedeMeta={`${fmt(needed)}/${fmt(needed)}`}
+      recedeChildren={chips}
     >
       <div className="cd-metaline">
         <b>
@@ -107,7 +93,10 @@ export function SubjectPoolBody({
         .
       </div>
       {chosenCodes.length > 0 ? chips : null}
-      {onDrill ? (
+      {/* Nothing to add when the count is met but blocked by an illegal
+          placement (remaining 0, not yet satisfied) — fix that placement, don't
+          browse for more. */}
+      {onDrill && remaining > 0 ? (
         <FindRow
           label={`Add ${fmt(remaining)} more${unitWord}`}
           onFind={() =>
@@ -118,6 +107,6 @@ export function SubjectPoolBody({
           }
         />
       ) : null}
-    </StatusCard>
+    </CountedCard>
   );
 }

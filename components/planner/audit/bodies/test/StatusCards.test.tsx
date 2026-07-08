@@ -5,6 +5,7 @@ import type { AuditNode } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import { SectionRow } from "../../sections/SectionRow";
 import type { Section } from "../../types";
+import { CompoundPickBody } from "../CompoundPick";
 import { SubjectPoolBody } from "../SubjectPoolBody";
 
 afterEach(cleanup);
@@ -118,6 +119,24 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
     expect(container.querySelector(".br4-split")).toBeNull();
     expect(container.querySelector(".cd-chip.drag")).toBeNull();
   });
+
+  it("does NOT recede when the count is met only via an illegal placement (legallyMet false)", () => {
+    // The compiler marks a pool met-but-flagged (`legallyMet: false`) when a
+    // load-bearing satisfier is placed illegally. The card must stay active.
+    const node = { ...poolNode(["cs341", "cs350"], 2), legallyMet: false };
+    const { container } = render(
+      <SubjectPoolBody
+        node={node}
+        illegalCodes={new Set(["cs350"])}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    expect(container.querySelector(".sat-a")).toBeNull(); // not receded
+    expect(container.querySelector(".cd-card")).not.toBeNull();
+    // The illegal course shows amber (warn), never a green "met" chip.
+    expect(container.querySelector(".cd-chip.warn")).not.toBeNull();
+  });
 });
 
 describe("Status Cards — notes (element I)", () => {
@@ -179,6 +198,93 @@ describe("Status Cards — level floor (element H)", () => {
     expect(auto?.querySelector("svg")).not.toBeNull(); // the lock glyph
     expect(
       within(container as HTMLElement).queryByText(/1 of 2 units/i),
+    ).not.toBeNull();
+  });
+});
+
+/** A compound pick whose options are subject pools — the shape that used to
+ *  render empty "0/0" cards with no chips and no browse (issue #115). */
+function compoundPoolPick(
+  optA: AuditNode,
+  optB: AuditNode,
+  decided: boolean,
+): AuditNode {
+  return {
+    ruleNode: {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [optA.ruleNode, optB.ruleNode],
+    },
+    status: decided ? "met" : "partial",
+    satisfiers: [...optA.satisfiers, ...optB.satisfiers],
+    missingCodes: [],
+    satisfiedCount: decided ? 1 : 0,
+    selectMin: 1,
+    selectMax: 1,
+    children: [optA, optB],
+  };
+}
+
+describe("Status Cards — compound pick with subject-pool options (issue #115)", () => {
+  it("renders a pool option's placed chips + a scoped Find-courses row (not an empty 0/0 card)", () => {
+    const drills: Array<[string[], unknown]> = [];
+    const { container } = render(
+      <CompoundPickBody
+        node={compoundPoolPick(poolNode(["cs341"], 2), poolNode([], 3), false)}
+        placedCodes={new Set(["cs341"])}
+        illegalCodes={EMPTY}
+        catalogByCode={NO_CATALOG}
+        onDrill={(codes, preset) => drills.push([codes, preset])}
+      />,
+    );
+    // Active card with two option sub-cards (not receded).
+    expect(container.querySelector(".sat-a")).toBeNull();
+    expect(container.querySelectorAll(".cd-opt")).toHaveLength(2);
+    // The placed pool course shows as a met chip — the body is NOT empty.
+    const met = [...container.querySelectorAll(".cd-chip.met")].map((c) =>
+      c.textContent?.replace(/\s+/g, "").toUpperCase(),
+    );
+    expect(met).toContain("CS341");
+    // Each pool option offers a browse row…
+    const finds = container.querySelectorAll(".br4-split");
+    expect(finds.length).toBeGreaterThanOrEqual(1);
+    // …and the per-option mini reflects the real need (1 of 2 / 0 of 3), never "0/0".
+    const minis = [...container.querySelectorAll(".cd-opt-mini")].map(
+      (m) => m.textContent,
+    );
+    expect(minis).toContain("1/2");
+    expect(minis).not.toContain("0/0");
+    // The browse drill carries the pool's subject/level preset.
+    fireEvent.click(finds[0] as HTMLButtonElement);
+    expect(drills[0][0]).toEqual([]);
+    expect(drills[0][1]).toMatchObject({
+      includePrefixes: ["CS"],
+      levels: [300, 400],
+    });
+  });
+
+  it("recedes to a green row listing the completed pool stream's courses", () => {
+    const { container } = render(
+      <CompoundPickBody
+        node={compoundPoolPick(
+          poolNode(["cs341", "cs350"], 2),
+          poolNode([], 3),
+          true,
+        )}
+        placedCodes={new Set(["cs341", "cs350"])}
+        illegalCodes={EMPTY}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    const recede = container.querySelector("details.sat-a");
+    expect(recede, "a satisfied compound pool recedes").not.toBeNull();
+    // The completed stream's courses appear as met chips (body is NOT empty).
+    expect(recede?.querySelectorAll(".cd-chip.met")).toHaveLength(2);
+    // The unchosen option hides behind the toggle.
+    expect(
+      within(container as HTMLElement).queryByText(/show 1 other option/i),
     ).not.toBeNull();
   });
 });

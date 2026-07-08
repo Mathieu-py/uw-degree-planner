@@ -1,6 +1,6 @@
-import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
+import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
-import { pluralize } from "@/lib/format";
+import { pluralize, progressPct } from "@/lib/format";
 import { MetChip } from "../cards/Chip";
 import { Recede } from "../cards/Recede";
 import { RingLead } from "../cards/RingLead";
@@ -32,7 +32,7 @@ export function ChooseOneRow({
   // Only collapse to the chosen chip(s) once a placement satisfies the choice.
   // A vacuously-met optional pick has no satisfiers and would render empty, so
   // keep showing the options until truly decided.
-  const decided = isSatisfied(node);
+  const decided = isLegallyMet(node);
   const title = node.description ?? "Choose one";
   const caption = `${selectMin} of ${options.length} ${pluralize(options.length, "option")}`;
   const satisfierCodes = new Set(node.satisfiers.map((s) => s.code));
@@ -52,8 +52,7 @@ export function ChooseOneRow({
       </Recede>
     );
   }
-  const pct =
-    needed > 0 ? Math.min(Math.round((satisfied / needed) * 100), 100) : 0;
+  const pct = progressPct(satisfied, needed, 0);
   return (
     <StatusCard
       tone={satisfied > 0 ? "partial" : "missing"}

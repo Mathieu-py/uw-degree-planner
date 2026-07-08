@@ -1,10 +1,7 @@
-import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
+import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import { countNoun } from "@/lib/format";
-import { Recede } from "../cards/Recede";
-import { RingLead } from "../cards/RingLead";
-import { StatusCard } from "../cards/StatusCard";
-import { StatusPill } from "../cards/StatusPill";
+import { CountedCard } from "../cards/CountedCard";
 import { nodeProgress } from "../nodeProgress";
 import { type DragWiring, type DrillFn, GENERIC_ALL } from "../types";
 import { ChooseOneRow } from "./ChooseOneRow";
@@ -78,30 +75,21 @@ function RequiredCoursesCard({
     </div>
   );
 
-  if (isSatisfied(node)) {
-    return (
-      <Recede
-        title="Required courses"
-        caption={caption}
-        meta={`${needed}/${needed}`}
-      >
-        {chips}
-      </Recede>
-    );
-  }
-  const pct =
-    needed > 0 ? Math.min(Math.round((satisfied / needed) * 100), 100) : 100;
+  // Recede only when every required course is placed *legally*. An illegal
+  // placement (unmet prereq / antireq) isn't credited toward the degree, so keep
+  // the card active/amber (with its WarnChip) rather than collapsing to a green
+  // "done" that would contradict the degree bar.
   return (
-    <StatusCard
-      tone={satisfied > 0 ? "partial" : "missing"}
-      lead={<RingLead pct={pct} num={satisfied} />}
+    <CountedCard
       title="Required courses"
       caption={caption}
-      pill={
-        satisfied > 0 ? (
-          <StatusPill variant="progress" label="In progress" />
-        ) : undefined
-      }
+      done={satisfied}
+      need={needed}
+      num={satisfied}
+      complete={isLegallyMet(node)}
+      recedeMeta={`${needed}/${needed}`}
+      recedeCaption={caption}
+      recedeChildren={chips}
     >
       <div className="cd-metaline">
         <b>
@@ -110,7 +98,7 @@ function RequiredCoursesCard({
         required courses placed.
       </div>
       {chips}
-    </StatusCard>
+    </CountedCard>
   );
 }
 
