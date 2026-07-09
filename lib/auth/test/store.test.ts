@@ -26,7 +26,11 @@ vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: createSupabaseBrowserClientMock,
 }));
 
-import { __resetAuthStoreForTests, useAuthState } from "../store";
+import {
+  __resetAuthStoreForTests,
+  publishUsername,
+  useAuthState,
+} from "../store";
 
 function mkUser(
   id = "u1",
@@ -206,6 +210,36 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
     await waitFor(() => expect(result.current.ready).toBe(true));
     expect(result.current.username).toBeNull();
     expect(result.current.displayName).toBe("u1@example.com");
+  });
+
+  it("publishUsername broadcasts a just-saved username to every consumer", async () => {
+    const user = mkUser();
+    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
+    maybeSingleMock.mockResolvedValueOnce({ data: { username: "old_name" } });
+
+    const { result: r1 } = renderHook(() => useAuthState());
+    const { result: r2 } = renderHook(() => useAuthState());
+    await waitFor(() => expect(r1.current.username).toBe("old_name"));
+
+    act(() => {
+      publishUsername("new_name");
+    });
+
+    expect(r1.current.username).toBe("new_name");
+    expect(r1.current.displayName).toBe("new_name");
+    expect(r2.current.username).toBe("new_name");
+  });
+
+  it("publishUsername is a no-op when signed out", async () => {
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    act(() => {
+      publishUsername("ghost");
+    });
+
+    expect(result.current.username).toBeNull();
+    expect(result.current.displayName).toBeNull();
   });
 
   it("clears the username on sign-out", async () => {

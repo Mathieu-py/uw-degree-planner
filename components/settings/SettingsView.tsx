@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { ThemePreviewPicker } from "@/components/theme/ThemePreviewPicker";
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { deleteAccount, updateProfile } from "@/lib/account/server/actions";
-import { useAuthState } from "@/lib/auth/store";
+import { publishUsername, useAuthState } from "@/lib/auth/store";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function usernameError(code: string): string {
@@ -151,6 +151,15 @@ function UsernameRow({ initialUsername }: { initialUsername: string }) {
 
   const dirty = value.trim() !== baseline.trim();
 
+  // The store's username arrives async (the profiles fetch can land after
+  // mount) — adopt it unless the user has started editing.
+  useEffect(() => {
+    if (!dirty && initialUsername !== baseline) {
+      setValue(initialUsername);
+      setBaseline(initialUsername);
+    }
+  }, [dirty, initialUsername, baseline]);
+
   async function save() {
     if (busy || !dirty) return;
     setBusy(true);
@@ -158,7 +167,9 @@ function UsernameRow({ initialUsername }: { initialUsername: string }) {
     setSaved(false);
     const result = await updateProfile({ username: value });
     if (result.ok) {
-      setBaseline(value);
+      setValue(result.data.username);
+      setBaseline(result.data.username);
+      publishUsername(result.data.username);
       setSaved(true);
     } else {
       setError(usernameError(result.error));

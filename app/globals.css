@@ -154,6 +154,19 @@
   --animate-scale-in: scale-in 200ms ease-out forwards;
   --animate-slide-in-top: slide-in-top 200ms ease-out forwards;
   --animate-slide-in-bottom: slide-in-bottom 220ms ease-out forwards;
+  /* Dropdown pop: faster + subtler than slide-in-top — menus should snap. */
+  --animate-menu-pop: menu-pop 130ms ease-out forwards;
+}
+
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in {

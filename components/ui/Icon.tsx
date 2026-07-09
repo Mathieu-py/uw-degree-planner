@@ -14,9 +14,11 @@ import Gear from "./icons/gear.svg";
 import Google from "./icons/google.svg";
 import Grid from "./icons/grid.svg";
 import Grip from "./icons/grip.svg";
+import Help from "./icons/help.svg";
 import Import from "./icons/import.svg";
 import List from "./icons/list.svg";
 import Lock from "./icons/lock.svg";
+import Logout from "./icons/logout.svg";
 import PlusSign from "./icons/plusSign.svg";
 import Rename from "./icons/rename.svg";
 import Reset from "./icons/reset.svg";
@@ -46,9 +48,11 @@ const REGISTRY = {
   google: Google,
   grid: Grid,
   grip: Grip,
+  help: Help,
   import: Import,
   list: List,
   lock: Lock,
+  logout: Logout,
   plusSign: PlusSign,
   rename: Rename,
   reset: Reset,
