@@ -18,6 +18,7 @@ import { TermChoiceModal } from "@/components/planner/picker/TermChoiceModal";
 import { Timeline } from "@/components/planner/timeline/Timeline";
 import { PlanToolbar } from "@/components/planner/toolbar/PlanToolbar";
 import { SaveStatusBadge } from "@/components/planner/toolbar/SaveStatusBadge";
+import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { ActionMenu } from "@/components/ui/ActionMenu";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -70,9 +71,7 @@ interface Props {
 export function PlannerShell(props: Props) {
   const { isAuthed, ready } = useAuthState();
   if (!ready) {
-    return (
-      <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
-    );
+    return <PlannerSkeleton />;
   }
   return <PlannerShellInner {...props} isAuthed={isAuthed} />;
 }
@@ -331,7 +330,7 @@ function PlannerShellInner({
         toolbar={null}
         overlays={handoffElement}
       >
-        <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
+        <PlannerSkeleton />
       </PlannerLayout>
     );
   }
@@ -389,7 +388,7 @@ function PlannerShellInner({
         planId={planId}
         overlays={handoffElement}
       >
-        <div className="h-96 rounded-[14px] border border-dashed border-line-2 bg-bg-2 animate-pulse" />
+        <PlannerSkeleton />
       </PlannerLayout>
     );
   }
