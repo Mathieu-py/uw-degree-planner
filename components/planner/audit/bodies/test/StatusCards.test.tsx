@@ -5,6 +5,7 @@ import type { AuditNode } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import { SectionRow } from "../../sections/SectionRow";
 import type { Section } from "../../types";
+import { ChooseOneRow } from "../ChooseOneRow";
 import { CompoundPickBody } from "../CompoundPick";
 import { SubjectPoolBody } from "../SubjectPoolBody";
 
@@ -39,6 +40,30 @@ function poolNode(satisfierCodes: string[], need: number): AuditNode {
     missingCodes: [],
     satisfiedCount: satisfierCodes.length,
     selectMin: need,
+    children: [],
+  };
+}
+
+/** A flat 1-of-N pick over single courses — the ChooseOneRow shape. */
+function choicePick(satisfierCodes: string[], options: string[]): AuditNode {
+  return {
+    ruleNode: {
+      kind: "pick",
+      selectMin: 1,
+      selectMax: 1,
+      children: [{ kind: "courses", courses: options }],
+    },
+    status: satisfierCodes.length > 0 ? "met" : "unmet",
+    satisfiers: satisfierCodes.map((code) => ({
+      code,
+      slotId: "s1",
+      termId: 1239,
+      position: "1A",
+    })),
+    missingCodes: [],
+    satisfiedCount: satisfierCodes.length,
+    selectMin: 1,
+    selectMax: 1,
     children: [],
   };
 }
@@ -136,6 +161,46 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
     expect(container.querySelector(".cd-card")).not.toBeNull();
     // The illegal course shows amber (warn), never a green "met" chip.
     expect(container.querySelector(".cd-chip.warn")).not.toBeNull();
+  });
+});
+
+describe("Status Cards — choose-one pick (element B) legality", () => {
+  it("does NOT recede when the choice is met only via an illegal placement (legallyMet false)", () => {
+    // The compiler marks the pick met-but-flagged when its only satisfier is
+    // placed illegally. The row must stay an active card, not a green recede.
+    const node = {
+      ...choicePick(["cs350"], ["cs341", "cs350"]),
+      legallyMet: false,
+    };
+    const { container } = render(
+      <ChooseOneRow
+        node={node}
+        options={["cs341", "cs350"]}
+        illegalCodes={new Set(["cs350"])}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    expect(container.querySelector(".sat-a")).toBeNull(); // not receded
+    expect(container.querySelector(".cd-card")).not.toBeNull();
+    // The illegal placement shows amber (warn), never a green "met" chip.
+    expect(container.querySelector(".cd-chip.warn")).not.toBeNull();
+    expect(container.querySelector(".cd-chip.met")).toBeNull();
+  });
+
+  it("recedes to the chosen course once the choice is legally satisfied", () => {
+    const { container } = render(
+      <ChooseOneRow
+        node={choicePick(["cs341"], ["cs341", "cs350"])}
+        options={["cs341", "cs350"]}
+        illegalCodes={EMPTY}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    const recede = container.querySelector("details.sat-a");
+    expect(recede, "a legally decided choice recedes").not.toBeNull();
+    expect(recede?.querySelectorAll(".cd-chip.met")).toHaveLength(1);
   });
 });
 
@@ -286,5 +351,29 @@ describe("Status Cards — compound pick with subject-pool options (issue #115)"
     expect(
       within(container as HTMLElement).queryByText(/show 1 other option/i),
     ).not.toBeNull();
+  });
+
+  it("does NOT recede when the completed option's satisfier is illegal (legallyMet false)", () => {
+    // Parent status says "met", but `decided` is recomputed from
+    // isLegallyMet(option) — the flagged option must not collapse the card.
+    const optA = { ...poolNode(["cs341", "cs350"], 2), legallyMet: false };
+    const { container } = render(
+      <CompoundPickBody
+        node={compoundPoolPick(optA, poolNode([], 3), true)}
+        placedCodes={new Set(["cs341", "cs350"])}
+        illegalCodes={new Set(["cs350"])}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    expect(container.querySelector(".sat-a")).toBeNull(); // not receded
+    expect(container.querySelector(".cd-card")).not.toBeNull();
+    // The illegal placement is flagged amber; the legal one stays green.
+    const codes = (sel: string) =>
+      [...container.querySelectorAll(sel)].map((c) =>
+        c.textContent?.replace(/\s+/g, "").toUpperCase(),
+      );
+    expect(codes(".cd-chip.warn")).toContain("CS350");
+    expect(codes(".cd-chip.met")).toContain("CS341");
   });
 });

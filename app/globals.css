@@ -1122,6 +1122,14 @@ body {
   overflow-y: auto;
   padding: 4px 6px 10px;
 }
+/* Audit-panel class taxonomy — two deliberate vocabularies:
+   av-*  = panel framework: the macro/section shell (av-macro*, av-substrata*),
+           panel advisories (av-note, av-hint, av-sec-label), and the ring
+           overlay (av-ring-*) shared by card leads, strata, and master·detail.
+   cd-*  = one requirement's active status card; sat-a = its receded green row.
+   The old av- card grammar (av-row/av-choice/av-item…) was fully migrated to
+   cd-/sat-a in #115; everything still under av- is shell, not cards. */
+
 /* Progress-ring overlay: a Ring with its satisfied count centred on top. Shared
    by every status-card lead via RingLead. */
 .av-ring-wrap {
