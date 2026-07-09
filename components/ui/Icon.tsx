@@ -16,6 +16,7 @@ import Grid from "./icons/grid.svg";
 import Grip from "./icons/grip.svg";
 import Import from "./icons/import.svg";
 import List from "./icons/list.svg";
+import Lock from "./icons/lock.svg";
 import Moon from "./icons/moon.svg";
 import PlusSign from "./icons/plusSign.svg";
 import Rename from "./icons/rename.svg";
@@ -49,6 +50,7 @@ const REGISTRY = {
   grip: Grip,
   import: Import,
   list: List,
+  lock: Lock,
   moon: Moon,
   plusSign: PlusSign,
   rename: Rename,

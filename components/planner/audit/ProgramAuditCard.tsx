@@ -15,7 +15,6 @@ interface Props {
   plan: LocalPlan;
   /** The program this card audits. Resolved against PROGRAMS internally. */
   programId: string;
-  catalog?: Course[];
   /** Shared `code → Course` lookup, built once by the parent. */
   catalogByCode: Map<string, Course>;
   /** Plan-wide validation issues; the credit-exclusion overlay is built per-program. */
@@ -39,7 +38,6 @@ interface Props {
 export const ProgramAuditCard = memo(function ProgramAuditCard({
   plan,
   programId,
-  catalog,
   catalogByCode,
   issues,
   blockingIssueCount,
@@ -111,7 +109,6 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
         macros={macros}
         placedCodes={placedCodes}
         illegalCodes={illegalCodes}
-        catalog={catalog}
         catalogByCode={catalogByCode}
         onDrill={onDrillToRequirement}
         drag={drag}

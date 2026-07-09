@@ -44,6 +44,7 @@
 
   --met: #1f9457;
   --met-soft: #e7f3ec;
+  --met-line: #bfe0cd; /* border for met chips / recede rows */
   --partial: #c5870b;
   --partial-soft: #f8efd9;
   --missing: #b6b1a4;
@@ -79,6 +80,7 @@
 
   --met: #36c47e;
   --met-soft: #11241a;
+  --met-line: #2f5a44;
   --partial: #f0b429;
   --partial-soft: #241d0b;
   --missing: #57523f;
@@ -119,6 +121,7 @@
 
   --color-met: var(--met);
   --color-met-soft: var(--met-soft);
+  --color-met-line: var(--met-line);
   --color-partial: var(--partial);
   --color-partial-soft: var(--partial-soft);
   --color-missing: var(--missing);
@@ -1119,32 +1122,16 @@ body {
   overflow-y: auto;
   padding: 4px 6px 10px;
 }
-/* Variant B — collapsible section rows + progress rings */
-.av-grouphead {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  padding: 10px 8px 6px;
-}
-.av-row {
-  border-radius: 10px;
-  border: 1px solid transparent;
-  margin-bottom: 2px;
-}
-.av-row[open] {
-  border-color: var(--line);
-  background: var(--bg-2);
-}
-.av-row-head {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 100%;
-  padding: 9px 10px;
-  cursor: pointer;
-}
+/* Audit-panel class taxonomy — two deliberate vocabularies:
+   av-*  = panel framework: the macro/section shell (av-macro*, av-substrata*),
+           panel advisories (av-note, av-hint, av-sec-label), and the ring
+           overlay (av-ring-*) shared by card leads, strata, and master·detail.
+   cd-*  = one requirement's active status card; sat-a = its receded green row.
+   The old av- card grammar (av-row/av-choice/av-item…) was fully migrated to
+   cd-/sat-a in #115; everything still under av- is shell, not cards. */
+
+/* Progress-ring overlay: a Ring with its satisfied count centred on top. Shared
+   by every status-card lead via RingLead. */
 .av-ring-wrap {
   position: relative;
   display: inline-flex;
@@ -1158,17 +1145,9 @@ body {
   font-size: 10.5px;
   font-weight: 700;
 }
-/* Neutral glyph in place of a ring for unit-based sections (no honest count). */
-.av-unit-ring {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ink-3);
-  background: var(--bg-3);
+/* Here (not inline on the <circle>) so the reduced-motion override can win. */
+.av-ring-fill {
+  transition: stroke-dashoffset 0.4s ease;
 }
 .av-sec-label {
   font-size: 13px;
@@ -1177,271 +1156,11 @@ body {
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.av-row-body {
-  padding: 2px 10px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-/* Required-course rows (draggable when unplaced, met when placed). */
-.av-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 9px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-}
-.av-item.drag {
-  cursor: grab;
-}
-.av-item.drag:hover {
-  border-color: var(--accent-line);
-  box-shadow: var(--sh-sm);
-}
-.av-item.drag:active {
-  cursor: grabbing;
-}
-.av-item.dim {
-  opacity: 0.35;
-}
-.av-item.met {
-  background: var(--met-soft);
-  border-color: transparent;
-}
-.av-item.flagged {
-  background: var(--partial-soft);
-  border-color: transparent;
-}
-.av-item-grip {
-  color: var(--accent);
-  display: inline-flex;
-  flex: none;
-}
-.av-item-grip.met {
-  color: var(--met);
-}
-.av-item-grip.flagged {
-  color: var(--partial);
-}
-.av-item-code {
-  font-size: 12px;
-  font-weight: 700;
-}
-.av-item-name {
-  font-size: 11px;
-  color: var(--ink-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.av-item-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  padding: 4px 8px;
-  border-radius: 6px;
-  flex: none;
-  cursor: pointer;
-  background: none;
-  border: 0;
-}
-.av-item-add:hover {
-  background: var(--accent-soft);
-}
-/* Option chips for pick(1-of-N) "choose one" rows + finite elective pools. */
-.av-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.av-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background: var(--bg-2);
-  color: var(--ink-2);
-}
-.av-chip.met {
-  background: var(--met-soft);
-  color: var(--met);
-}
-.av-chip.drag {
-  border: 1px dashed var(--accent-line);
-  background: var(--accent-soft);
-  color: var(--accent);
-  cursor: grab;
-}
-.av-chip.drag:hover {
-  border-color: var(--accent-bg);
-  box-shadow: var(--sh-sm);
-}
-.av-chip.drag:active {
-  cursor: grabbing;
-}
-.av-chip.dim {
-  opacity: 0.35;
-}
-.av-grip {
-  opacity: 0.7;
-  margin-right: -1px;
-}
-/* "Choose one" rows. */
-.av-choose {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 9px;
-  border-radius: 9px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-}
-.av-choose.is-met {
-  background: var(--met-soft);
-  border-color: transparent;
-}
-.av-choose-mark {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--met);
-  background: var(--bg);
-}
-.av-choose.is-met .av-choose-mark {
-  background: transparent;
-}
-.av-need {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-3);
-  width: 20px;
-  height: 20px;
-  border: 1.5px dashed var(--line-strong);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.av-choose-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-}
-/* subjectPool / open elective Browse bodies. */
-.av-pool {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  padding: 2px 2px 4px;
-}
-.av-pool-subj {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.av-subj {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  padding: 3px 7px;
-  border-radius: 5px;
-  background: var(--bg-2);
-  color: var(--ink-2);
-  border: 1px solid var(--line);
-}
 .av-hint {
   font-size: 11.5px;
   color: var(--ink-3);
   line-height: 1.5;
   margin: 0;
-}
-.av-browse {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  background: var(--accent-bg);
-  padding: 7px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 0;
-}
-.av-browse:hover {
-  filter: brightness(1.05);
-}
-.av-browse.sm {
-  background: none;
-  color: var(--accent);
-  padding: 4px 0 0;
-  font-size: 11.5px;
-}
-.av-browse.sm:hover {
-  filter: none;
-  text-decoration: underline;
-}
-
-/* Subject-pool / breadth "search the catalog" card (replaces the tag pile). */
-.av-poolbtn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-  padding: 9px 11px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: var(--bg-2);
-  color: var(--ink-3);
-  cursor: pointer;
-}
-.av-poolbtn:hover {
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-}
-.av-poolbtn.is-static {
-  cursor: default;
-}
-.av-poolbtn-ico {
-  flex: none;
-  display: inline-flex;
-  color: var(--accent);
-}
-.av-poolbtn-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-.av-poolbtn-lead {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink);
-}
-.av-poolbtn-sub {
-  font-size: 11px;
-  color: var(--ink-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .av-note {
   font-size: 11px;
@@ -1450,222 +1169,9 @@ body {
   line-height: 1.45;
 }
 
-/* Compound pick — a "choose one" group of mutually-exclusive options. The
-   group itself is the only card boundary; options inside are borderless rows
-   that expand on selection, so the structure reads as one decision rather than
-   a stack of competing cards. */
-.av-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--bg);
-  padding: 9px;
-}
-.av-choice-head {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  padding: 1px 3px 0;
-}
-.av-choice-opts {
-  display: flex;
-  flex-direction: column;
-}
-.av-choice-or {
-  align-self: center;
-  padding: 3px 0;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.av-choice-opt {
-  border-radius: 9px;
-}
-.av-choice-opt.is-open {
-  background: var(--accent-soft);
-}
-.av-choice-opt.is-met {
-  background: var(--met-soft);
-}
-.av-choice-sel {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  text-align: left;
-  padding: 8px 9px;
-  border-radius: 9px;
-  background: none;
-  border: 0;
-  color: inherit;
-  cursor: pointer;
-}
-.av-choice-opt:not(.is-open):not(.is-met) .av-choice-sel:hover {
-  background: var(--bg-2);
-}
-.av-choice-radio {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid var(--line-strong);
-  background: var(--bg);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-2);
-}
-.av-choice-opt.is-open .av-choice-radio {
-  border-color: var(--accent);
-  background: var(--accent-bg);
-  color: var(--accent-ink);
-}
-.av-choice-opt.is-met .av-choice-radio {
-  border-color: var(--met);
-  background: transparent;
-  color: var(--met);
-}
-.av-choice-preview {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.av-choice-open-label {
-  flex: 1 1 auto;
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.av-choice-chev {
-  flex: none;
-  display: inline-flex;
-  color: var(--ink-3);
-}
-.av-choice-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 9px 9px 40px;
-}
-/* Collapsed option: body stays in the DOM (codes reachable) but hidden. The
-   attribute selector beats the `.av-choice-body { display: flex }` rule above. */
-.av-choice-body[hidden] {
-  display: none;
-}
-/* Flatten the requirement rows inside an option — the group already frames
-   them, so drop their borders/fills to kill the nested-card bulk. */
-.av-choice-body .av-item {
-  border: 0;
-  background: transparent;
-  padding: 5px 3px;
-}
-.av-choice-body .av-item.drag:hover {
-  background: var(--bg-2);
-  box-shadow: none;
-}
-.av-choice-body .av-item.met {
-  background: transparent;
-}
-.av-choice-body .av-pool {
-  padding: 0;
-}
-.av-opt-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding: 8px 9px;
-  border-radius: 10px;
-  background: var(--met-soft);
-}
-.av-opt-summary-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-}
-.av-opt-summary-mark {
-  flex: none;
-  margin-top: 1px;
-  color: var(--met);
-  display: inline-flex;
-}
-.av-opt-summary-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.av-opt-summary-label {
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.av-opt-summary-codes {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-2);
-}
-.av-opt-toggle {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 2px;
-  padding: 4px 8px 4px 6px;
-  border-radius: 7px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--ink-3);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    color 0.12s ease;
-}
-.av-opt-toggle:hover {
-  background: var(--bg-3);
-  color: var(--ink-1);
-}
-.av-opt-chev {
-  display: inline-flex;
-  color: var(--ink-3);
-  transition: transform 0.15s ease;
-}
-.av-opt-toggle.is-open .av-opt-chev {
-  transform: rotate(90deg);
-}
-/* The "show others" control living inside the completed summary card: a full-
-   width footer split off by a met-tinted hairline, with a text-only (green)
-   hover so it sits flush on the green surface. */
-.av-opt-toggle--in-summary {
-  align-self: stretch;
-  justify-content: flex-start;
-  margin-top: 1px;
-  padding: 7px 3px 1px;
-  border-top: 1px solid color-mix(in srgb, var(--met) 20%, transparent);
-  border-radius: 0;
-}
-.av-opt-toggle--in-summary:hover {
-  background: none;
-  color: var(--met);
-}
-.av-opt-toggle--in-summary:hover .av-opt-chev {
-  color: var(--met);
-}
-
-/* Macro sections — the three top-level collapsible groups in the audit panel. */
+/* Macro sections — the top-level collapsible groups in the audit panel.
+   Section-shell handoff: icon tile · label · done/total count · chevron,
+   2px rule under the head; `is-complete` flips tile/label/rule to green. */
 .av-macro {
   border-bottom: 1px solid var(--line);
 }
@@ -1675,36 +1181,75 @@ body {
 .av-macro-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   cursor: pointer;
-  padding: 11px 10px;
+  padding: 14px 14px 12px;
+}
+.av-macro-tile {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .av-macro-label {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  letter-spacing: -0.015em;
+  color: var(--ink);
 }
 .av-macro-count {
   flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-family: var(--font-mono);
+}
+.av-macro-count .big {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.av-macro-count .small {
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
+}
+/* Standalone check that replaces the count once the section is complete. */
+.av-macro-done {
+  flex: none;
+  display: inline-flex;
+  color: var(--met);
 }
 .av-macro-chev {
   flex: none;
+  display: inline-flex;
   color: var(--ink-3);
+  transition: transform 0.15s ease;
+}
+.av-macro[open] > .av-macro-head .av-macro-chev {
+  transform: rotate(90deg);
+}
+/* Flush hairline between head and body; grey until complete, then solid
+   green — never a partial fill. Sibling of the summary, so hidden when
+   collapsed (matches the reference). */
+.av-macro-rule {
+  height: 2px;
+  background: var(--line);
 }
 .av-macro-body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 0 6px 10px;
+  padding: 12px 12px 8px;
 }
 .av-macro-block {
   display: flex;
@@ -1714,8 +1259,18 @@ body {
 .av-macro-hint {
   margin-top: 2px;
 }
+.av-macro.is-complete .av-macro-tile {
+  background: var(--met-soft);
+  color: var(--met);
+}
+.av-macro.is-complete .av-macro-label {
+  color: var(--met);
+}
+.av-macro.is-complete .av-macro-rule {
+  background: var(--met);
+}
 /* A quiet sub-stratum heading inside a macro (Term 1A, "Specialization", a
-   named rule sub-group) — a lighter sibling of .av-grouphead. */
+   named rule sub-group). */
 .av-substrata {
   font-size: 10.5px;
   font-weight: 700;
@@ -1752,4 +1307,407 @@ body {
   flex-direction: column;
   gap: 5px;
   padding-top: 2px;
+}
+
+/* ============================================================
+   Status Cards — the unified requirement grammar (issue #115).
+   One card chrome for courses / picks / pools; a satisfied
+   requirement recedes to a slim green row (.sat-a). Values are
+   final per the design handoff; reuse tokens so dark mode is free.
+   ============================================================ */
+.cd-card {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--missing);
+  border-radius: 12px;
+  background: var(--bg);
+  margin-bottom: 9px;
+  overflow: hidden;
+}
+.cd-card.partial {
+  border-left-color: var(--partial);
+}
+.cd-card.met {
+  border-left-color: var(--met);
+}
+.cd-cardhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+}
+/* Active cards are collapsible <details>: hide the marker, rotate the chevron. */
+details.cd-card > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details.cd-card > summary::-webkit-details-marker {
+  display: none;
+}
+.cd-chev {
+  flex: none;
+  color: var(--ink-3);
+  transition: transform 0.15s ease;
+}
+details.cd-card[open] .cd-chev {
+  transform: rotate(90deg);
+}
+.cd-ct {
+  flex: 1;
+  min-width: 0;
+}
+.cd-ct-title {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.cd-ct-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+/* header-right cluster: optional browse icon + the status pill */
+.br2-headright {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.cd-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.cd-pill.progress {
+  background: var(--partial-soft);
+  color: var(--partial);
+}
+.cd-pill.none {
+  background: var(--bg-3);
+  color: var(--ink-3);
+}
+.cd-pill.decide {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.cd-pill.note {
+  background: var(--bg-3);
+  color: var(--ink-2);
+}
+.cd-body {
+  padding: 2px 13px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cd-metaline {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.cd-metaline b {
+  color: var(--ink);
+  font-weight: 650;
+}
+/* chips — shared across every kind (course / option / pool satisfier) */
+.cd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+.cd-chip.met {
+  background: var(--met-soft);
+  color: var(--met);
+  border-color: var(--met-line);
+}
+.cd-chip.drag {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px dashed var(--accent-line);
+  cursor: grab;
+}
+.cd-chip.drag:hover {
+  border-color: var(--accent-bg);
+  box-shadow: var(--sh-sm);
+}
+.cd-chip.drag:active {
+  cursor: grabbing;
+}
+.cd-chip.warn {
+  background: var(--partial-soft);
+  color: var(--partial);
+  border-color: transparent;
+}
+.cd-chip.dim {
+  opacity: 0.35;
+}
+/* compound pick — option sub-cards inside the body */
+.cd-opt {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.cd-opt.sel {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.cd-opt-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  cursor: pointer;
+}
+.cd-opt-badge {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--bg-3);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cd-opt.sel .cd-opt-badge {
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+}
+.cd-opt-name {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.cd-opt-mini {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+.cd-opt-body {
+  padding: 0 11px 11px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cd-or {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 5px 0;
+}
+/* notes & constraints (advisory info) */
+.cd-glyph {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--bg-3);
+  color: var(--ink-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* A clearly bulleted list. Uses MANUAL bullets (::before) rather than
+   list-style, which Tailwind's preflight resets to `none` on <ul> and is then
+   inherited by the <li>s — so real markers never show. */
+.cd-notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cd-notes li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.cd-notes li::before {
+  content: "•";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+/* level-floor explainer — intentionally has no picker, so say why */
+.cd-auto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 8px 11px;
+  border-radius: 8px;
+}
+.cd-auto-ico {
+  color: var(--ink-3);
+  flex: none;
+  display: inline-flex;
+}
+/* "show N other options" link inside a satisfied compound recede row */
+.cd-showothers {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--met);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 0 0;
+}
+.cd-showothers:hover {
+  text-decoration: underline;
+}
+/* Browse action — a dashed "Find courses" split-row at the foot of the body,
+   on the criteria-based, no-fixed-list kinds only (subject pool / breadth /
+   open elective). Descriptor left, search action right; drop-target styling. */
+.br4-dash {
+  width: 100%;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 9px;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.br4-dash:hover {
+  border-color: var(--accent-bg);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.br4-split {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-family: var(--font-sans);
+}
+.br4-split .lbl {
+  flex: 1;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.br4-split .act {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+/* Satisfied → "Recede": a slim green collapsible confirmation row. The agreed
+   completion treatment — a green surface + count, not a full card wash. */
+.sat-a {
+  border: 1px solid var(--met-line);
+  border-left: 3px solid var(--met);
+  border-radius: 12px;
+  background: var(--bg);
+  margin-bottom: 9px;
+}
+.sat-a > summary {
+  list-style: none;
+}
+.sat-a > summary::-webkit-details-marker {
+  display: none;
+}
+.sat-a-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  cursor: pointer;
+}
+.sat-a-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--met);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sat-a-ct {
+  flex: 1;
+  min-width: 0;
+}
+.sat-a-title {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+.sat-a-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 1px;
+}
+.sat-a-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--met);
+  flex: none;
+}
+.sat-a-chev {
+  color: var(--ink-3);
+  flex: none;
+  transition: transform 0.15s ease;
+}
+.sat-a[open] .sat-a-chev {
+  transform: rotate(90deg);
+}
+.sat-a-body {
+  padding: 0 13px 12px 47px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sat-a-chev,
+  .cd-chev,
+  .av-macro-chev {
+    transition: none;
+  }
+  .av-ring-fill {
+    transition: none;
+  }
 }

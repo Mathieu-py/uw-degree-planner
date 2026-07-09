@@ -1,12 +1,20 @@
-import { Icon } from "@/components/ui/Icon";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { Ring } from "@/components/ui/Ring";
 import { NodeBody } from "../bodies/NodeBody";
 import { ringFor } from "../nodeProgress";
-import { isIncomplete, type Macro, type OptionRenderProps } from "../types";
+import type { Macro, OptionRenderProps } from "../types";
 import { SectionRow } from "./SectionRow";
 
+/** Head-tile glyph per macro; the complete state swaps in a check. */
+const TILE_ICON: Record<Macro["key"], IconName> = {
+  degree: "lock",
+  specialization: "bolt",
+  electives: "search",
+  other: "doc",
+};
+
 /**
- * One of the three top-level collapsible macro-sections (Degree requirements /
+ * One of the top-level collapsible macro-sections (Degree requirements /
  * Electives / Co-op & other). A `node` block renders the rule tree flat via
  * `NodeBody`; a `sections` block renders the existing Section rows inline.
  */
@@ -14,24 +22,43 @@ export function MacroSection({
   macro,
   placedCodes,
   illegalCodes,
-  catalog,
   catalogByCode,
   onDrill,
   drag,
 }: { macro: Macro } & OptionRenderProps) {
+  const complete =
+    macro.count != null && macro.count.satisfied >= macro.count.needed;
   return (
-    <details className="av-macro group/macro" open={macro.defaultOpen}>
+    <details
+      className={complete ? "av-macro is-complete" : "av-macro"}
+      open={macro.defaultOpen}
+    >
       <summary className="av-macro-head list-none select-none [&::-webkit-details-marker]:hidden">
+        <span className="av-macro-tile" aria-hidden="true">
+          <Icon name={complete ? "check" : TILE_ICON[macro.key]} size="md" />
+        </span>
         <span className="av-macro-label">{macro.label}</span>
         {macro.count ? (
-          <span className="av-macro-count u-mono">
-            {macro.count.satisfied} / {macro.count.needed}
-          </span>
+          complete ? (
+            <span
+              className="av-macro-done"
+              role="img"
+              aria-label={`${macro.count.satisfied} of ${macro.count.needed} complete`}
+            >
+              <Icon name="check" size="md" aria-hidden="true" />
+            </span>
+          ) : (
+            <span className="av-macro-count">
+              <span className="big">{macro.count.satisfied}</span>
+              <span className="small">/{macro.count.needed}</span>
+            </span>
+          )
         ) : null}
-        <span className="av-macro-chev inline-flex transition-transform group-open/macro:rotate-90">
+        <span className="av-macro-chev">
           <Icon name="chevronRight" size="xs" aria-hidden="true" />
         </span>
       </summary>
+      <div className="av-macro-rule" aria-hidden="true" />
       <div className="av-macro-body">
         {macro.blocks.map((block, i) => {
           const body =
@@ -40,7 +67,6 @@ export function MacroSection({
                 node={block.content.node}
                 placedCodes={placedCodes}
                 illegalCodes={illegalCodes}
-                catalog={catalog}
                 catalogByCode={catalogByCode}
                 onDrill={onDrill}
                 drag={drag}
@@ -50,10 +76,8 @@ export function MacroSection({
                 <SectionRow
                   key={s.key}
                   section={s}
-                  open={isIncomplete(s)}
                   placedCodes={placedCodes}
                   illegalCodes={illegalCodes}
-                  catalog={catalog}
                   catalogByCode={catalogByCode}
                   onDrill={onDrill}
                   drag={drag}

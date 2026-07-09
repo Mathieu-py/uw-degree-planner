@@ -1,7 +1,6 @@
 import type { AuditNode } from "@/lib/audit/compile";
 import type { NodeFill } from "@/lib/audit/progress";
 import type { Course, FilterPreset } from "@/lib/courses/types";
-import { unitsMet } from "@/lib/format";
 
 /**
  * Drag wiring for course rows / option chips. `draggingCode` is the code in
@@ -31,26 +30,12 @@ export type AcknowledgeFn = (
   acked: boolean,
 ) => void;
 
-interface SectionSummary {
-  needed: number;
-  satisfied: number;
-  excludedViolationCount: number;
-}
-
 /**
- * A renderable audit section. `node` sections (terms, flexible/spec groups)
- * carry a compiled `AuditNode`; the `elective*` kinds derive from
- * `program.electives[]`, outside the rule tree.
+ * A renderable audit section. The `elective*` / breadth / levelFloor / info
+ * kinds derive from `program.electives[]` + degree notes, outside the rule tree
+ * (rule-tree requirements render via `NodeBody`, not as sections).
  */
 export type Section =
-  | {
-      kind: "node";
-      key: string;
-      title: string;
-      caption: string;
-      node: AuditNode;
-      summary: SectionSummary;
-    }
   | {
       kind: "electiveFinite";
       key: string;
@@ -108,18 +93,6 @@ export type Section =
       items: string[];
     };
 
-/** True when a section still has unmet requirements (used to default it open). */
-export function isIncomplete(section: Section): boolean {
-  if (section.kind === "node")
-    return section.summary.satisfied < section.summary.needed;
-  if (section.kind === "electiveFinite") return section.placed < section.need;
-  if (section.kind === "breadth")
-    return !unitsMet(section.placedUnits, section.needUnits);
-  if (section.kind === "levelFloor")
-    return !unitsMet(section.placedUnits, section.needUnits);
-  return false;
-}
-
 /** One of the top-level collapsible macro-sections. */
 type MacroKey = "degree" | "specialization" | "electives" | "other";
 
@@ -157,7 +130,6 @@ export interface OptionRenderProps {
   placedCodes: ReadonlySet<string>;
   /** Placed codes whose placement is illegal (prereq/antireq) — flagged, uncounted. */
   illegalCodes: ReadonlySet<string>;
-  catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;

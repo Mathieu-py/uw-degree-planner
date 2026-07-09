@@ -49,6 +49,12 @@ export interface AuditNode {
    * ("met-but-flagged"); UI warns. Coreqs are advisory, so excluded.
    */
   illegalSatisfiers?: Placement[];
+  /**
+   * Met on legal placements ALONE (illegal satisfiers dropped). Cards recede to
+   * "done" on this, not `isSatisfied` (which counts flagged placements), so they
+   * agree with the degree bar. See {@link isLegallyMet}.
+   */
+  legallyMet?: boolean;
   children: AuditNode[];
 }
 
@@ -171,15 +177,18 @@ function compile(
           : satisfiers.length > 0
             ? "partial"
             : "unmet";
+      const illegal = illegalAmong(satisfiers, legality);
       return withIllegal(
         {
           ruleNode: node,
           status,
           satisfiers,
           missingCodes: missing,
+          // Every named course is required, so any illegal one is load-bearing.
+          legallyMet: satisfiers.length - illegal.length >= optionCount,
           children: [],
         },
-        illegalAmong(satisfiers, legality),
+        illegal,
       );
     }
     case "all": {
@@ -193,6 +202,8 @@ function compile(
           description: describeRule(node),
           satisfiers: children.flatMap((c) => c.satisfiers),
           missingCodes: children.flatMap((c) => c.missingCodes),
+          // Every child must be legally met (excluded children are transparent).
+          legallyMet: children.every((c) => c.legallyMet === true),
           children,
         },
         children.flatMap((c) => c.illegalSatisfiers ?? []),
@@ -216,6 +227,7 @@ function compile(
         satisfiers: [],
         missingCodes: [],
         excludedViolations: violations,
+        legallyMet: true,
         children: [],
       };
     }
@@ -251,6 +263,8 @@ function compilePick(
     // No `satisfiers > 0` guard (unlike the nested branch): a flat pool has no
     // vacuously-met children, and a min-0 pool is correctly "met" at 0 —
     // consumers needing "actually decided" call `isSatisfied`.
+    const illegal = illegalAmong(satisfiers, legality);
+    const legalCount = satisfiers.length - illegal.length;
     return withIllegal(
       {
         ruleNode: node,
@@ -264,11 +278,13 @@ function compilePick(
         satisfiers,
         missingCodes: missing,
         satisfiedCount: satisfiers.length,
+        // Decided by legal picks alone (≥1, and ≥ selectMin).
+        legallyMet: legalCount > 0 && legalCount >= (node.selectMin ?? 0),
         selectMin: node.selectMin,
         selectMax: node.selectMax,
         children: [],
       },
-      illegalAmong(satisfiers, legality),
+      illegal,
     );
   }
   // Mixed/nested children: each must be independently met to count as 1.
@@ -283,6 +299,10 @@ function compilePick(
       c.satisfiers.length > 0,
   ).length;
   const anyPartial = children.some((c) => c.status === "partial");
+  // Only options met on legal placements count toward "decided".
+  const legalCount = children.filter(
+    (c) => c.legallyMet === true && c.satisfiers.length > 0,
+  ).length;
   return withIllegal(
     {
       ruleNode: node,
@@ -298,6 +318,7 @@ function compilePick(
       // children, so no single code list completes it. Panel recurses.
       missingCodes: [],
       satisfiedCount: count,
+      legallyMet: legalCount > 0 && legalCount >= (node.selectMin ?? 0),
       selectMin: node.selectMin,
       selectMax: node.selectMax,
       children,
@@ -348,6 +369,13 @@ function compileSubjectPool(
         ? "partial"
         : "unmet"
     : statusFromPickCount(have, need, need, false);
+  // Drop illegal placements to decide "legally met": by real units when
+  // unit-stated (a load-bearing illegal 1.0-unit course removes 1.0), else by
+  // count. Overflow illegal placements beyond `need` leave it legally met.
+  const illegal = illegalAmong(satisfiers, legality);
+  const legalHave = unitBased
+    ? have - illegal.reduce((u, p) => u + unitsOf(p.code), 0)
+    : satisfiers.length - illegal.length;
   return withIllegal(
     {
       ruleNode: node,
@@ -356,11 +384,12 @@ function compileSubjectPool(
       satisfiers,
       missingCodes: [],
       satisfiedCount: have,
+      legallyMet: unitBased ? unitsMet(legalHave, need) : legalHave >= need,
       selectMin: need,
       selectMax: need,
       children: [],
     },
-    illegalAmong(satisfiers, legality),
+    illegal,
   );
 }
 
@@ -581,6 +610,18 @@ export function isSatisfied(node: AuditNode): boolean {
     (node.status === "met" || node.status === "overSatisfied") &&
     node.satisfiers.length > 0
   );
+}
+
+/**
+ * Like {@link isSatisfied}, but satisfied by legally-credited placements ALONE —
+ * a requirement met only because of an illegal placement (before its prereqs /
+ * in an antireq conflict) is NOT legally met. The UI recedes a card to "done"
+ * on this, not `isSatisfied`, so the card agrees with the degree bar (which
+ * doesn't credit illegal placements). Nodes built without the `legallyMet` field
+ * (test mocks) fall back to `isSatisfied`.
+ */
+export function isLegallyMet(node: AuditNode): boolean {
+  return node.legallyMet ?? isSatisfied(node);
 }
 
 /**

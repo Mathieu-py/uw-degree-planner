@@ -62,7 +62,7 @@ function oneSlotPlan(programId: string, codes: string[]): LocalPlan {
 }
 
 // An engineering program with an empty plan leaves every required course
-// unplaced, so the panel renders draggable `.av-item.drag` course rows.
+// unplaced, so the panel renders draggable `.cd-chip.drag` course chips.
 function engineeringProgramId(): string | undefined {
   return Object.entries(PROGRAMS).find(
     ([, p]) => p.kind === "engineering",
@@ -205,9 +205,9 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const choose = container.querySelector(".av-choose");
-    expect(choose, "expected at least one 'choose one' row").not.toBeNull();
-    expect(container.querySelectorAll(".av-chip.drag").length).toBeGreaterThan(
+    const choose = container.querySelector(".cd-pill.decide");
+    expect(choose, "expected at least one 'choose one' card").not.toBeNull();
+    expect(container.querySelectorAll(".cd-chip.drag").length).toBeGreaterThan(
       0,
     );
   });
@@ -226,9 +226,9 @@ describe("AuditPanel", () => {
         />,
       );
       const norm = (t: string) => t.replace(/\s+/g, "").toUpperCase();
-      const grouped = [...container.querySelectorAll(".av-choose")].some(
-        (row) => {
-          const chips = [...row.querySelectorAll(".av-chip")].map((c) =>
+      const grouped = [...container.querySelectorAll(".cd-card")].some(
+        (card) => {
+          const chips = [...card.querySelectorAll(".cd-chip")].map((c) =>
             norm(c.textContent ?? ""),
           );
           return chips.includes("AMATH271") && chips.includes("AMATH333");
@@ -238,11 +238,11 @@ describe("AuditPanel", () => {
         grouped,
         "AMATH 271 and AMATH 333 should share one choose-one card",
       ).toBe(true);
-      // And AMATH 271 must NOT also appear as a standalone required course row.
-      const rowCodes = [...container.querySelectorAll(".av-item-code")].map(
-        (c) => norm(c.textContent ?? ""),
+      // And AMATH 271 must NOT be duplicated as a standalone required course.
+      const all271 = [...container.querySelectorAll(".cd-chip")].filter(
+        (c) => norm(c.textContent ?? "") === "AMATH271",
       );
-      expect(rowCodes).not.toContain("AMATH271");
+      expect(all271).toHaveLength(1);
     },
   );
 
@@ -264,8 +264,8 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const row = container.querySelector(".av-item.drag");
-    expect(row, "expected at least one draggable course row").not.toBeNull();
+    const row = container.querySelector(".cd-chip.drag");
+    expect(row, "expected at least one draggable course chip").not.toBeNull();
     if (!row) return;
     expect(row.getAttribute("draggable")).toBe("true");
 
@@ -276,7 +276,7 @@ describe("AuditPanel", () => {
     });
   });
 
-  it("clicking a course row's Add button drills into the requirement", () => {
+  it("clicking a draggable course chip drills into the requirement", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const drilled: string[][] = [];
@@ -287,11 +287,11 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const add = container.querySelector<HTMLButtonElement>(".av-item-add");
-    expect(add).not.toBeNull();
-    if (!add) return;
+    const chip = container.querySelector<HTMLButtonElement>(".cd-chip.drag");
+    expect(chip).not.toBeNull();
+    if (!chip) return;
 
-    fireEvent.click(add);
+    fireEvent.click(chip);
     expect(drilled).toHaveLength(1);
     expect(drilled[0]).toHaveLength(1);
   });
@@ -317,14 +317,14 @@ describe("AuditPanel", () => {
       />,
     );
 
-    const row = container.querySelector(".av-item.drag");
+    const row = container.querySelector(".cd-chip.drag");
     if (!row) return;
     fireEvent.dragStart(row, { dataTransfer: fakeDataTransfer() });
     expect(started).not.toBeNull();
     fireEvent.dragEnd(row);
     expect(ended).toBe(1);
 
-    // With that code marked as dragging, its row dims (.dim).
+    // With that code marked as dragging, its chip dims (.dim).
     rerender(
       <AuditPanel
         plan={mkPlan({ programIds: [engId] })}
@@ -332,7 +332,7 @@ describe("AuditPanel", () => {
         drag={{ draggingCode: started, onStart: () => {}, onEnd: () => {} }}
       />,
     );
-    expect(container.querySelector(".av-item.dim")).not.toBeNull();
+    expect(container.querySelector(".cd-chip.dim")).not.toBeNull();
   });
 
   it.skipIf(!("psychology-bsc" in PROGRAMS))(
@@ -396,9 +396,11 @@ describe("AuditPanel", () => {
       expect(
         within(aside).queryAllByText(/0 of 1 unit/i).length,
       ).toBeGreaterThan(0);
-      // Eligible subjects surface in the pool card's criteria summary.
-      const poolSub = aside.querySelector(".av-poolbtn-sub");
-      expect(poolSub?.textContent ?? "").not.toBe("");
+      // Eligible subjects surface in the breadth card's meta line (after "from").
+      const meta = [...aside.querySelectorAll(".cd-metaline")].find((m) =>
+        /0 of 1 unit/i.test(m.textContent ?? ""),
+      );
+      expect(meta?.textContent ?? "").toMatch(/from\s+\S/i);
       expect(within(aside).queryByText(/^Degree units$/)).toBeNull();
       expect(
         within(aside).queryByText(/Distribution requirements/i),
@@ -422,9 +424,12 @@ describe("AuditPanel", () => {
       expect(
         within(aside).queryAllByText(/PHIL\s*101/i).length,
       ).toBeGreaterThan(0);
-      expect(
-        within(aside).queryAllByText(/1 of 1 unit/i).length,
-      ).toBeGreaterThan(0);
+      // The 1.0-unit Humanities breadth is satisfied → it recedes to a green
+      // confirmation row with a "1/1" count.
+      const metas = [...aside.querySelectorAll(".sat-a-meta")].map(
+        (m) => m.textContent,
+      );
+      expect(metas).toContain("1/1");
     },
   );
 
@@ -458,9 +463,9 @@ describe("AuditPanel", () => {
           onDrillToRequirement={() => {}}
         />,
       );
-      const opts = container.querySelectorAll(".av-choice-opt");
+      const opts = container.querySelectorAll(".cd-opt");
       expect(opts.length).toBeGreaterThanOrEqual(3);
-      expect(container.querySelector(".av-choice-or")).not.toBeNull();
+      expect(container.querySelector(".cd-or")).not.toBeNull();
       expect(
         within(container).queryAllByText(/choose 1 of 3 options/i).length,
       ).toBeGreaterThan(0);
@@ -486,12 +491,12 @@ describe("AuditPanel", () => {
       expect(
         within(container).queryAllByText(/completed.*option a/i).length,
       ).toBeGreaterThan(0);
-      expect(container.querySelector(".av-opt-summary")).not.toBeNull();
+      expect(container.querySelector(".sat-a")).not.toBeNull();
       // Collapsed: the option group is not in the DOM until the toggle is clicked.
-      expect(container.querySelector(".av-choice-opt")).toBeNull();
+      expect(container.querySelector(".cd-opt")).toBeNull();
       const toggle = within(container).getByText(/show 2 other options/i);
       fireEvent.click(toggle);
-      expect(container.querySelector(".av-choice-opt")).not.toBeNull();
+      expect(container.querySelector(".cd-opt")).not.toBeNull();
     },
   );
 
@@ -542,7 +547,7 @@ describe("AuditPanel", () => {
         within(degree).queryAllByText(/Approved Courses List/i).length,
       ).toBeGreaterThan(0);
       // …and as a real pick (draggable option chips), not a static electives row.
-      expect(degree.querySelectorAll(".av-chip").length).toBeGreaterThan(0);
+      expect(degree.querySelectorAll(".cd-chip").length).toBeGreaterThan(0);
 
       // If an Electives macro exists (free electives etc.), it must NOT hold the list.
       const electives = macroByLabel(container, /^Electives$/i);
@@ -693,7 +698,7 @@ describe("AuditPanel", () => {
       expect(aside.textContent ?? "").not.toMatch(
         /complete all of the following/i,
       );
-      const codes = [...container.querySelectorAll(".av-item-code")].map((c) =>
+      const codes = [...container.querySelectorAll(".cd-chip")].map((c) =>
         c.textContent?.replace(/\s+/g, "").toUpperCase(),
       );
       expect(codes).toContain("CS341"); // a known core requirement
@@ -740,7 +745,7 @@ describe("AuditPanel", () => {
       ),
     );
     expect(other, "expected a Co-op & other macro").toBeTruthy();
-    const labels = [...(other?.querySelectorAll(".av-sec-label") ?? [])].map(
+    const labels = [...(other?.querySelectorAll(".cd-ct-title") ?? [])].map(
       (l) => l.textContent ?? "",
     );
     // Exactly one row for the repeated label, titled with the count.
@@ -755,16 +760,17 @@ describe("AuditPanel", () => {
     expect(other?.textContent ?? "").toContain(firstNote);
   });
 
-  it("leaves course rows inert (not draggable, no Add) without a drill handler", () => {
+  it("leaves course chips inert (not draggable) without a drill handler", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const { container } = render(
       <AuditPanel plan={mkPlan({ programIds: [engId] })} />,
     );
 
-    // Unplaced rows still render, but with no drag affordance and no Add.
-    expect(container.querySelector(".av-item")).not.toBeNull();
-    expect(container.querySelector(".av-item.drag")).toBeNull();
-    expect(container.querySelector(".av-item-add")).toBeNull();
+    // Unplaced courses still render as chips, but with no drag affordance and
+    // no Find-courses browse row.
+    expect(container.querySelector(".cd-chip")).not.toBeNull();
+    expect(container.querySelector(".cd-chip.drag")).toBeNull();
+    expect(container.querySelector(".br4-split")).toBeNull();
   });
 });

@@ -6,7 +6,6 @@ interface Props {
   macros: Macro[];
   placedCodes: ReadonlySet<string>;
   illegalCodes: ReadonlySet<string>;
-  catalog?: Course[];
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;
@@ -24,7 +23,6 @@ export function AuditMacroList({
   macros,
   placedCodes,
   illegalCodes,
-  catalog,
   catalogByCode,
   onDrill,
   drag,
@@ -38,7 +36,6 @@ export function AuditMacroList({
           macro={macro}
           placedCodes={placedCodes}
           illegalCodes={illegalCodes}
-          catalog={catalog}
           catalogByCode={catalogByCode}
           onDrill={onDrill}
           drag={drag}

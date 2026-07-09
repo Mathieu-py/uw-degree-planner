@@ -469,8 +469,8 @@ function PlannerShellInner({
               <AuditPanel
                 plan={deferredPlan ?? plan}
                 catalog={catalog}
-                onDrillToRequirement={(codes) => {
-                  handleDrillToRequirement(codes);
+                onDrillToRequirement={(codes, preset) => {
+                  handleDrillToRequirement(codes, preset);
                   setAuditSheetOpen(false);
                 }}
                 onAcknowledgeRequirement={handleAcknowledgeRequirement}

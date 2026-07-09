@@ -2,262 +2,250 @@
 
 import { Fragment, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { type AuditNode, isSatisfied } from "@/lib/audit/compile";
-import { countNoun, formatCourseCode, pluralize } from "@/lib/format";
-import type { OptionRenderProps } from "../types";
-import { NodeBody } from "./NodeBody";
+import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
+import { fmtUnits, pluralize, progressPct } from "@/lib/format";
+import { walkRule } from "@/lib/requirements/walk";
+import { MetChip, WarnChip } from "../cards/Chip";
+import { FindRow } from "../cards/FindRow";
+import { Recede } from "../cards/Recede";
+import { RingLead } from "../cards/RingLead";
+import { StatusCard } from "../cards/StatusCard";
+import { StatusPill } from "../cards/StatusPill";
+import { nodeProgress } from "../nodeProgress";
+import { GENERIC_ALL, type OptionRenderProps } from "../types";
+import { OptionChip } from "./OptionChip";
+import { poolLevels } from "./SubjectPoolBody";
 
 /** A→Z badge for an option's position in the choice. */
 function optionBadge(index: number): string {
   return String.fromCharCode(65 + index);
 }
 
+/** The fixed course codes an option's subtree names, walking the RULE tree (the
+ *  compiler unions a flat pick's leaves onto the rule, so its codes only live
+ *  there). Pools carry no fixed list — they're handled by {@link collectPools}. */
+function collectCourses(node: AuditNode): string[] {
+  const codes: string[] = [];
+  walkRule(node.ruleNode, (r) => {
+    if (r.kind === "courses") codes.push(...r.courses);
+  });
+  return [...new Set(codes)];
+}
+
+/** The compiled subjectPool nodes inside an option (bare pool, or nested under an
+ *  `all` bundle) — each keeps its `subjectCodes`/levels and its placed
+ *  `satisfiers`, so it can render met chips + a scoped "Find courses" row. */
+function collectPools(node: AuditNode): AuditNode[] {
+  if (node.ruleNode.kind === "subjectPool") return [node];
+  return node.children.flatMap(collectPools);
+}
+
+function optionName(option: AuditNode, badge: string): string {
+  return option.description && option.description !== GENERIC_ALL
+    ? option.description
+    : `Option ${badge}`;
+}
+
+/** Placed satisfier chips for a met/receded option (met, or warn if illegal). */
+function satisfierChips(
+  codes: string[],
+  illegalCodes: ReadonlySet<string>,
+  catalogByCode: OptionRenderProps["catalogByCode"],
+) {
+  return [...new Set(codes)].map((code) =>
+    illegalCodes.has(code) ? (
+      <WarnChip key={code} code={code} name={catalogByCode.get(code)?.name} />
+    ) : (
+      <MetChip key={code} code={code} name={catalogByCode.get(code)?.name} />
+    ),
+  );
+}
+
+/** One subject-pool part of an option: its placed chips + a scoped browse row. */
+function PoolPart({
+  pool,
+  illegalCodes,
+  catalogByCode,
+  onDrill,
+}: { pool: AuditNode } & Omit<OptionRenderProps, "placedCodes" | "drag">) {
+  const r = pool.ruleNode;
+  if (r.kind !== "subjectPool") return null;
+  const subjects = r.subjectCodes.map((s) => s.toUpperCase());
+  const chosen = pool.satisfiers.map((p) => p.code);
+  const { needed, satisfied } = nodeProgress(pool);
+  const remaining = Math.max(0, needed - satisfied);
+  return (
+    <>
+      {satisfierChips(chosen, illegalCodes, catalogByCode)}
+      {onDrill && remaining > 0 ? (
+        <FindRow
+          label={`Add ${fmtUnits(remaining)} more`}
+          onFind={() =>
+            onDrill([], {
+              includePrefixes: subjects,
+              levels: poolLevels(r.minLevel, r.maxLevel),
+            })
+          }
+        />
+      ) : null}
+    </>
+  );
+}
+
+/** An option's body: fixed courses as chips, plus each pool's chips + browse. */
+function OptionBody({
+  opt,
+  placedCodes,
+  illegalCodes,
+  catalogByCode,
+  onDrill,
+  drag,
+}: { opt: AuditNode } & OptionRenderProps) {
+  return (
+    <div className="cd-opt-body">
+      {collectCourses(opt).map((code) => (
+        <OptionChip
+          key={code}
+          code={code}
+          placed={placedCodes.has(code)}
+          illegal={illegalCodes.has(code)}
+          catalogByCode={catalogByCode}
+          onDrill={onDrill}
+          drag={drag}
+        />
+      ))}
+      {collectPools(opt).map((pool, pi) => (
+        <PoolPart
+          // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
+          key={`pool-${pi}`}
+          pool={pool}
+          illegalCodes={illegalCodes}
+          catalogByCode={catalogByCode}
+          onDrill={onDrill}
+        />
+      ))}
+    </div>
+  );
+}
+
 /**
- * A compound `pick` (options are multi-course bundles), rendered as mutually-
- * exclusive option cards; collapses to a summary + "show others" once satisfied.
+ * Element C — a compound `pick` whose options are multi-course bundles (A / B /
+ * …), rendered as `.cd-opt` sub-cards separated by "or". Collapses to a green
+ * recede row once the required number of streams is complete, expandable to the
+ * others.
  */
 export function CompoundPickBody({
   node,
-  depth,
-  ...rest
+  placedCodes,
+  illegalCodes,
+  catalogByCode,
+  onDrill,
+  drag,
 }: {
   node: AuditNode;
-  depth: number;
 } & OptionRenderProps) {
   const r = node.ruleNode;
   const [showAll, setShowAll] = useState(false);
-  // Local focus: which card is expanded. Placement (not this) decides what's
-  // satisfied, so it needs no persistence — default to the in-progress option.
   const options = node.children;
-  const [focused, setFocused] = useState(() => initialFocus(options));
   if (r.kind !== "pick") return null;
 
   const selectMin = r.selectMin ?? 1;
+  const { needed, satisfied } = nodeProgress(node);
   const metOptions = options
     .map((opt, index) => ({ opt, index }))
-    .filter(({ opt }) => isSatisfied(opt));
+    .filter(({ opt }) => isLegallyMet(opt));
   const decided = metOptions.length >= selectMin;
+  const title = node.description ?? "Choose one option";
+  const caption = `choose ${selectMin} of ${options.length} ${pluralize(options.length, "option")}`;
 
-  // A satisfied compound pick collapses to a summary + "show others".
+  // Satisfied → recede to the completed path(s); the rest hide behind a toggle.
   if (decided && !showAll) {
+    const others = options.length - metOptions.length;
+    const recedeCaption =
+      metOptions.length > 1
+        ? `Completed — Options ${metOptions.map((m) => optionBadge(m.index)).join(", ")}`
+        : `Completed — Option ${optionBadge(metOptions[0].index)}`;
+    const doneCodes = metOptions.flatMap(({ opt }) =>
+      opt.satisfiers.map((p) => p.code),
+    );
     return (
-      <CompoundPickSummary
-        metOptions={metOptions}
-        total={options.length}
-        onShowAll={() => setShowAll(true)}
-      />
+      <Recede title={title} caption={recedeCaption}>
+        <div className="cd-chips">
+          {satisfierChips(doneCodes, illegalCodes, catalogByCode)}
+        </div>
+        {others > 0 ? (
+          <button
+            type="button"
+            className="cd-showothers"
+            onClick={() => setShowAll(true)}
+          >
+            <Icon name="chevronRight" size="xs" aria-hidden="true" />
+            show {others} other {pluralize(others, "option")}
+          </button>
+        ) : null}
+      </Recede>
     );
   }
 
   return (
-    <div className="av-choice">
-      {/* Nested picks add the framing header; a top-level one already has it as
-          its section title. */}
-      {depth > 0 ? (
-        <div className="av-choice-head">{pickFraming(r, options.length)}</div>
-      ) : null}
-      <div className="av-choice-opts">
-        {options.map((opt, i) => (
+    <StatusCard
+      tone={satisfied > 0 ? "partial" : "missing"}
+      lead={
+        <RingLead
+          pct={progressPct(satisfied, needed, 0)}
+          num={satisfied}
+          tone="neutral"
+        />
+      }
+      title={title}
+      caption={caption}
+      pill={
+        <StatusPill
+          variant="decide"
+          label={selectMin === 1 ? "Choose 1" : `Choose ${selectMin}`}
+        />
+      }
+    >
+      <div className="cd-metaline">
+        Commit to <b>one stream</b> — every course in it must be completed.
+      </div>
+      {options.map((opt, i) => {
+        const badge = optionBadge(i);
+        const { needed: oNeed, satisfied: oSat } = nodeProgress(opt);
+        return (
           // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
           <Fragment key={i}>
-            {i > 0 ? <div className="av-choice-or">or</div> : null}
-            <ChoiceOption
-              option={opt}
-              index={i}
-              expanded={i === focused}
-              onSelect={() => setFocused(i)}
-              {...rest}
-            />
+            {i > 0 ? <div className="cd-or">or</div> : null}
+            <div className={`cd-opt${opt.status === "partial" ? " sel" : ""}`}>
+              <div className="cd-opt-head">
+                <span className="cd-opt-badge">{badge}</span>
+                <span className="cd-opt-name">{optionName(opt, badge)}</span>
+                <span className="cd-opt-mini">
+                  {fmtUnits(oSat)}/{fmtUnits(oNeed)}
+                </span>
+              </div>
+              <OptionBody
+                opt={opt}
+                placedCodes={placedCodes}
+                illegalCodes={illegalCodes}
+                catalogByCode={catalogByCode}
+                onDrill={onDrill}
+                drag={drag}
+              />
+            </div>
           </Fragment>
-        ))}
-      </div>
-      {decided ? (
+        );
+      })}
+      {decided && showAll ? (
         <button
           type="button"
-          className="av-opt-toggle is-open"
+          className="cd-showothers"
           onClick={() => setShowAll(false)}
         >
-          <span className="av-opt-chev">
-            <Icon name="chevronRight" size="xs" aria-hidden="true" />
-          </span>
-          Hide other options
+          <Icon name="chevronRight" size="xs" aria-hidden="true" />
+          hide other options
         </button>
       ) : null}
-    </div>
+    </StatusCard>
   );
-}
-
-/** Pick the option to expand first: one in progress, else a met one, else A. */
-function initialFocus(options: AuditNode[]): number {
-  const partial = options.findIndex((o) => o.status === "partial");
-  if (partial >= 0) return partial;
-  const met = options.findIndex(isSatisfied);
-  return met >= 0 ? met : 0;
-}
-
-/** A one-line glance at a collapsed option: its course codes (+ pool/extra). */
-function optionPreviewText(opt: AuditNode): string {
-  const codes: string[] = [];
-  let pools = 0;
-  const walk = (n: AuditNode) => {
-    const r = n.ruleNode;
-    if (r.kind === "courses") codes.push(...r.courses);
-    else if (r.kind === "subjectPool") pools += r.selectCount ?? 1;
-    else n.children.forEach(walk);
-  };
-  walk(opt);
-  const uniq = [...new Set(codes)];
-  const parts = uniq.slice(0, 3).map(formatCourseCode);
-  const extra = uniq.length - parts.length;
-  if (extra > 0) parts.push(`+${extra}`);
-  if (pools > 0) parts.push(`+${countNoun(pools, "course")}`);
-  return parts.join("  ·  ") || "—";
-}
-
-/**
- * One alternative in a compound pick: a selectable row (badge + course preview)
- * that expands to the full requirement body and collapses its siblings.
- */
-function ChoiceOption({
-  option,
-  index,
-  expanded,
-  onSelect,
-  ...rest
-}: {
-  option: AuditNode;
-  index: number;
-  expanded: boolean;
-  onSelect: () => void;
-} & OptionRenderProps) {
-  const met = isSatisfied(option);
-  const cls = `av-choice-opt${expanded ? " is-open" : ""}${met ? " is-met" : ""}`;
-  return (
-    <div className={cls}>
-      <button
-        type="button"
-        className="av-choice-sel"
-        onClick={onSelect}
-        aria-expanded={expanded}
-      >
-        <span className="av-choice-radio">
-          {met ? (
-            <Icon name="check" size="sm" aria-hidden="true" />
-          ) : (
-            optionBadge(index)
-          )}
-        </span>
-        {expanded ? (
-          <span className="av-choice-open-label">
-            Option {optionBadge(index)}
-          </span>
-        ) : (
-          <span className="av-choice-preview">{optionPreviewText(option)}</span>
-        )}
-        {expanded ? null : (
-          <span className="av-choice-chev">
-            <Icon name="chevronRight" size="xs" aria-hidden="true" />
-          </span>
-        )}
-      </button>
-      {/* Always in the DOM (just hidden when not expanded) — conditional
-          rendering would drop these codes from the rendered audit. */}
-      <div className="av-choice-body" hidden={!expanded}>
-        <OptionBody node={option} {...rest} />
-      </div>
-    </div>
-  );
-}
-
-/**
- * An option card's body. An `all` bundle renders its children directly (the card
- * is the "complete all" boundary); anything else renders as-is.
- */
-function OptionBody({
-  node,
-  ...rest
-}: { node: AuditNode } & OptionRenderProps) {
-  if (node.ruleNode.kind === "all") {
-    return (
-      <div className="flex flex-col gap-1.5">
-        {node.children.map((child, i) => (
-          <NodeBody
-            // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
-            key={i}
-            node={child}
-            depth={1}
-            {...rest}
-          />
-        ))}
-      </div>
-    );
-  }
-  return <NodeBody node={node} depth={1} {...rest} />;
-}
-
-/** Collapsed view of a satisfied compound pick: the completed path(s) + toggle. */
-function CompoundPickSummary({
-  metOptions,
-  total,
-  onShowAll,
-}: {
-  metOptions: { opt: AuditNode; index: number }[];
-  total: number;
-  onShowAll: () => void;
-}) {
-  const others = total - metOptions.length;
-  // Completed path(s) + the "show others" control share one card, so the choice
-  // reads as a single resolved block rather than a card with a stray link below.
-  return (
-    <div className="av-opt-summary">
-      {metOptions.map(({ opt, index }) => (
-        <div key={index} className="av-opt-summary-row">
-          <span className="av-opt-summary-mark">
-            <Icon name="check" size="sm" aria-hidden="true" />
-          </span>
-          <span className="av-opt-summary-body">
-            <span className="av-opt-summary-label">
-              Completed — Option {optionBadge(index)}
-            </span>
-            <span className="av-opt-summary-codes">
-              {[...new Set(opt.satisfiers.map((s) => s.code))]
-                .map(formatCourseCode)
-                .join(" + ")}
-            </span>
-          </span>
-        </div>
-      ))}
-      {others > 0 ? (
-        <button
-          type="button"
-          className="av-opt-toggle av-opt-toggle--in-summary"
-          onClick={onShowAll}
-        >
-          <span className="av-opt-chev">
-            <Icon name="chevronRight" size="xs" aria-hidden="true" />
-          </span>
-          show {others} other {pluralize(others, "option")}
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-/** A concise "Choose N …" framing for a nested mixed pick's alternatives. */
-function pickFraming(
-  r: Extract<AuditNode["ruleNode"], { kind: "pick" }>,
-  optionCount?: number,
-): string {
-  const min = r.selectMin;
-  const max = r.selectMax;
-  // Name the total when known: "Choose 1 of 3 options" > "Choose 1 of these…".
-  if (optionCount != null && min != null && max != null && min === max)
-    return `Choose ${min} of ${optionCount} options`;
-  if (min != null && max != null)
-    return min === max
-      ? `Choose ${min} of these options:`
-      : `Choose ${min}–${max} of these options:`;
-  if (max != null) return `Choose up to ${max} of these options:`;
-  if (min != null) return `Choose at least ${min} of these options:`;
-  return "Choose from these options:";
 }

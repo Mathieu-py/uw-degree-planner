@@ -46,6 +46,21 @@ export function countNoun(
   return `${count} ${pluralize(count, noun, plural)}`;
 }
 
+/**
+ * Progress as an integer percent, clamped to [0, 100]. `whenEmpty` is returned
+ * when nothing is required (`total <= 0`): 100 for a vacuously-complete volume,
+ * 0 for an optional pick whose empty ring should read as unfilled.
+ */
+export function progressPct(
+  done: number,
+  total: number,
+  whenEmpty = 100,
+): number {
+  return total > 0
+    ? Math.min(Math.round((done / total) * 100), 100)
+    : whenEmpty;
+}
+
 /** Human level-range note, e.g. "300–400 level". Null when unbounded. */
 export function formatLevelRange(min?: number, max?: number): string | null {
   if (min == null && max == null) return null;
