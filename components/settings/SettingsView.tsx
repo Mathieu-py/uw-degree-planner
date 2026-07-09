@@ -165,16 +165,22 @@ function UsernameRow({ initialUsername }: { initialUsername: string }) {
     setBusy(true);
     setError(null);
     setSaved(false);
-    const result = await updateProfile({ username: value });
-    if (result.ok) {
-      setValue(result.data.username);
-      setBaseline(result.data.username);
-      publishUsername(result.data.username);
-      setSaved(true);
-    } else {
-      setError(usernameError(result.error));
+    try {
+      const result = await updateProfile({ username: value });
+      if (result.ok) {
+        setValue(result.data.username);
+        setBaseline(result.data.username);
+        publishUsername(result.data.username);
+        setSaved(true);
+      } else {
+        setError(usernameError(result.error));
+      }
+    } catch {
+      // Server-action transport failures reject instead of returning {ok:false}.
+      setError(usernameError("unknown"));
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (

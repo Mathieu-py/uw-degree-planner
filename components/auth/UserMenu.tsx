@@ -119,7 +119,7 @@ function UserMenuInner() {
             role="menuitem"
             href="/settings"
             onClick={close}
-            className={`${MENU_ITEM_CLASS} text-ink hover:bg-bg-2`}
+            className={`${MENU_ITEM_CLASS} text-ink hover:bg-bg-2 focus-visible:bg-bg-2`}
           >
             <Icon
               name="gear"
@@ -135,7 +135,7 @@ function UserMenuInner() {
             target="_blank"
             rel="noreferrer"
             onClick={close}
-            className={`${MENU_ITEM_CLASS} text-ink hover:bg-bg-2`}
+            className={`${MENU_ITEM_CLASS} text-ink hover:bg-bg-2 focus-visible:bg-bg-2`}
           >
             <Icon
               name="help"
@@ -151,7 +151,7 @@ function UserMenuInner() {
             type="button"
             onClick={signOut}
             disabled={busy}
-            className={`${MENU_ITEM_CLASS} cursor-pointer text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`${MENU_ITEM_CLASS} cursor-pointer text-danger hover:bg-danger-soft focus-visible:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Icon name="logout" size="sm" aria-hidden="true" />
             <span className="flex-1 text-left font-medium">
