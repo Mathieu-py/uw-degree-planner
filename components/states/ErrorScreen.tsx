@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import { SiteFooter } from "@/components/chrome/SiteFooter";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
 import { REPO_URL } from "@/lib/constants";
 
@@ -91,7 +92,10 @@ export function ErrorScreen({
 
           <div className="flex flex-wrap justify-center gap-3 mt-7">
             {"href" in primary ? (
-              <Link href={primary.href} className={PRIMARY_CTA}>
+              <Link
+                href={primary.href}
+                className={buttonClasses({ variant: "primary", size: "lg" })}
+              >
                 {primary.label}
                 <Icon name="arrow" size="sm" aria-hidden="true" />
               </Link>
@@ -99,13 +103,16 @@ export function ErrorScreen({
               <button
                 type="button"
                 onClick={primary.onClick}
-                className={PRIMARY_CTA}
+                className={buttonClasses({ variant: "primary", size: "lg" })}
               >
                 {primary.label}
                 <Icon name="arrow" size="sm" aria-hidden="true" />
               </button>
             )}
-            <Link href={secondary.href} className={SECONDARY_CTA}>
+            <Link
+              href={secondary.href}
+              className={buttonClasses({ variant: "outline", size: "lg" })}
+            >
               {secondary.label}
             </Link>
           </div>
@@ -134,11 +141,3 @@ export function ErrorScreen({
     </>
   );
 }
-
-const PRIMARY_CTA =
-  "inline-flex items-center justify-center gap-2 h-[48px] px-6 text-[15px] " +
-  "font-semibold rounded-[10px] bg-primary text-primary-ink hover:bg-primary-hover";
-
-const SECONDARY_CTA =
-  "inline-flex items-center justify-center gap-2 h-[48px] px-6 text-[15px] " +
-  "font-semibold rounded-[10px] border border-line-2 bg-bg text-ink hover:bg-bg-2";

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { ThemePreviewPicker } from "@/components/theme/ThemePreviewPicker";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -52,10 +53,7 @@ export function SettingsView() {
             Account settings — your username, appearance, and account removal —
             live behind sign-in. In demo mode there's no account to manage.
           </p>
-          <Link
-            href="/login?next=/settings"
-            className="inline-flex h-11 items-center justify-center rounded-[9px] bg-primary px-5 text-sm font-semibold text-primary-ink hover:bg-primary-hover"
-          >
+          <Link href="/login?next=/settings" className={buttonClasses()}>
             Sign in
           </Link>
         </div>
