@@ -42,7 +42,7 @@ function attach(
 ): EligibilityRow[] {
   return attachEligibility(rows, {
     placedAnywhere: opts.placedAnywhere ?? new Set(),
-    hideUnmetPrereqs: opts.hideUnmetPrereqs ?? false,
+    show: opts.show ?? "all",
     ...opts,
   });
 }
@@ -50,7 +50,7 @@ function attach(
 describe("attachEligibility", () => {
   it("leaves eligibility null (and keeps the row) when completed is empty and there's no antireq/duplicate", () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
-    const out = attach(rows, { completed: new Set(), hideUnmetPrereqs: true });
+    const out = attach(rows, { completed: new Set(), show: "eligibleCheck" });
     expect(out).toHaveLength(1);
     expect(out[0].eligibility).toBeNull();
   });
@@ -61,16 +61,16 @@ describe("attachEligibility", () => {
     expect(out[0].eligibility?.state).toBe("eligible");
   });
 
-  it("filters out rows with unmet prereqs when hideUnmetPrereqs=true", () => {
+  it('filters out rows with unmet prereqs when show="eligibleCheck"', () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
     const out = attach(rows, {
       completed: new Set(["math137"]),
-      hideUnmetPrereqs: true,
+      show: "eligibleCheck",
     });
     expect(out).toHaveLength(0);
   });
 
-  it("keeps rows with unmet prereqs as ineligible when hideUnmetPrereqs=false", () => {
+  it('keeps rows with unmet prereqs as ineligible when show="all"', () => {
     const rows = makeRows([makeCourse({ code: "cs136", prereqs: "CS135" })]);
     const out = attach(rows, { completed: new Set(["math137"]) });
     expect(out).toHaveLength(1);
@@ -112,7 +112,7 @@ describe("attachEligibility", () => {
     expect(
       attach(rows, {
         completed: new Set(["cs135"]),
-        hideUnmetPrereqs: true,
+        show: "eligibleCheck",
         programs: [SYDE],
       }),
     ).toHaveLength(0);
@@ -132,7 +132,7 @@ describe("attachEligibility", () => {
     const out = attach(rows, {
       completed: new Set(["math117"]),
       placedAnywhere: new Set(["math117"]),
-      hideUnmetPrereqs: true,
+      show: "eligibleCheck",
       level: "2A",
       programs: [SYDE],
       programReferenced: new Set(["math119"]),
@@ -144,7 +144,7 @@ describe("attachEligibility", () => {
   it("greys a placed course's cross-listed twin (not dropped from candidates)", () => {
     // CLAS 221 is the same course as ANTH 201; with ANTH 201 placed, the twin
     // must surface as ineligible/already-placed (greyed) — and stay hidden when
-    // hideUnmetPrereqs — even with an empty completed set (term-independent).
+    // show hides ineligible — even with an empty completed set (term-independent).
     const rows = makeRows([
       { ...makeCourse({ code: "clas221" }), crossListed: ["anth201"] },
     ]);
@@ -159,7 +159,7 @@ describe("attachEligibility", () => {
       attach(rows, {
         completed: new Set(),
         placedAnywhere: new Set(["anth201"]),
-        hideUnmetPrereqs: true,
+        show: "eligibleCheck",
       }),
     ).toHaveLength(0);
   });
@@ -172,7 +172,7 @@ describe("attachEligibility", () => {
     const out = attach(rows, {
       completed: new Set(),
       placedAnywhere: new Set(["math138"]),
-      hideUnmetPrereqs: true,
+      show: "eligibleCheck",
     });
     expect(out).toHaveLength(0);
     const shown = attach(rows, {

@@ -1,40 +1,41 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { CourseTable } from "@/components/courses/CourseTable";
 import { FilterSidebar } from "@/components/planner/picker/FilterSidebar";
 import {
   PICKER_PAGE_SIZE,
   useFilteredCourses,
 } from "@/components/planner/picker/useFilteredCourses";
 import { Button } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
-import { Picker } from "@/components/ui/Picker";
 import type { SortKey } from "@/lib/courses/courseSort";
-import { seatsAvailable } from "@/lib/courses/filters";
-import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { Course } from "@/lib/courses/types";
-import { formatCourseCode, formatPercent, pluralize } from "@/lib/format";
+import { pluralize } from "@/lib/format";
 import { TermPicker } from "./TermPicker";
 
 // No placed/completed context on the catalog: it's a plan-independent browse
-// surface, so eligibility isn't computed (rows show prerequisites instead).
+// surface, so eligibility isn't computed (no Status column — that's the picker).
 const NO_CODES: Set<string> = new Set();
 
-const SORTS: Array<{ key: SortKey; label: string }> = [
-  { key: "code", label: "Code" },
-  { key: "useful", label: "Most useful" },
-  { key: "easy", label: "Easiest" },
-  { key: "liked", label: "Most liked" },
-];
+// Read-only reflection of the active sort in the table toolbar; the sortable
+// column headers are the control.
+const SORT_LABELS: Record<SortKey, string> = {
+  code: "Code",
+  name: "Course",
+  useful: "Useful",
+  easy: "Easy",
+  liked: "Liked",
+  reviews: "Reviews",
+  seats: "Seats",
+};
 
 export function CatalogView({ catalog }: { catalog: Course[] }) {
   const {
     filters,
     sortKey,
+    sortDir,
     knownPrefixes,
     sorted,
     visible,
@@ -69,60 +70,61 @@ export function CatalogView({ catalog }: { catalog: Course[] }) {
             knownPrefixes={knownPrefixes}
             onPatch={patchFilters}
             onReset={resetFilters}
-            showHideUnmet={false}
+            showEligibility={false}
           />
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Input
-              type="search"
-              value={filters.query}
-              onChange={(e) => patchFilters({ query: e.target.value })}
-              aria-label="Search by code or name"
-              placeholder="Search by code or name…"
-              className="flex-1"
-            />
-            <Picker
-              value={sortKey}
-              onChange={onSort}
-              options={SORTS.map((s) => ({ value: s.key, label: s.label }))}
-              ariaLabel="Sort courses"
-              className="w-44"
-            />
-          </div>
-
-          <p className="u-small">
-            {sorted.length.toLocaleString()}{" "}
-            {pluralize(sorted.length, "course")}
-          </p>
+          <Input
+            type="search"
+            value={filters.query}
+            onChange={(e) => patchFilters({ query: e.target.value })}
+            aria-label="Search by code or name"
+            placeholder="Search by code or name…"
+            className="w-full"
+          />
 
           {visible.length === 0 ? (
             <div className="card-2 border border-line rounded-[14px] px-4 py-12 text-center text-sm text-ink-3">
               No matching courses.
             </div>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {visible.map((r) => (
-                <CatalogRow
-                  key={r.course.id}
-                  course={r.course}
-                  onAdd={() => setAddCourse(r.course)}
-                />
-              ))}
-            </ul>
-          )}
+            <div className="card overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-line bg-bg-2 text-[12.5px] text-ink-2">
+                <span>
+                  <b className="text-ink font-semibold">
+                    {sorted.length.toLocaleString()}
+                  </b>{" "}
+                  {pluralize(sorted.length, "course")}
+                </span>
+                <span>
+                  Sort{" "}
+                  <b className="text-accent font-semibold">
+                    {SORT_LABELS[sortKey]} {sortDir === "asc" ? "↑" : "↓"}
+                  </b>
+                </span>
+              </div>
 
-          {hasMore ? (
-            <Button
-              variant="outline"
-              onClick={showMore}
-              className="self-center mt-1"
-            >
-              Show {Math.min(PICKER_PAGE_SIZE, sorted.length - visible.length)}{" "}
-              more
-            </Button>
-          ) : null}
+              <CourseTable
+                rows={visible}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={onSort}
+                mode="catalog"
+                onAdd={setAddCourse}
+              />
+
+              {hasMore ? (
+                <div className="border-t border-line px-4 py-3 flex justify-center">
+                  <Button variant="outline" onClick={showMore}>
+                    Show{" "}
+                    {Math.min(PICKER_PAGE_SIZE, sorted.length - visible.length)}{" "}
+                    more
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 
@@ -130,80 +132,5 @@ export function CatalogView({ catalog }: { catalog: Course[] }) {
         <TermPicker course={addCourse} onClose={() => setAddCourse(null)} />
       ) : null}
     </div>
-  );
-}
-
-function CatalogRow({ course, onAdd }: { course: Course; onAdd: () => void }) {
-  const seats = seatsAvailable(course);
-  const prereqLine = course.prereqs?.trim() || null;
-
-  return (
-    <li className="card p-3 flex items-center gap-4">
-      <div className="min-w-0 flex-1 flex flex-col gap-0.5">
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/course/${course.code}?from=catalog`}
-            className="u-mono text-[13px] font-bold hover:text-accent"
-          >
-            {formatCourseCode(course.code)}
-          </Link>
-          <span className="text-sm text-ink truncate">{course.name}</span>
-        </div>
-        {prereqLine ? (
-          <span className="u-small truncate" title={prereqLine}>
-            Prereq: {prereqLine}
-          </span>
-        ) : (
-          <span className="u-small text-ink-3">No prerequisites</span>
-        )}
-      </div>
-
-      <div className="hidden sm:flex items-center gap-4 shrink-0">
-        <MiniRating label="Useful" value={course.rating?.useful} />
-        <MiniRating label="Liked" value={course.rating?.liked} />
-        {seats != null ? (
-          <Chip variant={seats > 0 ? "done" : "default"}>
-            {seats > 0 ? `${seats} seats` : "Full"}
-          </Chip>
-        ) : null}
-      </div>
-
-      <div className="flex items-center gap-1 shrink-0">
-        <Link
-          href={`/course/${course.code}?from=catalog`}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-[7px] text-ink-3 hover:text-ink hover:bg-bg-2"
-          aria-label={`Details for ${course.code}`}
-          title="Course details"
-        >
-          <Icon name="external" size="sm" aria-hidden="true" />
-        </Link>
-        <Button variant="primary" size="sm" onClick={onAdd}>
-          Add
-        </Button>
-      </div>
-    </li>
-  );
-}
-
-function MiniRating({
-  label,
-  value,
-}: {
-  label: string;
-  value: number | null | undefined;
-}) {
-  const pct = value == null ? null : Math.round(value * 100);
-  const color = getRatingColor(value);
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 w-[88px]"
-      title={`${label}: ${pct == null ? "no data" : `${pct}%`}`}
-    >
-      <span className="u-small w-10">{label}</span>
-      <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
-      <span className="u-mono text-[11px] tabular-nums">
-        {value == null ? "—" : formatPercent(value)}
-      </span>
-    </span>
   );
 }

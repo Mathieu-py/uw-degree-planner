@@ -14,6 +14,7 @@ import { applyFilters } from "@/lib/courses/filters";
 import {
   attachEligibility,
   type EligibilityRow,
+  type ShowFilter,
 } from "@/lib/courses/rowEligibility";
 import type { Course, FilterPreset } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
@@ -26,7 +27,7 @@ export interface PickerFilters {
   minUseful: number | null;
   minEasy: number | null;
   hasSeatsOnly: boolean;
-  hideUnmetPrereqs: boolean;
+  show: ShowFilter;
 }
 
 const DEFAULT_FILTERS: PickerFilters = {
@@ -37,7 +38,7 @@ const DEFAULT_FILTERS: PickerFilters = {
   minUseful: null,
   minEasy: null,
   hasSeatsOnly: false,
-  hideUnmetPrereqs: true,
+  show: "eligibleCheck",
 };
 
 const PAGE = 50;
@@ -171,7 +172,7 @@ export function useFilteredCourses({
   //   and only evaluate the ~50 rendered rows (vs. the whole ~10k catalog per
   //   keystroke).
   const sortedCourses = useMemo<EligibilityRow[]>(() => {
-    if (filters.hideUnmetPrereqs) {
+    if (filters.show !== "all") {
       const baseRows = searched.map((course) => ({
         course,
         eligibility: null,
@@ -180,7 +181,7 @@ export function useFilteredCourses({
         completed: completedExpanded,
         placedAnywhere: placedExpanded,
         programReferenced,
-        hideUnmetPrereqs: true,
+        show: filters.show,
         level,
         programs,
         sameTerm,
@@ -206,7 +207,7 @@ export function useFilteredCourses({
     level,
     programs,
     antireqNamers,
-    filters.hideUnmetPrereqs,
+    filters.show,
     sortKey,
     sortDir,
   ]);
@@ -215,12 +216,12 @@ export function useFilteredCourses({
     const slice = sortedCourses.slice(0, limit);
     // In gating mode, slice rows already carry annotations from the
     // pre-pagination pass — re-annotating would be wasted work.
-    if (filters.hideUnmetPrereqs) return slice;
+    if (filters.show !== "all") return slice;
     return attachEligibility(slice, {
       completed: completedExpanded,
       placedAnywhere: placedExpanded,
       programReferenced,
-      hideUnmetPrereqs: false,
+      show: "all",
       level,
       programs,
       sameTerm,
@@ -236,7 +237,7 @@ export function useFilteredCourses({
     level,
     programs,
     antireqNamers,
-    filters.hideUnmetPrereqs,
+    filters.show,
   ]);
 
   // `sorted` is exposed for the candidate-count display and hasMore math;
