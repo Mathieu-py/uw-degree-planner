@@ -9,6 +9,8 @@ import { Ring } from "@/components/ui/Ring";
 
 type Term = { label: string; done: boolean; slots: string[] };
 
+const PLACEHOLDER = "+ add";
+
 const TERMS: Term[] = [
   {
     label: "1A · F23",
@@ -16,11 +18,9 @@ const TERMS: Term[] = [
     slots: ["MATH 115", "SYDE 101", "PHYS 115"],
   },
   { label: "1B · W24", done: true, slots: ["MATH 116", "SYDE 121", "CHE 102"] },
-  { label: "2A · F24", done: false, slots: ["SYDE 211", "SYDE 223", "+ add"] },
-  { label: "2B · W25", done: false, slots: ["SYDE 252", "+ add", "+ add"] },
+  { label: "2A · F24", done: false, slots: ["SYDE 211", "SYDE 223", PLACEHOLDER] },
+  { label: "2B · W25", done: false, slots: ["SYDE 252", PLACEHOLDER, PLACEHOLDER] },
 ];
-
-const PLACEHOLDER = "+ add";
 
 type ReqState = "met" | "partial" | "missing";
 
@@ -53,7 +53,7 @@ export function MiniPlanner() {
                   code === PLACEHOLDER ? (
                     // biome-ignore lint/suspicious/noArrayIndexKey: static decoration
                     <span key={i} className="mp-cslot mp-cslot-ghost">
-                      + add
+                      {PLACEHOLDER}
                     </span>
                   ) : (
                     <span
