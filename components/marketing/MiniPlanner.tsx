@@ -18,8 +18,16 @@ const TERMS: Term[] = [
     slots: ["MATH 115", "SYDE 101", "PHYS 115"],
   },
   { label: "1B · W24", done: true, slots: ["MATH 116", "SYDE 121", "CHE 102"] },
-  { label: "2A · F24", done: false, slots: ["SYDE 211", "SYDE 223", PLACEHOLDER] },
-  { label: "2B · W25", done: false, slots: ["SYDE 252", PLACEHOLDER, PLACEHOLDER] },
+  {
+    label: "2A · F24",
+    done: false,
+    slots: ["SYDE 211", "SYDE 223", PLACEHOLDER],
+  },
+  {
+    label: "2B · W25",
+    done: false,
+    slots: ["SYDE 252", PLACEHOLDER, PLACEHOLDER],
+  },
 ];
 
 type ReqState = "met" | "partial" | "missing";
