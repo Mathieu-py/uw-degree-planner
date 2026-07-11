@@ -70,15 +70,12 @@ export function DashboardView({
             single local plan.
           </p>
           <div className="flex gap-3">
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center justify-center rounded-[9px] bg-primary px-5 text-sm font-semibold text-primary-ink hover:bg-primary-hover"
-            >
+            <Link href="/login" className={buttonClasses()}>
               Sign in
             </Link>
             <Link
               href="/plan"
-              className="inline-flex h-11 items-center justify-center rounded-[9px] border border-line-2 bg-bg px-5 text-sm font-semibold text-ink hover:bg-bg-2"
+              className={buttonClasses({ variant: "outline" })}
             >
               Open demo planner
             </Link>

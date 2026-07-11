@@ -2,23 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { type ReactNode, useEffect, useState } from "react";
+import { ThemePreviewPicker } from "@/components/theme/ThemePreviewPicker";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { deleteAccount, updateProfile } from "@/lib/account/server/actions";
-import { useAuthState } from "@/lib/auth/store";
+import { publishUsername, useAuthState } from "@/lib/auth/store";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const NAV_ITEMS = [
-  { id: "account", label: "Account" },
-  { id: "appearance", label: "Appearance" },
-  { id: "danger", label: "Danger zone" },
-] as const;
-
-type SectionId = (typeof NAV_ITEMS)[number]["id"];
 
 function usernameError(code: string): string {
   switch (code) {
@@ -38,12 +31,11 @@ function usernameError(code: string): string {
 export function SettingsView() {
   const { user, username, displayName, ready, isAuthed } = useAuthState();
   const router = useRouter();
-  const [active, setActive] = useState<SectionId>("account");
 
   if (!ready) {
     return (
       <div className="section">
-        <div className="container-lg flex flex-col gap-4">
+        <div className="container-sm flex flex-col gap-4">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -61,10 +53,7 @@ export function SettingsView() {
             Account settings — your username, appearance, and account removal —
             live behind sign-in. In demo mode there's no account to manage.
           </p>
-          <Link
-            href="/login?next=/settings"
-            className="inline-flex h-11 items-center justify-center rounded-[9px] bg-primary px-5 text-sm font-semibold text-primary-ink hover:bg-primary-hover"
-          >
+          <Link href="/login?next=/settings" className={buttonClasses()}>
             Sign in
           </Link>
         </div>
@@ -72,85 +61,59 @@ export function SettingsView() {
     );
   }
 
-  function scrollTo(id: SectionId) {
-    setActive(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  }
-
   const initials = (displayName ?? "?").slice(0, 2).toUpperCase();
 
   return (
     <div className="section">
-      <div className="container-lg flex flex-col gap-7">
+      <div className="container-sm flex flex-col gap-7">
         <div className="flex flex-col gap-1">
           <Eyebrow>Settings</Eyebrow>
           <h1 className="u-h1">Account</h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-10 items-start">
-          {/* Sub-nav */}
-          <nav className="flex md:flex-col gap-1 md:sticky md:top-20">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => scrollTo(item.id)}
-                className={`text-left rounded-[8px] px-3 py-[9px] text-sm font-medium transition-colors ${
-                  active === item.id
-                    ? "bg-bg-3 text-ink"
-                    : "text-ink-2 hover:text-ink hover:bg-bg-2"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Panels */}
-          <div className="flex flex-col gap-10 min-w-0">
-            <section id="account" className="scroll-mt-24 flex flex-col">
-              <div className="flex items-center gap-4 pb-6 border-b border-line">
-                <span className="grid place-items-center size-14 rounded-full bg-primary text-primary-ink text-lg font-bold">
-                  {initials}
+        <div className="flex flex-col gap-10 min-w-0">
+          <section id="account" className="scroll-mt-24 flex flex-col">
+            <div className="flex items-center gap-4 pb-6 border-b border-line">
+              <span className="grid place-items-center size-14 rounded-full bg-primary text-primary-ink text-lg font-bold">
+                {initials}
+              </span>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="font-semibold truncate">
+                  {displayName ?? "Signed in"}
                 </span>
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="font-semibold truncate">
-                    {displayName ?? "Signed in"}
-                  </span>
-                  <span className="u-small truncate">{user?.email}</span>
-                </div>
+                <span className="u-small truncate">{user?.email}</span>
               </div>
+            </div>
 
-              <UsernameRow initialUsername={username ?? ""} />
+            <UsernameRow initialUsername={username ?? ""} />
 
-              <Row label="Email" hint="Used for sign-in and account recovery.">
-                <Input
-                  type="email"
-                  value={user?.email ?? ""}
-                  readOnly
-                  disabled
-                  className="max-w-[360px] opacity-70"
-                />
-              </Row>
-            </section>
+            <Row label="Email" hint="Used for sign-in and account recovery.">
+              <Input
+                type="email"
+                value={user?.email ?? ""}
+                readOnly
+                disabled
+                className="max-w-[360px] opacity-70"
+              />
+            </Row>
+          </section>
 
-            <section id="appearance" className="scroll-mt-24">
-              <h2 className="u-h3 pb-2">Appearance</h2>
-              <Row label="Theme" hint="Pick a side — light or dark.">
-                <ThemeToggle />
-              </Row>
-            </section>
+          <section id="appearance" className="scroll-mt-24">
+            <h2 className="u-h3 pb-2">Appearance</h2>
+            <Row label="Theme" hint="Pick a side — light or dark.">
+              <ThemePreviewPicker />
+            </Row>
+          </section>
 
-            <section id="danger" className="scroll-mt-24">
-              <h2 className="u-h3 pb-2 text-danger">Danger zone</h2>
-              <Row
-                label="Delete account"
-                hint="Permanently removes your account and every plan. This can't be undone."
-              >
-                <DeleteAccountRow onDeleted={() => router.replace("/")} />
-              </Row>
-            </section>
-          </div>
+          <section id="danger" className="scroll-mt-24">
+            <h2 className="u-h3 pb-2 text-danger">Danger zone</h2>
+            <Row
+              label="Delete account"
+              hint="Permanently removes your account and every plan. This can't be undone."
+            >
+              <DeleteAccountRow onDeleted={() => router.replace("/")} />
+            </Row>
+          </section>
         </div>
       </div>
     </div>
@@ -186,19 +149,36 @@ function UsernameRow({ initialUsername }: { initialUsername: string }) {
 
   const dirty = value.trim() !== baseline.trim();
 
+  // The store's username arrives async (the profiles fetch can land after
+  // mount) — adopt it unless the user has started editing.
+  useEffect(() => {
+    if (!dirty && initialUsername !== baseline) {
+      setValue(initialUsername);
+      setBaseline(initialUsername);
+    }
+  }, [dirty, initialUsername, baseline]);
+
   async function save() {
     if (busy || !dirty) return;
     setBusy(true);
     setError(null);
     setSaved(false);
-    const result = await updateProfile({ username: value });
-    if (result.ok) {
-      setBaseline(value);
-      setSaved(true);
-    } else {
-      setError(usernameError(result.error));
+    try {
+      const result = await updateProfile({ username: value });
+      if (result.ok) {
+        setValue(result.data.username);
+        setBaseline(result.data.username);
+        publishUsername(result.data.username);
+        setSaved(true);
+      } else {
+        setError(usernameError(result.error));
+      }
+    } catch {
+      // Server-action transport failures reject instead of returning {ok:false}.
+      setError(usernameError("unknown"));
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (

@@ -2,11 +2,13 @@
 import { cleanup, fireEvent, render, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AuditNode } from "@/lib/audit/compile";
+import { type ScoreInputs, scoreNode } from "@/lib/audit/score";
 import type { Course } from "@/lib/courses/types";
 import { SectionRow } from "../../sections/SectionRow";
 import type { Section } from "../../types";
 import { ChooseOneRow } from "../ChooseOneRow";
 import { CompoundPickBody } from "../CompoundPick";
+import { NodeBody } from "../NodeBody";
 import { SubjectPoolBody } from "../SubjectPoolBody";
 
 afterEach(cleanup);
@@ -72,7 +74,9 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
   it("shows chosen chips + an 'N of M chosen' meta and a Find-courses row while in progress", () => {
     const { container } = render(
       <SubjectPoolBody
-        node={poolNode(["cs341", "cs348", "cs370", "cs449", "cs456"], 6)}
+        scored={scoreNode(
+          poolNode(["cs341", "cs348", "cs370", "cs449", "cs456"], 6),
+        )}
         illegalCodes={EMPTY}
         catalogByCode={NO_CATALOG}
         onDrill={() => {}}
@@ -97,7 +101,7 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
     const drills: Array<[string[], unknown]> = [];
     const { container } = render(
       <SubjectPoolBody
-        node={poolNode(["cs341"], 6)}
+        scored={scoreNode(poolNode(["cs341"], 6))}
         illegalCodes={EMPTY}
         catalogByCode={NO_CATALOG}
         onDrill={(codes, preset) => drills.push([codes, preset])}
@@ -116,7 +120,7 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
     const codes = ["cs341", "cs348", "cs370", "cs449", "cs456", "cs466"];
     const { container } = render(
       <SubjectPoolBody
-        node={poolNode(codes, 6)}
+        scored={scoreNode(poolNode(codes, 6))}
         illegalCodes={EMPTY}
         catalogByCode={NO_CATALOG}
         onDrill={() => {}}
@@ -136,7 +140,7 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
   it("is inert in the read-only view — no Find-courses row, no draggable chips", () => {
     const { container } = render(
       <SubjectPoolBody
-        node={poolNode(["cs341", "cs348"], 6)}
+        scored={scoreNode(poolNode(["cs341", "cs348"], 6))}
         illegalCodes={EMPTY}
         catalogByCode={NO_CATALOG}
       />,
@@ -151,7 +155,7 @@ describe("Status Cards — subject pool (issue #115 headline)", () => {
     const node = { ...poolNode(["cs341", "cs350"], 2), legallyMet: false };
     const { container } = render(
       <SubjectPoolBody
-        node={node}
+        scored={scoreNode(node)}
         illegalCodes={new Set(["cs350"])}
         catalogByCode={NO_CATALOG}
         onDrill={() => {}}
@@ -174,7 +178,7 @@ describe("Status Cards — choose-one pick (element B) legality", () => {
     };
     const { container } = render(
       <ChooseOneRow
-        node={node}
+        scored={scoreNode(node)}
         options={["cs341", "cs350"]}
         illegalCodes={new Set(["cs350"])}
         catalogByCode={NO_CATALOG}
@@ -191,7 +195,7 @@ describe("Status Cards — choose-one pick (element B) legality", () => {
   it("recedes to the chosen course once the choice is legally satisfied", () => {
     const { container } = render(
       <ChooseOneRow
-        node={choicePick(["cs341"], ["cs341", "cs350"])}
+        scored={scoreNode(choicePick(["cs341"], ["cs341", "cs350"]))}
         options={["cs341", "cs350"]}
         illegalCodes={EMPTY}
         catalogByCode={NO_CATALOG}
@@ -201,6 +205,114 @@ describe("Status Cards — choose-one pick (element B) legality", () => {
     const recede = container.querySelector("details.sat-a");
     expect(recede, "a legally decided choice recedes").not.toBeNull();
     expect(recede?.querySelectorAll(".cd-chip.met")).toHaveLength(1);
+  });
+});
+
+describe("Status Cards — match-scored path (the production shape)", () => {
+  /** Hand-built ScoreInputs: fill/assigned for exactly the given nodes. */
+  function matchInputs(entries: Array<[AuditNode, string[]]>): ScoreInputs {
+    const nodeFill = new WeakMap<AuditNode, number>();
+    const nodeAssigned = new WeakMap<AuditNode, string[]>();
+    for (const [n, codes] of entries) {
+      nodeFill.set(n, codes.length);
+      if (codes.length > 0) nodeAssigned.set(n, codes);
+    }
+    return { nodeFill, nodeAssigned };
+  }
+
+  /** An all-required `courses` leaf — the RequiredCoursesCard shape. */
+  function coursesNode(satisfierCodes: string[], missing: string[]): AuditNode {
+    return {
+      ruleNode: { kind: "courses", courses: [...satisfierCodes, ...missing] },
+      status:
+        missing.length === 0
+          ? "met"
+          : satisfierCodes.length > 0
+            ? "partial"
+            : "unmet",
+      satisfiers: satisfierCodes.map((code) => ({
+        code,
+        slotId: "s1",
+        termId: 1239,
+        position: "1A",
+      })),
+      missingCodes: missing,
+      children: [],
+    };
+  }
+
+  it("a legally-met pick whose option was credited elsewhere does NOT recede", () => {
+    const node = choicePick(["cs341"], ["cs341", "cs350"]);
+    // Match present, but this pick's bucket got nothing (claimed elsewhere).
+    const { container } = render(
+      <ChooseOneRow
+        scored={scoreNode(node, matchInputs([[node, []]]))}
+        options={["cs341", "cs350"]}
+        illegalCodes={EMPTY}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    expect(container.querySelector(".sat-a")).toBeNull(); // not receded
+    expect(container.querySelector(".cd-card")).not.toBeNull();
+  });
+
+  it("a receded pick keeps the WarnChip for an illegally-placed option", () => {
+    // CS 341 placed legally (credited); CS 350 also placed but illegal — the
+    // warning must survive the recede (credited codes are always legal).
+    const node = choicePick(["cs341", "cs350"], ["cs341", "cs350"]);
+    const { container } = render(
+      <ChooseOneRow
+        scored={scoreNode(node, matchInputs([[node, ["cs341"]]]))}
+        options={["cs341", "cs350"]}
+        illegalCodes={new Set(["cs350"])}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    const recede = container.querySelector("details.sat-a");
+    expect(recede).not.toBeNull();
+    expect(recede?.querySelectorAll(".cd-chip.met")).toHaveLength(1);
+    expect(recede?.querySelectorAll(".cd-chip.warn")).toHaveLength(1);
+  });
+
+  it("a receded pool chips only what credited it, plus illegal satisfiers", () => {
+    const node = poolNode(["cs341", "cs348", "cs350"], 2);
+    const scored = scoreNode(node, matchInputs([[node, ["cs341", "cs348"]]]));
+    const { container } = render(
+      <SubjectPoolBody
+        scored={scored}
+        illegalCodes={new Set(["cs350"])}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    const recede = container.querySelector("details.sat-a");
+    expect(recede).not.toBeNull();
+    // The two credited courses chip green; the illegal third warns; a legal
+    // satisfier claimed elsewhere would not be re-shown.
+    expect(recede?.querySelectorAll(".cd-chip.met")).toHaveLength(2);
+    expect(recede?.querySelectorAll(".cd-chip.warn")).toHaveLength(1);
+  });
+
+  it("required-courses metaline counts placements even with zero match credit", () => {
+    // Both placed codes' singleton buckets are owned by an earlier leaf naming
+    // the same courses (progress.ts `required` is first-wins) — the card must
+    // still read "2 of 3", agreeing with its placed chips, not "0 of 3".
+    const node = coursesNode(["math235", "math239"], ["stat230"]);
+    const { container } = render(
+      <NodeBody
+        scored={scoreNode(node, matchInputs([[node, []]]))}
+        placedCodes={new Set(["math235", "math239"])}
+        illegalCodes={EMPTY}
+        catalogByCode={NO_CATALOG}
+        onDrill={() => {}}
+      />,
+    );
+    expect(container.querySelector(".sat-a")).toBeNull(); // stat230 missing
+    expect(container.querySelector(".cd-metaline")?.textContent).toMatch(
+      /2 of 3/,
+    );
   });
 });
 
@@ -296,7 +408,9 @@ describe("Status Cards — compound pick with subject-pool options (issue #115)"
     const drills: Array<[string[], unknown]> = [];
     const { container } = render(
       <CompoundPickBody
-        node={compoundPoolPick(poolNode(["cs341"], 2), poolNode([], 3), false)}
+        scored={scoreNode(
+          compoundPoolPick(poolNode(["cs341"], 2), poolNode([], 3), false),
+        )}
         placedCodes={new Set(["cs341"])}
         illegalCodes={EMPTY}
         catalogByCode={NO_CATALOG}
@@ -332,10 +446,12 @@ describe("Status Cards — compound pick with subject-pool options (issue #115)"
   it("recedes to a green row listing the completed pool stream's courses", () => {
     const { container } = render(
       <CompoundPickBody
-        node={compoundPoolPick(
-          poolNode(["cs341", "cs350"], 2),
-          poolNode([], 3),
-          true,
+        scored={scoreNode(
+          compoundPoolPick(
+            poolNode(["cs341", "cs350"], 2),
+            poolNode([], 3),
+            true,
+          ),
         )}
         placedCodes={new Set(["cs341", "cs350"])}
         illegalCodes={EMPTY}
@@ -359,7 +475,7 @@ describe("Status Cards — compound pick with subject-pool options (issue #115)"
     const optA = { ...poolNode(["cs341", "cs350"], 2), legallyMet: false };
     const { container } = render(
       <CompoundPickBody
-        node={compoundPoolPick(optA, poolNode([], 3), true)}
+        scored={scoreNode(compoundPoolPick(optA, poolNode([], 3), true))}
         placedCodes={new Set(["cs341", "cs350"])}
         illegalCodes={new Set(["cs350"])}
         catalogByCode={NO_CATALOG}

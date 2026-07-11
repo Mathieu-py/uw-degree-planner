@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
-import {
-  nodeProgress,
-  ringFor,
-} from "../../../components/planner/audit/nodeProgress";
 import { equivalenceForCatalog } from "../../courses/equivalence";
 import type { LocalPlan } from "../../plan/types";
 import type { Program } from "../../programs";
 import { compileAudit } from "../compile";
 import { computeDegreeProgress } from "../progress";
+import { ringFor, scoreAudit, scoreNode } from "../score";
 
 function makePlan(codes: string[]): LocalPlan {
   return {
@@ -213,15 +210,21 @@ describe("computeDegreeProgress — course equivalence", () => {
 
     // The panel must agree: before the summarize fix, `needed` used
     // r.courses.length, so this met leaf showed a 1/2 ring (and the group stuck
-    // below 100%) on both the read-only and catalog-backed (fill) views.
+    // below 100%) on both the local (no-progress) and match-scored views.
     const root = audit.flexibleRoot;
     if (!root) throw new Error("expected a flexible root");
-    const leaf = root.children[0];
-    expect(nodeProgress(leaf)).toEqual({ needed: 1, satisfied: 1 });
-    expect(nodeProgress(leaf, progress.nodeFill)).toEqual({
+    const local = scoreNode(root.children[0]);
+    expect({ needed: local.needed, satisfied: local.credit }).toEqual({
       needed: 1,
       satisfied: 1,
     });
-    expect(ringFor(root, progress.nodeFill).pct).toBe(100);
+    const scored = scoreAudit(audit, progress);
+    const leaf = scored.flexible?.children[0];
+    expect({ needed: leaf?.needed, satisfied: leaf?.credit }).toEqual({
+      needed: 1,
+      satisfied: 1,
+    });
+    if (!scored.flexible) throw new Error("expected a scored flexible root");
+    expect(ringFor(scored.flexible).pct).toBe(100);
   });
 });

@@ -424,14 +424,13 @@ export function WelcomeFlow({
 
         {/* Footer nav */}
         <div className="flex items-center justify-between">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
-            className="inline-flex h-[42px] items-center rounded-[9px] px-4 text-sm font-semibold text-ink-2 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Back
-          </button>
+          </Button>
           {step < STEPS.length - 1 ? (
             <Button
               variant="primary"

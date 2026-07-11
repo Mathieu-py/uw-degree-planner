@@ -14,17 +14,17 @@ import Gear from "./icons/gear.svg";
 import Google from "./icons/google.svg";
 import Grid from "./icons/grid.svg";
 import Grip from "./icons/grip.svg";
+import Help from "./icons/help.svg";
 import Import from "./icons/import.svg";
 import List from "./icons/list.svg";
 import Lock from "./icons/lock.svg";
-import Moon from "./icons/moon.svg";
+import Logout from "./icons/logout.svg";
 import PlusSign from "./icons/plusSign.svg";
 import Rename from "./icons/rename.svg";
 import Reset from "./icons/reset.svg";
 import Search from "./icons/search.svg";
 import Share from "./icons/share.svg";
 import Shield from "./icons/shield.svg";
-import Sun from "./icons/sun.svg";
 import Upload from "./icons/upload.svg";
 import Warning from "./icons/warning.svg";
 
@@ -48,10 +48,11 @@ const REGISTRY = {
   google: Google,
   grid: Grid,
   grip: Grip,
+  help: Help,
   import: Import,
   list: List,
   lock: Lock,
-  moon: Moon,
+  logout: Logout,
   plusSign: PlusSign,
   rename: Rename,
   reset: Reset,
@@ -59,7 +60,6 @@ const REGISTRY = {
   settings: Gear,
   share: Share,
   shield: Shield,
-  sun: Sun,
   upload: Upload,
   warning: Warning,
 } as const;

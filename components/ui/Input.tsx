@@ -1,8 +1,9 @@
 "use client";
 
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+// ComponentProps (not InputHTMLAttributes) so `ref` flows through the spread.
+interface InputProps extends ComponentProps<"input"> {
   /** Optional leading icon (rendered inside the field, left-aligned). */
   icon?: ReactNode;
 }

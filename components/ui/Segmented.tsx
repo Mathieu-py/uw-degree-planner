@@ -21,7 +21,7 @@ interface SegmentedProps<T extends string> {
 /**
  * Segmented control matching the design's `.seg`. The active button gets a
  * raised surface (bg-bg + shadow-card-sm) over the inset track. Used by the
- * Appearance toggle, dashboard grid/list switch, and onboarding stepper.
+ * dashboard grid/list switch.
  */
 export function Segmented<T extends string>({
   options,

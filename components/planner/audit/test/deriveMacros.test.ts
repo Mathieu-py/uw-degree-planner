@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileAudit } from "@/lib/audit/compile";
+import { computeDegreeProgress } from "@/lib/audit/progress";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { Program } from "@/lib/programs";
 import { deriveMacros } from "../deriveMacros";
@@ -39,7 +40,7 @@ function makePlan(codes: string[]): LocalPlan {
 /** Compile a plan, then derive the panel's macro sections (0.5 unit/course). */
 function macrosOf(program: Program, codes: string[]) {
   const audit = compileAudit(program, makePlan(codes), null, new Set());
-  return deriveMacros(audit, program, 0, [], [], () => 0.5, new Set());
+  return deriveMacros(audit, program, () => 0.5, new Set());
 }
 
 const PROGRAM: Program = {
@@ -96,31 +97,17 @@ describe("deriveMacros", () => {
       sectionsOf(m).find((s) => s.kind === "electiveFinite");
 
     // Both te1 and te2 are placed. The independent count is 2 (over-counts an
-    // option a named requirement may have claimed); the headline credited only 1.
-    const withCredit = deriveMacros(
-      audit,
-      program,
-      0,
-      [],
-      [],
-      () => 0.5,
-      new Set(),
-      undefined,
-      [1], // electiveCredit index-aligned to deriveElectiveSections
-    ).macros;
+    // option a named requirement may have claimed); the headline credits only 1
+    // (the elective needs 1, and the match binds each course to one slot).
+    const progress = computeDegreeProgress(audit, program, () => 0.5);
+    const withCredit = deriveMacros(audit, program, () => 0.5, new Set(), {
+      progress,
+    }).macros;
     const s = finiteOf(withCredit);
     expect(s && s.kind === "electiveFinite" ? s.placed : null).toBe(1);
 
-    // Without a credit array (read-only view), it falls back to the raw count.
-    const noCredit = deriveMacros(
-      audit,
-      program,
-      0,
-      [],
-      [],
-      () => 0.5,
-      new Set(),
-    ).macros;
+    // Without the headline model (tests), it falls back to the raw count.
+    const noCredit = deriveMacros(audit, program, () => 0.5, new Set()).macros;
     const s2 = finiteOf(noCredit);
     expect(s2 && s2.kind === "electiveFinite" ? s2.placed : null).toBe(2);
   });
@@ -144,15 +131,7 @@ describe("deriveMacros", () => {
       null,
       legality,
     );
-    const { macros } = deriveMacros(
-      audit,
-      program,
-      0,
-      [],
-      [],
-      () => 0.5,
-      legality,
-    );
+    const { macros } = deriveMacros(audit, program, () => 0.5, legality);
     const s = sectionsOf(macros).find((x) => x.kind === "electiveFinite");
     if (!s || s.kind !== "electiveFinite") throw new Error("expected finite");
     // Only te1 counts — the illegal te2 is excluded, so 1 of 2 (won't recede).

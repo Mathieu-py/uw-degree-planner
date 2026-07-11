@@ -13,8 +13,9 @@ import {
   type ElectiveSection,
   subjectPoolFilter,
 } from "@/lib/audit/electives";
-import { isLevelFloor, type LevelFloor } from "@/lib/audit/levelFloors";
-import type { NodeFill } from "@/lib/audit/progress";
+import { isLevelFloor } from "@/lib/audit/levelFloors";
+import type { DegreeProgress } from "@/lib/audit/progress";
+import { type ScoredNode, scoreAudit } from "@/lib/audit/score";
 import { poolMatch } from "@/lib/courses/code";
 import {
   countNoun,
@@ -24,7 +25,6 @@ import {
   unitsMet,
 } from "@/lib/format";
 import { type Program, requiredCoursesIn, TERM_LETTERS } from "@/lib/programs";
-import { nodeProgress } from "./nodeProgress";
 import {
   GENERIC_ALL,
   type Macro,
@@ -41,7 +41,7 @@ import {
  * only when every course sits inside a pick (a pure choice list). Null for a
  * leaf, an unlabeled group, or the generic wrapper.
  */
-function namedGroupLabel(node: AuditNode): string | null {
+export function namedGroupLabel(node: AuditNode): string | null {
   if (node.ruleNode.kind !== "all" || node.description == null) return null;
   if (node.description === GENERIC_ALL) return null;
   return requiredCoursesIn(node.ruleNode).length > 0 ? null : node.description;
@@ -52,19 +52,19 @@ function namedGroupLabel(node: AuditNode): string | null {
  * all of the following" wrapper; keep only a NAMED sub-group ("Core Courses")
  * as a light sub-label.
  */
-function flattenRuleRoot(root: AuditNode): MacroBlock[] {
+function flattenRuleRoot(root: ScoredNode): MacroBlock[] {
   const wholeRoot: MacroBlock[] = [
-    { subLabel: null, content: { kind: "node", node: root } },
+    { subLabel: null, content: { kind: "node", scored: root } },
   ];
-  if (root.ruleNode.kind !== "all" || root.children.length === 0)
+  if (root.node.ruleNode.kind !== "all" || root.children.length === 0)
     return wholeRoot;
 
   // Nothing worth labeling → render the wrapper as one block, don't unwrap.
-  if (!root.children.some(namedGroupLabel)) return wholeRoot;
+  if (!root.children.some((c) => namedGroupLabel(c.node))) return wholeRoot;
 
   return root.children.map((c) => ({
-    subLabel: namedGroupLabel(c),
-    content: { kind: "node", node: c },
+    subLabel: namedGroupLabel(c.node),
+    content: { kind: "node", scored: c },
   }));
 }
 
@@ -82,37 +82,34 @@ function flattenRuleRoot(root: AuditNode): MacroBlock[] {
 export function deriveMacros(
   audit: AuditRoot,
   program: Program | null,
-  /** Free-elective units from the unified headline model. */
-  freeElectiveUnits: number,
-  /** Scored breadth requirements (units) from the unified headline model. */
-  breadthRequirements: BreadthRequirement[],
-  /** Scored level-floor requirements from the unified headline model. */
-  levelFloors: LevelFloor[],
   /** Units of a placed course (catalog-backed; default 0.5). */
   unitsOf: (code: string) => number,
   /** Slot-scoped illegality keys; illegal placements don't credit counts. */
   legality: ReadonlySet<string>,
-  /**
-   * Per-node distinct credit from the unit headline (computeDegreeProgress).
-   * When present, rule-tree rows reflect the same one-course-per-slot assignment
-   * as the headline; when omitted (read-only view), rows use the independent
-   * per-node count.
-   */
-  nodeFill?: NodeFill,
-  /**
-   * Per-elective headline credit (index-aligned to `electiveSections`). Present →
-   * the chip reflects the match credit; omitted → it counts placed options
-   * independently (read-only view).
-   */
-  electiveCredit?: number[],
-  /**
-   * The program's elective sections. MUST be the same array passed to
-   * `computeDegreeProgress` so `electiveCredit[i]` maps to the i-th elective;
-   * buildProgramAudit computes it once and threads it to both. Omit to derive
-   * locally (credit alignment then rests on identical ordering).
-   */
-  electiveSections?: ElectiveSection[],
+  opts: {
+    /**
+     * The headline model computed on this exact `audit` instance — rows then
+     * reflect its one-course-per-slot assignment, and free-elective/breadth/
+     * level-floor rows are emitted. Omitted (tests) → compiled-tree counts.
+     */
+    progress?: DegreeProgress;
+    /**
+     * MUST be the same array `computeDegreeProgress` received so
+     * `progress.electiveCredit[i]` maps to the i-th elective; buildProgramAudit
+     * threads one instance to both. Omit to derive locally.
+     */
+    electiveSections?: ElectiveSection[];
+  } = {},
 ): { macros: Macro[] } {
+  const { progress, electiveSections } = opts;
+  const freeElectiveUnits = progress?.freeUnits ?? 0;
+  const breadthRequirements = progress?.breadthRequirements ?? [];
+  const levelFloors = progress?.levelFloors ?? [];
+  const electiveCredit = progress?.electiveCredit;
+  // Every row count/recede below reads the scored tree — the one merge point
+  // between compiled satisfaction and match credit.
+  const scored = scoreAudit(audit, progress);
+
   // Count like the headline: illegally-placed courses don't credit, keeping the
   // elective/communication counts consistent with the degree rows.
   const placedCodes = new Set<string>();
@@ -120,32 +117,32 @@ export function deriveMacros(
     if (!legality.has(placementLegalityKey(p))) placedCodes.add(code);
 
   // ---- Degree requirements: required core, flattened ----
+  // Headers sum the rendered blocks' capped credits (what the sub-rings show),
+  // not a root-level cap — deliberate: the header tracks what the cards render,
+  // even though splitting a labeled root can shift the total.
   const degreeBlocks: MacroBlock[] = [];
   let degNeeded = 0;
   let degSatisfied = 0;
 
-  if (audit.byTerm) {
+  if (scored.byTerm) {
     // Engineering: keep the per-term breakdown (term order is meaningful) as a
     // sub-label over each term's rows.
     for (const t of TERM_LETTERS) {
-      const node = audit.byTerm[t];
-      if (!node) continue;
-      const summary = nodeProgress(node, nodeFill);
-      if (summary.needed === 0) continue;
-      degNeeded += summary.needed;
-      degSatisfied += summary.satisfied;
+      const term = scored.byTerm[t];
+      if (!term || term.needed === 0) continue;
+      degNeeded += term.needed;
+      degSatisfied += term.credit;
       degreeBlocks.push({
         subLabel: `Term ${t}`,
-        content: { kind: "node", node },
+        content: { kind: "node", scored: term },
       });
     }
   }
-  if (audit.flexibleRoot) {
-    for (const block of flattenRuleRoot(audit.flexibleRoot)) {
+  if (scored.flexible) {
+    for (const block of flattenRuleRoot(scored.flexible)) {
       if (block.content.kind === "node") {
-        const s = nodeProgress(block.content.node, nodeFill);
-        degNeeded += s.needed;
-        degSatisfied += s.satisfied;
+        degNeeded += block.content.scored.needed;
+        degSatisfied += block.content.scored.credit;
       }
       degreeBlocks.push(block);
     }
@@ -154,12 +151,11 @@ export function deriveMacros(
   const specBlocks: MacroBlock[] = [];
   let specNeeded = 0;
   let specSatisfied = 0;
-  if (audit.specializationRoot) {
-    for (const block of flattenRuleRoot(audit.specializationRoot)) {
+  if (scored.specialization) {
+    for (const block of flattenRuleRoot(scored.specialization)) {
       if (block.content.kind === "node") {
-        const s = nodeProgress(block.content.node, nodeFill);
-        specNeeded += s.needed;
-        specSatisfied += s.satisfied;
+        specNeeded += block.content.scored.needed;
+        specSatisfied += block.content.scored.credit;
       }
       specBlocks.push(block);
     }
@@ -172,15 +168,18 @@ export function deriveMacros(
     const minima: Section[] = [];
     const comm = deriveCommunicationRequirement(program, placedCodes);
     if (comm && !comm.alreadyInTree) {
+      // Match credit when available: a comm option claimed by another bucket
+      // must not read done here while the headline's comm slot sits unfilled.
+      const done = Math.min(progress?.commCredit ?? comm.placed, comm.need);
       degNeeded += comm.need;
-      degSatisfied += Math.min(comm.placed, comm.need);
+      degSatisfied += done;
       minima.push({
         kind: "electiveFinite",
         key: "deg-comm",
         title: comm.title,
-        caption: `${comm.placed} of ${comm.need} done · ${comm.options.map(formatCourseCode).join(" or ")}`,
+        caption: `${done} of ${comm.need} done · ${comm.options.map(formatCourseCode).join(" or ")}`,
         need: comm.need,
-        placed: comm.placed,
+        placed: done,
         options: comm.options,
       });
     }
@@ -307,7 +306,6 @@ export function deriveMacros(
       hint: null,
       blocks: degreeBlocks,
       defaultOpen: true,
-      nodeFill,
     });
   if (specBlocks.length > 0)
     macros.push({
@@ -320,7 +318,6 @@ export function deriveMacros(
       hint: null,
       blocks: specBlocks,
       defaultOpen: true,
-      nodeFill,
     });
   if (electiveRows.length > 0)
     macros.push({

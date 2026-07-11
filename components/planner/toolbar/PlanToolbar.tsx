@@ -1,18 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  type FormEvent,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, type ReactNode, useCallback, useState } from "react";
 import { ShareModal } from "@/components/planner/modals/ShareModal";
 import { ActionMenu, type MenuItem } from "@/components/ui/ActionMenu";
 import { Button } from "@/components/ui/Button";
+import {
+  DropdownChevron,
+  DropdownSurface,
+} from "@/components/ui/DropdownSurface";
 import { Icon } from "@/components/ui/Icon";
+import { FIELD_CLASSES } from "@/components/ui/Input";
+import { useDropdown } from "@/components/ui/useDropdown";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
@@ -103,8 +102,13 @@ function PlanToolbarAuthed({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const {
+    open: pickerOpen,
+    toggle: togglePicker,
+    close: closePicker,
+    containerRef: pickerRef,
+    id: pickerId,
+  } = useDropdown();
   const [inlineRenameId, setInlineRenameId] = useState<string | null>(null);
   const [inlineRenameName, setInlineRenameName] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -137,28 +141,14 @@ function PlanToolbarAuthed({
     returnToPlansList(planId);
   }
 
-  useEffect(() => {
-    if (!pickerOpen) return;
-    function onPointerDown(e: PointerEvent) {
-      if (!pickerRef.current) return;
-      if (!pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
-    }
-    window.addEventListener("pointerdown", onPointerDown);
-    return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [pickerOpen]);
-
   const dismissInline = useCallback(() => {
     setEditing(false);
     setConfirmingDelete(false);
   }, []);
 
-  // Single Escape handler: close the picker and dismiss any inline edit/confirm.
-  // Both are no-ops when already cleared, so running both is safe.
-  const handleEscape = useCallback(() => {
-    setPickerOpen(false);
-    dismissInline();
-  }, [dismissInline]);
-  useEscape(handleEscape);
+  // useDropdown owns Escape/outside-click while the picker is open; this covers
+  // the inline rename/delete bars, which render in place of the dropdown.
+  useEscape(dismissInline);
 
   const navigateToPlan = useCallback(
     (planId: string | null) => {
@@ -318,28 +308,25 @@ function PlanToolbarAuthed({
       ) : null}
 
       <div className={containerClass}>
-        <div ref={pickerRef} className="relative">
+        <div ref={pickerRef} className="relative w-64">
           <button
             type="button"
-            onClick={() => setPickerOpen((v) => !v)}
+            onClick={togglePicker}
             aria-haspopup="listbox"
             aria-expanded={pickerOpen}
+            aria-controls={pickerOpen ? pickerId : undefined}
             aria-label="Switch plan"
-            className="appearance-none rounded-md border border-line-2 bg-bg pl-3 pr-9 py-2.5 text-sm w-64 text-left truncate relative"
+            className={`${FIELD_CLASSES} flex cursor-pointer items-center justify-between gap-2 pl-[13px] pr-3 text-left`}
           >
-            {currentPlan.name}
-            <Icon
-              name="chevronDown"
-              size="xs"
-              aria-hidden="true"
-              className={`absolute right-3 top-1/2 -translate-y-1/2 opacity-70 transition-transform ${pickerOpen ? "" : "-rotate-90"}`}
-            />
+            <span className="min-w-0 truncate">{currentPlan.name}</span>
+            <DropdownChevron open={pickerOpen} />
           </button>
           {pickerOpen ? (
-            <div
+            <DropdownSurface
+              id={pickerId}
               role="listbox"
               aria-label="Plans"
-              className="absolute left-0 top-full mt-1 z-20 w-64 max-h-72 overflow-y-auto rounded-md border border-line bg-bg shadow-card-md py-1"
+              className="left-0 w-full max-h-72 overflow-y-auto"
             >
               {plans.map((p) => {
                 const selected = p.id === currentPlan.id;
@@ -354,14 +341,14 @@ function PlanToolbarAuthed({
                     tabIndex={inlineActive ? -1 : 0}
                     onClick={() => {
                       if (inlineActive) return;
-                      setPickerOpen(false);
+                      closePicker();
                       handleSwitch(p.id);
                     }}
                     onKeyDown={(e) => {
                       if (inlineActive) return;
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setPickerOpen(false);
+                        closePicker();
                         handleSwitch(p.id);
                       }
                     }}
@@ -484,7 +471,7 @@ function PlanToolbarAuthed({
                   </div>
                 );
               })}
-            </div>
+            </DropdownSurface>
           ) : null}
         </div>
         <Button

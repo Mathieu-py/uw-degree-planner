@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { Input } from "@/components/ui/Input";
 
 const focusOnMount = (el: HTMLInputElement | null) => el?.focus();
 
@@ -34,14 +35,14 @@ export function RenameBar({
         // shrink the toolbar. The delete bar pins the same way. #99
         className="flex items-center gap-1 flex-1 min-w-0 min-h-[48px]"
       >
-        <input
+        <Input
           ref={focusOnMount}
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Escape") onCancel();
           }}
-          className="flex-1 min-w-0 rounded border border-line-2 bg-bg px-3 py-2.5 text-sm"
+          className="flex-1 min-w-0"
           aria-label="New plan name"
         />
         {/* size="lg" to match the delete bar — both replace the full toolbar. */}

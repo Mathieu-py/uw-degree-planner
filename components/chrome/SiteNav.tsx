@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/UserMenu";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuthState } from "@/lib/auth/store";
 import { Brand } from "./Brand";
 
@@ -33,9 +32,10 @@ const MY_PLANS_LINK: NavLink = {
 
 /**
  * Sticky, blurred top nav. Left: wordmark + section links (active from the
- * pathname). Right: theme toggle + sign-in/account control. Styling lives in
- * the `.nav` class. The wordmark links "home": plans dashboard when signed in,
- * marketing landing when signed out.
+ * pathname). Right: sign-in/account control (theme lives in the account
+ * page's Appearance section). Styling lives in the `.nav` class. The wordmark
+ * links "home": plans dashboard when signed in, marketing landing when
+ * signed out.
  */
 export function SiteNav() {
   const pathname = usePathname();
@@ -60,7 +60,6 @@ export function SiteNav() {
         </nav>
       </div>
       <div className="nav-right">
-        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

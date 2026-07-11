@@ -1,4 +1,4 @@
-import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
+import { creditedChipCodes, type ScoredNode } from "@/lib/audit/score";
 import type { Course } from "@/lib/courses/types";
 import { pluralize, progressPct } from "@/lib/format";
 import { MetChip, WarnChip } from "../cards/Chip";
@@ -6,44 +6,48 @@ import { Recede } from "../cards/Recede";
 import { RingLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
 import { StatusPill } from "../cards/StatusPill";
-import { nodeProgress } from "../nodeProgress";
 import type { DragWiring, DrillFn } from "../types";
 import { OptionChip } from "./OptionChip";
 
 /** Element B — a pick(N-of-M) over single courses: draggable option chips that
  *  recede to the chosen course(s) once the choice is decided. */
 export function ChooseOneRow({
-  node,
+  scored,
   options,
   illegalCodes,
   catalogByCode,
   onDrill,
   drag,
 }: {
-  node: AuditNode;
+  scored: ScoredNode;
   options: string[];
   illegalCodes: ReadonlySet<string>;
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
   drag?: DragWiring;
 }) {
+  const node = scored.node;
   const r = node.ruleNode;
   if (r.kind !== "pick") return null;
   const selectMin = r.selectMin ?? 1;
-  const { needed, satisfied } = nodeProgress(node);
-  // Only collapse to the chosen chip(s) once a placement satisfies the choice.
-  // A vacuously-met optional pick has no satisfiers and would render empty, so
-  // keep showing the options until truly decided.
-  const decided = isLegallyMet(node);
+  const { needed, credit, complete } = scored;
   const title = node.description ?? "Choose one";
   const caption = `${selectMin} of ${options.length} ${pluralize(options.length, "option")}`;
+  // Open-state chips show raw plan presence (drag UX), even when the match
+  // credited a course elsewhere.
   const satisfierCodes = new Set(node.satisfiers.map((s) => s.code));
+  // The satisfier fallback covers a vacuously-met optional pick, whose
+  // satisfiers aren't in any bucket.
+  const chosenCodes =
+    scored.creditedCodes.length > 0
+      ? creditedChipCodes(scored, illegalCodes)
+      : satisfierCodes;
 
-  if (decided) {
+  if (complete) {
     return (
       <Recede title={title} caption={caption}>
         <div className="cd-chips">
-          {[...satisfierCodes].map((code) =>
+          {[...chosenCodes].map((code) =>
             illegalCodes.has(code) ? (
               <WarnChip
                 key={code}
@@ -62,11 +66,11 @@ export function ChooseOneRow({
       </Recede>
     );
   }
-  const pct = progressPct(satisfied, needed, 0);
+  const pct = progressPct(credit, needed, 0);
   return (
     <StatusCard
-      tone={satisfied > 0 ? "partial" : "missing"}
-      lead={<RingLead pct={pct} num={satisfied} tone="neutral" />}
+      tone={credit > 0 ? "partial" : "missing"}
+      lead={<RingLead pct={pct} num={credit} tone="neutral" />}
       title={title}
       caption={caption}
       pill={

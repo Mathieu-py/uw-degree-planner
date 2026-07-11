@@ -143,6 +143,17 @@ function usernameFromMetadata(user: User | null): string | null {
   return typeof raw === "string" && raw.length > 0 ? raw : null;
 }
 
+/**
+ * Push a just-saved username into the store. Server actions can't reach the
+ * browser client's auth listener, so settings calls this after updateProfile
+ * succeeds — otherwise the header would show the old name until a reload.
+ */
+export function publishUsername(username: string): void {
+  if (!state.user || state.username === username) return;
+  state = { ...state, username };
+  notify();
+}
+
 export interface UseAuthStateResult {
   user: User | null;
   /** Profile username, or null when unset / not yet fetched. */

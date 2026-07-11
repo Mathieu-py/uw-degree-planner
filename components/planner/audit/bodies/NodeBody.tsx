@@ -1,63 +1,35 @@
-import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
-import type { Course } from "@/lib/courses/types";
+import { pickOptions, type ScoredNode } from "@/lib/audit/score";
 import { countNoun } from "@/lib/format";
 import { CountedCard } from "../cards/CountedCard";
-import { nodeProgress } from "../nodeProgress";
-import { type DragWiring, type DrillFn, GENERIC_ALL } from "../types";
+import { GENERIC_ALL, type OptionRenderProps } from "../types";
 import { ChooseOneRow } from "./ChooseOneRow";
 import { CompoundPickBody } from "./CompoundPick";
 import { OptionChip } from "./OptionChip";
 import { SubjectPoolBody } from "./SubjectPoolBody";
 
-/**
- * Flatten a 1-of-1 pick whose every leaf is a single course into a list of
- * option codes, recursing through nested 1-of-1 picks. Returns `null` when any
- * option is genuinely compound (several courses, a subject pool, or not a
- * strict 1-of-1), so the caller keeps the structured rendering.
- */
-function asFlatChoiceOptions(node: AuditNode): string[] | null {
-  const r = node.ruleNode;
-  if (r.kind === "courses")
-    return r.courses.length === 1 ? [r.courses[0]] : null;
-  if (r.kind !== "pick") return null;
-  if ((r.selectMin ?? 1) !== 1 || (r.selectMax ?? 1) !== 1) return null;
-  const opts: string[] = [];
-  if (node.children.length === 0) {
-    // Compiler-unioned course leaves: each code is its own option.
-    for (const c of r.children) {
-      if (c.kind !== "courses") return null;
-      opts.push(...c.courses);
-    }
-  } else {
-    for (const child of node.children) {
-      const sub = asFlatChoiceOptions(child);
-      if (!sub) return null;
-      opts.push(...sub);
-    }
-  }
-  return [...new Set(opts)];
-}
-
 /** Element A — a fixed set of required courses rendered as one Status Card of
  *  met/warn/drag chips; recedes to a green confirmation once all are placed. */
 function RequiredCoursesCard({
-  node,
+  scored,
   placedCodes,
   illegalCodes,
   catalogByCode,
   onDrill,
   drag,
 }: {
-  node: AuditNode;
-  placedCodes: ReadonlySet<string>;
-  illegalCodes: ReadonlySet<string>;
-  catalogByCode: Map<string, Course>;
-  onDrill?: DrillFn;
-  drag?: DragWiring;
-}) {
+  scored: ScoredNode;
+} & OptionRenderProps) {
+  const node = scored.node;
   const r = node.ruleNode;
   if (r.kind !== "courses") return null;
-  const { needed, satisfied } = nodeProgress(node);
+  const { needed, complete } = scored;
+  // Count placement reality like the chips: match credit reads 0 for a leaf
+  // whose codes' buckets an earlier same-code leaf owns (progress.ts required
+  // is first-wins), contradicting a placed chip. `complete` gates the recede.
+  const placed = Math.max(
+    0,
+    node.satisfiers.length - (node.illegalSatisfiers?.length ?? 0),
+  );
   const caption = countNoun(needed, "required course");
   const chips = (
     <div className="cd-chips">
@@ -75,25 +47,23 @@ function RequiredCoursesCard({
     </div>
   );
 
-  // Recede only when every required course is placed *legally*. An illegal
-  // placement (unmet prereq / antireq) isn't credited toward the degree, so keep
-  // the card active/amber (with its WarnChip) rather than collapsing to a green
-  // "done" that would contradict the degree bar.
+  // `complete` is legality-based (score.ts): an illegal placement keeps the
+  // card active/amber rather than collapsing to a green "done".
   return (
     <CountedCard
       title="Required courses"
       caption={caption}
-      done={satisfied}
+      done={placed}
       need={needed}
-      num={satisfied}
-      complete={isLegallyMet(node)}
+      num={placed}
+      complete={complete}
       recedeMeta={`${needed}/${needed}`}
       recedeCaption={caption}
       recedeChildren={chips}
     >
       <div className="cd-metaline">
         <b>
-          {satisfied} of {needed}
+          {placed} of {needed}
         </b>{" "}
         required courses placed.
       </div>
@@ -103,12 +73,13 @@ function RequiredCoursesCard({
 }
 
 /**
- * Renders an audit node's body, dispatching on rule-node kind to the Status-Card
- * grammar: `courses` → required-courses card; `pick` → choose-one / compound
- * card; `subjectPool` → pool card; `all` → a stack of the above.
+ * Renders a scored node's body, dispatching on rule kind to the Status-Card
+ * grammar: `courses` → required card; `pick` → choose-one / compound card;
+ * `subjectPool` → pool card; `all` → a stack of the above. Counts and recede
+ * come off the ScoredNode; `scored.node` supplies presentation only.
  */
 export function NodeBody({
-  node,
+  scored,
   placedCodes,
   illegalCodes,
   catalogByCode,
@@ -116,20 +87,16 @@ export function NodeBody({
   drag,
   depth = 0,
 }: {
-  node: AuditNode;
-  placedCodes: ReadonlySet<string>;
-  illegalCodes: ReadonlySet<string>;
-  catalogByCode: Map<string, Course>;
-  onDrill?: DrillFn;
-  drag?: DragWiring;
+  scored: ScoredNode;
   depth?: number;
-}) {
+} & OptionRenderProps) {
+  const node = scored.node;
   const r = node.ruleNode;
 
   if (r.kind === "courses") {
     return (
       <RequiredCoursesCard
-        node={node}
+        scored={scored}
         placedCodes={placedCodes}
         illegalCodes={illegalCodes}
         catalogByCode={catalogByCode}
@@ -140,35 +107,14 @@ export function NodeBody({
   }
 
   if (r.kind === "pick") {
-    // 1-of-N over `courses` leaves: the compiler unions them into one pool
-    // (options on `r.children`). Mirrors `allCoursesLeaves`. Render "choose one".
-    const allCourses =
-      r.children.length > 0 && r.children.every((c) => c.kind === "courses");
-    if (allCourses) {
-      const options = [
-        ...new Set(
-          r.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
-        ),
-      ];
+    // score.ts keys the scoring source on this same helper: a flat choice is
+    // always match-scored, a CompoundPickBody subtree always local.
+    const options = pickOptions(node);
+    if (options) {
       return (
         <ChooseOneRow
-          node={node}
+          scored={scored}
           options={options}
-          illegalCodes={illegalCodes}
-          catalogByCode={catalogByCode}
-          onDrill={onDrill}
-          drag={drag}
-        />
-      );
-    }
-    // A 1-of-1 pick whose options are all single courses — even nested — is one
-    // flat choice (any course satisfies it). Collapse to a "choose one" card.
-    const flat = asFlatChoiceOptions(node);
-    if (flat && flat.length > 0) {
-      return (
-        <ChooseOneRow
-          node={node}
-          options={flat}
           illegalCodes={illegalCodes}
           catalogByCode={catalogByCode}
           onDrill={onDrill}
@@ -180,7 +126,7 @@ export function NodeBody({
     // read as mutually exclusive, collapsing to a summary once satisfied.
     return (
       <CompoundPickBody
-        node={node}
+        scored={scored}
         placedCodes={placedCodes}
         illegalCodes={illegalCodes}
         catalogByCode={catalogByCode}
@@ -193,7 +139,7 @@ export function NodeBody({
   if (r.kind === "subjectPool") {
     return (
       <SubjectPoolBody
-        node={node}
+        scored={scored}
         illegalCodes={illegalCodes}
         catalogByCode={catalogByCode}
         onDrill={onDrill}
@@ -209,11 +155,11 @@ export function NodeBody({
         {depth > 0 && node.description && node.description !== GENERIC_ALL ? (
           <span className="u-small mt-1 mb-1.5 block">{node.description}</span>
         ) : null}
-        {node.children.map((child, i) => (
+        {scored.children.map((child, i) => (
           <NodeBody
             // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
             key={i}
-            node={child}
+            scored={child}
             placedCodes={placedCodes}
             illegalCodes={illegalCodes}
             catalogByCode={catalogByCode}
