@@ -62,10 +62,10 @@ export function FilterSidebar({
       </div>
 
       {showEligibility ? (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-ink-3">
+        <fieldset className="min-w-0">
+          <legend className="mb-1.5 text-[10px] uppercase tracking-wider text-ink-3">
             Show
-          </span>
+          </legend>
           <div className="flex flex-col">
             {SHOW_OPTIONS.map((o) => {
               const on = filters.show === o.value;
@@ -105,7 +105,7 @@ export function FilterSidebar({
               );
             })}
           </div>
-        </div>
+        </fieldset>
       ) : null}
 
       <div className="flex flex-col gap-1.5">

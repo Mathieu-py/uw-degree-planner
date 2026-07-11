@@ -77,6 +77,24 @@ describe("attachEligibility", () => {
     expect(out[0].eligibility?.state).toBe("ineligible");
   });
 
+  it('with show="eligible", keeps only eligible rows (drops check + ineligible)', () => {
+    const rows = makeRows([
+      makeCourse({ code: "cs136", prereqs: "CS135" }), // eligible: CS135 completed
+      makeCourse({ code: "cs246", prereqs: "Level at least 2A" }), // check: no level given
+      makeCourse({ code: "cs241", prereqs: "CS888" }), // ineligible: prereq not completed
+    ]);
+    const completed = new Set(["cs135"]);
+    const strict = attach(rows, { completed, show: "eligible" });
+    expect(strict.map((r) => r.course.code)).toEqual(["cs136"]);
+    expect(strict[0].eligibility?.state).toBe("eligible");
+    // Distinct from "eligibleCheck", which also keeps the uncertain "check" row.
+    const lenient = attach(rows, { completed, show: "eligibleCheck" });
+    expect(lenient.map((r) => r.course.code).sort()).toEqual([
+      "cs136",
+      "cs246",
+    ]);
+  });
+
   it("resolves a level-gated prereq definitively when level is provided", () => {
     const rows = makeRows([
       makeCourse({ code: "cs246", prereqs: "Level at least 2A" }),

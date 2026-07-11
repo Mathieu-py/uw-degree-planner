@@ -166,11 +166,11 @@ export function useFilteredCourses({
 
   // Eligibility annotation is the most expensive step (parse + walk each prereq
   // AST). Split by mode:
-  // - hideUnmetPrereqs true: MUST annotate everything before pagination, else
-  //   an unmet row survives into a later page.
-  // - hideUnmetPrereqs false: annotation is decorative, so defer past sort+slice
-  //   and only evaluate the ~50 rendered rows (vs. the whole ~10k catalog per
-  //   keystroke).
+  // - show !== "all" (the filter drops rows): MUST annotate everything before
+  //   pagination, else a filtered-out row survives into a later page.
+  // - show === "all" (nothing dropped): annotation is decorative, so defer past
+  //   sort+slice and only evaluate the ~50 rendered rows (vs. the whole ~10k
+  //   catalog per keystroke).
   const sortedCourses = useMemo<EligibilityRow[]>(() => {
     if (filters.show !== "all") {
       const baseRows = searched.map((course) => ({
