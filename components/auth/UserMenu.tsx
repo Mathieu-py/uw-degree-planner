@@ -36,10 +36,18 @@ function UserMenuInner() {
 
   async function signOut() {
     setBusy(true);
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) window.alert(`Sign out failed: ${error.message}`);
-    setBusy(false);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signOut();
+      if (error) window.alert(`Sign out failed: ${error.message}`);
+    } catch (err) {
+      window.alert(
+        `Sign out failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    } finally {
+      // Always release the button — a thrown error must not strand it disabled.
+      setBusy(false);
+    }
   }
 
   if (!ready) {
@@ -60,7 +68,12 @@ function UserMenuInner() {
   // Username-first identity (email when unset); the OAuth full name is
   // deliberately not shown.
   const cardName = displayName ?? "Signed in";
-  const initials = cardName.slice(0, 2).toUpperCase();
+  // Word initials for multi-word names ("Jane Doe" → JD); single-word or
+  // email display names fall back to their first two characters.
+  const words = cardName.trim().split(/\s+/);
+  const initials = (
+    words.length > 1 ? `${words[0][0]}${words[1][0]}` : cardName.slice(0, 2)
+  ).toUpperCase();
   const email = user.email ?? null;
 
   return (
