@@ -178,7 +178,7 @@ export const AuditPanel = memo(function AuditPanel({
                     />
                   ) : null}
                   <span className="av-ring-wrap">
-                    <Ring pct={d.progress.pct} size={38} stroke={3.5} />
+                    <Ring pct={d.progress.pct} size={38} />
                     <span className="av-ring-num" style={{ fontSize: "9.5px" }}>
                       {d.progress.pct}
                     </span>

@@ -92,5 +92,7 @@ describe("computeDegreeProgress — every program (maximal plan)", () => {
       structuredShortfalls.map((s) => `${s.id}=${s.pct}%`),
       "structured programs that can't reach 100% even fully loaded",
     ).toEqual([]);
-  });
+    // Whole catalog × ~194 programs runs ~2s locally; the generous timeout keeps
+    // it from flaking on a loaded / over-parallelized runner (a real hang still fails).
+  }, 30_000);
 });

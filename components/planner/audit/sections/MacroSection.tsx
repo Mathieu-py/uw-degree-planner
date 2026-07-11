@@ -105,7 +105,6 @@ export function MacroSection({
                       <Ring
                         pct={ring.pct}
                         size={24}
-                        stroke={3}
                         tone={ring.optional ? "neutral" : undefined}
                       />
                       <span className="av-ring-num">{ring.num}</span>
