@@ -146,18 +146,10 @@ export function buildProgramAudit(
     electiveSections,
     effectiveUnverified,
   );
-  const { macros } = deriveMacros(
-    audit,
-    auditedProgram,
-    progress.freeUnits,
-    progress.breadthRequirements,
-    progress.levelFloors,
-    unitsOf,
-    legality,
-    progress.nodeFill,
-    progress.electiveCredit,
+  const { macros } = deriveMacros(audit, auditedProgram, unitsOf, legality, {
+    progress,
     electiveSections,
-  );
+  });
 
   // Unverified requirements, surfaced near the headline (not buried in a macro)
   // so "confirm with your advisor" is actionable. Each carries its acked state;

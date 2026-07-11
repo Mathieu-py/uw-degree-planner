@@ -44,6 +44,7 @@ describe("maxBipartiteMatch", () => {
   it("handles empty buckets and no eligibility", () => {
     expect(maxBipartiteMatch([])).toEqual({
       filledByBucket: [],
+      codesByBucket: [],
       matched: new Set(),
     });
     const r = maxBipartiteMatch([{ need: 2, eligible: [] }]);
@@ -73,6 +74,51 @@ describe("maxBipartiteMatch", () => {
     });
     expect(r.matched.size).toBe(1);
   });
+
+  it("codesByBucket reports each bucket's assigned courses", () => {
+    const r = maxBipartiteMatch([
+      { need: 1, eligible: ["a"] },
+      { need: 2, eligible: ["a", "b", "c"] },
+    ]);
+    expect(r.codesByBucket[0]).toEqual(["a"]);
+    expect([...r.codesByBucket[1]].sort()).toEqual(["b", "c"]);
+    // Assignment and counts agree bucket-by-bucket.
+    r.filledByBucket.forEach((n, i) => {
+      expect(r.codesByBucket[i]).toHaveLength(n);
+    });
+  });
+
+  it("a tied claim goes to the EARLIER bucket (named before pools)", () => {
+    // `a` fits both; only one slot can hold it. Equal ranks keep input order,
+    // so the first bucket wins.
+    const r = maxBipartiteMatch([
+      { need: 1, eligible: ["a"] },
+      { need: 1, eligible: ["a"] },
+    ]);
+    expect(r.codesByBucket).toEqual([["a"], []]);
+  });
+
+  it("rank overrides input order for tied claims; results stay input-aligned", () => {
+    // The rank-0 bucket claims the shared course even though it comes second.
+    const r = maxBipartiteMatch([
+      { need: 1, eligible: ["a"], rank: 1 },
+      { need: 1, eligible: ["a"], rank: 0 },
+    ]);
+    expect(r.codesByBucket).toEqual([[], ["a"]]);
+    expect(r.filledByBucket).toEqual([0, 1]);
+    expect(r.matched).toEqual(new Set(["a"]));
+  });
+
+  it("ranks never shrink the matching (priority is a tiebreak, not a filter)", () => {
+    // Enough distinct courses for every slot: all fill regardless of ranks.
+    const r = maxBipartiteMatch([
+      { need: 1, eligible: ["a", "b"], rank: 5 },
+      { need: 2, eligible: ["b", "c"], rank: 0 },
+      { need: 1, eligible: ["a", "d"], rank: 2 },
+    ]);
+    expect(r.matched.size).toBe(4);
+    expect(r.filledByBucket).toEqual([1, 2, 1]);
+  });
 });
 
 describe("assignUnitPools", () => {
@@ -84,7 +130,25 @@ describe("assignUnitPools", () => {
     expect(assignUnitPools([], () => 0.5)).toEqual({
       got: [],
       used: new Set(),
+      usedByPool: [],
       exact: true,
+    });
+  });
+
+  it("usedByPool partitions `used` across the pools", () => {
+    const pools: UnitPoolInput[] = [
+      { needUnits: 0.5, eligible: [0, 1] },
+      { needUnits: 1.0, eligible: [1, 2, 3] },
+    ];
+    const r = assignUnitPools(pools, () => 0.5);
+    expect(r.usedByPool).toHaveLength(2);
+    // Every consumed course appears in exactly one pool's list, and the lists
+    // reproduce `used` and each pool's credited units.
+    const flat = r.usedByPool.flat();
+    expect(new Set(flat)).toEqual(r.used);
+    expect(flat).toHaveLength(r.used.size);
+    r.usedByPool.forEach((cs, i) => {
+      expect(cs.length * 0.5).toBeCloseTo(r.got[i]);
     });
   });
 

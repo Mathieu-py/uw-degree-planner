@@ -1,10 +1,9 @@
-import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
+import { creditedChipCodes, type ScoredNode } from "@/lib/audit/score";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits, formatLevelRange, joinWithOverflow } from "@/lib/format";
 import { MetChip, WarnChip } from "../cards/Chip";
 import { CountedCard } from "../cards/CountedCard";
 import { FindRow } from "../cards/FindRow";
-import { nodeProgress } from "../nodeProgress";
 import type { DrillFn } from "../types";
 
 /** Level buckets within a pool's [min,max] range (bucketed values). [] = all. */
@@ -22,24 +21,31 @@ export function poolLevels(min?: number, max?: number): number[] {
  * browse link; recedes to a green confirmation once the pool is complete.
  */
 export function SubjectPoolBody({
-  node,
+  scored,
   illegalCodes,
   catalogByCode,
   onDrill,
 }: {
-  node: AuditNode;
+  scored: ScoredNode;
   illegalCodes: ReadonlySet<string>;
   catalogByCode: Map<string, Course>;
   onDrill?: DrillFn;
 }) {
+  const node = scored.node;
   const r = node.ruleNode;
   if (r.kind !== "subjectPool") return null;
   const subjects = r.subjectCodes.map((s) => s.toUpperCase());
   const levelText = formatLevelRange(r.minLevel, r.maxLevel);
   const unitBased = r.needUnits !== undefined;
-  const { needed, satisfied } = nodeProgress(node);
+  const { needed, credit: satisfied, complete } = scored;
   const remaining = Math.max(0, needed - satisfied);
-  const chosenCodes = [...new Set(node.satisfiers.map((p) => p.code))];
+  // Match-scored: chip only what credits THIS pool — "N additional courses"
+  // means beyond the named list, so a course claimed elsewhere isn't re-shown.
+  // Local-scored falls back to every matching satisfier.
+  const chosenCodes =
+    scored.source === "match"
+      ? [...creditedChipCodes(scored, illegalCodes)]
+      : [...new Set(node.satisfiers.map((p) => p.code))];
 
   const title = node.description ?? "Subject pool";
   const fmt = (n: number) => (unitBased ? fmtUnits(n) : String(n));
@@ -73,7 +79,7 @@ export function SubjectPoolBody({
       done={satisfied}
       need={needed}
       num={fmt(satisfied)}
-      complete={isLegallyMet(node)}
+      complete={complete}
       recedeMeta={`${fmt(needed)}/${fmt(needed)}`}
       recedeChildren={chips}
     >

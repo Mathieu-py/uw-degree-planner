@@ -2,7 +2,8 @@
 
 import { Fragment, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { type AuditNode, isLegallyMet } from "@/lib/audit/compile";
+import type { AuditNode } from "@/lib/audit/compile";
+import { optionMet, type ScoredNode } from "@/lib/audit/score";
 import { fmtUnits, pluralize, progressPct } from "@/lib/format";
 import { walkRule } from "@/lib/requirements/walk";
 import { MetChip, WarnChip } from "../cards/Chip";
@@ -11,7 +12,6 @@ import { Recede } from "../cards/Recede";
 import { RingLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
 import { StatusPill } from "../cards/StatusPill";
-import { nodeProgress } from "../nodeProgress";
 import { GENERIC_ALL, type OptionRenderProps } from "../types";
 import { OptionChip } from "./OptionChip";
 import { poolLevels } from "./SubjectPoolBody";
@@ -32,12 +32,12 @@ function collectCourses(node: AuditNode): string[] {
   return [...new Set(codes)];
 }
 
-/** The compiled subjectPool nodes inside an option (bare pool, or nested under an
+/** The scored subjectPool nodes inside an option (bare pool, or nested under an
  *  `all` bundle) — each keeps its `subjectCodes`/levels and its placed
- *  `satisfiers`, so it can render met chips + a scoped "Find courses" row. */
-function collectPools(node: AuditNode): AuditNode[] {
-  if (node.ruleNode.kind === "subjectPool") return [node];
-  return node.children.flatMap(collectPools);
+ *  satisfiers, so it can render met chips + a scoped "Find courses" row. */
+function collectPools(scored: ScoredNode): ScoredNode[] {
+  if (scored.node.ruleNode.kind === "subjectPool") return [scored];
+  return scored.children.flatMap(collectPools);
 }
 
 function optionName(option: AuditNode, badge: string): string {
@@ -61,19 +61,19 @@ function satisfierChips(
   );
 }
 
-/** One subject-pool part of an option: its placed chips + a scoped browse row. */
+/** One subject-pool part of an option: its placed chips + a scoped browse row.
+ *  Local-scored numbers — the match doesn't model partial options. */
 function PoolPart({
   pool,
   illegalCodes,
   catalogByCode,
   onDrill,
-}: { pool: AuditNode } & Omit<OptionRenderProps, "placedCodes" | "drag">) {
-  const r = pool.ruleNode;
+}: { pool: ScoredNode } & Omit<OptionRenderProps, "placedCodes" | "drag">) {
+  const r = pool.node.ruleNode;
   if (r.kind !== "subjectPool") return null;
   const subjects = r.subjectCodes.map((s) => s.toUpperCase());
-  const chosen = pool.satisfiers.map((p) => p.code);
-  const { needed, satisfied } = nodeProgress(pool);
-  const remaining = Math.max(0, needed - satisfied);
+  const chosen = pool.node.satisfiers.map((p) => p.code);
+  const remaining = Math.max(0, pool.needed - pool.credit);
   return (
     <>
       {satisfierChips(chosen, illegalCodes, catalogByCode)}
@@ -100,10 +100,10 @@ function OptionBody({
   catalogByCode,
   onDrill,
   drag,
-}: { opt: AuditNode } & OptionRenderProps) {
+}: { opt: ScoredNode } & OptionRenderProps) {
   return (
     <div className="cd-opt-body">
-      {collectCourses(opt).map((code) => (
+      {collectCourses(opt.node).map((code) => (
         <OptionChip
           key={code}
           code={code}
@@ -131,30 +131,32 @@ function OptionBody({
 /**
  * Element C — a compound `pick` whose options are multi-course bundles (A / B /
  * …), rendered as `.cd-opt` sub-cards separated by "or". Collapses to a green
- * recede row once the required number of streams is complete, expandable to the
- * others.
+ * recede row once enough streams are complete. The whole subtree is
+ * local-scored (score.ts): each option counts its own satisfiers.
  */
 export function CompoundPickBody({
-  node,
+  scored,
   placedCodes,
   illegalCodes,
   catalogByCode,
   onDrill,
   drag,
 }: {
-  node: AuditNode;
+  scored: ScoredNode;
 } & OptionRenderProps) {
+  const node = scored.node;
   const r = node.ruleNode;
   const [showAll, setShowAll] = useState(false);
-  const options = node.children;
+  const options = scored.children;
   if (r.kind !== "pick") return null;
 
   const selectMin = r.selectMin ?? 1;
-  const { needed, satisfied } = nodeProgress(node);
+  const { needed, credit: satisfied, complete: decided } = scored;
+  // Same predicate as the recede gate (completeOf counts `optionMet` children),
+  // so `decided` ⇒ metOptions non-empty by construction.
   const metOptions = options
     .map((opt, index) => ({ opt, index }))
-    .filter(({ opt }) => isLegallyMet(opt));
-  const decided = metOptions.length >= selectMin;
+    .filter(({ opt }) => optionMet(opt.node));
   const title = node.description ?? "Choose one option";
   const caption = `choose ${selectMin} of ${options.length} ${pluralize(options.length, "option")}`;
 
@@ -166,7 +168,7 @@ export function CompoundPickBody({
         ? `Completed — Options ${metOptions.map((m) => optionBadge(m.index)).join(", ")}`
         : `Completed — Option ${optionBadge(metOptions[0].index)}`;
     const doneCodes = metOptions.flatMap(({ opt }) =>
-      opt.satisfiers.map((p) => p.code),
+      opt.node.satisfiers.map((p) => p.code),
     );
     return (
       <Recede title={title} caption={recedeCaption}>
@@ -211,17 +213,20 @@ export function CompoundPickBody({
       </div>
       {options.map((opt, i) => {
         const badge = optionBadge(i);
-        const { needed: oNeed, satisfied: oSat } = nodeProgress(opt);
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: rule tree is stable
           <Fragment key={i}>
             {i > 0 ? <div className="cd-or">or</div> : null}
-            <div className={`cd-opt${opt.status === "partial" ? " sel" : ""}`}>
+            <div
+              className={`cd-opt${opt.node.status === "partial" ? " sel" : ""}`}
+            >
               <div className="cd-opt-head">
                 <span className="cd-opt-badge">{badge}</span>
-                <span className="cd-opt-name">{optionName(opt, badge)}</span>
+                <span className="cd-opt-name">
+                  {optionName(opt.node, badge)}
+                </span>
                 <span className="cd-opt-mini">
-                  {fmtUnits(oSat)}/{fmtUnits(oNeed)}
+                  {fmtUnits(opt.credit)}/{fmtUnits(opt.needed)}
                 </span>
               </div>
               <OptionBody

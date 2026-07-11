@@ -55,6 +55,10 @@ export interface AuditNode {
    * agree with the degree bar. See {@link isLegallyMet}.
    */
   legallyMet?: boolean;
+  /** `satisfiedCount` net of illegal placements, in the node's own dimension.
+   *  Persisted for pools: converting illegal placements to units needs
+   *  `unitsOf`, which consumers don't have. */
+  legalSatisfiedCount?: number;
   children: AuditNode[];
 }
 
@@ -384,6 +388,7 @@ function compileSubjectPool(
       satisfiers,
       missingCodes: [],
       satisfiedCount: have,
+      legalSatisfiedCount: legalHave,
       legallyMet: unitBased ? unitsMet(legalHave, need) : legalHave >= need,
       selectMin: need,
       selectMax: need,
@@ -624,62 +629,108 @@ export function isLegallyMet(node: AuditNode): boolean {
   return node.legallyMet ?? isSatisfied(node);
 }
 
+export interface RuleSummary {
+  needed: number;
+  satisfied: number;
+  /** `satisfied` net of illegal placements, dimension-correct per kind (legal
+   *  units for a unit pool, legally-met options for a pick) — never `satisfied`
+   *  minus a subtree illegal-course count, which mixes dimensions. */
+  legalSatisfied: number;
+  excludedViolationCount: number;
+}
+
 /**
  * Roll-up for headline numbers, counting each slot once: `courses` = N,
  * `pick` = selectMin, `subjectPool` = selectCount, `all` sums children.
  * `excludedViolationCount` totals `excluded`-rule hits (don't change status;
  * surfaced so the panel can badge without re-walking).
+ *
+ * `summarizeStep` computes one node from its children's summaries so a caller
+ * already walking the tree (score.ts) can fold upward in a single pass.
  */
-export function summarize(node: AuditNode): {
-  needed: number;
-  satisfied: number;
-  excludedViolationCount: number;
-} {
+export function summarizeStep(
+  node: AuditNode,
+  children: readonly RuleSummary[],
+): RuleSummary {
   const r = node.ruleNode;
   switch (r.kind) {
-    case "courses":
+    case "courses": {
       // `satisfiers + missingCodes` is the post-equivalence option count (see
       // partitionByPlacement) — a leaf naming both twins of one course is ONE
       // slot, matching the headline. `r.courses.length` would double-count it.
+      const satisfied = node.satisfiers.length;
       return {
-        needed: node.satisfiers.length + node.missingCodes.length,
-        satisfied: node.satisfiers.length,
+        needed: satisfied + node.missingCodes.length,
+        satisfied,
+        legalSatisfied: Math.max(
+          0,
+          satisfied - (node.illegalSatisfiers?.length ?? 0),
+        ),
         excludedViolationCount: 0,
       };
+    }
     case "all": {
       let needed = 0;
       let satisfied = 0;
+      let legalSatisfied = 0;
       let excludedViolationCount = 0;
-      for (const c of node.children) {
-        const s = summarize(c);
+      for (const s of children) {
         needed += s.needed;
         satisfied += s.satisfied;
+        legalSatisfied += s.legalSatisfied;
         excludedViolationCount += s.excludedViolationCount;
       }
-      return { needed, satisfied, excludedViolationCount };
+      return { needed, satisfied, legalSatisfied, excludedViolationCount };
     }
     case "pick": {
       const min = r.selectMin ?? 0;
       const got = Math.min(node.satisfiedCount ?? 0, min);
+      // Count what compile counted for `legallyMet`: legal placements for a
+      // flat pool, legally-met options for a nested pick (see compilePick).
+      const legalCount =
+        node.children.length === 0
+          ? node.satisfiers.length - (node.illegalSatisfiers?.length ?? 0)
+          : node.children.filter(
+              (c) => isLegallyMet(c) && c.satisfiers.length > 0,
+            ).length;
       // An excluded leaf can sit under a pick; fold counts up as in `all`.
       let excludedViolationCount = 0;
-      for (const c of node.children) {
-        excludedViolationCount += summarize(c).excludedViolationCount;
+      for (const s of children) {
+        excludedViolationCount += s.excludedViolationCount;
       }
-      return { needed: min, satisfied: got, excludedViolationCount };
+      return {
+        needed: min,
+        satisfied: got,
+        legalSatisfied: Math.max(0, Math.min(legalCount, min)),
+        excludedViolationCount,
+      };
     }
     case "subjectPool": {
       // Unit-stated pools report in units (satisfiedCount holds placed units);
       // count-stated pools in courses.
       const need = r.needUnits ?? r.selectCount;
       const got = Math.min(node.satisfiedCount ?? 0, need);
-      return { needed: need, satisfied: got, excludedViolationCount: 0 };
+      // Fallback for hand-built test nodes without `legalSatisfiedCount`.
+      const legal =
+        node.legalSatisfiedCount ??
+        (node.satisfiedCount ?? 0) - (node.illegalSatisfiers?.length ?? 0);
+      return {
+        needed: need,
+        satisfied: got,
+        legalSatisfied: Math.max(0, Math.min(legal, need)),
+        excludedViolationCount: 0,
+      };
     }
     case "excluded":
       return {
         needed: 0,
         satisfied: 0,
+        legalSatisfied: 0,
         excludedViolationCount: node.excludedViolations?.length ?? 0,
       };
   }
+}
+
+export function summarize(node: AuditNode): RuleSummary {
+  return summarizeStep(node, node.children.map(summarize));
 }

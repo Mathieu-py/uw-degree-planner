@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deriveMacros } from "../../../components/planner/audit/deriveMacros";
 import type { LocalPlan } from "../../plan/types";
 import { PROGRAMS, type Program } from "../../programs";
-import { compileAudit } from "../compile";
+import { type AuditNode, compileAudit } from "../compile";
 import { computeDegreeProgress } from "../progress";
 
 function makePlan(codes: string[]): LocalPlan {
@@ -61,16 +61,9 @@ describe("overlapping subjectPool vs. named requirement", () => {
     const plan = makePlan(codes);
     const audit = compileAudit(program, plan, null, new Set(), "test");
     const progress = computeDegreeProgress(audit, program, unitsOf, new Set());
-    const { macros } = deriveMacros(
-      audit,
-      program,
-      progress.freeUnits,
-      progress.breadthRequirements,
-      progress.levelFloors,
-      unitsOf,
-      new Set(),
-      progress.nodeFill,
-    );
+    const { macros } = deriveMacros(audit, program, unitsOf, new Set(), {
+      progress,
+    });
     const degree = macros.find((m) => m.key === "degree");
     return { progress, degreeCount: degree?.count };
   }
@@ -84,11 +77,109 @@ describe("overlapping subjectPool vs. named requirement", () => {
     expect(degreeCount).toEqual({ satisfied: 1, needed: 2 });
   });
 
+  it("the NAMED requirement claims the shared course, not the pool", () => {
+    // "1 additional ENGL course" is beyond the named ENGL 101 (calendar wording:
+    // "Complete N additional … courses"), so the single placed course must
+    // credit the named slot and leave the POOL row unmet — not the reverse.
+    const plan = makePlan(["engl101"]);
+    const audit = compileAudit(program, plan, null, new Set(), "test");
+    const progress = computeDegreeProgress(audit, program, unitsOf, new Set());
+    const root = audit.flexibleRoot;
+    if (!root) throw new Error("expected a flexible root");
+    const [namedLeaf, pool] = root.children;
+    expect(progress.nodeFill.get(namedLeaf)).toBe(1);
+    expect(progress.nodeFill.get(pool) ?? 0).toBe(0);
+    // And the assigned-codes map agrees: the course belongs to the named row.
+    expect(progress.nodeAssigned.get(namedLeaf)).toEqual(["engl101"]);
+    expect(progress.nodeAssigned.get(pool)).toBeUndefined();
+  });
+
   it("adding a distinct ENGL course fills the pool and reaches 100%", () => {
     const { progress, degreeCount } = run(["engl101", "engl102"]);
     expect(progress.allComplete).toBe(true);
     expect(progress.pct).toBe(100);
     expect(degreeCount).toEqual({ satisfied: 2, needed: 2 });
+
+    const plan = makePlan(["engl101", "engl102"]);
+    const audit = compileAudit(program, plan, null, new Set(), "test");
+    const p = computeDegreeProgress(audit, program, unitsOf, new Set());
+    const root = audit.flexibleRoot;
+    if (!root) throw new Error("expected a flexible root");
+    const [namedLeaf, pool] = root.children;
+    expect(p.nodeAssigned.get(namedLeaf)).toEqual(["engl101"]);
+    expect(p.nodeAssigned.get(pool)).toEqual(["engl102"]);
+  });
+});
+
+describe("Actuarial Science (Honours): required courses vs. 'additional' pools", () => {
+  const program = PROGRAMS["h-actuarial-science"];
+
+  // The program's required core — includes ACTSC 431/446 (400-level ACTSC) and
+  // several 300/400-level math-faculty courses, ALL filter-eligible for the
+  // plan's "Complete N additional …" subject pools.
+  const requiredCore = [
+    "actsc231",
+    "actsc232",
+    "actsc331",
+    "actsc363",
+    "actsc372",
+    "actsc431",
+    "actsc446",
+    "afm101",
+    "econ101",
+    "econ102",
+    "engl378",
+    "mthel131",
+    "stat330",
+    "stat331",
+    "stat333",
+    "stat341",
+  ];
+
+  function poolNodes(root: AuditNode): AuditNode[] {
+    const out: AuditNode[] = [];
+    const walk = (n: AuditNode) => {
+      if (n.ruleNode.kind === "subjectPool") out.push(n);
+      for (const c of n.children) walk(c);
+    };
+    walk(root);
+    return out;
+  }
+
+  it("placing only the required core credits NO 'additional' pool", () => {
+    const audit = compileAudit(
+      program,
+      makePlan(requiredCore),
+      null,
+      new Set(),
+    );
+    const progress = computeDegreeProgress(audit, program, unitsOf, new Set());
+    const root = audit.flexibleRoot;
+    if (!root) throw new Error("expected a flexible root");
+    const pools = poolNodes(root);
+    // 2× ACTSC@400, 1× 300–400 math-faculty, 2× ACTSC (any level).
+    expect(pools.length).toBeGreaterThanOrEqual(3);
+    for (const pool of pools) {
+      expect(progress.nodeFill.get(pool) ?? 0).toBe(0);
+      expect(progress.nodeAssigned.get(pool)).toBeUndefined();
+    }
+  });
+
+  it("a distinct extra 400-level ACTSC credits exactly one pool", () => {
+    const audit = compileAudit(
+      program,
+      makePlan([...requiredCore, "actsc445"]),
+      null,
+      new Set(),
+    );
+    const progress = computeDegreeProgress(audit, program, unitsOf, new Set());
+    const root = audit.flexibleRoot;
+    if (!root) throw new Error("expected a flexible root");
+    const credited = poolNodes(root).filter(
+      (p) => (progress.nodeFill.get(p) ?? 0) > 0,
+    );
+    expect(credited).toHaveLength(1);
+    expect(progress.nodeAssigned.get(credited[0])).toEqual(["actsc445"]);
   });
 });
 
@@ -98,16 +189,9 @@ describe("English – Literature and Rhetoric (3-year): real program", () => {
   function run(codes: string[]) {
     const audit = compileAudit(program, makePlan(codes), null, new Set());
     const progress = computeDegreeProgress(audit, program, unitsOf, new Set());
-    const { macros } = deriveMacros(
-      audit,
-      program,
-      progress.freeUnits,
-      progress.breadthRequirements,
-      progress.levelFloors,
-      unitsOf,
-      new Set(),
-      progress.nodeFill,
-    );
+    const { macros } = deriveMacros(audit, program, unitsOf, new Set(), {
+      progress,
+    });
     const degree = macros.find((m) => m.key === "degree")?.count;
     return { progress, degree };
   }

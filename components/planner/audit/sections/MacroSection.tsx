@@ -1,7 +1,7 @@
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Ring } from "@/components/ui/Ring";
+import { ringFor } from "@/lib/audit/score";
 import { NodeBody } from "../bodies/NodeBody";
-import { ringFor } from "../nodeProgress";
 import type { Macro, OptionRenderProps } from "../types";
 import { SectionRow } from "./SectionRow";
 
@@ -64,7 +64,7 @@ export function MacroSection({
           const body =
             block.content.kind === "node" ? (
               <NodeBody
-                node={block.content.node}
+                scored={block.content.scored}
                 placedCodes={placedCodes}
                 illegalCodes={illegalCodes}
                 catalogByCode={catalogByCode}
@@ -90,7 +90,7 @@ export function MacroSection({
           if (block.subLabel) {
             const ring =
               block.content.kind === "node"
-                ? ringFor(block.content.node, macro.nodeFill)
+                ? ringFor(block.content.scored)
                 : null;
             return (
               <details

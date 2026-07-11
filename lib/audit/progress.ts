@@ -74,16 +74,31 @@ export interface DegreeProgress {
    * reads the same match credit as the headline. Sparse — no entry for "browse".
    */
   electiveCredit: number[];
+  /**
+   * The actual courses the match assigned to each owning rule node — the codes
+   * behind `nodeFill`'s counts. Lets a requirement row show WHICH courses credit
+   * it, so an overlapping pool doesn't chip a course a named requirement claimed.
+   */
+  nodeAssigned: NodeAssigned;
+  /** Match credit of the communication bucket (absent when there is none, or
+   *  it lives in the rule tree). The minimums row reads this so it can't show
+   *  done while another bucket claimed the course and the slot sits unfilled. */
+  commCredit?: number;
 }
 
 /** Filled-slot count per owning rule-tree node (see {@link DegreeProgress.nodeFill}). */
 export type NodeFill = WeakMap<AuditNode, number>;
+
+/** Assigned course codes per owning rule-tree node (see {@link DegreeProgress.nodeAssigned}). */
+export type NodeAssigned = WeakMap<AuditNode, string[]>;
 
 /** A requirement that consumes real degree slots. */
 interface Bucket {
   need: number;
   /** Placed course codes that qualify for it. */
   eligible: string[];
+  /** Claim priority for tied assignments (see `MatchBucket.rank`, matching.ts). */
+  rank?: number;
   /**
    * Units to reserve per UNFILLED slot (filled slots use real units). A
    * required course knows its exact units; a pool/pick/elective slot can't,
@@ -332,7 +347,7 @@ export function computeDegreeProgress(
     return equiv.classOf(code).filter((m) => m !== code && placed.has(m));
   };
 
-  const buckets: Bucket[] = [];
+  const ruleBuckets: Bucket[] = [];
   const unitPools: UnitPool[] = [];
   const required = new Map<string, AuditNode>();
 
@@ -342,11 +357,43 @@ export function computeDegreeProgress(
         root,
         placed,
         placedMatches,
-        buckets,
+        ruleBuckets,
         unitPools,
         required,
         unitsOf,
       );
+
+  // Required courses → singleton buckets; each reserves its real catalog units.
+  // Collapse to one bucket per equivalence class first (mirrors compileAudit's
+  // partitionByPlacement, #21, keyed on the sorted class head): a leaf naming
+  // both twins of one course — or two leaves each naming a twin — is ONE
+  // required course, not two slots, else the headline demands two placements
+  // where the compiled tree shows the row met by a single one.
+  //
+  // Rank 0 — first claim on ties: a course both named individually and
+  // pool-eligible credits the NAMED slot. The calendar states pools as
+  // "Complete N additional … courses" (Kuali, e.g. Actuarial Science):
+  // "additional" means beyond the named list, which already contains
+  // pool-eligible courses (ACTSC 431/446 are 400-level ACTSC).
+  const buckets: Bucket[] = [];
+  const requiredClasses = new Map<string, { code: string; owner: AuditNode }>();
+  for (const [code, owner] of required) {
+    const classKey = equiv.classOf(code)[0];
+    if (!requiredClasses.has(classKey))
+      requiredClasses.set(classKey, { code, owner });
+  }
+  for (const { code, owner } of requiredClasses.values()) {
+    buckets.push({
+      need: 1,
+      eligible: placedMatches(code),
+      estimateUnit: unitsOf(code),
+      owner,
+      rank: 0,
+    });
+  }
+  // Rank 1 — picks and count-stated pools claim in tree order after the named
+  // core; rank 2 — elective lists and communication take what's left.
+  buckets.push(...ruleBuckets.map((b) => ({ ...b, rank: 1 })));
 
   // Finite electives (consolidated upstream so overlapping pools count once)
   // and unit-based subject pools ("0.5 unit of BIOL/CHEM/… at 200+").
@@ -362,6 +409,7 @@ export function computeDegreeProgress(
   // chip reads the same match credit as the headline, not a double-count.
   const electiveBucketIndex = new Map<number, number>();
   const electivePool = new Map<number, UnitPool>();
+  let commBucketIndex: number | null = null;
   if (program) {
     (electiveSections ?? deriveElectiveSections(program)).forEach((e, i) => {
       if (e.kind === "finite") {
@@ -369,6 +417,7 @@ export function computeDegreeProgress(
         buckets.push({
           need: e.need,
           eligible: [...new Set(e.options.flatMap(placedMatches))],
+          rank: 2,
         });
       } else if (e.kind === "subjectPool") {
         const filter = subjectPoolFilter(e); // build the subjects Set once
@@ -384,32 +433,14 @@ export function computeDegreeProgress(
     // Communication — a pick-one named course. Skip when the rules already
     // include the option, else its units double-count.
     const comm = deriveCommunicationRequirement(program, placedList);
-    if (comm && !comm.alreadyInTree)
+    if (comm && !comm.alreadyInTree) {
+      commBucketIndex = buckets.length;
       buckets.push({
         need: comm.need,
         eligible: [...new Set(comm.options.flatMap(placedMatches))],
+        rank: 2,
       });
-  }
-
-  // Required courses → singleton buckets; each reserves its real catalog units.
-  // Collapse to one bucket per equivalence class first (mirrors compileAudit's
-  // partitionByPlacement, #21, keyed on the sorted class head): a leaf naming
-  // both twins of one course — or two leaves each naming a twin — is ONE
-  // required course, not two slots, else the headline demands two placements
-  // where the compiled tree shows the row met by a single one.
-  const requiredClasses = new Map<string, { code: string; owner: AuditNode }>();
-  for (const [code, owner] of required) {
-    const classKey = equiv.classOf(code)[0];
-    if (!requiredClasses.has(classKey))
-      requiredClasses.set(classKey, { code, owner });
-  }
-  for (const { code, owner } of requiredClasses.values()) {
-    buckets.push({
-      need: 1,
-      eligible: placedMatches(code),
-      estimateUnit: unitsOf(code),
-      owner,
-    });
+    }
   }
 
   // Optimal unique assignment of courses to slots (maxBipartiteMatch): each
@@ -419,20 +450,27 @@ export function computeDegreeProgress(
   // of them as a maximum matching allows — a pick must not burn a pool's only
   // course when a non-pool alternative fills the same slot.
   const poolEligible = new Set(unitPools.flatMap((p) => p.eligible));
-  const { filledByBucket, matched } = maxBipartiteMatch(buckets, {
-    matchLast: poolEligible,
-  });
+  const { filledByBucket, codesByBucket, matched } = maxBipartiteMatch(
+    buckets,
+    { matchLast: poolEligible },
+  );
 
-  // Per-node distinct credit: roll each owning rule-node's filled-slot total up,
-  // so the panel's requirement rows reflect this match (one course → one slot)
-  // rather than an independent count that lets a course satisfy several
-  // overlapping requirements. A node owning several buckets (a multi-course leaf,
-  // or a compound pick + its residual) sums across them.
+  // Per-node distinct credit: each owner's filled-slot total (a node can own
+  // several buckets — a multi-course leaf, a pick + residual). `nodeAssigned`
+  // keeps the codes behind the counts so rows chip exactly what credits them.
   const nodeFill: NodeFill = new WeakMap();
+  const nodeAssigned: NodeAssigned = new WeakMap();
+  const assignToNode = (owner: AuditNode | undefined, codes: string[]) => {
+    if (!owner || codes.length === 0) return;
+    const cur = nodeAssigned.get(owner);
+    if (cur) cur.push(...codes);
+    else nodeAssigned.set(owner, [...codes]);
+  };
   for (let bi = 0; bi < buckets.length; bi++) {
     const owner = buckets[bi].owner;
     if (!owner) continue;
     nodeFill.set(owner, (nodeFill.get(owner) ?? 0) + filledByBucket[bi]);
+    assignToNode(owner, codesByBucket[bi]);
   }
 
   // Unit pools (a unit-stated `subjectPool` rule, or a unit-based elective pool,
@@ -467,6 +505,7 @@ export function computeDegreeProgress(
     // row matches the headline; elective pools have no owner.
     if (pool.owner)
       nodeFill.set(pool.owner, (nodeFill.get(pool.owner) ?? 0) + credit);
+    assignToNode(pool.owner, poolAssign.usedByPool[i]);
     if (!unitsMet(got, pool.needUnits)) {
       poolShortfall += pool.needUnits - got;
       allPoolsMet = false;
@@ -568,5 +607,9 @@ export function computeDegreeProgress(
     owedUnverified,
     nodeFill,
     electiveCredit,
+    nodeAssigned,
+    ...(commBucketIndex !== null && {
+      commCredit: filledByBucket[commBucketIndex],
+    }),
   };
 }

@@ -412,6 +412,7 @@ describe("summarize", () => {
     expect(summarize(audit.flexibleRoot)).toEqual({
       needed: 3,
       satisfied: 1,
+      legalSatisfied: 1,
       excludedViolationCount: 0,
     });
   });
@@ -435,6 +436,7 @@ describe("summarize", () => {
     expect(summarize(audit.flexibleRoot)).toEqual({
       needed: 3,
       satisfied: 2,
+      legalSatisfied: 2,
       excludedViolationCount: 0,
     });
   });
@@ -489,6 +491,7 @@ describe("summarize", () => {
     expect(summarize(audit.flexibleRoot)).toEqual({
       needed: 1,
       satisfied: 1,
+      legalSatisfied: 1,
       excludedViolationCount: 2,
     });
     expect(audit.flexibleRoot.status).toBe("met");

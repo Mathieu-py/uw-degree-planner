@@ -5,11 +5,18 @@ export interface MatchBucket {
   need: number;
   /** Course codes that may fill a slot of this bucket. */
   eligible: string[];
+  /**
+   * Claim priority for tied assignments: lower ranks first (default 0; equal
+   * ranks keep input order) — e.g. a named requirement over an "additional" pool.
+   */
+  rank?: number;
 }
 
 export interface MatchResult {
   /** Filled-slot count per bucket, index-aligned with the input buckets. */
   filledByBucket: number[];
+  /** Courses assigned to each bucket's slots, index-aligned with the inputs. */
+  codesByBucket: string[][];
   /** Every course that was assigned to a slot (each to exactly one). */
   matched: Set<string>;
 }
@@ -27,14 +34,22 @@ export interface MatchResult {
  * Kuhn's algorithm: assign each course, augmenting along alternating paths to
  * bump an already-matched course to another open slot. `matchLast` codes are
  * deferred so the matching consumes as few of them as possible.
+ *
+ * When either of two buckets could take a shared course without changing the
+ * matching size, the lowest-`rank` bucket keeps it (slots are tried in rank
+ * order, and augmentation never unseats a course except to admit a new one).
  */
 export function maxBipartiteMatch(
   buckets: readonly MatchBucket[],
   opts: { matchLast?: ReadonlySet<string> } = {},
 ): MatchResult {
-  // Expand buckets into individual slots; `slotBucket[s]` is slot s's bucket.
+  // Expand buckets into slots in claim-priority order; `slotBucket[s]` keeps
+  // the INPUT index, so the result arrays stay input-aligned regardless of rank.
+  const byRank = buckets
+    .map((_, i) => i)
+    .sort((a, b) => (buckets[a].rank ?? 0) - (buckets[b].rank ?? 0));
   const slotBucket: number[] = [];
-  for (let bi = 0; bi < buckets.length; bi++)
+  for (const bi of byRank)
     for (let k = 0; k < buckets[bi].need; k++) slotBucket.push(bi);
 
   const bucketEligible = buckets.map((b) => new Set(b.eligible));
@@ -72,11 +87,20 @@ export function maxBipartiteMatch(
     if (augment(code, new Array(slotBucket.length).fill(false)))
       matched.add(code);
 
-  const filledByBucket = new Array<number>(buckets.length).fill(0);
-  for (let s = 0; s < slotBucket.length; s++)
-    if (slotMatch[s] !== null) filledByBucket[slotBucket[s]] += 1;
+  const codesByBucket: string[][] = Array.from(
+    { length: buckets.length },
+    () => [],
+  );
+  for (let s = 0; s < slotBucket.length; s++) {
+    const code = slotMatch[s];
+    if (code !== null) codesByBucket[slotBucket[s]].push(code);
+  }
 
-  return { filledByBucket, matched };
+  return {
+    filledByBucket: codesByBucket.map((c) => c.length),
+    codesByBucket,
+    matched,
+  };
 }
 
 /** A unit-stated pool: cover `needUnits` of real credit from `eligible` courses. */
@@ -91,6 +115,8 @@ export interface UnitPoolAssignment<Id = number> {
   got: number[];
   /** Courses actually consumed — each credited to exactly one pool. */
   used: Set<Id>;
+  /** The consumed courses per pool, index-aligned to the input pools. */
+  usedByPool: Id[][];
   /** true ⇒ shortfall-optimal with minimal consumed weight (up to the >20-item
    *  cover heuristic); false ⇒ a guard or the node budget bailed to
    *  greedy-or-best-found. */
@@ -124,7 +150,7 @@ export function assignUnitPools<Id>(
 ): UnitPoolAssignment<Id> {
   const { maxContested = 32, nodeBudget = 200_000 } = guard;
   const n = pools.length;
-  if (n === 0) return { got: [], used: new Set(), exact: true };
+  if (n === 0) return { got: [], used: new Set(), usedByPool: [], exact: true };
 
   // Pools each course qualifies for.
   const poolsOfCourse = new Map<Id, number[]>();
@@ -259,21 +285,27 @@ export function assignUnitPools<Id>(
   // Realise the winning contested routing, then cover each pool's residual need
   // from its exclusives with the least weight (heavy courses stay free).
   const got = new Array<number>(n).fill(0);
-  const used = new Set<Id>();
+  const usedByPool: Id[][] = Array.from({ length: n }, () => []);
   for (let i = 0; i < contested.length; i++)
     if (winner[i] >= 0) {
       got[winner[i]] += cWeight[i];
-      used.add(contested[i]);
+      usedByPool[winner[i]].push(contested[i]);
     }
   for (let pi = 0; pi < n; pi++) {
     if (unitsMet(got[pi], pools[pi].needUnits)) continue;
     const residual = pools[pi].needUnits - got[pi];
     for (const c of minWeightCover(exclusiveOf[pi], weightOf, residual)) {
       got[pi] += weightOf(c);
-      used.add(c);
+      usedByPool[pi].push(c);
     }
   }
-  return { got, used, exact: !budgetHit };
+  // Each course routes to exactly one pool, so `used` is just the union.
+  return {
+    got,
+    used: new Set(usedByPool.flat()),
+    usedByPool,
+    exact: !budgetHit,
+  };
 }
 
 /**
@@ -333,6 +365,7 @@ function greedyAssign<Id>(
 ): UnitPoolAssignment<Id> {
   const got = new Array<number>(pools.length).fill(0);
   const used = new Set<Id>();
+  const usedByPool: Id[][] = Array.from({ length: pools.length }, () => []);
   // Nothing is consumed before the sort, so "most constrained" = fewest eligible.
   const order = pools
     .map((_, i) => i)
@@ -342,7 +375,8 @@ function greedyAssign<Id>(
       if (unitsMet(got[pi], pools[pi].needUnits)) break;
       if (used.has(c)) continue;
       used.add(c);
+      usedByPool[pi].push(c);
       got[pi] += weightOf(c);
     }
-  return { got, used, exact: false };
+  return { got, used, usedByPool, exact: false };
 }
