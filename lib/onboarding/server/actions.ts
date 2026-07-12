@@ -36,6 +36,10 @@ export async function fetchVariantGroups(
 export async function placeVariantSelections(
   input: VariantPlacementInput,
 ): Promise<VariantPlacement[]> {
+  // TODO(prod-hardening): validate `input` here (trust boundary, per account/plan
+  // actions). `startTermId` reaches buildEmptySlots unchecked and throws on a bad
+  // value — prefer returning [] so the picker degrades, not 500s. fetchVariantGroups
+  // already skips unknown ids, so it needs no guard.
   const catalog = await loadTerm(PINNED_TERM);
   return resolveVariantPlacements(input, catalog);
 }
