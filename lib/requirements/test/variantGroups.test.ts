@@ -85,7 +85,9 @@ describe("enumerateVariantGroups", () => {
     );
     const keys = new Set([...cs, ...ce].map((g) => g.key));
     expect(keys.size).toBe(cs.length + ce.length);
-    expect(cs.every((g) => g.programId === "h-computer-science-bcs")).toBe(true);
+    expect(cs.every((g) => g.programId === "h-computer-science-bcs")).toBe(
+      true,
+    );
     expect(ce.every((g) => g.programId === "computer-engineering")).toBe(true);
   });
 });
