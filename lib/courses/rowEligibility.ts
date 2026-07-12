@@ -18,6 +18,16 @@ export interface EligibilityRow {
   eligibility: CourseEligibilityVerdict | null;
 }
 
+/**
+ * The picker's "Show" filter — one control merging the old hide-unmet toggle
+ * and an eligibility filter (they're the same axis):
+ * - `eligible`      — only courses that come back eligible.
+ * - `eligibleCheck` — eligible + uncertain ("check"); drops the definitely-
+ *   ineligible (missing prereq / wrong program / antireq). The default.
+ * - `all`           — everything, each row keeping its status chip.
+ */
+export type ShowFilter = "eligible" | "eligibleCheck" | "all";
+
 export interface AttachEligibilityOptions {
   /** Codes completed strictly before the target term. */
   completed: ReadonlySet<string>;
@@ -28,8 +38,8 @@ export interface AttachEligibilityOptions {
    * Omitted by the program-less catalog browse, where nothing is suppressed.
    */
   programReferenced?: ReadonlySet<string>;
-  /** Drop rows that come back ineligible. */
-  hideUnmetPrereqs: boolean;
+  /** Which eligibility states to keep (see {@link ShowFilter}). */
+  show: ShowFilter;
   /** Target term's level ("2A") for level-gated prereqs. */
   level?: string;
   /** Student's program(s) for program-restriction prereqs (double degree → more than one). */
@@ -54,7 +64,7 @@ export function attachEligibility(
     completed,
     placedAnywhere,
     programReferenced = EMPTY_SET,
-    hideUnmetPrereqs,
+    show,
     level,
     programs,
     sameTerm,
@@ -83,10 +93,13 @@ export function attachEligibility(
         verdict.blockedByProgram;
       return { course: r.course, eligibility: trustworthy ? verdict : null };
     })
-    .filter(
-      (r) =>
-        !hideUnmetPrereqs ||
-        !r.eligibility ||
-        r.eligibility.state !== "ineligible",
-    );
+    .filter((r) => {
+      if (show === "all") return true;
+      const v = r.eligibility;
+      // Uncertain (null) rows can't be judged: keep under the default
+      // "eligibleCheck", drop under strict "eligible".
+      if (!v) return show === "eligibleCheck";
+      if (show === "eligible") return v.state === "eligible";
+      return v.state !== "ineligible"; // eligibleCheck
+    });
 }

@@ -1,27 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback } from "react";
+import { CourseTable } from "@/components/courses/CourseTable";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import {
-  type CourseEligibilityVerdict,
-  isProgramBlocked,
-} from "@/lib/courses/courseEligibility";
-import type { SortDir, SortKey } from "@/lib/courses/courseSort";
-import { seatsAvailable } from "@/lib/courses/filters";
-import { getRatingColor } from "@/lib/courses/ratingColor";
-import type { EligibilityRow } from "@/lib/courses/rowEligibility";
+import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course, FilterPreset } from "@/lib/courses/types";
-import {
-  formatCourseCode,
-  formatPercent,
-  pluralize,
-  truncate,
-} from "@/lib/format";
+import { pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { ProgramIdentity } from "@/lib/programs";
 import { FilterSidebar } from "./FilterSidebar";
@@ -52,8 +40,9 @@ interface Props {
 
 /**
  * Modal slot picker. Filter+sort+paginate pipeline lives in
- * {@link useFilteredCourses}; this component owns layout, focus handling,
- * and the table presentation.
+ * {@link useFilteredCourses}; the table presentation is the shared
+ * {@link CourseTable} in picker mode. This component owns modal layout, focus
+ * handling, and the add gate.
  */
 export function SlotPicker({
   targetTermLabel,
@@ -98,18 +87,17 @@ export function SlotPicker({
   // returns once EXIT_MS has elapsed (or immediately if a close was already
   // in flight), so pick-during-close and rapid double-pick are deduped.
   const handlePick = useCallback(
-    async (code: string) => {
+    async (course: Course) => {
       // Hard gate: a course closed to the student's faculty/program can never
       // be added (rows are also rendered non-interactive). Belt-and-suspenders
       // so no add path slips a wrong-faculty course into the plan.
-      const course = catalog.find((c) => c.code === code);
-      if (course && isProgramBlocked(course, { programs, programReferenced })) {
+      if (isProgramBlocked(course, { programs, programReferenced })) {
         return;
       }
       await animateOut();
-      onPick(code);
+      onPick(course.code);
     },
-    [animateOut, onPick, catalog, programs, programReferenced],
+    [animateOut, onPick, programs, programReferenced],
   );
 
   return (
@@ -160,87 +148,23 @@ export function SlotPicker({
               placeholder="Search by code or name…"
             />
           </div>
-          <div className="flex-1 overflow-y-auto">
+          {/* overflow-x-hidden: the shared table is fixed-layout + full-width,
+              so it never needs horizontal scroll — clip rather than let a
+              stray cell spill promote overflow-y:auto's x-axis to a scrollbar. */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {visible.length === 0 ? (
               <div className="px-4 py-12 text-center text-sm text-ink-3">
                 No matching courses.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-bg border-b border-line">
-                    <tr className="text-left">
-                      <Th
-                        label="Code"
-                        col="code"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                      />
-                      <Th
-                        label="Course"
-                        col="name"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                      />
-                      <Th
-                        label="Useful"
-                        col="useful"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Easy"
-                        col="easy"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Liked"
-                        col="liked"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Rev."
-                        col="reviews"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <Th
-                        label="Seats"
-                        col="seats"
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={onSort}
-                        align="right"
-                      />
-                      <th className="px-2 py-2 text-ink-3 text-xs font-medium">
-                        {/* details link column */}
-                        <span className="sr-only">Details</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((r) => (
-                      <Row
-                        key={r.course.id}
-                        row={r}
-                        onPick={() => handlePick(r.course.code)}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <CourseTable
+                rows={visible}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={onSort}
+                mode="picker"
+                onAdd={handlePick}
+              />
             )}
             {hasMore ? (
               <div className="px-4 py-3 border-t border-line">
@@ -260,206 +184,5 @@ export function SlotPicker({
         </div>
       </div>
     </Modal>
-  );
-}
-
-function Th({
-  label,
-  col,
-  sortKey,
-  sortDir,
-  onSort,
-  align = "left",
-}: {
-  label: string;
-  col: SortKey;
-  sortKey: SortKey;
-  sortDir: SortDir;
-  onSort: (k: SortKey) => void;
-  align?: "left" | "right";
-}) {
-  const active = col === sortKey;
-  return (
-    <th
-      className={
-        "px-2 py-2 text-ink-3 text-xs font-medium " +
-        (align === "right" ? "text-right" : "text-left")
-      }
-    >
-      <button
-        type="button"
-        onClick={() => onSort(col)}
-        className={
-          "inline-flex items-center gap-1 hover:text-ink " +
-          (align === "right" ? "flex-row-reverse" : "")
-        }
-      >
-        {label}
-        {active ? (
-          <span className="text-ink-3">{sortDir === "asc" ? "↑" : "↓"}</span>
-        ) : null}
-      </button>
-    </th>
-  );
-}
-
-function Row({ row, onPick }: { row: EligibilityRow; onPick: () => void }) {
-  const { course, eligibility } = row;
-  const reviews = course.rating?.filled_count ?? 0;
-  const seats = seatsAvailable(course);
-  // A course that can't be added — closed to the student's faculty/program, or
-  // already in the plan (incl. a cross-listed twin) — renders its add
-  // affordances inert; the chip explains why.
-  const inert = !!eligibility?.blockedByProgram || !!eligibility?.alreadyPlaced;
-  return (
-    <tr className="border-b border-line hover:bg-bg-2">
-      <td className="px-2 py-2 font-mono text-xs whitespace-nowrap">
-        {inert ? (
-          <span className="text-ink-3 cursor-not-allowed" aria-disabled="true">
-            {formatCourseCode(course.code)}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={onPick}
-            className="text-ink hover:underline"
-          >
-            {formatCourseCode(course.code)}
-          </button>
-        )}
-      </td>
-      <td className="px-2 py-2">
-        {inert ? (
-          <span
-            className="text-left flex items-center gap-2 min-w-0 w-full cursor-not-allowed"
-            aria-disabled="true"
-          >
-            <span className="text-ink-3 line-clamp-2 min-w-0">
-              {course.name}
-            </span>
-            {eligibility ? <EligibilityChip verdict={eligibility} /> : null}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={onPick}
-            className="text-left flex items-center gap-2 min-w-0 w-full"
-          >
-            <span className="text-ink line-clamp-2 min-w-0">{course.name}</span>
-            {eligibility ? <EligibilityChip verdict={eligibility} /> : null}
-          </button>
-        )}
-      </td>
-      <RatingCell value={course.rating?.useful} />
-      <RatingCell value={course.rating?.easy} />
-      <RatingCell value={course.rating?.liked} />
-      <td className="px-2 py-2 text-right text-xs tabular-nums text-ink-2">
-        {reviews}
-      </td>
-      <td className="px-2 py-2 text-right text-xs tabular-nums">
-        {seats == null ? (
-          <span className="text-ink-3">—</span>
-        ) : seats > 0 ? (
-          <span className="text-met">{seats}</span>
-        ) : (
-          <span className="text-ink-3">0</span>
-        )}
-      </td>
-      <td className="px-2 py-2 text-right">
-        <Link
-          href={`/course/${course.code}`}
-          target="_blank"
-          rel="noopener"
-          title="Open full course details (new tab)"
-          aria-label={`Full details for ${course.code}`}
-          className="inline-flex items-center justify-center w-6 h-6 rounded text-ink-3 hover:text-ink hover:bg-bg-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Icon name="external" size="sm" aria-hidden="true" />
-        </Link>
-      </td>
-    </tr>
-  );
-}
-
-function RatingCell({ value }: { value: number | null | undefined }) {
-  if (value == null) {
-    return <td className="px-2 py-2 text-right text-xs text-ink-3">—</td>;
-  }
-  const color = getRatingColor(value);
-  return (
-    <td className="px-2 py-2 text-right">
-      <div className="inline-flex items-center gap-1.5 justify-end min-w-[56px]">
-        <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
-        <span className="tabular-nums text-xs font-medium w-9 text-right">
-          {formatPercent(value)}
-        </span>
-      </div>
-    </td>
-  );
-}
-
-function EligibilityChip({ verdict }: { verdict: CourseEligibilityVerdict }) {
-  if (verdict.state === "eligible") {
-    return (
-      <span className="inline-flex shrink-0 items-center rounded-full bg-met-soft text-met px-1.5 py-0.5 text-[10px] font-medium">
-        Eligible
-      </span>
-    );
-  }
-  if (verdict.state === "check") {
-    const hint = verdict.reasons[0] ?? "manual check";
-    return (
-      <span
-        className="inline-flex shrink-0 items-center rounded-full bg-partial-soft text-partial px-1.5 py-0.5 text-[10px] font-medium"
-        title={verdict.reasons.join(" · ")}
-      >
-        Check: {truncate(hint, 18)}
-      </span>
-    );
-  }
-  // Ineligible — label the specific reason. `alreadyPlaced` fires for a placed
-  // cross-listed twin (the exact code is filtered out of candidates upstream).
-  if (verdict.alreadyPlaced) {
-    return (
-      <span
-        className="inline-flex shrink-0 items-center rounded-full bg-bg-2 text-ink-2 px-1.5 py-0.5 text-[10px] font-medium"
-        title={verdict.reasons[0] ?? "Already in plan"}
-      >
-        In plan
-      </span>
-    );
-  }
-  if (verdict.antireqConflicts.length > 0) {
-    return (
-      <span
-        className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
-        title={`Antireq conflict: ${verdict.antireqConflicts.join(", ")}`}
-      >
-        Antireq conflict
-      </span>
-    );
-  }
-  if (verdict.blockedByProgram) {
-    return (
-      <span
-        className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
-        title={verdict.rawRequirements.join(" · ")}
-      >
-        Wrong program
-      </span>
-    );
-  }
-  return (
-    <span
-      className="inline-flex shrink-0 items-center rounded-full bg-danger-soft text-danger px-1.5 py-0.5 text-[10px] font-medium"
-      title={
-        verdict.missingCourses.length > 0
-          ? verdict.missingCourses.map(formatCourseCode).join(", ")
-          : verdict.rawRequirements.join(" · ")
-      }
-    >
-      Missing prereqs
-    </span>
   );
 }
