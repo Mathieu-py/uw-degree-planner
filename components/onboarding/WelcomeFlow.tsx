@@ -36,6 +36,8 @@ import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
+import { useVariantPicker } from "./useVariantPicker";
+import { VariantPicker } from "./VariantPicker";
 
 const STEPS = ["Set up", "Review"] as const;
 
@@ -73,6 +75,13 @@ export function WelcomeFlow({
   const [streamConfident, setStreamConfident] = useState(true);
   const [busy, setBusy] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
+  // Manual-onboarding variant picker (#84). Transcript path skips it — placed
+  // courses already resolve every choice.
+  const variants = useVariantPicker({
+    programIds,
+    stream,
+    enabled: !parseResult,
+  });
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -211,8 +220,9 @@ export function WelcomeFlow({
     setBusy(true);
     setBuildError(null);
     try {
+      const finalPlan = await variants.applyTo(draftPlan);
       if (isAuthed) {
-        const id = await create(NEW_PLAN_NAME, toSnapshot(draftPlan));
+        const id = await create(NEW_PLAN_NAME, toSnapshot(finalPlan));
         if (id) {
           router.push(`/plan/${id}`);
         } else {
@@ -220,7 +230,7 @@ export function WelcomeFlow({
           setBusy(false);
         }
       } else {
-        savePlan(draftPlan);
+        savePlan(finalPlan);
         router.push("/plan");
       }
     } catch (err) {
@@ -415,6 +425,16 @@ export function WelcomeFlow({
                 </p>
                 {partnerBanner}
                 {doubleDegreeSuggestion}
+                {variants.groups.length > 0 ? (
+                  <div className="flex flex-col gap-3 border-t border-line pt-4">
+                    <h3 className="u-h3 text-[15px]">Course choices</h3>
+                    <VariantPicker
+                      groups={variants.groups}
+                      value={variants.selections}
+                      onChange={variants.onChange}
+                    />
+                  </div>
+                ) : null}
               </>
             )}
           </div>
