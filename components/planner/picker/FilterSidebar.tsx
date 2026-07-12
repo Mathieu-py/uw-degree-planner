@@ -94,7 +94,7 @@ export function FilterSidebar({
                       <span className="h-1.5 w-1.5 rounded-full bg-accent-bg" />
                     ) : null}
                   </span>
-                  <span className={"h-1.5 w-1.5 rounded-full " + o.dot} />
+                  <span className={`h-1.5 w-1.5 rounded-full ${o.dot}`} />
                   <span>{o.label}</span>
                   {o.value === "eligibleCheck" ? (
                     <span className="ml-auto text-[9px] uppercase tracking-wide text-ink-3">

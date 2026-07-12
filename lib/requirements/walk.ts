@@ -13,7 +13,7 @@ export function walkRule(node: RuleNode, visit: (n: RuleNode) => void): void {
  * functionally mandatory (Kuali sometimes emits mandatory rules as `pick(1,1)`
  * not `all`). Returns the flat course codes if so, else null.
  */
-function functionallyMandatoryCourses(node: RuleNode): string[] | null {
+export function functionallyMandatoryCourses(node: RuleNode): string[] | null {
   if (node.kind !== "pick" || node.selectMin === undefined) return null;
   const leafCourses: string[] = [];
   for (const c of node.children) {
