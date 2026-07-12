@@ -8,6 +8,7 @@
  */
 
 import { loadTerm } from "@/lib/courses/data";
+import { logError } from "@/lib/log";
 import {
   resolveVariantPlacements,
   type VariantPlacement,
@@ -18,7 +19,7 @@ import {
   enumerateVariantGroups,
   type VariantGroup,
 } from "@/lib/requirements/variantGroups";
-import { PINNED_TERM } from "@/lib/terms";
+import { KNOWN_TERMS, PINNED_TERM } from "@/lib/terms";
 
 /** Pickable variant groups for the selected program(s); flattened, double-degree-safe. */
 export async function fetchVariantGroups(
@@ -32,14 +33,23 @@ export async function fetchVariantGroups(
   return out;
 }
 
+// Bound the work one request can trigger; a real onboarding picks a few dozen.
+const MAX_VARIANT_SELECTIONS = 200;
+
 /** Timeline positions for the student's picks, prereq-aware (catalog server-side). */
 export async function placeVariantSelections(
   input: VariantPlacementInput,
 ): Promise<VariantPlacement[]> {
-  // TODO(prod-hardening): validate `input` here (trust boundary, per account/plan
-  // actions). `startTermId` reaches buildEmptySlots unchecked and throws on a bad
-  // value — prefer returning [] so the picker degrades, not 500s. fetchVariantGroups
-  // already skips unknown ids, so it needs no guard.
-  const catalog = await loadTerm(PINNED_TERM);
-  return resolveVariantPlacements(input, catalog);
+  // Public endpoint: validate at the boundary and degrade to no placements
+  // (never 500) — the picker is optional.
+  if (!KNOWN_TERMS.some((t) => t.id === input.startTermId)) return [];
+  if (input.selections.length > MAX_VARIANT_SELECTIONS) return [];
+
+  try {
+    const catalog = await loadTerm(PINNED_TERM);
+    return resolveVariantPlacements(input, catalog);
+  } catch (err) {
+    logError("placeVariantSelections failed:", err);
+    return [];
+  }
 }
