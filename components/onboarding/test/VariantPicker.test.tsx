@@ -78,4 +78,14 @@ describe("VariantPicker", () => {
     );
     expect(screen.getByText("Term 2A")).toBeDefined();
   });
+
+  it("names each option group for assistive tech (description + hint)", () => {
+    render(<VariantPicker groups={[group()]} value={{}} onChange={vi.fn()} />);
+    // <fieldset> exposes role="group"; aria-label carries the selection context.
+    expect(
+      screen.getByRole("group", {
+        name: /complete 1 of the following\. choose 1/i,
+      }),
+    ).toBeDefined();
+  });
 });

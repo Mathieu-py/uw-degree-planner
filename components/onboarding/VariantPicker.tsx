@@ -48,6 +48,7 @@ function GroupBlock({
   onChange: (codes: string[]) => void;
 }) {
   const single = isSingle(group);
+  const hint = hintFor(group);
   const atMax = group.selectMax != null && value.length >= group.selectMax;
 
   const toggle = (code: string) => {
@@ -70,13 +71,17 @@ function GroupBlock({
           {group.description}
         </span>
         <span className="shrink-0 text-[11px] uppercase tracking-wide text-ink-3">
-          {hintFor(group)}
+          {hint}
         </span>
       </div>
-      {/* Toggle buttons (not a radiogroup): single-select just means picking one
-          deselects the rest — the visible description labels the set and the
-          "Choose 1" hint carries the rule; aria-pressed announces each state. */}
-      <div className="flex flex-wrap gap-1.5">
+      {/* Toggle buttons in a <fieldset> (not a radiogroup): single-select just
+          means picking one deselects the rest. The aria-label carries the
+          selection context (description + hint) to AT, since each button only
+          announces its own aria-pressed state. */}
+      <fieldset
+        aria-label={`${group.description}. ${hint}`}
+        className="flex flex-wrap gap-1.5"
+      >
         {group.options.map((code) => {
           const selected = value.includes(code);
           const disabled = !single && !selected && atMax;
@@ -93,7 +98,7 @@ function GroupBlock({
             </button>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 }
