@@ -1,4 +1,5 @@
 import type { DragEvent } from "react";
+import { isAcademicSlot } from "@/lib/plan/derive";
 import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import type { LocalPlan, SlotCourse } from "@/lib/plan/types";
 
@@ -127,7 +128,7 @@ export function applyCourseDrop(
 ): LocalPlan {
   const target = plan.slots.find((s) => s.id === toSlotId);
   // Only academic term columns accept drops — never co-op or pre-arrival.
-  if (!target || target.isCoop || target.position === "pre") return plan;
+  if (!target || !isAcademicSlot(target)) return plan;
 
   const code = data.code.toLowerCase();
   if (target.courses.some((c) => c.code === code)) return plan; // already there

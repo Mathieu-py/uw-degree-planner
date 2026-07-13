@@ -230,7 +230,7 @@ describe("English – Literature and Rhetoric (3-year): real program", () => {
     const better = run([...namedOnly, "engl210e", "engl340", "engl361"]);
     expect(better.progress.pct).toBeGreaterThan(base.progress.pct);
     // The 3 distinct ENGL courses fill the two previously-stranded ENGL pools,
-    // which are unit-stated (#101): needUnits 1.0 + 0.5 = 1.5 units, so the
+    // which are unit-stated: needUnits 1.0 + 0.5 = 1.5 units, so the
     // degree row's satisfied total rises by 1.5 (units), not by 3 (courses). Any
     // residual gap is the separate communication requirement — not the overlap bug.
     expect(better.degree?.satisfied).toBe((base.degree?.satisfied ?? 0) + 1.5);

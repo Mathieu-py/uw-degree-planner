@@ -17,7 +17,7 @@ interface Props {
  * a quiet "+ Add another program" link that opens a searchable, faculty-filtered
  * command palette ({@link ProgramSearchPalette}) for adding more. Used by Plan
  * Settings and onboarding so a double-degree student can audit against more than
- * one program (issue #32). The first row is the primary — it anchors the plan's
+ * one program. The first row is the primary — it anchors the plan's
  * single specialization and is tagged "Primary" once a second program is added
  * (the rest read "Joint").
  */

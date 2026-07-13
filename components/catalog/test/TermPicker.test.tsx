@@ -191,7 +191,56 @@ describe("TermPicker", () => {
     expect(savePlanMock).not.toHaveBeenCalled();
   });
 
-  it("disables terms where the prerequisite isn't met", () => {
+  it("shows a program-block notice instead of terms when the course is closed to the plan's program", () => {
+    loadPlanMock.mockReturnValue({
+      ...makePlan([slot({ id: "a", position: "1A", termId: FALL_2025 })]),
+      // A SYDE plan; "Anthropology students only" is a hard program wall for it.
+      programIds: ["systems-design-engineering"],
+    });
+    render(
+      <TermPicker
+        course={makeCourse({
+          code: "anth101",
+          prereqs: "Anthropology students only",
+        })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/isn't open to your program/i)).toBeTruthy();
+    // A plan-level block replaces the term list entirely — no term buttons.
+    expect(screen.queryByRole("button", { name: /Fall 2025/ })).toBeNull();
+  });
+
+  it("prefers the already-placed notice over the program block when both apply", () => {
+    loadPlanMock.mockReturnValue({
+      ...makePlan([
+        slot({
+          id: "a",
+          position: "1A",
+          termId: FALL_2025,
+          courses: [{ code: "anth101" }],
+        }),
+      ]),
+      // Placed (e.g. via transcript import) before the plan became SYDE, so it's
+      // both in the plan AND closed to the program. Already-placed wins.
+      programIds: ["systems-design-engineering"],
+    });
+    render(
+      <TermPicker
+        course={makeCourse({
+          code: "anth101",
+          prereqs: "Anthropology students only",
+        })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/already placed in fall 2025/i)).toBeTruthy();
+    expect(screen.queryByText(/isn't open to your program/i)).toBeNull();
+  });
+
+  it("keeps a term with unmet prerequisites addable (soft warning, not disabled)", () => {
     loadPlanMock.mockReturnValue(
       makePlan([slot({ id: "a", position: "1A", termId: FALL_2025 })]),
     );
@@ -202,10 +251,12 @@ describe("TermPicker", () => {
       />,
     );
 
-    // MATH116 sits nowhere in the plan, so the term is ineligible.
+    // MATH116 sits nowhere in the plan, but a missing prereq is only a warning —
+    // the student can still plan the course ahead of it, so the term stays
+    // clickable (matches the slot picker). Only a program block disables.
     expect(screen.getByRole("button", { name: /Fall 2025/ })).toHaveProperty(
       "disabled",
-      true,
+      false,
     );
   });
 });

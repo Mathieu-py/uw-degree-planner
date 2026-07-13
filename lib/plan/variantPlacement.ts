@@ -1,5 +1,5 @@
 /**
- * Resolve variant-picker selections (#84) into timeline positions for a fresh
+ * Resolve variant-picker selections into timeline positions for a fresh
  * manual plan. Engineering picks carry their rule's own term; flexible picks
  * (CS and most majors, no term in the rule) go to the earliest prereq-eligible
  * term at or after the course's level term (1xx→1A … 4xx→4A) — prereq-aware via
@@ -18,6 +18,7 @@ import {
   type TermLetter,
 } from "@/lib/programs";
 import type { TermId } from "@/lib/terms";
+import { isAcademicSlot } from "./derive";
 import { eligibleSlotIdsForCourse } from "./eligibleTerms";
 import { addCourseToSlot } from "./mutateSlots";
 import { buildEmptySlots } from "./sequence";
@@ -91,9 +92,7 @@ export function resolveVariantPlacements(
 
   // Slot ids/positions are stable across addCourseToSlot, so this list built
   // once stays valid; buildEmptySlots emits academic terms in sequence order.
-  const academicSlots = plan.slots.filter(
-    (s) => !s.isCoop && s.position !== "pre",
-  );
+  const academicSlots = plan.slots.filter(isAcademicSlot);
 
   const placements: VariantPlacement[] = [];
   const placed = new Set<string>(); // a code can appear in two programs' groups

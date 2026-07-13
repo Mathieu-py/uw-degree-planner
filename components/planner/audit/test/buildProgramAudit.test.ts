@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "@/lib/plan/types";
 
-// Synthetic PROGRAMS so the spec-owed folding (#123) is exercised WITHOUT
+// Synthetic PROGRAMS so the spec-owed folding is exercised WITHOUT
 // regenerating data/programs.json. Only PROGRAMS is overridden — everything else
 // (types, programReferencedCodes, …) stays real; programReferencedCodes returns an
 // empty set for these unknown ids, which is fine (no antireqs to exclude).

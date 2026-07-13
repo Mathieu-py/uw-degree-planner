@@ -6,12 +6,15 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
+import { isCourseBlockedForPlan } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
+import { placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import {
   loadServerPlan,
@@ -23,8 +26,13 @@ import type { ActionResult, ServerPlan } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { PlanSlot } from "@/lib/plan/types";
 import { optionButtonClasses, TermOptionList } from "./TermOptionList";
-import { alreadyInLabel, useTermOptions } from "./termOptions";
-import { ErrorBody, StatusBody, serverActionError } from "./termPickerShared";
+import { useTermOptions } from "./termOptions";
+import {
+  ErrorBody,
+  ProgramBlockedBody,
+  StatusBody,
+  serverActionError,
+} from "./termPickerShared";
 
 export type TermPickerStep = "plans" | "term";
 
@@ -65,12 +73,23 @@ export function TermPickerAuthed({
   const [containing, setContaining] = useState<Set<string> | null>(null);
 
   // serverPlan is null during the plan-picker step and mid-load, so options stay
-  // empty until a plan resolves.
-  const { options, alreadyIn } = useTermOptions(
+  // empty until a plan resolves. `blocked` guards the term step for the single-
+  // plan auto-advance case (the plan step below is skipped there).
+  const { options, alreadyIn, blocked } = useTermOptions(
     course,
     serverPlan?.slots,
     serverPlan,
   );
+
+  // Program eligibility is per-plan, not per-term, so it's decided here rather
+  // than showing every term disabled. Summaries carry the programIds we need.
+  const blockedPlanIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of plans ?? []) {
+      if (isCourseBlockedForPlan(course, p)) set.add(p.id);
+    }
+    return set;
+  }, [plans, course]);
 
   // Which of the user's plans already hold this course? One RLS-scoped read,
   // keyed only on the course, so it runs once when the picker opens.
@@ -125,7 +144,7 @@ export function TermPickerAuthed({
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !serverPlan || !selectedPlanId) return;
-    if (alreadyInLabel(serverPlan.slots, code) !== null) return;
+    if (placedCourseLabel(serverPlan.slots, course) !== null) return;
     const updated = addCourseToSlot(serverPlan, slot.id, { code });
     if (updated === serverPlan) return;
     setSaving(true);
@@ -184,11 +203,12 @@ export function TermPickerAuthed({
       <>
         {plans.map((p) => {
           const has = containing.has(p.id);
+          const isBlocked = blockedPlanIds.has(p.id);
           return (
             <button
               key={p.id}
               type="button"
-              disabled={has}
+              disabled={has || isBlocked}
               onClick={() => void openPlan(p.id)}
               className={optionButtonClasses}
             >
@@ -196,6 +216,10 @@ export function TermPickerAuthed({
                 <span className="text-sm truncate">{p.name}</span>
                 {has ? (
                   <span className="u-small text-met">Already in this plan</span>
+                ) : isBlocked ? (
+                  <span className="u-small text-danger">
+                    Not open to your program
+                  </span>
                 ) : null}
               </span>
               <Icon name="external" size="sm" aria-hidden="true" />
@@ -235,13 +259,19 @@ export function TermPickerAuthed({
           }
         />
       ) : serverPlan ? (
-        <TermOptionList
-          options={options}
-          alreadyIn={alreadyIn}
-          justAdded={justAdded}
-          busy={saving}
-          onPick={addTo}
-        />
+        blocked ? (
+          // Reached only when a single (auto-advanced) plan is program-blocked;
+          // multi-plan users can't select a blocked plan above.
+          <ProgramBlockedBody />
+        ) : (
+          <TermOptionList
+            options={options}
+            alreadyIn={alreadyIn}
+            justAdded={justAdded}
+            busy={saving}
+            onPick={addTo}
+          />
+        )
       ) : null}
       {saveError ? (
         <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">

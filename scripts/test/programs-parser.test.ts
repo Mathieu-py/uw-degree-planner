@@ -798,7 +798,6 @@ describe("unverified requirements — owed prose we can't structure", () => {
     // "CS440-CS498" is a SET of courses, not a 2-course list. We expand it to the
     // real catalog codes in that inclusive subject band (never synthesizing
     // endpoints), so the rule structures instead of dropping to unverified.
-    // See #117 (bucket C).
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(
@@ -886,7 +885,7 @@ describe("unverified requirements — owed prose we can't structure", () => {
 
   it("recovers the pool half of a Choose-any rule with no literal codes", () => {
     // "any CS course at the 600-/700-level" has no extractable codes; the
-    // Choose-any branch now falls through to a subject pool. See #117 (bucket C).
+    // Choose-any branch now falls through to a subject pool.
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(
@@ -906,7 +905,7 @@ describe("unverified requirements — owed prose we can't structure", () => {
 
   it("keeps a range re-introduced after an exclusion clause (no greedy drop)", () => {
     // The old `.*$` strip deleted everything after "except", losing the trailing
-    // CS440-CS489. Only the excluded band drops; the later range survives. #117.
+    // CS440-CS489. Only the excluded band drops; the later range survives.
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(
@@ -923,7 +922,7 @@ describe("unverified requirements — owed prose we can't structure", () => {
 
   it("subtracts an excluded course that sits INSIDE an included band (colon list)", () => {
     // "CS440-CS498, excluding CS486" — CS486 is within the included band, so it
-    // must be removed, not merely left unmatched by the range regex. #117 (C).
+    // must be removed, not merely left unmatched by the range regex.
     const r = parseProgramRequirements(
       {
         requirements: wrapLeaf(

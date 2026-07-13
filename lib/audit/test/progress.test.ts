@@ -283,7 +283,7 @@ describe("computeDegreeProgress — compound pick credits the heavier group", ()
 });
 
 describe("computeDegreeProgress — over-satisfied compound pick, saturated free allotment (#104)", () => {
-  // #104 finding (3): "1 of {light 0.5} or {heavy 1.0}", BOTH placed, with the
+  // finding (3): "1 of {light 0.5} or {heavy 1.0}", BOTH placed, with the
   // free-elective room already full from other courses (leftovers 1.5 > 1.0 room).
   // `creditedUnits` is provably order-independent (= min(placed, total): the
   // uncredited group just spills to the saturated free pool), but heaviest-first
@@ -591,7 +591,7 @@ describe("computeDegreeProgress — weighted-tie unit pools route the heavy cour
   // Three pools, need 0.5 CS + 1.0 CS-or-MATH + 0.5 MATH = 2.0. The only satisfying
   // assignment sends the 1.0-unit cs300 to the pool that needs a whole unit; the
   // 0.5s fill the rest. A weight-blind greedy lets the 0.5-unit CS pool grab cs300
-  // (over-filling it) and strands the 1.0 pool at 0.5 → stuck at 99% (issue #121).
+  // (over-filling it) and strands the 1.0 pool at 0.5 → stuck at 99%.
   const csOnly = {
     description:
       "Complete a minimum of 0.5 unit of CS courses at the 200-level or above",
@@ -630,7 +630,7 @@ describe("computeDegreeProgress — weighted-tie unit pools route the heavy cour
 });
 
 describe("computeDegreeProgress — a pick doesn't burn a unit pool's course", () => {
-  // #121 phase boundary: "1 of {cs300, engl100}" + "0.5 unit of CS", cs300 the
+  // phase boundary: "1 of {cs300, engl100}" + "0.5 unit of CS", cs300 the
   // pool's ONLY eligible course. The matcher defers pool-eligible courses
   // (matchLast), so the pick takes engl100 whichever way its options are
   // ordered — previously list order decided between 99% and 100%.

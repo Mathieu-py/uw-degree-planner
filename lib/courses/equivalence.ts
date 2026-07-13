@@ -1,5 +1,5 @@
 /**
- * Course equivalence (GitHub #21): cross-listed courses are the *same course*
+ * Course equivalence: cross-listed courses are the *same course*
  * under different codes. Authoritative source is Kuali's `crossListedCourses`
  * ({@link Course.crossListed}). Builds the transitive closure (union-find) into
  * equivalence classes, so any member satisfies a requirement naming another.

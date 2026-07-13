@@ -183,7 +183,7 @@ describe("named-list join (#117 bucket D)", () => {
 
   it("reads 'Complete a course from the <list>' as a required pick of 1", () => {
     // The article "a"/"an" is a count of 1. Without it, no count parsed → an OPEN
-    // (optional) pick that silently drops the requirement. Regression for #117.
+    // (optional) pick that silently drops the requirement.
     const r = parseProgramRequirements({
       requirements: rule(
         "Complete a course from the Technical Electives lists",
@@ -203,7 +203,7 @@ describe("named-list join (#117 bucket D)", () => {
   it("reads a UNIT-stated named-list rule as a gating pick (units ÷ 0.5)", () => {
     // "2.0 units from the … lists" has no course COUNT but a unit total → a real
     // pick of 4, not an optional pick and not unverified. The honest, trackable
-    // reading of a single-list unit requirement. Regression for #117.
+    // reading of a single-list unit requirement.
     const r = parseProgramRequirements({
       requirements: rule(
         "Complete courses from the Technical Electives lists to total 2.0 units",
@@ -225,7 +225,7 @@ describe("named-list join (#117 bucket D)", () => {
   it("leaves a COMPOUND 'X courses or from the list' rule unverified (list is only part)", () => {
     // A pool half ("GER courses") unioned with the list can't be structured as a
     // list-only pick without being too strict, so it gates as unverified — an
-    // honest reading rather than a wrong one. Regression for #117 evaluation.
+    // honest reading rather than a wrong one.
     const text =
       "Complete 2.0 units of GER courses or from the Technical Electives lists";
     const r = parseProgramRequirements({
@@ -239,7 +239,7 @@ describe("named-list join (#117 bucket D)", () => {
 
   it("leaves a named-list rule with NO count at all unverified (no optional pick)", () => {
     // Neither a course count nor a unit total → an open pick would be optional and
-    // silently drop the requirement, so it must gate as unverified. See #117.
+    // silently drop the requirement, so it must gate as unverified.
     const text =
       "Complete courses from the Technical Electives lists as approved";
     const r = parseProgramRequirements({
@@ -253,7 +253,7 @@ describe("named-list join (#117 bucket D)", () => {
 
   it("does not turn prose that merely MENTIONS a list into a pick", () => {
     // "In List 1, keep a 60% average" references a list but is a constraint, not a
-    // selection rule — it must not become a pick over List 1's courses. See #117.
+    // selection rule — it must not become a pick over List 1's courses.
     const r = parseProgramRequirements({
       requirements: rule("In List 1, students must keep a 60% average"),
       courseListsNew: section("List 1", ["CS 245", "CS 246"]),
@@ -265,7 +265,7 @@ describe("named-list join (#117 bucket D)", () => {
   it("does not over-union every '… electives' list from a bare 'electives' reference", () => {
     // "electives" is neither an exact heading nor MORE specific than one, so it
     // must not sweep in both "Technical Electives" and "Science Electives". The
-    // rule stays unverified rather than grabbing an over-broad union. See #117.
+    // rule stays unverified rather than grabbing an over-broad union.
     const text = "Complete 1 course from the electives lists";
     const r = parseProgramRequirements({
       requirements: rule(text),
@@ -299,7 +299,7 @@ describe("named-list join (#117 bucket D)", () => {
   // A titled requirement SECTION referenced by a sibling rule ("… from the list
   // of Approved Courses below"). Chemistry states 5 approved courses in the
   // "Approved Courses List" section and 1 more from Required Courses; the "+1"
-  // must join the same section, not strand in unverified. #117.
+  // must join the same section, not strand in unverified.
   const approvedListSection = (heading: string, codes: string[]) => `
     <section>
       <header><h2 data-testid="grouping-label"><span>${heading}</span></h2></header>

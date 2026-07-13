@@ -262,7 +262,7 @@ function PlanCard({
       </div>
 
       {/* Reserve a stable width + right-align so the resting↔confirm swap never
-          reflows the row and the safe cancel stays where the trash was. #129 */}
+          reflows the row and the safe cancel stays where the trash was. */}
       <div className="flex items-center justify-end gap-1 shrink-0 min-w-[152px] min-h-[34px]">
         {confirming ? (
           <>

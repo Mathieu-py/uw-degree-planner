@@ -88,10 +88,10 @@ export function buildProgramAudit(
   // single requirement, and hand-picked programs are audited independently
   // (AuditPanel), never summed into a shared denominator — so no term partition
   // is needed. A 3-year leg on an 8-term double-degree grid now correctly credits
-  // its required courses wherever they are placed (replaces the #105 span gate).
+  // its required courses wherever they are placed (replaces the span gate).
 
   // One index for BOTH passes: the audit tree and the progress headline must
-  // agree on what a placed cross-listed twin satisfies (#21).
+  // agree on what a placed cross-listed twin satisfies.
   const equiv = equivalenceForCatalog(catalogByCode);
   const audit = compileAudit(
     auditedProgram,
@@ -107,13 +107,13 @@ export function buildProgramAudit(
   );
   // A selected specialization's owed requirements are folded into this program's
   // acknowledgment dimension (same programId + verbatim text), so they gate the
-  // headline and are acknowledgeable exactly like the program's own (#123).
+  // headline and are acknowledgeable exactly like the program's own.
   // Resolved here, not at scrape time: a spec is shared by reference across parents
   // that may differ in whether they have a totalUnits denominator.
   const noTotal = program?.unitPlan?.totalUnits == null;
   // A spec's owed requirements: its unstructurable rules, plus its dropped free
   // electives ONLY when the parent has no total to absorb them (else they're
-  // redundant with the free remainder — mirrors foldFreeElectivesIntoUnverified, #117).
+  // redundant with the free remainder — mirrors foldFreeElectivesIntoUnverified).
   const specOwed = (spec: Specialization): string[] => [
     ...(spec.unverifiedRequirements ?? []),
     ...(noTotal ? (spec.freeElectives ?? []) : []),
@@ -123,7 +123,7 @@ export function buildProgramAudit(
     : null;
   // Merge the program's own owed requirements with the selected spec's ONCE
   // (deduped): this single list drives both the acknowledgeable UI rows and the
-  // headline gate, so computeDegreeProgress no longer re-merges internally (#123).
+  // headline gate, so computeDegreeProgress no longer re-merges internally.
   const effectiveUnverified = [
     ...new Set([
       ...(program?.unverifiedRequirements ?? []),
@@ -162,7 +162,7 @@ export function buildProgramAudit(
   // Acked text matching no current requirement → the rule changed on re-scrape.
   // The known set spans ALL specs (not just the selected one) so switching specs
   // doesn't flag the prior spec's confirmations as a stale calendar regression;
-  // they persist quietly and are remembered if that spec is re-selected (#123).
+  // they persist quietly and are remembered if that spec is re-selected.
   const unverifiedSet = new Set([
     ...(program?.unverifiedRequirements ?? []),
     ...(program?.specializations ?? []).flatMap(specOwed),

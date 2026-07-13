@@ -9,7 +9,7 @@ import { compileAudit } from "../compile";
 import { computeDegreeProgress } from "../progress";
 
 /**
- * End-to-end course-equivalence path (#21). One catalog with a cross-listed pair
+ * End-to-end course-equivalence path. One catalog with a cross-listed pair
  * (amath242 ≡ cs371) threaded through every consumer — plan validation, the
  * picker's eligible-term calc, audit compilation, and the degree headline — to
  * prove they agree: the placed twin satisfies a requirement, a prereq, and reads

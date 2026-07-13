@@ -1,6 +1,35 @@
 import type { EquivalenceIndex } from "@/lib/courses/equivalence";
-import type { TermId } from "@/lib/terms";
+import type { Course } from "@/lib/courses/types";
+import { type TermId, termInfo } from "@/lib/terms";
 import type { PlanSlot } from "./types";
+
+/**
+ * An academic term column — the only slots that hold picked courses and accept
+ * drops. Excludes co-op and the pre-arrival (transfer-credit) slot.
+ */
+export function isAcademicSlot(slot: PlanSlot): boolean {
+  return !slot.isCoop && slot.position !== "pre";
+}
+
+/**
+ * Where the course — or a cross-listed twin — already sits, as a label ("Fall
+ * 2025" / "your plan"), or null if unplaced. Twin-aware so the "already placed"
+ * gate can't be dodged via the other code of a cross-listed pair.
+ */
+export function placedCourseLabel(
+  slots: PlanSlot[],
+  course: Course,
+): string | null {
+  const codes = new Set([
+    course.code.toLowerCase(),
+    ...(course.crossListed ?? []),
+  ]);
+  const slot = slots.find((s) => s.courses.some((c) => codes.has(c.code)));
+  if (!slot) return null;
+  return slot.termId !== null
+    ? (termInfo(slot.termId)?.label ?? "your plan")
+    : "your plan";
+}
 
 /**
  * Anything carrying plan slots. Both `LocalPlan` and `ServerPlan` satisfy this;
@@ -35,7 +64,7 @@ export function completedCoursesFromPlan(
  * prereq evaluator (`evaluate()` in lib/prereqs/satisfied.ts).
  *
  * With `equiv`, the set is widened to include every cross-listed equivalent of a
- * completed course (GitHub #21), so a prereq naming one code is satisfied by an
+ * completed course, so a prereq naming one code is satisfied by an
  * equivalent the student actually took.
  */
 export function completedSetFromPlan(

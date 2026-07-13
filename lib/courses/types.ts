@@ -51,7 +51,7 @@ export type CatalogCourse = Omit<BaseCourse, "description"> & {
   /**
    * Cross-listed equivalents (lowercased) from Kuali's authoritative
    * `crossListedCourses` — UW's source for course equivalence; one member counts
-   * as the others (GitHub #21). Absent when none.
+   * as the others. Absent when none.
    */
   crossListed?: string[];
   /**

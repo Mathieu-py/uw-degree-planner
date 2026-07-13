@@ -32,7 +32,7 @@ export function RenameBar({
         onSubmit={onSubmit}
         // Pin the row to 48px — the height of the resting toolbar's tallest
         // control, the size="lg" "Edit plan" ActionMenu — so editing doesn't
-        // shrink the toolbar. The delete bar pins the same way. #99
+        // shrink the toolbar. The delete bar pins the same way.
         className="flex items-center gap-1 flex-1 min-w-0 min-h-[48px]"
       >
         <Input
@@ -89,7 +89,7 @@ export function DeleteConfirmBar({
 }) {
   return (
     <div className={containerClass}>
-      {/* min-h pins the bar to 48px so the icon buttons don't shrink the toolbar. #99 */}
+      {/* min-h pins the bar to 48px so the icon buttons don't shrink the toolbar. */}
       <div className="flex items-center justify-between gap-2 flex-1 min-w-0 min-h-[48px]">
         <span className="text-sm truncate">Delete "{planName}"?</span>
         <div className="flex items-center gap-1 shrink-0">

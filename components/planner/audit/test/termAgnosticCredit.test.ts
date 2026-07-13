@@ -10,7 +10,7 @@ import { buildProgramAudit } from "../buildProgramAudit";
  * requirements, not to the term a course is taken in. So a required course
  * credits its program wherever it sits on the timeline — including terms past a
  * short program's nominal length on a mixed double-degree grid. (Replaces the
- * former term-span gate, #105, which was not calendar-backed.)
+ * former term-span gate, which was not calendar-backed.)
  */
 
 const EMPTY_CATALOG = new Map<string, Course>();

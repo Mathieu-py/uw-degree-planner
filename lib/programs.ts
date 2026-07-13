@@ -111,13 +111,13 @@ const SpecializationSchema = z.object({
   rules: RuleNodeSchema.optional(),
   electives: z.array(ElectiveCategorySchema).optional(),
   // Owed requirements the parser couldn't structure, surfaced (like a program's)
-  // so a spec can't read 100% with real requirements dropped (#123).
+  // so a spec can't read 100% with real requirements dropped.
   unverifiedRequirements: z.array(z.string()).optional(),
   // Dropped free-elective statements, stored RAW (not pre-folded into
   // `unverifiedRequirements` like the program path): a spec instance is shared by
   // reference across parents that may differ in whether they have a totalUnits
   // denominator, so the conditional re-surfacing happens per-parent at audit time
-  // (buildProgramAudit), not here (#123, mirrors #117).
+  // (buildProgramAudit), not here.
   freeElectives: z.array(z.string()).optional(),
 });
 
@@ -593,4 +593,23 @@ export function programReferencedCodes(
 
   referencedCodesCache.set(key, out);
   return out;
+}
+
+/**
+ * A plan's program identities + all referenced codes — the inputs every
+ * eligibility check needs. Spans a double degree's programs, merging each one's
+ * specialization codes.
+ */
+export function programContext(
+  programIds: string[] | undefined,
+  specializationIds: Record<string, string> | undefined,
+): { programs: ProgramIdentity[]; programReferenced: ReadonlySet<string> } {
+  const programs = programIdentities(programIds, specializationIds);
+  const programReferenced = new Set<string>();
+  for (const id of programIds ?? []) {
+    for (const c of programReferencedCodes(id, specializationIds?.[id])) {
+      programReferenced.add(c);
+    }
+  }
+  return { programs, programReferenced };
 }

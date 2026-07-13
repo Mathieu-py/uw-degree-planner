@@ -11,15 +11,10 @@ export const optionButtonClasses =
 
 /**
  * Presentational term-option list shared by the catalog's signed-out and
- * signed-in add flows. Renders the "already placed" banner plus one button
- * per academic term, disabling ineligible terms (and every term once the
- * course is already placed). `busy` disables interaction during an in-flight
- * server save.
- *
- * `justAdded` suppresses the "already placed" banner: once the user has placed
- * the course in this session, the footer's "Added to … ✓" is the confirmation,
- * so repeating it as an "already placed" warning would just be noise. The
- * banner is reserved for courses that were already in the plan on open.
+ * signed-in add flows. Prereq/antireq gaps only warn (a chip); the sole
+ * disablers are "already placed" and `busy` — program blocks are plan-level and
+ * handled upstream. `justAdded` suppresses the "already placed" banner once the
+ * footer's "Added to … ✓" already confirms this session's add.
  */
 export function TermOptionList({
   options,
@@ -45,7 +40,9 @@ export function TermOptionList({
         <button
           key={opt.slot.id}
           type="button"
-          disabled={opt.state === "missing" || alreadyIn !== null || busy}
+          // Prereq/antireq gaps stay addable (chip only); program blocks are
+          // handled upstream. Only already-placed / in-flight save disables.
+          disabled={alreadyIn !== null || busy}
           onClick={() => onPick(opt.slot, opt.label)}
           title={opt.hint}
           className={optionButtonClasses}

@@ -185,7 +185,7 @@ describe("deriveMacros", () => {
   it("dedupes identical notes folded under one title (no duplicate rows/keys)", () => {
     // Two notes with the same title AND text (e.g. both defaulting to the same
     // advisory) must collapse to a single item — else SectionRow renders (and
-    // keys) it twice. Regression for #117 review.
+    // keys) it twice.
     const program: Program = {
       ...PROGRAM,
       informational: [

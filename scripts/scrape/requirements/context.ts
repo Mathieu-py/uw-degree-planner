@@ -10,7 +10,7 @@ export interface ParseContext {
    * This program's named course lists keyed by normalized heading — its
    * `courseListsNew` plus its titled requirement sections (added by
    * `indexSectionLists`). Joins a rule's "from List N" / "from the … list"
-   * reference to its courses. See #117 (bucket D).
+   * reference to its courses.
    */
   namedLists: Map<string, string[]>;
   /**

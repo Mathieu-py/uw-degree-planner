@@ -1,5 +1,5 @@
 // Locked stroke-to-size ratio (3.5 at 34px, per the design handoff) so a larger
-// ring is a scaled smaller one rather than a differently-proportioned shape (#141).
+// ring is a scaled smaller one rather than a differently-proportioned shape.
 const RING_RATIO = 3.5 / 34;
 
 /** SVG donut progress ring. Geometry per the design handoff. */

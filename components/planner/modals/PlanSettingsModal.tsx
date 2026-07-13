@@ -79,7 +79,7 @@ export function PlanSettingsModal({
         Object.entries(prev).filter(([pid]) => next.includes(pid)),
       ),
     );
-    // Suggest the new primary program's default stream (#131), unless the user
+    // Suggest the new primary program's default stream, unless the user
     // has already chosen one by hand. Null = no program to key on → leave it.
     if (!streamTouched) {
       const suggested = defaultStreamFor(next, plan.startTermId);
@@ -97,7 +97,7 @@ export function PlanSettingsModal({
     });
   }
 
-  // Collapse a hand-picked pair to its packaged double degree (#103), carrying
+  // Collapse a hand-picked pair to its packaged double degree, carrying
   // over any specialization the packaged plan still offers.
   function acceptDoubleDegree(doubleDegreeId: string) {
     const next = swapToDoubleDegree(

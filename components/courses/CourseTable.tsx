@@ -10,6 +10,7 @@ import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { EligibilityRow } from "@/lib/courses/rowEligibility";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode, formatPercent } from "@/lib/format";
+import { buildCourseOrigin } from "@/lib/plan/courseOrigin";
 
 export type CourseTableMode = "catalog" | "picker";
 
@@ -34,10 +35,15 @@ interface CourseTableProps {
    * adds directly to the target slot.
    */
   onAdd: (course: Course) => void;
+  /**
+   * Query appended to each picker row's Details link (`?from=picker&planId=…&term=…`)
+   * so the detail page can offer a one-click "Add to {term}". Picker mode only.
+   */
+  detailsQuery?: string;
 }
 
 /**
- * Shared course grid behind both the catalog and the slot picker (#91). One
+ * Shared course grid behind both the catalog and the slot picker. One
  * clean, sortable table; `mode` is the only structural difference:
  * - catalog: no eligibility column (status is plan-relative, unknown here);
  *   the row opens course details and a per-row Add button starts the add flow.
@@ -55,6 +61,7 @@ export function CourseTable({
   onSort,
   mode,
   onAdd,
+  detailsQuery,
 }: CourseTableProps) {
   const isPicker = mode === "picker";
   return (
@@ -126,7 +133,12 @@ export function CourseTable({
         <tbody>
           {rows.map((r) =>
             isPicker ? (
-              <PickerRow key={r.course.id} row={r} onAdd={onAdd} />
+              <PickerRow
+                key={r.course.id}
+                row={r}
+                onAdd={onAdd}
+                detailsQuery={detailsQuery}
+              />
             ) : (
               <CatalogRow key={r.course.id} row={r} onAdd={onAdd} />
             ),
@@ -191,7 +203,7 @@ function CatalogRow({
 }) {
   const router = useRouter();
   const { course } = row;
-  const detailsHref = `/course/${course.code}?from=catalog`;
+  const detailsHref = `/course/${course.code}${buildCourseOrigin({ from: "catalog" })}`;
   const seats = seatsAvailable(course);
 
   return (
@@ -226,18 +238,19 @@ function CatalogRow({
 }
 
 /**
- * Picker row. The whole row adds the course to the slot (unless blocked) —
- * hover highlight + the footer's "click a row to add" copy carry that; a quiet
- * Details link opens the course page in a new tab. The action cell holds only
- * the Details link so it never spills the column (which would trip the scroll
- * area's overflow-x and reintroduce a horizontal scrollbar).
+ * Picker row. The whole row adds the course (unless blocked); a quiet Details
+ * link opens the course page in the same tab with the plan+term context
+ * (`?from=picker&…`) for the same one-click add. Details is the action cell's
+ * only content so it can't spill the column and trip the scroll area's overflow-x.
  */
 function PickerRow({
   row,
   onAdd,
+  detailsQuery,
 }: {
   row: EligibilityRow;
   onAdd: (course: Course) => void;
+  detailsQuery?: string;
 }) {
   const { course, eligibility } = row;
   const seats = seatsAvailable(course);
@@ -245,7 +258,7 @@ function PickerRow({
   // (incl. a cross-listed twin), can't be added — render the row inert; the
   // chip explains why. Belt-and-suspenders with the picker's own add gate.
   const inert = !!eligibility?.blockedByProgram || !!eligibility?.alreadyPlaced;
-  const detailsHref = `/course/${course.code}`;
+  const detailsHref = `/course/${course.code}${detailsQuery ?? ""}`;
 
   return (
     <tr
@@ -287,9 +300,7 @@ function PickerRow({
       <td className="pl-3 pr-5 h-[52px] align-middle text-right whitespace-nowrap overflow-hidden">
         <Link
           href={detailsHref}
-          target="_blank"
-          rel="noopener"
-          title="Open course details (new tab)"
+          title="Open course details"
           aria-label={`Details for ${course.code}`}
           className="text-[12.5px] font-semibold text-ink-2 hover:text-ink hover:underline underline-offset-[3px]"
           onClick={(e) => e.stopPropagation()}

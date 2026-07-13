@@ -140,7 +140,7 @@ export const AuditPanel = memo(function AuditPanel({
          * maximum of two credentials"): no single course is summed into a shared
          * denominator across programs. UW's packaged double degrees (e.g.
          * `bba-and-bmath-double-degree`) are single programs picked directly.
-         * Suggesting that swap is tracked in #103.
+         * Suggesting that swap is tracked.
          */}
         <div className="pw-audit-top">
           <div className="flex items-baseline justify-between gap-2">

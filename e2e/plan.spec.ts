@@ -7,7 +7,7 @@ import { expect, type Page, test } from "@playwright/test";
 async function createDemoPlan(page: Page) {
   await page.goto("/plan");
   // Step 1 (Set up): the program picker is now a multi-select that starts
-  // empty (issue #32 double-degree), so Continue is gated until at least one
+  // empty (double-degree), so Continue is gated until at least one
   // program is chosen. The "Add a program" trigger opens a searchable palette;
   // pick the first result, then close it. Fall start and Regular stream
   // defaults are fine, then advance.

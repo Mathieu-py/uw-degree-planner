@@ -114,7 +114,7 @@ export function useFilteredCourses({
     [catalog, placedCodes],
   );
 
-  // Course equivalence (#21): a cross-listed twin of a placed/completed course
+  // Course equivalence: a cross-listed twin of a placed/completed course
   // counts as that course. `placedExpanded` drives the antireq + already-placed
   // checks (a placed course's twin reads as taken); `completedExpanded` lets a
   // twin satisfy a prereq. Candidates exclude only the EXACT placed codes — a

@@ -8,7 +8,7 @@ import type {
   TermLetter,
 } from "./types";
 
-// 1A–4B, the single source of truth shared with the audit (#105). The annotation
+// 1A–4B, the single source of truth shared with the audit. The annotation
 // makes membership drift between the two `TermLetter` unions a compile error.
 const ACADEMIC_TERMS: readonly TermLetter[] = TERM_LETTERS;
 

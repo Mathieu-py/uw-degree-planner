@@ -6,6 +6,7 @@ import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
 import { getRatingColor } from "@/lib/courses/ratingColor";
 import { countNoun, formatCourseCode, formatPercent } from "@/lib/format";
+import { parseCourseOrigin } from "@/lib/plan/courseOrigin";
 import { describePrereqParts } from "@/lib/prereqs/describe";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";
 
@@ -23,18 +24,19 @@ export async function generateMetadata(props: {
 
 export default async function CoursePage(props: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ from?: string; planId?: string }>;
+  searchParams: Promise<{ from?: string; planId?: string; term?: string }>;
 }) {
   const { code } = await props.params;
-  const { from, planId } = await props.searchParams;
+  const { from, planId, term } = parseCourseOrigin(await props.searchParams);
   const course = await loadCourseByCode(TERM, code);
   if (!course) notFound();
 
-  // Return to the exact plan the user came from when one was passed; otherwise
-  // fall back to the generic planner (signed-out local plan, or direct visit).
-  const backToPlannerHref = planId
-    ? `/plan/${encodeURIComponent(planId)}`
-    : "/plan";
+  // "← Back" goes to the catalog when the user came from it, else the planner
+  // (the exact plan if a planId was passed; else generic /plan).
+  const plannerHref = planId ? `/plan/${encodeURIComponent(planId)}` : "/plan";
+  const fromCatalog = from === "catalog";
+  const backHref = fromCatalog ? "/catalog" : plannerHref;
+  const backLabel = fromCatalog ? "Back to catalog" : "Back to planner";
 
   const rating = course.rating;
   const hasRatings =
@@ -45,10 +47,10 @@ export default async function CoursePage(props: {
   return (
     <div className="mx-auto max-w-5xl w-full px-6 py-10">
       <Link
-        href={backToPlannerHref}
+        href={backHref}
         className="text-sm text-ink-2 hover:text-ink w-fit inline-flex items-center gap-1.5"
       >
-        ← Back to planner
+        ← {backLabel}
       </Link>
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 items-start">
@@ -153,7 +155,13 @@ export default async function CoursePage(props: {
 
           <div className="h-px bg-line" />
 
-          <AddInPlannerButton course={course} from={from} />
+          <AddInPlannerButton
+            course={course}
+            from={from}
+            planId={planId}
+            term={term}
+            backHref={plannerHref}
+          />
           <a
             href={uwflowUrl}
             target="_blank"

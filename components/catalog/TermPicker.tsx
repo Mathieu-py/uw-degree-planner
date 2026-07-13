@@ -10,11 +10,15 @@ import { TermPickerLocal } from "./TermPickerLocal";
 import { StatusBody } from "./termPickerShared";
 
 /**
- * Catalog "Add" flow. With no target term, the prereq check runs per academic
- * term; adding writes the course into the chosen term's slot. Signed-out users
- * edit their local plan; signed-in users first pick a server plan, then the
- * same term picker runs against it (persisted via `savePlanState`). `onAdded`,
- * when given, fires after a successful add in place of the default close.
+ * Course-first "Add" flow (catalog / course detail page): the course is fixed
+ * and the user chooses plan + term here. The inverse is the slot-first
+ * {@link SlotPicker} (term fixed, course chosen). Both write through the shared
+ * `addCourseToSlot` + `savePlanState`/`savePlan` sinks; see also the detail
+ * page's one-click {@link lib/plan/commitAddCourse} variant.
+ *
+ * Signed-out users edit their local plan; signed-in users pick a server plan
+ * first, then the same term picker. `onAdded` fires after a successful add in
+ * place of the default close.
  */
 export function TermPicker({
   course,

@@ -18,7 +18,7 @@ export interface ProgramDetailFields {
   requiredCoursesTermByTerm?: string;
   requirements?: string;
   courseRequirementsNoUnits?: string;
-  /** Structured named lists ("Technical Electives List") joined by name (#117 D). */
+  /** Structured named lists ("Technical Electives List") joined by name. */
   courseListsNew?: string;
 }
 

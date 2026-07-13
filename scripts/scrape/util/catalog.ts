@@ -29,7 +29,7 @@ function splitCode(code: string): CatalogEntry & { prefix: string } {
  * lookup for expanding code ranges against the authoritative catalog. Plain
  * `node:fs` (the scraper is a tsx script, no `server-only` loadTerm); memoized.
  * A missing/unreadable file degrades to empty, so a range expands to nothing
- * rather than crashing. See #117 (bucket C).
+ * rather than crashing.
  */
 export function loadCatalogCodes(): CatalogIndex {
   if (cached) return cached;
@@ -56,7 +56,7 @@ export function loadCatalogCodes(): CatalogIndex {
       if (Number.isNaN(num)) continue;
       // A range means "any real, offered course in this band": index only
       // weighted courses (units present), excluding inactive/not-offered and WLU
-      // cross-listed members a student can't take. See #117 (bucket C).
+      // cross-listed members a student can't take.
       if (c.units == null) continue;
       const bucket = byPrefix.get(prefix);
       if (bucket) bucket.push({ num, code });

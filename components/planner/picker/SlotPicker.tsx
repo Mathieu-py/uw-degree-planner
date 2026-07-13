@@ -34,15 +34,22 @@ interface Props {
   focusCodes?: string[];
   /** Filters to pre-apply on open (e.g. a subject-pool Browse → its subjects). */
   initialFilters?: FilterPreset;
+  /** Query appended to each row's Details link (`?from=picker&planId=…&term=…`). */
+  detailsQuery?: string;
   onPick: (code: string) => void;
   onClose: () => void;
 }
 
 /**
- * Modal slot picker. Filter+sort+paginate pipeline lives in
- * {@link useFilteredCourses}; the table presentation is the shared
- * {@link CourseTable} in picker mode. This component owns modal layout, focus
- * handling, and the add gate.
+ * Slot-first "Add" flow: the target term is fixed (the slot the user clicked)
+ * and they choose a course, added directly to that slot. The inverse is the
+ * course-first {@link TermPicker} (course fixed, term chosen). Each row's
+ * Details link carries `detailsQuery` (`?from=picker&planId=…&term=…`) so the
+ * detail page can offer the same one-click add without re-asking for the term.
+ *
+ * Filter+sort+paginate lives in {@link useFilteredCourses}; the table is the
+ * shared {@link CourseTable} in picker mode. This component owns modal layout,
+ * focus handling, and the add gate.
  */
 export function SlotPicker({
   targetTermLabel,
@@ -55,6 +62,7 @@ export function SlotPicker({
   sameTerm,
   focusCodes,
   initialFilters,
+  detailsQuery,
   onPick,
   onClose,
 }: Props) {
@@ -164,6 +172,7 @@ export function SlotPicker({
                 onSort={onSort}
                 mode="picker"
                 onAdd={handlePick}
+                detailsQuery={detailsQuery}
               />
             )}
             {hasMore ? (

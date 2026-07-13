@@ -116,7 +116,7 @@ export interface LocalPlan {
    * Per-program acknowledgement of `unverifiedRequirements` (`programId → acked
    * texts`): rules the scraper couldn't make machine-checkable, which the student
    * confirms to clear the 100% headline. Keyed by verbatim text (the only stable
-   * id — re-wordings should re-prompt). Optional for pre-#116 plans; the server
+   * id — re-wordings should re-prompt). Optional for earlier plans; the server
    * round-trip normalizes to `{}`, so `ServerPlan` has it required.
    */
   acknowledgedRequirements?: Record<string, string[]>;

@@ -9,7 +9,7 @@ import type { RuleNode } from "../../../lib/programs";
 const RULE_OVERRIDES: Record<string, RuleNode[]> = {
   // Kuali emits the BSc Communication Requirement as "Complete of the following:
   // COMMST 193, ENGL 193" — count missing, so it matches DEFERRED_PROSE_RE and is
-  // silently dropped. Intent is "complete 1 of" (issue #49). Only hydrogeology
+  // silently dropped. Intent is "complete 1 of". Only hydrogeology
   // hits the malformed phrasing.
   "earth-sciences-hydrogeology": [
     {

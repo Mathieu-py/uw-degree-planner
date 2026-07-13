@@ -16,7 +16,7 @@ interface Props {
 }
 
 /**
- * Nudge shown when a hand-picked pair matches a packaged double degree (#103):
+ * Nudge shown when a hand-picked pair matches a packaged double degree:
  * two standalone programs give only per-program rings, so we offer a one-click
  * switch to the single packaged plan for an accurate combined audit. Dismissible
  * — hand-picking stays allowed, and a student who genuinely wants the two audited

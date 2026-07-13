@@ -6,7 +6,7 @@ import { cleanText } from "../util/dom";
  * Parse Kuali's `additionalConstraints` HTML into progress-untracked
  * `informational` notes. This calendar prose is where a referenced list (e.g.
  * "List 1") is *defined* and where discretionary "see your advisor" rules live —
- * unstructurable, but dropping it lost the one sentence the student needs. See #117.
+ * unstructurable, but dropping it lost the one sentence the student needs.
  *
  * One item per top-level `<p>`/`<li>` in document order (a nested sub-list stays
  * with its parent) — so intro prose that precedes a list isn't lost — falling

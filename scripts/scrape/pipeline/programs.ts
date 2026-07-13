@@ -120,7 +120,7 @@ export async function runPhaseA(
         ? { unitPlan: planResult.unitPlan }
         : {};
       // Carry additionalConstraints prose alongside the unit-plan informational
-      // items, so rules defined only in prose reach the UI. See #117.
+      // items, so rules defined only in prose reach the UI.
       const informational = [
         ...planResult.informational,
         ...parseAdditionalConstraints(detail.additionalConstraints),
@@ -201,7 +201,7 @@ export async function runPhaseA(
  * the headline has no free remainder to gate them and the audit could otherwise
  * read 100% with the electives unaccounted. Mutates `programs` in place; merges
  * with any existing entries and dedupes. Call AFTER the total is final (post
- * {@link attachDegreeRequirements}), so a degree-supplied total suppresses them. #117.
+ * {@link attachDegreeRequirements}), so a degree-supplied total suppresses them.
  */
 export function foldFreeElectivesIntoUnverified(
   programs: Record<string, Program>,

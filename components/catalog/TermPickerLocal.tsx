@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import type { Course } from "@/lib/courses/types";
+import { placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import { TermOptionList } from "./TermOptionList";
-import { alreadyInLabel, useTermOptions } from "./termOptions";
+import { useTermOptions } from "./termOptions";
+import { ProgramBlockedBody } from "./termPickerShared";
 
 /**
  * Signed-out add flow: the user has a single local plan in localStorage. Runs
@@ -26,18 +28,23 @@ export function TermPickerLocal({
   const code = course.code.toLowerCase();
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
 
-  const { options, alreadyIn } = useTermOptions(course, plan?.slots, plan);
+  const { options, alreadyIn, blocked } = useTermOptions(
+    course,
+    plan?.slots,
+    plan,
+  );
 
   function addTo(slot: PlanSlot, label: string) {
     if (!plan) return;
     // A course belongs in exactly one term; the option buttons disable once
-    // it's placed, but guard here too so the writer can never duplicate.
-    if (alreadyInLabel(plan.slots, code) !== null) return;
+    // it's placed, but guard here too (twin-aware) so the writer can't duplicate.
+    if (placedCourseLabel(plan.slots, course) !== null) return;
     const next = addCourseToSlot(plan, slot.id, { code });
     if (next === plan) return;
-    const stamped = { ...next, updatedAt: new Date().toISOString() };
-    savePlan(stamped);
-    setPlan(stamped);
+    // Only reflect the add and report success if the write stuck (localStorage
+    // can be full/unavailable). savePlan re-stamps updatedAt itself.
+    if (!savePlan(next)) return;
+    setPlan(next);
     onAdded(label);
   }
 
@@ -59,6 +66,10 @@ export function TermPickerLocal({
       </div>
     );
   }
+
+  // A program/faculty block closes the course to the whole plan — state it once
+  // rather than showing every term disabled.
+  if (blocked) return <ProgramBlockedBody />;
 
   return (
     <TermOptionList

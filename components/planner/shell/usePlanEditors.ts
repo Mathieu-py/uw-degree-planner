@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import type { FilterPreset } from "@/lib/courses/types";
 import { countNoun, pluralize } from "@/lib/format";
+import { isAcademicSlot } from "@/lib/plan/derive";
 import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
 import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { rebuildSlots } from "@/lib/plan/sequence";
@@ -139,7 +140,7 @@ export function usePlanEditors({
       if (!plan) return;
       const streamChanged = next.stream !== plan.stream;
       // Re-sequence when the stream OR the program span changes (a shorter
-      // program trims 4A/4B, #105); otherwise just update metadata. No rebuild
+      // program trims 4A/4B); otherwise just update metadata. No rebuild
       // without a calendar anchor (startTermId === null).
       const newSpan = programIdsTermSpan(next.programIds);
       const spanChanged = newSpan !== programIdsTermSpan(plan.programIds);
@@ -195,9 +196,7 @@ export function usePlanEditors({
         return;
       }
       const current = planRef.current;
-      const target =
-        current?.slots.find((s) => !s.isCoop && s.position !== "pre") ??
-        current?.slots[0];
+      const target = current?.slots.find(isAcademicSlot) ?? current?.slots[0];
       if (!target) return;
       setPicker({
         slotId: target.id,
@@ -241,7 +240,7 @@ export function usePlanEditors({
   );
 
   // Toggle a program's manual confirmation of an unverified requirement (keyed by
-  // verbatim text). Acked items stop gating the 100% headline (#116). Empty
+  // verbatim text). Acked items stop gating the 100% headline. Empty
   // per-program arrays are pruned so the map doesn't accrete stale keys.
   const handleAcknowledgeRequirement = useCallback(
     (programId: string, text: string, acked: boolean) => {

@@ -91,7 +91,7 @@ export function buildSpecialization(
   }
   const rules = result.kind === "flexible" ? result.rules : undefined;
   if (result.kind === "flexible") warnings.push(...result.warnings);
-  // Spec-level owed requirements now surface (#123). `unverified` is carried as-is;
+  // Spec-level owed requirements now surface. `unverified` is carried as-is;
   // `freeElectives` is stored raw and re-surfaced conditionally at audit time
   // (buildProgramAudit) — a spec is shared by reference across parents that may
   // differ in whether they have a totalUnits denominator, so the fold can't be
