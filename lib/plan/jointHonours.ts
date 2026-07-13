@@ -1,4 +1,5 @@
-import { PROGRAMS, type Program, programShortName } from "@/lib/programs";
+import { type Program, programShortName } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 
 /**
  * A Joint Honours plan is half a degree — matched by name, not the `jh-` prefix,

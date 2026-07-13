@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { poolMatch } from "../../courses/code";
 import type { LocalPlan } from "../../plan/types";
-import { PROGRAMS } from "../../programs";
+import { PROGRAMS } from "../../programsRegistry";
 import { type AuditNode, type AuditRoot, compileAudit } from "../compile";
 import { computeDegreeProgress } from "../progress";
 

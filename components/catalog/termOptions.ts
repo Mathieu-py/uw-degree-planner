@@ -11,7 +11,8 @@ import {
   placedCourseLabel,
 } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
-import { type ProgramIdentity, programContext } from "@/lib/programs";
+import type { ProgramIdentity } from "@/lib/programs";
+import { programContext } from "@/lib/programsRegistry";
 import { termInfo } from "@/lib/terms";
 
 export type TermState = "eligible" | "check" | "missing";

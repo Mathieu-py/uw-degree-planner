@@ -1,5 +1,5 @@
 import { DashboardView } from "@/components/dashboard/DashboardView";
-import { programNameMap } from "@/lib/programs";
+import { programNameMap } from "@/lib/programsRegistry";
 
 export const metadata = {
   title: "My plans",

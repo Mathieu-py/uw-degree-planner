@@ -14,7 +14,7 @@ import { fmtUnits } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import type { Program, Specialization } from "@/lib/programs";
-import { PROGRAMS, programReferencedCodes } from "@/lib/programs";
+import { PROGRAMS, programReferencedCodes } from "@/lib/programsRegistry";
 import { deriveMacros } from "./deriveMacros";
 import type { Macro } from "./types";
 

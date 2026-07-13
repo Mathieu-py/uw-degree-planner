@@ -6,7 +6,8 @@ import { Icon } from "@/components/ui/Icon";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { countNoun, pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
-import { joinProgramNames, PROGRAMS, type TermLetter } from "@/lib/programs";
+import { joinProgramNames, type TermLetter } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import {
   type Categorized,
   categorize,

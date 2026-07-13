@@ -1,5 +1,6 @@
 import { PASS_THRESHOLD } from "@/lib/plan/grades";
-import { PROGRAMS, TERM_LETTERS, type TermLetter } from "@/lib/programs";
+import { TERM_LETTERS, type TermLetter } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import type {
   CourseStatus,
   ParsedCourse,

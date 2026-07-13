@@ -3,17 +3,10 @@ import {
   describeRule,
   FACULTIES,
   facultyLabel,
-  getProgramOptions,
   getRequiredCourses,
-  getSpecialization,
   isTermLetter,
-  PROGRAMS,
   type Program,
-  programIdentity,
-  programIdsTermSpan,
-  programReferencedCodes,
   programShortCode,
-  programShortNames,
   programTermSpan,
   type RuleNode,
   requiredCoursesIn,
@@ -21,6 +14,15 @@ import {
   TERM_LETTERS,
   walkRule,
 } from "../programs";
+import {
+  getProgramOptions,
+  getSpecialization,
+  PROGRAMS,
+  programIdentity,
+  programIdsTermSpan,
+  programReferencedCodes,
+  programShortNames,
+} from "../programsRegistry";
 
 function hasAnyPick(node: RuleNode): boolean {
   let found = false;

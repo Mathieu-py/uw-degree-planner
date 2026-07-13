@@ -11,6 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "analyze": "next experimental-analyze --output",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "knip": "knip",

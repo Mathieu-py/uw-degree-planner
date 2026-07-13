@@ -11,12 +11,8 @@ import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { PlanSnapshot } from "@/lib/plan/server/types";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
-import {
-  PROGRAMS,
-  programIdsTermSpan,
-  programShortName,
-  programTermSpan,
-} from "@/lib/programs";
+import { programShortName, programTermSpan } from "@/lib/programs";
+import { PROGRAMS, programIdsTermSpan } from "@/lib/programsRegistry";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import type { PickerContext } from "./usePlannerModals";
 

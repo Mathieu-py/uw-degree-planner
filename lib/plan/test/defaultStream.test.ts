@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { makeTermId } from "@/lib/terms";
 import {
   defaultStreamFor,

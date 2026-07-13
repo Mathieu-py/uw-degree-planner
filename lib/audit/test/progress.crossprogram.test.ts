@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import coursesData from "../../../data/courses.1261.json";
 import type { LocalPlan } from "../../plan/types";
-import { PROGRAMS } from "../../programs";
+import { PROGRAMS } from "../../programsRegistry";
 import { compileAudit } from "../compile";
 import { computeDegreeProgress } from "../progress";
 

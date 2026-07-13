@@ -12,12 +12,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { deriveElectiveSections } from "@/lib/audit/electives";
 import { formatCourseCode } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
-import {
-  PROGRAMS,
-  type Program,
-  type RuleNode,
-  type Specialization,
-} from "@/lib/programs";
+import type { Program, RuleNode, Specialization } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { AuditPanel } from "../AuditPanel";
 
 afterEach(cleanup);

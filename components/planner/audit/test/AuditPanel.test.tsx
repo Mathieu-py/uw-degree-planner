@@ -11,7 +11,7 @@ import type { Course } from "@/lib/courses/types";
 import { COURSE_DRAG_MIME } from "@/lib/plan/dnd";
 import { fakeDataTransfer } from "@/lib/plan/test/fakeDataTransfer";
 import type { LocalPlan } from "@/lib/plan/types";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { AuditPanel } from "../AuditPanel";
 
 afterEach(cleanup);

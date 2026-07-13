@@ -34,12 +34,11 @@ import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
+import { joinProgramNames, type ProgramOption } from "@/lib/programs";
 import {
-  joinProgramNames,
-  type ProgramOption,
   programIdentities,
   programReferencedCodes,
-} from "@/lib/programs";
+} from "@/lib/programsRegistry";
 import { termInfo } from "@/lib/terms";
 import { ProgramHeader } from "./ProgramHeader";
 import { usePlanEditors } from "./usePlanEditors";

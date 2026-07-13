@@ -14,7 +14,7 @@ import {
   type VariantPlacement,
   type VariantPlacementInput,
 } from "@/lib/plan/variantPlacement";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import {
   enumerateVariantGroups,
   type VariantGroup,

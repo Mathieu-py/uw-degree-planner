@@ -12,7 +12,8 @@ import { resolveAntireqCodes } from "@/lib/plan/validate";
 import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
-import { type ProgramIdentity, programContext } from "@/lib/programs";
+import type { ProgramIdentity } from "@/lib/programs";
+import { programContext } from "@/lib/programsRegistry";
 import type { Course } from "./types";
 
 type CourseEligibilityState = "eligible" | "check" | "ineligible";

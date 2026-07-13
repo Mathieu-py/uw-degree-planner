@@ -1,9 +1,5 @@
-import {
-  getSpecialization,
-  PROGRAMS,
-  type Program,
-  programShortName,
-} from "@/lib/programs";
+import { type Program, programShortName } from "@/lib/programs";
+import { getSpecialization, PROGRAMS } from "@/lib/programsRegistry";
 
 /** Order-insensitive key for a program-id pair. */
 function pairKey(a: string, b: string): string {

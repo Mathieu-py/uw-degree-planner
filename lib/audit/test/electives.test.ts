@@ -5,7 +5,8 @@ import {
   deriveElectiveSections,
   subjectPoolEligible,
 } from "@/lib/audit/electives";
-import { type ElectiveCategory, PROGRAMS, type Program } from "@/lib/programs";
+import type { ElectiveCategory, Program } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 
 describe("classifyElective", () => {
   it("treats 'Complete N of the following' with an approved list as finite/draggable", () => {

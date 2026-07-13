@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSpecialization, PROGRAMS } from "@/lib/programs";
+import { getSpecialization, PROGRAMS } from "@/lib/programsRegistry";
 import {
   doubleDegreeSuggestionMessage,
   specsAfterDoubleDegreeSwap,

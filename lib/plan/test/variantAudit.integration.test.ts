@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AuditNode, compileAudit, isSatisfied } from "@/lib/audit/compile";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { enumerateVariantGroups } from "@/lib/requirements/variantGroups";
 import { addCourseToSlot } from "../mutateSlots";
 import { buildEmptySlots } from "../sequence";
