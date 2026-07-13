@@ -18,6 +18,7 @@ import {
   type TermLetter,
 } from "@/lib/programs";
 import type { TermId } from "@/lib/terms";
+import { isAcademicSlot } from "./derive";
 import { eligibleSlotIdsForCourse } from "./eligibleTerms";
 import { addCourseToSlot } from "./mutateSlots";
 import { buildEmptySlots } from "./sequence";
@@ -91,9 +92,7 @@ export function resolveVariantPlacements(
 
   // Slot ids/positions are stable across addCourseToSlot, so this list built
   // once stays valid; buildEmptySlots emits academic terms in sequence order.
-  const academicSlots = plan.slots.filter(
-    (s) => !s.isCoop && s.position !== "pre",
-  );
+  const academicSlots = plan.slots.filter(isAcademicSlot);
 
   const placements: VariantPlacement[] = [];
   const placed = new Set<string>(); // a code can appear in two programs' groups

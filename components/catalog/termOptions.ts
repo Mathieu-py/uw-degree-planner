@@ -2,15 +2,16 @@ import { useMemo } from "react";
 import {
   type CourseEligibilityContext,
   evaluateCourseEligibility,
+  isProgramBlocked,
 } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
-import { completedSetFromPlan } from "@/lib/plan/derive";
-import type { PlanSlot } from "@/lib/plan/types";
 import {
-  type ProgramIdentity,
-  programIdentities,
-  programReferencedCodes,
-} from "@/lib/programs";
+  completedSetFromPlan,
+  isAcademicSlot,
+  placedCourseLabel,
+} from "@/lib/plan/derive";
+import type { PlanSlot } from "@/lib/plan/types";
+import { type ProgramIdentity, programContext } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 
 export type TermState = "eligible" | "check" | "missing";
@@ -35,39 +36,37 @@ export function computeTermOptions(
   programReferenced: ReadonlySet<string>,
   placedAnywhere: ReadonlySet<string>,
 ): TermOption[] {
-  return slots
-    .filter((s) => s.position !== "pre" && !s.isCoop)
-    .map((slot) => {
-      const ctx: CourseEligibilityContext = {
-        completed: completedSetFromPlan({ slots }, slot.termId ?? undefined),
-        sameTerm: new Set(slot.courses.map((c) => c.code)),
-        level: slot.position,
-        programs,
-        programReferenced,
-        placedAnywhere,
-      };
-      const verdict = evaluateCourseEligibility(course, ctx);
-      const state: TermState =
-        verdict.state === "ineligible"
-          ? "missing"
-          : verdict.state === "check"
-            ? "check"
-            : "eligible";
-      const hint =
-        state === "eligible"
-          ? "Prerequisites met"
-          : verdict.reasons.join(" · ") ||
-            (state === "check" ? "Manual check" : "Needs earlier prereqs");
-      return {
-        slot,
-        label:
-          slot.termId !== null
-            ? (termInfo(slot.termId)?.label ?? slot.position)
-            : slot.position,
-        state,
-        hint,
-      };
-    });
+  return slots.filter(isAcademicSlot).map((slot) => {
+    const ctx: CourseEligibilityContext = {
+      completed: completedSetFromPlan({ slots }, slot.termId ?? undefined),
+      sameTerm: new Set(slot.courses.map((c) => c.code)),
+      level: slot.position,
+      programs,
+      programReferenced,
+      placedAnywhere,
+    };
+    const verdict = evaluateCourseEligibility(course, ctx);
+    const state: TermState =
+      verdict.state === "ineligible"
+        ? "missing"
+        : verdict.state === "check"
+          ? "check"
+          : "eligible";
+    const hint =
+      state === "eligible"
+        ? "Prerequisites met"
+        : verdict.reasons.join(" · ") ||
+          (state === "check" ? "Manual check" : "Needs earlier prereqs");
+    return {
+      slot,
+      label:
+        slot.termId !== null
+          ? (termInfo(slot.termId)?.label ?? slot.position)
+          : slot.position,
+      state,
+      hint,
+    };
+  });
 }
 
 /**
@@ -83,9 +82,10 @@ export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
 }
 
 /**
- * Shared hook behind every course→term "add" surface: derives
- * {@link computeTermOptions} + {@link alreadyInLabel}. `slots` is nullable so
- * callers can render before the plan loads (options stay empty until it does).
+ * Shared hook behind every course→term "add" surface: {@link computeTermOptions}
+ * + {@link placedCourseLabel} (twin-aware), plus a plan-level `blocked` flag (a
+ * program block is term-independent, so callers surface it once, not per term).
+ * `slots` is nullable so callers can render before the plan loads.
  */
 export function useTermOptions(
   course: Course,
@@ -94,30 +94,11 @@ export function useTermOptions(
     programIds: string[];
     specializationIds: Record<string, string>;
   } | null,
-): { options: TermOption[]; alreadyIn: string | null } {
-  const code = course.code.toLowerCase();
-  // Identities + referenced-codes span every program (double degree), so a
-  // course relevant to — or restricted to — either degree resolves right.
-  // (`programIds` ref is stable across slot edits, so it's a sound memo dep.)
-  const programs = useMemo(
-    () => programIdentities(plan?.programIds, plan?.specializationIds),
+): { options: TermOption[]; alreadyIn: string | null; blocked: boolean } {
+  const { programs, programReferenced } = useMemo(
+    () => programContext(plan?.programIds, plan?.specializationIds),
     [plan?.programIds, plan?.specializationIds],
   );
-  const programReferenced = useMemo(() => {
-    const ids = plan?.programIds ?? [];
-    if (ids.length <= 1)
-      return programReferencedCodes(
-        ids[0],
-        ids[0] ? plan?.specializationIds?.[ids[0]] : null,
-      );
-    const out = new Set<string>();
-    ids.forEach((id) => {
-      // Each program contributes its own specialization's referenced codes.
-      const codes = programReferencedCodes(id, plan?.specializationIds?.[id]);
-      for (const c of codes) out.add(c);
-    });
-    return out;
-  }, [plan?.programIds, plan?.specializationIds]);
   const placedAnywhere = useMemo(
     () => new Set((slots ?? []).flatMap((s) => s.courses.map((c) => c.code))),
     [slots],
@@ -135,6 +116,16 @@ export function useTermOptions(
         : [],
     [slots, course, programs, programReferenced, placedAnywhere],
   );
-  const alreadyIn = slots ? alreadyInLabel(slots, code) : null;
-  return { options, alreadyIn };
+  // Plan-level (not per-term); a null plan (loading / no plan) can't be blocked.
+  const programBlocked = useMemo(
+    () =>
+      plan != null && isProgramBlocked(course, { programs, programReferenced }),
+    [plan, course, programs, programReferenced],
+  );
+  // Twin-aware (see placedCourseLabel): a placed cross-listed member also gates.
+  const alreadyIn = slots ? placedCourseLabel(slots, course) : null;
+  // Already-placed outranks a program block (matches evaluateCourseEligibility):
+  // a placed-but-blocked course reads "already placed", not "not open".
+  const blocked = alreadyIn === null && programBlocked;
+  return { options, alreadyIn, blocked };
 }

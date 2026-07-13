@@ -6,6 +6,19 @@ export function StatusBody({ children }: { children: ReactNode }) {
   return <p className="u-body py-4 text-center">{children}</p>;
 }
 
+/**
+ * Shown in place of the term list when a program/faculty restriction closes the
+ * course to the plan's program. Program eligibility is plan-level, so it's
+ * stated once here rather than disabling every term.
+ */
+export function ProgramBlockedBody() {
+  return (
+    <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-3 text-center">
+      This course isn't open to your program.
+    </p>
+  );
+}
+
 /** Centered error message with an optional retry button. */
 export function ErrorBody({
   message,

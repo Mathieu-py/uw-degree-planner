@@ -76,6 +76,30 @@ describe("SlotPicker", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
+  it("threads detailsQuery onto each row's Details link (same tab)", () => {
+    render(
+      <SlotPicker
+        targetTermLabel="Fall 2023"
+        catalog={CATALOG}
+        placedCodes={NO_PLACED}
+        completedBefore={NO_COMPLETED}
+        detailsQuery="?from=picker&planId=p1&term=1261"
+        onPick={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const links = screen.getAllByRole("link", { name: /details for/i });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(link.getAttribute("href")).toContain(
+        "?from=picker&planId=p1&term=1261",
+      );
+      // Same-tab: no target="_blank" (so the detail page's one-click add lands
+      // the user back on the planner, closing the loop).
+      expect(link.getAttribute("target")).toBeNull();
+    }
+  });
+
   it("filters to focusCodes when provided", () => {
     render(
       <SlotPicker

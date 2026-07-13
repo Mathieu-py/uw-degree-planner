@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
-import { completedSetFromPlan } from "@/lib/plan/derive";
+import { buildCourseOrigin } from "@/lib/plan/courseOrigin";
+import { completedSetFromPlan, isAcademicSlot } from "@/lib/plan/derive";
 import { eligibleSlotIdsForCourse } from "@/lib/plan/eligibleTerms";
 import { removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
@@ -298,10 +299,16 @@ function PlannerShellInner({
         : "Pre-arrival";
     // The slot's position is the student's level in this term ("1A".."4B"),
     // letting the picker resolve level-gated prereqs. Pre/co-op have no level.
-    const level =
-      !slot.isCoop && slot.position !== "pre" ? slot.position : undefined;
+    const level = isAcademicSlot(slot) ? slot.position : undefined;
     // Codes already in the target slot, so coreqs can resolve same-term.
     const sameTerm = new Set(slot.courses.map((c) => c.code));
+    // from=picker context for each row's Details link → one-click "Add to {term}".
+    // Pre slots have no termId, so term is omitted and the detail page falls back.
+    const detailsQuery = buildCourseOrigin({
+      from: "picker",
+      planId: planId ?? undefined,
+      term: slot.termId ?? undefined,
+    });
     return {
       slot,
       completedBefore,
@@ -309,8 +316,9 @@ function PlannerShellInner({
       termLabel,
       level,
       sameTerm,
+      detailsQuery,
     };
-  }, [plan, picker]);
+  }, [plan, picker, planId]);
 
   const termChoiceCourse = termChoiceCode
     ? (catalogByCode.get(termChoiceCode) ?? null)
@@ -402,9 +410,10 @@ function PlannerShellInner({
   // Tag the timeline's course links as plan-originated so the detail page hides
   // its redundant "Add to plan", and carry the plan id so "Back to planner"
   // returns to this exact plan. Local plans have no planId and stay at /plan.
-  const planOriginQuery = planId
-    ? `?from=plan&planId=${encodeURIComponent(planId)}`
-    : "?from=plan";
+  const planOriginQuery = buildCourseOrigin({
+    from: "plan",
+    planId: planId ?? undefined,
+  });
 
   return (
     <PlannerLayout
@@ -427,6 +436,7 @@ function PlannerShellInner({
               sameTerm={pickerMeta.sameTerm}
               focusCodes={picker.focusCodes}
               initialFilters={picker.initialFilters}
+              detailsQuery={pickerMeta.detailsQuery}
               onPick={handlePickCode}
               onClose={closePicker}
             />

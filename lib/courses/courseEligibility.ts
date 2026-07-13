@@ -12,7 +12,7 @@ import { resolveAntireqCodes } from "@/lib/plan/validate";
 import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
-import type { ProgramIdentity } from "@/lib/programs";
+import { type ProgramIdentity, programContext } from "@/lib/programs";
 import type { Course } from "./types";
 
 type CourseEligibilityState = "eligible" | "check" | "ineligible";
@@ -226,6 +226,22 @@ export function isProgramBlocked(
     assumeCoursesUncertain: true,
   });
   return !pre.satisfied && pre.blockedByProgram;
+}
+
+/**
+ * Is `course` closed to a plan by a program/faculty restriction? {@link
+ * programContext} + {@link isProgramBlocked} in one gate so every add surface
+ * agrees. `plan` is any plan or summary carrying program ids.
+ */
+export function isCourseBlockedForPlan(
+  course: Course,
+  plan: { programIds?: string[]; specializationIds?: Record<string, string> },
+): boolean {
+  const { programs, programReferenced } = programContext(
+    plan.programIds,
+    plan.specializationIds,
+  );
+  return isProgramBlocked(course, { programs, programReferenced });
 }
 
 /**

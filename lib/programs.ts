@@ -594,3 +594,22 @@ export function programReferencedCodes(
   referencedCodesCache.set(key, out);
   return out;
 }
+
+/**
+ * A plan's program identities + all referenced codes — the inputs every
+ * eligibility check needs. Spans a double degree's programs, merging each one's
+ * specialization codes.
+ */
+export function programContext(
+  programIds: string[] | undefined,
+  specializationIds: Record<string, string> | undefined,
+): { programs: ProgramIdentity[]; programReferenced: ReadonlySet<string> } {
+  const programs = programIdentities(programIds, specializationIds);
+  const programReferenced = new Set<string>();
+  for (const id of programIds ?? []) {
+    for (const c of programReferencedCodes(id, specializationIds?.[id])) {
+      programReferenced.add(c);
+    }
+  }
+  return { programs, programReferenced };
+}

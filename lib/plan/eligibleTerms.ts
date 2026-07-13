@@ -12,7 +12,7 @@ import {
 import { equivalenceForCatalog } from "@/lib/courses/equivalence";
 import type { Course } from "@/lib/courses/types";
 import type { ProgramIdentity } from "@/lib/programs";
-import { completedSetFromPlan } from "./derive";
+import { completedSetFromPlan, isAcademicSlot } from "./derive";
 import type { LocalPlan } from "./types";
 
 // A course with no catalog entry carries no constraints — eligible in every
@@ -52,7 +52,7 @@ export function eligibleSlotIdsForCourse(
   const out = new Set<string>();
   for (const slot of plan.slots) {
     // Only academic term columns accept drops — never co-op or pre-arrival.
-    if (slot.isCoop || slot.position === "pre") continue;
+    if (!isAcademicSlot(slot)) continue;
     const ctx: CourseEligibilityContext = {
       completed:
         slot.termId !== null

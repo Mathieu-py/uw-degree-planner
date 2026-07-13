@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { NEW_PLAN_NAME } from "@/lib/constants";
 import type { FilterPreset } from "@/lib/courses/types";
 import { countNoun, pluralize } from "@/lib/format";
+import { isAcademicSlot } from "@/lib/plan/derive";
 import { applyCourseDrop, type CourseDragData } from "@/lib/plan/dnd";
 import { addCourseToSlot, removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { rebuildSlots } from "@/lib/plan/sequence";
@@ -195,9 +196,7 @@ export function usePlanEditors({
         return;
       }
       const current = planRef.current;
-      const target =
-        current?.slots.find((s) => !s.isCoop && s.position !== "pre") ??
-        current?.slots[0];
+      const target = current?.slots.find(isAcademicSlot) ?? current?.slots[0];
       if (!target) return;
       setPicker({
         slotId: target.id,

@@ -205,6 +205,42 @@ describe("TermPicker — signed in", () => {
     expect(loadServerPlanMock).toHaveBeenCalledWith("p2");
   });
 
+  it("disables only the plan whose program is barred (program check at the plan step)", async () => {
+    // "Not open to Faculty of Math students" blocks a CS plan (math faculty) but
+    // not a SYDE plan (engineering) — the check is per-plan, at this first step,
+    // not per-term inside a chosen plan.
+    mockPlanList([
+      mkSummary({
+        id: "syde",
+        name: "SYDE plan",
+        programIds: ["systems-design-engineering"],
+      }),
+      mkSummary({
+        id: "cs",
+        name: "CS plan",
+        programIds: ["h-computer-science-bcs"],
+      }),
+    ]);
+    render(
+      <TermPicker
+        course={makeCourse({
+          code: "cs114",
+          prereqs: "Not open to Faculty of Math students.",
+        })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const cs = await screen.findByRole("button", { name: /CS plan/ });
+    expect(cs).toHaveProperty("disabled", true);
+    expect(screen.getByText(/Not open to your program/i)).toBeTruthy();
+    // The engineering plan can take it — still selectable.
+    expect(screen.getByRole("button", { name: /SYDE plan/ })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+
   it("persists the add as a full snapshot that preserves existing courses", async () => {
     mockPlanList([mkSummary()]);
     loadServerPlanMock.mockResolvedValue({
