@@ -14,7 +14,7 @@ export function isAcademicSlot(slot: PlanSlot): boolean {
 /**
  * Where the course — or a cross-listed twin — already sits, as a label ("Fall
  * 2025" / "your plan"), or null if unplaced. Twin-aware so the "already placed"
- * gate can't be dodged via the other code of a cross-listed pair (#21).
+ * gate can't be dodged via the other code of a cross-listed pair.
  */
 export function placedCourseLabel(
   slots: PlanSlot[],
@@ -64,7 +64,7 @@ export function completedCoursesFromPlan(
  * prereq evaluator (`evaluate()` in lib/prereqs/satisfied.ts).
  *
  * With `equiv`, the set is widened to include every cross-listed equivalent of a
- * completed course (GitHub #21), so a prereq naming one code is satisfied by an
+ * completed course, so a prereq naming one code is satisfied by an
  * equivalent the student actually took.
  */
 export function completedSetFromPlan(

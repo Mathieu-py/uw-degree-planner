@@ -74,7 +74,7 @@ export function evaluateCourseEligibility(
   //    `crossListed` first so the message stays "in plan as ANTH 201" even when
   //    the caller passed an equiv-expanded `placedAnywhere` (which also contains
   //    this code). The twin isn't dropped from the picker — it renders greyed
-  //    with this badge, like the wrong-program case (#21).
+  // with this badge, like the wrong-program case.
   const placedTwin =
     course.crossListed?.find((m) => m !== code && ctx.placedAnywhere.has(m)) ??
     null;

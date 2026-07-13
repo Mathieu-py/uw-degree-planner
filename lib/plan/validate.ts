@@ -98,7 +98,7 @@ export function validatePlan(
         ? completedSetFromPlan(plan, slot.termId, equiv)
         : completedSetFromPlan(plan, undefined, equiv);
     // Expanded like completedBefore so a coreq naming one cross-listed twin is
-    // satisfied by the other co-scheduled twin, as it would be a term earlier (#21).
+    // satisfied by the other co-scheduled twin, as it would be a term earlier.
     const sameSlotCodes = equiv.expand(slot.courses.map((c) => c.code));
     const coreqContext = new Set<string>([
       ...completedBeforeSet,
@@ -160,7 +160,7 @@ export function validatePlan(
       );
       const reverseAnti = namedAsAntireqBy.get(c.code);
       // A course never conflicts with its own twin (same course, not an antireq
-      // pair) — holding both is flagged as a duplicate below instead (#21).
+      // pair) — holding both is flagged as a duplicate below instead.
       const collisions = [
         ...new Set([...forwardAnti, ...(reverseAnti ?? [])]),
       ].filter((other) => !equiv.areEquivalent(other, c.code));
@@ -177,7 +177,7 @@ export function validatePlan(
       // ---- Duplicate (cross-listed twin placed under another code) ----
       // Two codes of one class are the SAME course, so credit its units once.
       // Use the antireq kind so creditExclusionKeys grouping holds one member
-      // out — "credit for one, never both, never zero" (#21).
+      // out — "credit for one, never both, never zero".
       const twins = equiv
         .classOf(c.code)
         .filter((m) => m !== c.code && allPlacedCodes.has(m));

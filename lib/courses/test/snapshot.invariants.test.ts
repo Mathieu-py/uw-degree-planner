@@ -4,8 +4,8 @@ import coursesData from "../../../data/courses.1261.json";
 import { equivalenceForCatalog } from "../equivalence";
 
 /**
- * Data-quality guardrails over the committed catalog snapshot (CodeRabbit PR
- * #114). These run against the real generated data, so a regression in the
+ * Data-quality guardrails over the committed catalog snapshot. These run
+ * against the real generated data, so a regression in the
  * build pipeline (or a bad hand-edit) is caught here rather than surfacing as a
  * subtle runtime miscount. They also pin the invariants that the runtime
  * validator (lib/courses/validation.ts) relies on.

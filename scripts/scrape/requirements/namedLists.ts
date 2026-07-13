@@ -1,7 +1,7 @@
 // Named-list resolution: joins a rule that references course lists by name
 // ("from the Technical Electives lists", "List A, B, C, or D") to the union of
 // those lists' course codes, and indexes titled <section>s into the context's
-// list map. Also the leading-count helpers a list rule needs. See #117 (D).
+// list map. Also the leading-count helpers a list rule needs.
 import type * as cheerio from "cheerio";
 import { normalizeListName } from "../program/electives";
 import { unitsToCount, wordToNumber } from "../util/counts";
@@ -23,7 +23,7 @@ const NAMED_LIST_RE = /\bfrom\s+(?:the\s+)?([^.;:]+?)\s+lists?\b/i;
 // The inverse phrasing Kuali also uses to point at a sibling titled section:
 // "from the list of Approved Courses below". NAMED_LIST_RE reads "<Name> list"
 // but not this "list of <Name>" shape; the trailing "below"/"above" anchors the
-// name. indexSectionLists indexes those sections so the name resolves. #117.
+// name. indexSectionLists indexes those sections so the name resolves.
 const LIST_OF_SECTION_RE =
   /\blist\s+of\s+([A-Za-z][A-Za-z ]*?)\s+(?:below|above)\b/i;
 // Leading count: "Complete 1 additional course…", "four courses…", "Complete a
@@ -38,7 +38,7 @@ const LEADING_COUNT_RE =
  * of their course codes. Tries a "List X[, Y…]" enumeration, then a "<Name> list"
  * reference, then the "list of <Name>" inverse. Null when no known list matches —
  * the rule stays unverified (e.g. a list defined only in additionalConstraints
- * prose). See #117 (bucket D).
+ * prose).
  */
 export function resolveNamedList(
   ctx: ParseContext,

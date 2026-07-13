@@ -76,7 +76,7 @@ export function swapToDoubleDegree(
 /**
  * Onboarding builds specs from the transcript, keyed by the originally-detected
  * program ids. When the student swaps that detected pair for its packaged double
- * degree (#103), re-key any spec the packaged plan still offers so onboarding
+ * degree, re-key any spec the packaged plan still offers so onboarding
  * preserves it too — parity with PlanSettingsModal. No-op unless the selection is
  * exactly that swap (the two-program detection collapsed to the single plan).
  */

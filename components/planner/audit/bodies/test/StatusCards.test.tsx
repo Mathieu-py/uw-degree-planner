@@ -380,7 +380,7 @@ describe("Status Cards — level floor (element H)", () => {
 });
 
 /** A compound pick whose options are subject pools — the shape that used to
- *  render empty "0/0" cards with no chips and no browse (issue #115). */
+ * render empty "0/0" cards with no chips and no browse. */
 function compoundPoolPick(
   optA: AuditNode,
   optB: AuditNode,

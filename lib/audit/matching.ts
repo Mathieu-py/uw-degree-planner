@@ -136,12 +136,12 @@ function sumWeight<Id>(
  * Route atomic weighted courses to unit pools, lexicographically minimising
  * (total shortfall, total consumed weight): a satisfiable set reaches 100%
  * regardless of pool/course order or unit weight, and heavy courses stay free
- * for the free-elective pool (#121 — the greedy this replaces ignored weight).
+ * for the free-elective pool (the greedy this replaces ignored weight).
  * A course credits its WHOLE weight to one pool; splitting would double-count.
  * Branch-and-bound over contested courses (eligible for ≥2 pools); exclusives
  * fold into pool capacity and are covered minimally at realisation. Greedy
  * seeds the incumbent and is the guard/budget fallback, so results never score
- * worse than the pre-#121 greedy.
+ * worse than the earlier greedy.
  */
 export function assignUnitPools<Id>(
   pools: readonly UnitPoolInput<Id>[],
@@ -357,7 +357,7 @@ function minWeightCover<Id>(
   return best;
 }
 
-/** The pre-#121 greedy (most-constrained pool first, consume in order until met):
+/** The earlier greedy (most-constrained pool first, consume in order until met):
  *  the incumbent seed and guard fallback, so a pathological plan is never worse. */
 function greedyAssign<Id>(
   pools: readonly UnitPoolInput<Id>[],

@@ -250,7 +250,7 @@ describe("assignUnitPools", () => {
   it("solves an overlapping cluster exactly regardless of total pool count", () => {
     // Regression: the guard once keyed on TOTAL pool count (>8 ⇒ greedy), so
     // disjoint pools around a tiny weighted-tie cluster silently reintroduced
-    // the #121 stranding. The guard now keys on the contested subproblem only.
+    // the stranding. The guard now keys on the contested subproblem only.
     const W = (i: number) => (i === 100 ? 1.0 : 0.5);
     const disjoint: UnitPoolInput[] = Array.from({ length: 7 }, (_, k) => ({
       needUnits: 0.5,
@@ -271,7 +271,7 @@ describe("assignUnitPools", () => {
     // The weighted-tie instance with nodeBudget 1: the search aborts on its
     // first expansion, so the result must be the greedy incumbent — 2 of 3
     // pools met, exact:false, never a throw. Pins the "budget bail is never
-    // worse than pre-#121" floor.
+    // worse than earlier" floor.
     const W = (i: number) => (i === 0 ? 1.0 : 0.5);
     const pools: UnitPoolInput[] = [
       { needUnits: 0.5, eligible: [0, 1] },

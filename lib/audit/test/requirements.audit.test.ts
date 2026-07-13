@@ -2,7 +2,7 @@
 // locks the accuracy invariants the audit pipeline must hold for honest
 // progress reporting:
 //   1. an empty plan scores 0% — no requirement is "vacuously met" before any
-//      course is placed (issue #95);
+// course is placed;
 //   2. every elective note classifies cleanly into tracked (finite, counted)
 //      vs untracked (open/unit lists), and none is malformed;
 //   3. subjectPool level bounds sit on the hundred scale the compiler buckets
@@ -94,7 +94,7 @@ describe("requirements audit — accuracy invariants across all programs", () =>
     expect(programIds.length).toBeGreaterThan(150);
   });
 
-  // (1) Empty plan ⇒ 0%. This is the root-cause guard for issue #95: a pick
+  // (1) Empty plan ⇒ 0%. This is the root-cause guard: a pick
   // with no selectMin is vacuously "met" but must contribute 0 satisfied slots
   // until something is actually placed.
   it.each(programIds)("scores 0%% on an empty plan: %s", (programId) => {
@@ -105,7 +105,7 @@ describe("requirements audit — accuracy invariants across all programs", () =>
     ).toBe(0);
   });
 
-  // The two programs named in #95 — optional picks made them read ~22%.
+  // The two programs named — optional picks made them read ~22%.
   it.each([
     "computational-mathematics",
     "h-actuarial-science",
@@ -115,7 +115,7 @@ describe("requirements audit — accuracy invariants across all programs", () =>
     expect(headlineSatisfied(audit)).toBe(0);
   });
 
-  // (2) No malformed elective note (missing count, e.g. the Kuali typo in #49).
+  // (2) No malformed elective note (missing count, e.g. the Kuali typo).
   it.each(
     programIds,
   )("has no malformed elective descriptions: %s", (programId) => {

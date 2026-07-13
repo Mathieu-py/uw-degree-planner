@@ -29,7 +29,7 @@ export interface ProgramDetail extends ProgramListEntry {
   specializationsList?: string;
   /**
    * Free-prose calendar notes carried through as `informational` (where list
-   * defs and discretionary "see your advisor" rules live). See #117.
+   * defs and discretionary "see your advisor" rules live).
    */
   additionalConstraints?: string;
 }

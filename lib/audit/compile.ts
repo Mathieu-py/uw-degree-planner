@@ -120,7 +120,7 @@ function withIllegal(node: AuditNode, illegal: Placement[]): AuditNode {
 
 /**
  * Split codes into satisfying placements and still-missing codes. A code is
- * satisfied by its exact placement OR any cross-listed equivalent (#21); the
+ * satisfied by its exact placement OR any cross-listed equivalent; the
  * equivalent's placement is credited directly, never duplicated.
  *
  * Codes collapse to one per equivalence class first, since an option list can
@@ -296,7 +296,7 @@ function compilePick(
     compile(c, placement, legality, equiv, unitsOf),
   );
   // Require ≥1 satisfier: an optional child is vacuously "met" with nothing
-  // placed, inflating the parent on an empty plan (issue #95).
+  // placed, inflating the parent on an empty plan.
   const count = children.filter(
     (c) =>
       (c.status === "met" || c.status === "overSatisfied") &&
@@ -549,7 +549,7 @@ export function compileAudit(
    */
   programId: string | null = null,
   /**
-   * Course-equivalence index (GitHub #21): a required code is also satisfied by
+   * Course-equivalence index: a required code is also satisfied by
    * a placed cross-listed equivalent. Omitted → exact-code matching only.
    */
   equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,

@@ -74,7 +74,7 @@ export async function main() {
   // resolveDegreeTotalUnits, so a degree-supplied total still suppresses them).
   foldFreeElectivesIntoUnverified(phaseA.programs, phaseA.freeElectivesBySlug);
 
-  // Stamp the term span now that `totalUnits` is final (#105).
+  // Stamp the term span now that `totalUnits` is final.
   for (const program of Object.values(phaseA.programs)) {
     program.numberOfTerms = deriveNumberOfTerms(program);
   }

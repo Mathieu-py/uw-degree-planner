@@ -259,8 +259,7 @@ function parseLi(
   }
 
   // A rule referencing a `courseListsNew` list by name extracts no codes itself;
-  // join the list's courses before the branches below record it unverified. See
-  // #117 (bucket D).
+  // join the list's courses before the branches below record it unverified.
   if (codes.length === 0) {
     const listCourses = resolveNamedList(ctx, fullText);
     const n = listCourses ? requiredCount(fullText) : null;
@@ -343,7 +342,7 @@ function parseLi(
   if (CHOOSE_ANY_RE.test(prefix)) {
     if (codes.length === 0) {
       // No literal codes — try the pool half ("any CS course at the 600-/700-
-      // level") before giving up. See #117 (bucket C).
+      // level") before giving up.
       const pool = parseChooseAnyPool(fullText);
       if (pool) return { kind: "node", node: pool };
       return recordUnextracted(
@@ -411,7 +410,7 @@ function parseLi(
   // a bogus subject ("CS340-CS398" → "CSCS"), yielding an unsatisfiable pool. A
   // digit-bearing range is unambiguous, so expand it to offered courses here,
   // before that fallback. Any colon-list "Complete N of …: <range>" already
-  // matched an earlier branch. #117 follow-up.
+  // matched an earlier branch.
   const leadCount = LEAD_COUNT_RE.exec(fullText);
   if (leadCount) {
     // A filter/diversity qualifier ("3 seminars from …") can't be honored by a
@@ -484,7 +483,7 @@ function parseLi(
     // Redundant with the unit headline's free remainder — but only when the
     // program has a totalUnits denominator. Record it so the assembler can
     // re-surface it as unverified for programs that lack one (else the audit
-    // could read 100% with the electives unaccounted). #117.
+    // could read 100% with the electives unaccounted).
     droppedFreeElectives.push(fullText);
     return null;
   }
@@ -523,7 +522,7 @@ function collectCourseCodes(
     // Ranges ("CS440-CS498") are never hyperlinked, so expand them even when the
     // rule also has anchored literals — a plain-text range in a mixed list isn't
     // lost. expandRanges is exclusion-aware, so "(excluding CS450-CS460)" / "…,
-    // except CS499" after the colon aren't counted. Real codes only. See #117 (C).
+    // except CS499" after the colon aren't counted. Real codes only.
     for (const code of expandRanges(list)) codes.add(code);
     // Literal plain-text codes only as a fallback when nothing was hyperlinked
     // (Kuali "…W" codes, unlinked INDEV387), so prose codes don't leak into an

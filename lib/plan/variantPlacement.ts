@@ -1,5 +1,5 @@
 /**
- * Resolve variant-picker selections (#84) into timeline positions for a fresh
+ * Resolve variant-picker selections into timeline positions for a fresh
  * manual plan. Engineering picks carry their rule's own term; flexible picks
  * (CS and most majors, no term in the rule) go to the earliest prereq-eligible
  * term at or after the course's level term (1xx→1A … 4xx→4A) — prereq-aware via

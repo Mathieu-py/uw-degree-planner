@@ -182,13 +182,13 @@ function parseFromClause(rest: string, exclusions: string[]): string[] {
 /**
  * Resolve a faculty-scoped clause ("Faculty of Arts", "Faculties: Environment,
  * Health, Science") to the faculties it names — read up to a clause break, split
- * on connectives, each fragment via {@link facultyFromName}. See #117 (bucket B).
+ * on connectives, each fragment via {@link facultyFromName}.
  */
 function parseFacultyClause(text: string): Faculty[] {
   if (!/facult/i.test(text)) return [];
   // Stop the capture before a "from" clause (with or without a leading "or"), so
   // "Faculty of Arts from: CS, MATH" yields "Arts", not "Arts from: CS, MATH"
-  // (whose "MATH" would wrongly pull in the whole Math faculty). See #117 (B).
+  // (whose "MATH" would wrongly pull in the whole Math faculty).
   const m = text.match(
     /facult(?:y\s+of|ies)\b\s*:?\s*([\s\S]+?)(?=;|\.|$|,?\s+(?:or\s+)?from\b)/i,
   );
@@ -232,7 +232,7 @@ function buildPool(
   // Strip a connective preamble between the subject noun and "from" ("…courses,
   // in any combination, chosen from …"). The `(?=from\b)` lookahead fires only
   // when a real list follows, so a bare "in any combination" still falls through
-  // to null. See #117 (bucket A).
+  // to null.
   rest = rest
     .replace(
       /^,?\s*(?:in any combination\s*,?\s*)?(?:chosen\s+)?(?=from\b)/i,
@@ -245,7 +245,7 @@ function buildPool(
 
   // Faculty clause → that faculty's codes via the authoritative table, unioned
   // with explicit/`from:` codes so a compound "Faculty of Arts, or … codes" rule
-  // keeps both halves. Uppercased to match the stored convention. See #117 (B).
+  // keeps both halves. Uppercased to match the stored convention.
   const facultySubjects = subjectsForFaculties(parseFacultyClause(rest)).map(
     (c) => c.toUpperCase(),
   );
@@ -290,7 +290,7 @@ export function parseSubjectPool(fullText: string): RuleNode | null {
 /**
  * Parse a "Choose any …" pool with no "Complete N" head ("any CS course at the
  * 600-/700-level"): strip the framing, build a `selectCount: 1` pool. Fallback
- * when a "Choose any" rule extracted no literal codes. See #117 (bucket C).
+ * when a "Choose any" rule extracted no literal codes.
  */
 export function parseChooseAnyPool(fullText: string): RuleNode | null {
   const rest = fullText

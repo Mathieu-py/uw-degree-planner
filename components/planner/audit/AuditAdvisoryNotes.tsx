@@ -7,7 +7,7 @@ interface Props {
   estimatedDenom: boolean;
   /** Plan-wide prereq/antireq placement issues (shown the same on each program). */
   blockingIssueCount: number;
-  /** "Add a partner plan" copy when a lone Joint Honours plan is unpaired (#111). */
+  /** "Add a partner plan" copy when a lone Joint Honours plan is unpaired. */
   jointHonoursPartner?: string | null;
 }
 

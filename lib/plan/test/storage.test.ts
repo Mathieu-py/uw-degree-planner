@@ -113,7 +113,7 @@ describe("savePlan + loadPlan", () => {
 
   it("defaults acknowledgedRequirements to {} for a plan saved before the field existed", () => {
     // Additive field (no schemaVersion bump): an old v3 plan without it must
-    // still load, defaulting the map to {}. See #116.
+    // still load, defaulting the map to {}.
     const legacy = JSON.stringify(VALID_PLAN); // VALID_PLAN omits the field
     store.setItem(PLAN_STORAGE_KEY, legacy);
     const loaded = loadPlan();

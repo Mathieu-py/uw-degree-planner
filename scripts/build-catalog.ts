@@ -98,7 +98,7 @@ async function writeSnapshot(
 /**
  * Last-known seating from the committed snapshot, for a partial refresh when
  * Open Data is unavailable (no `UW_OPENDATA_KEY`) — holds `sections` steady
- * rather than wiping them. Absent/unreadable snapshot → empty seating. #120.
+ * rather than wiping them. Absent/unreadable snapshot → empty seating.
  */
 async function loadExistingSeating(
   termId: number,
@@ -167,7 +167,7 @@ async function main() {
   for (const term of terms) {
     // Missing key (e.g. CI without the secret) is non-fatal: keep last-known
     // seating from the committed snapshot so ratings/prose/Kuali still refresh
-    // instead of the build aborting or wiping seating. #120.
+    // instead of the build aborting or wiping seating.
     let seating: Record<string, CourseSection[]>;
     if (hasOpenDataKey()) {
       process.stdout.write(`Term ${term}: seating from Open Data... `);
@@ -175,7 +175,7 @@ async function main() {
         seating = await fetchSeating(term);
       } catch (err) {
         // A present-but-invalid key or an Open Data outage shouldn't abort the
-        // whole build either — keep last-known seating and refresh the rest. #120.
+        // whole build either — keep last-known seating and refresh the rest.
         console.warn(
           `\nTerm ${term}: Open Data seating fetch failed (${err instanceof Error ? err.message : err}) — reusing seating from the existing snapshot.`,
         );

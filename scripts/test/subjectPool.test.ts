@@ -193,7 +193,7 @@ describe("parseSubjectPool — bucket B: faculty-scoped pools", () => {
   it("does not absorb the Math faculty from a 'MATH' subject code after 'and from'", () => {
     // "and from" (not "or from") once let the faculty capture run past "Arts" into
     // the subject list, where "MATH" wrongly matched the whole Math faculty. The
-    // pool must scope to Arts + the two named codes only. Regression for #117 (B).
+    // pool must scope to Arts + the two named codes only.
     const p = pool(
       parseSubjectPool(
         "Complete 1.0 unit of courses, in any combination, chosen from the Faculty of Arts, and from the following subject codes: BET, MATH",

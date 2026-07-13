@@ -201,7 +201,7 @@ function parseCourseListsSections(
  * Normalize a list name (a `courseListsNew` heading or a rule's reference) to a
  * join key: lowercase, drop parentheticals/punctuation, strip "list(s)"/"approved"
  * so "Technical Electives List" and "the Technical Electives lists" both key to
- * "technical electives", and "List A" to "a". See #117 (bucket D).
+ * "technical electives", and "List A" to "a".
  */
 export function normalizeListName(s: string): string {
   return s
@@ -217,7 +217,7 @@ export function normalizeListName(s: string): string {
 /**
  * Index `courseListsNew` by normalized heading → its course codes, so a rule
  * referencing a list by name can be joined to its definition. Only sections with
- * both a heading and linked courses are indexed. See #117 (bucket D).
+ * both a heading and linked courses are indexed.
  */
 export function buildNamedListIndex(
   courseListsNewHtml: string | undefined,

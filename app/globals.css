@@ -649,7 +649,7 @@ body {
   display: block;
   height: 100%;
   border-radius: 999px;
-  /* Solid fill to match the real audit panel (was a met→gold gradient). #141 */
+  /* Solid fill to match the real audit panel (was a met→gold gradient). */
   background: var(--met);
 }
 /* status dots — shared: mini-planner (historic) + SaveStatusBadge */
@@ -1045,7 +1045,7 @@ body {
 }
 .pw-plan {
   /* Same default surface as the audit's requirement cards (bg + line), so a
-     placed slot and its audit counterpart visually rhyme. #141 */
+     placed slot and its audit counterpart visually rhyme. */
   background: var(--bg);
   border: 1px solid var(--line);
 }
@@ -1266,7 +1266,7 @@ body {
            overlay (av-ring-*) shared by card leads, strata, and master·detail.
    cd-*  = one requirement's active status card; sat-a = its receded green row.
    The old av- card grammar (av-row/av-choice/av-item…) was fully migrated to
-   cd-/sat-a in #115; everything still under av- is shell, not cards. */
+   cd-/sat-a; everything still under av- is shell, not cards. */
 
 /* Progress-ring overlay: a Ring with its satisfied count centred on top. Shared
    by every status-card lead via RingLead. */
@@ -1448,7 +1448,7 @@ body {
 }
 
 /* ============================================================
-   Status Cards — the unified requirement grammar (issue #115).
+   Status Cards — the unified requirement grammar.
    One card chrome for courses / picks / pools; a satisfied
    requirement recedes to a slim green row (.sat-a). Values are
    final per the design handoff; reuse tokens so dark mode is free.

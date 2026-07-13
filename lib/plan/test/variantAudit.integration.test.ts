@@ -40,7 +40,7 @@ function findPick(node: AuditNode, code: string): AuditNode | null {
   return null;
 }
 
-// End-to-end guarantee that the manual-onboarding variant picker (#84) resolves
+// End-to-end guarantee that the manual-onboarding variant picker resolves
 // choices the degree audit actually credits — the two must never drift.
 describe("variant picker ↔ audit sync", () => {
   it("a picked flexible variant is credited by the audit", () => {

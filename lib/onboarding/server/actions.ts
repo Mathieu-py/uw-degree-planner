@@ -1,9 +1,9 @@
 "use server";
 
 /**
- * Server actions for the manual-onboarding variant picker (#84). Both the rule
+ * Server actions for the manual-onboarding variant picker. Both the rule
  * trees (PROGRAMS) and the catalog (loadTerm) are server-only — deliberately
- * kept out of the `/plan/new` client bundle (#31) — so the onboarding client
+ * kept out of the `/plan/new` client bundle — so the onboarding client
  * reaches them through these thin wrappers rather than importing programs.json.
  */
 

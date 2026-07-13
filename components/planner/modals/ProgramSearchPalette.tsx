@@ -113,9 +113,8 @@ export function ProgramSearchPalette({
   // be combined with another joint or honours plan", UW Math). So once any
   // variant of a subject is picked, its siblings become unpickable. Keyed on the
   // subject title (the program name minus its parenthetical) — the same
-  // disambiguator #27 must split on.
+  // disambiguator must split on.
   // Source: https://uwaterloo.ca/combinatorics-and-optimization/undergraduates/degrees/joint-and-minor-combinatorics-and-optimization
-  // Related: #111 (require a Joint-Honours partner), #27 (transcript variants).
   const takenSubjects = useMemo(() => {
     const taken = new Set<string>();
     for (const e of entries) {

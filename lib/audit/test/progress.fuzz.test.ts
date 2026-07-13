@@ -8,7 +8,7 @@ import { progressOf } from "./helpers";
 /**
  * Integration fuzz: random unit-pool programs × random plans, end-to-end
  * through compile + progress. No oracle — instead the invariants that must
- * hold for ANY input, chiefly order-independence (the #121 bug class: a
+ * hold for ANY input, chiefly order-independence (the bug class: a
  * satisfiable plan reading 99% because of elective/course order).
  */
 
@@ -108,7 +108,7 @@ describe("computeDegreeProgress — integration fuzz", () => {
       );
       if (p.pct === 100) expect(p.allComplete, `seed ${seed}`).toBe(true);
 
-      // The #121 property: shuffling electives and plan order must not move
+      // The property: shuffling electives and plan order must not move
       // the audit. (Quarter-grid weights ⇒ exact float sums ⇒ strict equality.)
       const shuffledProgram: Program = {
         ...program,

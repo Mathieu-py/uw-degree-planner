@@ -41,8 +41,9 @@ export function TermPickerLocal({
     if (placedCourseLabel(plan.slots, course) !== null) return;
     const next = addCourseToSlot(plan, slot.id, { code });
     if (next === plan) return;
-    // savePlan re-stamps updatedAt itself, so no manual stamp here.
-    savePlan(next);
+    // Only reflect the add and report success if the write stuck (localStorage
+    // can be full/unavailable). savePlan re-stamps updatedAt itself.
+    if (!savePlan(next)) return;
     setPlan(next);
     onAdded(label);
   }

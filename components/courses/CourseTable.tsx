@@ -43,7 +43,7 @@ interface CourseTableProps {
 }
 
 /**
- * Shared course grid behind both the catalog and the slot picker (#91). One
+ * Shared course grid behind both the catalog and the slot picker. One
  * clean, sortable table; `mode` is the only structural difference:
  * - catalog: no eligibility column (status is plan-relative, unknown here);
  *   the row opens course details and a per-row Add button starts the add flow.

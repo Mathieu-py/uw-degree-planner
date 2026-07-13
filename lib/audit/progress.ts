@@ -111,7 +111,7 @@ interface Bucket {
    * match, each owner's filled-slot total feeds `nodeFill`, so the panel's
    * requirement rows read the SAME one-course-per-slot credit as the headline
    * instead of an independent per-node count that double-credits overlapping
-   * pools (#21 follow-up).
+   * pools.
    */
   owner?: AuditNode;
 }
@@ -286,7 +286,7 @@ function collectExcluded(node: AuditNode, out: Set<string>): void {
  * @param legality slot-scoped keys of illegally-placed courses, from
  *   `creditExclusionKeys`. Excluded from credit so they never inflate the headline
  *   (still shown met-but-flagged on their row).
- * @param equiv course-equivalence index (#21). MUST match what `compileAudit`
+ * @param equiv course-equivalence index. MUST match what `compileAudit`
  *   was given, else a twin marks the tree row met while this leaves its bucket
  *   unfilled — pct stuck below 100 with every row green.
  */
@@ -312,7 +312,7 @@ export function computeDegreeProgress(
    * The owed `unverifiedRequirements` to gate on — already merged by the caller
    * (the program's own PLUS any selected specialization's owed items, deduped;
    * buildProgramAudit does this once). Omitted ⇒ fall back to the program's own,
-   * so callers with no specialization keep program-level gating for free (#123).
+   * so callers with no specialization keep program-level gating for free.
    */
   unverifiedRequirements?: readonly string[],
 ): DegreeProgress {
@@ -365,7 +365,7 @@ export function computeDegreeProgress(
 
   // Required courses → singleton buckets; each reserves its real catalog units.
   // Collapse to one bucket per equivalence class first (mirrors compileAudit's
-  // partitionByPlacement, #21, keyed on the sorted class head): a leaf naming
+  // partitionByPlacement, keyed on the sorted class head): a leaf naming
   // both twins of one course — or two leaves each naming a twin — is ONE
   // required course, not two slots, else the headline demands two placements
   // where the compiled tree shows the row met by a single one.
@@ -403,7 +403,7 @@ export function computeDegreeProgress(
   // Subject pools are scored by UNITS, not a 0.5-derived course count: a single
   // 1.0-unit course satisfies "1.0 unit of X", and a 0.25 lab counts for what it
   // weighs. They're assigned in a units pass after the count-based matcher
-  // (below), like breadth/level floors. (Issue #101.) `unitPools` already holds
+  // (below), like breadth/level floors. `unitPools` already holds
   // any unit-stated `subjectPool` from the tree. Map each elective to the
   // bucket/pool it becomes (keyed by identity, robust to the sort below) so the
   // chip reads the same match credit as the headline, not a double-count.
@@ -473,18 +473,18 @@ export function computeDegreeProgress(
     assignToNode(owner, codesByBucket[bi]);
   }
 
-  // Unit pools (a unit-stated `subjectPool` rule, or a unit-based elective pool,
-  // issue #101): credit leftover (not-yet-matched) courses toward each pool's REAL
+  // Unit pools (a unit-stated `subjectPool` rule, or a unit-based elective pool):
+  // credit leftover (not-yet-matched) courses toward each pool's REAL
   // unit target, after the matcher so named requirements keep first claim. Consumed
   // courses join `matched` (credited once, not reusable by a free elective); any
   // shortfall reserves named space so it shrinks free room and gates completion.
   //
-  // `assignUnitPools` (#121) is weight-aware and order-independent over the
+  // `assignUnitPools` is weight-aware and order-independent over the
   // leftovers, and the matcher above consumes as few pool-eligible courses as
   // possible. Known residual: a bucket forced to choose BETWEEN two
   // pool-eligible courses still picks by list order (resolving that needs a
   // joint solve); >32-contested overlaps degrade to the old greedy (`exact`
-  // deliberately unobserved — never worse than pre-#121).
+  // deliberately unobserved — never worse than earlier).
   const poolAssign = assignUnitPools(
     unitPools.map((p) => ({
       needUnits: p.needUnits,

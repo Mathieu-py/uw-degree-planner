@@ -23,7 +23,7 @@ export interface KualiCourseData {
   units?: number;
   /**
    * Cross-listed equivalents (Kuali `crossListedCourses`) — authoritative source
-   * for course equivalence (GitHub #21). Lowercased; omitted when none.
+   * for course equivalence. Lowercased; omitted when none.
    */
   crossListed?: string[];
   /**

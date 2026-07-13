@@ -104,7 +104,7 @@ function GroupBlock({
 }
 
 /**
- * Batch resolver for a program's variant choices during manual onboarding (#84).
+ * Batch resolver for a program's variant choices during manual onboarding.
  * Flexible groups render flat; engineering groups group under their term header
  * (first-appearance order, which `enumerateVariantGroups` emits in 1A→4B order).
  * Everything is optional — a group left empty is simply skipped.

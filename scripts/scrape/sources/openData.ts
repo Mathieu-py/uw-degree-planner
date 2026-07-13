@@ -90,7 +90,7 @@ function apiKey(): string {
 }
 
 /** Whether Open Data seating can be fetched (key present). When false, the build
- *  holds seating steady from the last snapshot instead of aborting. #120. */
+ * holds seating steady from the last snapshot instead of aborting. */
 export const hasOpenDataKey = (): boolean =>
   Boolean(process.env.UW_OPENDATA_KEY);
 
@@ -98,7 +98,7 @@ export const hasOpenDataKey = (): boolean =>
  * Rebuild the seating map from an existing snapshot's courses — last-known
  * `sections` keyed by code, empties dropped (to match {@link fetchSeating}, which
  * omits courses with no sections). Lets the build reuse committed seating when
- * Open Data is unavailable rather than wiping it. #120.
+ * Open Data is unavailable rather than wiping it.
  */
 export function seatingFromSnapshot(
   courses: Pick<CatalogCourse, "code" | "sections">[],

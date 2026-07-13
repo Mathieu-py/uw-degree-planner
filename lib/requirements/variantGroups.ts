@@ -1,6 +1,6 @@
 /**
  * Pickable variant groups of a program's rule tree, for the manual-onboarding
- * variant picker (#84). A group is a `pick` whose children are all `courses`
+ * variant picker. A group is a `pick` whose children are all `courses`
  * leaves and that isn't functionally mandatory — i.e. a real "Complete N of
  * these course numbers" choice (CS115 / CS135 / CS145, CS240 / CS240E, …).
  *

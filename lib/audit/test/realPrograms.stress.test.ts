@@ -52,7 +52,7 @@ function rootsOf(audit: AuditRoot): AuditNode[] {
 
 describe("real subjectPool — Anthropology '3.0 units of ANTH at the 300-level'", () => {
   // 3g-anthropology rules include: subjectPool { selectCount: 6, needUnits: 3.0,
-  // subjectCodes: ["ANTH"], minLevel: 300 } — a unit-stated pool (#101), so it
+  // subjectCodes: ["ANTH"], minLevel: 300 } — a unit-stated pool, so it
   // scores by UNITS. A 200-level ANTH course must NOT satisfy it.
   const program = PROGRAMS["3g-anthropology"];
 

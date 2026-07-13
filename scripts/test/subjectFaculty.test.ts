@@ -19,7 +19,7 @@ const FACULTIES: Faculty[] = [
 ];
 
 describe("subjectsForFaculties — no faculty silently resolves to an empty pool", () => {
-  // Guard (#10): a faculty that mapped to zero subjects would make a
+  // Guard: a faculty that mapped to zero subjects would make a
   // "Faculty of X" pool expand to nothing and silently drop the whole
   // requirement. Each real faculty must own several subject codes, so a future
   // edit that empties one is caught here instead of quietly under-crediting.

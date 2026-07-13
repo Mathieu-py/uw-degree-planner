@@ -75,7 +75,7 @@ export function WelcomeFlow({
   const [streamConfident, setStreamConfident] = useState(true);
   const [busy, setBusy] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
-  // Manual-onboarding variant picker (#84). Transcript path skips it — placed
+  // Manual-onboarding variant picker. Transcript path skips it — placed
   // courses already resolve every choice.
   const variants = useVariantPicker({
     programIds,
@@ -130,7 +130,7 @@ export function WelcomeFlow({
 
   function handleProgramChange(next: string[]) {
     setProgramIds(next);
-    // Manual pick pre-fills the co-op stream from the program's default (#131).
+    // Manual pick pre-fills the co-op stream from the program's default.
     // A transcript-detected stream (parseResult) and an explicit choice both win.
     if (!parseResult && !streamTouched) {
       const suggested = defaultStreamFor(next, startTermId);
@@ -146,7 +146,7 @@ export function WelcomeFlow({
   const buildPlan = useCallback((): LocalPlan => {
     const mintId = () => crypto.randomUUID();
     // Plan length follows the longest selected program (6 for Three-Year
-    // General, else 8; empty ⇒ 8). See #105.
+    // General, else 8; empty ⇒ 8).
     const numAcademicTerms = programIdsTermSpan(programIds);
     if (parseResult) {
       const { plan } = applyTranscriptToPlan(parseResult, {
@@ -157,7 +157,7 @@ export function WelcomeFlow({
       });
       // Honour programs the user corrected in review; keep only detected
       // specializations whose program is still on the plan. A double-degree swap
-      // (#103) re-keys a still-valid spec onto the packaged plan first, so it
+      // re-keys a still-valid spec onto the packaged plan first, so it
       // isn't lost — parity with PlanSettingsModal.
       const detectedSpecs = specsAfterDoubleDegreeSwap(
         parseResult.detectedProgramIds,
@@ -188,7 +188,7 @@ export function WelcomeFlow({
     (id) => programOptions.find((p) => p.id === id)?.name,
     "your program",
   );
-  // A lone Joint Honours plan is only half a degree — prompt for a partner (#111).
+  // A lone Joint Honours plan is only half a degree — prompt for a partner.
   const jointHonoursPartner = jointHonoursWarning(programIds);
   const partnerBanner = jointHonoursPartner ? (
     <p className="flex items-start gap-1.5 rounded-[8px] border border-partial bg-partial-soft px-3 py-2 text-xs text-ink-2">
@@ -202,7 +202,7 @@ export function WelcomeFlow({
     </p>
   ) : null;
   // A hand-picked pair that packages into a single double degree — offer the swap
-  // (#103). handleProgramChange collapses to the single id and re-suggests stream.
+  // handleProgramChange collapses to the single id and re-suggests stream.
   const doubleDegreeSuggestion = (
     <DoubleDegreeSuggestion
       programIds={programIds}

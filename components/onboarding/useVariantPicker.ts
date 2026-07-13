@@ -15,7 +15,7 @@ import type {
 import type { VariantGroup } from "@/lib/requirements/variantGroups";
 
 /**
- * Owns the manual-onboarding variant picker (#84): the program's pickable
+ * Owns the manual-onboarding variant picker: the program's pickable
  * course-variant groups, the student's selections, and folding those picks into
  * the built plan. Kept out of WelcomeFlow so that already-busy component doesn't
  * grow another state machine (mirrors the planner's usePlanner* hooks).

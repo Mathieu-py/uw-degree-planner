@@ -9,12 +9,12 @@
  * classify (map to its owning faculty, or omit if it has none).
  *
  * "Real/offered" is loadCatalogCodes()'s `units != null` lens, which already
- * excludes inactive/not-offered and WLU cross-listed codes (#117) — without it
+ * excludes inactive/not-offered and WLU cross-listed codes — without it
  * the catalog's historical superset buries the signal in ~100 dead subjects.
  *
  * Non-fatal by design (always exits 0): a mid-term catalog refresh that adds a
  * subject must not fail CI. Unlike check-dropped.ts, drift here is a heads-up,
- * not a regression. See issue #122.
+ * not a regression.
  *
  * Run: pnpm check-subjects
  */

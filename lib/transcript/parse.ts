@@ -214,9 +214,9 @@ export function parseTranscript(text: string): TranscriptParseResult {
   }
 
   // Each distinct program resolving to a real slug, in order of appearance — a
-  // double-degree student has two Plan lines (#32). Ambiguous or generic lines
+  // double-degree student has two Plan lines. Ambiguous or generic lines
   // ("Computer Science"; "Program: Engineering") resolve to null and are skipped
-  // (#27), so a single-degree transcript yields one slug. The first is primary.
+  // so a single-degree transcript yields one slug. The first is primary.
   const detectedProgramIds: string[] = [];
   const seen = new Set<string>();
   // Per-program specialization (first spec-bearing line per id wins).
