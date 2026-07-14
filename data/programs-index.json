@@ -1,0 +1,2070 @@
+{
+  "3g-anthropology": {
+    "name": "Anthropology (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-ba-sds-and-h-bsw-double-degree": {
+    "name": "Social Development Studies and Social Work Double Degree (Bachelor of Arts - Three-Year General and Bachelor of Social Work - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "sds-diversity-and-equity",
+        "name": "Diversity and Equity Specialization"
+      },
+      {
+        "slug": "sds-education",
+        "name": "Education Specialization"
+      },
+      {
+        "slug": "sds-individual-well-being-and-development",
+        "name": "Individual Well-Being and Development Specialization"
+      },
+      {
+        "slug": "sds-social-policy-and-social-action",
+        "name": "Social Policy and Social Action Specialization"
+      }
+    ]
+  },
+  "3g-classical-studies": {
+    "name": "Classical Studies (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-communication-studies": {
+    "name": "Communication Studies (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-english-creative-and-professional-writing": {
+    "name": "English - Creative and Professional Writing (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "3g-english-literature-and-rhetoric": {
+    "name": "English - Literature and Rhetoric (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "3g-english-rhetoric-media-and-professional-communication": {
+    "name": "English - Rhetoric, Media, and Professional Communication (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "3g-french": {
+    "name": "French (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "fr-professional-french",
+        "name": "Professional French Specialization"
+      }
+    ]
+  },
+  "3g-gender-and-social-justice": {
+    "name": "Gender and Social Justice (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-geography-and-environmental-management": {
+    "name": "Geography and Environmental Management (Bachelor of Environmental Studies - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "gem-aviation",
+        "name": "Aviation Specialization"
+      }
+    ]
+  },
+  "3g-german": {
+    "name": "German (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-history": {
+    "name": "History (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "hist-global-interactions",
+        "name": "Global Interactions Specialization"
+      },
+      {
+        "slug": "hist-international-relations",
+        "name": "International Relations Specialization"
+      },
+      {
+        "slug": "hist-revolution-war-and-upheaval",
+        "name": "Revolution, War, and Upheaval Specialization"
+      }
+    ]
+  },
+  "3g-mathematics": {
+    "name": "Mathematics (Bachelor of Mathematics, Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-medieval-studies": {
+    "name": "Medieval Studies (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-music": {
+    "name": "Music (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "music-church-music-and-worship",
+        "name": "Church Music and Worship Specialization"
+      },
+      {
+        "slug": "music-composition",
+        "name": "Composition Specialization"
+      },
+      {
+        "slug": "music-cultural-context-and-analysis",
+        "name": "Cultural Context and Analysis Specialization"
+      },
+      {
+        "slug": "music-performance",
+        "name": "Performance Specialization"
+      }
+    ]
+  },
+  "3g-peace-and-conflict-studies": {
+    "name": "Peace and Conflict Studies (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "pacs-restorative-justice",
+        "name": "Restorative Justice Specialization"
+      }
+    ]
+  },
+  "3g-philosophy": {
+    "name": "Philosophy (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-political-science": {
+    "name": "Political Science (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "psci-international-relations",
+        "name": "International Relations Specialization"
+      }
+    ]
+  },
+  "3g-psychology": {
+    "name": "Psychology (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-religion-culture-and-spirituality": {
+    "name": "Religion, Culture, and Spirituality (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-science": {
+    "name": "Science (Bachelor of Science - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-social-development-studies": {
+    "name": "Social Development Studies (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "sds-diversity-and-equity",
+        "name": "Diversity and Equity Specialization"
+      },
+      {
+        "slug": "sds-education",
+        "name": "Education Specialization"
+      },
+      {
+        "slug": "sds-individual-well-being-and-development",
+        "name": "Individual Well-Being and Development Specialization"
+      },
+      {
+        "slug": "sds-social-policy-and-social-action",
+        "name": "Social Policy and Social Action Specialization"
+      },
+      {
+        "slug": "sds-social-work",
+        "name": "Social Work Specialization"
+      }
+    ]
+  },
+  "3g-sociology": {
+    "name": "Sociology (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-spanish": {
+    "name": "Spanish (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "3g-visual-culture": {
+    "name": "Visual Culture (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6
+  },
+  "4g-anthropology": {
+    "name": "Anthropology (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-ba-sds-and-h-bsw-double-degree": {
+    "name": "Social Development Studies and Social Work Double Degree (Bachelor of Arts - Four-Year General and Bachelor of Social Work - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "sds-diversity-and-equity",
+        "name": "Diversity and Equity Specialization"
+      },
+      {
+        "slug": "sds-education",
+        "name": "Education Specialization"
+      },
+      {
+        "slug": "sds-individual-well-being-and-development",
+        "name": "Individual Well-Being and Development Specialization"
+      },
+      {
+        "slug": "sds-social-policy-and-social-action",
+        "name": "Social Policy and Social Action Specialization"
+      }
+    ]
+  },
+  "4g-classical-studies": {
+    "name": "Classical Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-communication-studies": {
+    "name": "Communication Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "commst-media-studies",
+        "name": "Media Studies Specialization"
+      },
+      {
+        "slug": "commst-performance-studies",
+        "name": "Performance Studies Specialization"
+      },
+      {
+        "slug": "commst-public-advocacy",
+        "name": "Public Advocacy Specialization"
+      },
+      {
+        "slug": "commst-strategic-communication",
+        "name": "Strategic Communication Specialization"
+      }
+    ]
+  },
+  "4g-economics": {
+    "name": "Economics (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "econ-econometrics",
+        "name": "Econometrics Specialization"
+      },
+      {
+        "slug": "econ-finance",
+        "name": "Finance Specialization"
+      },
+      {
+        "slug": "econ-public-policy",
+        "name": "Public Policy Specialization"
+      }
+    ]
+  },
+  "4g-english-creative-and-professional-writing": {
+    "name": "English - Creative and Professional Writing (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "4g-english-literature": {
+    "name": "English - Literature (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "4g-english-literature-and-rhetoric": {
+    "name": "English - Literature and Rhetoric (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "4g-english-rhetoric-media-and-professional-communication": {
+    "name": "English - Rhetoric, Media, and Professional Communication (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "4g-french": {
+    "name": "French (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "fr-professional-french",
+        "name": "Professional French Specialization"
+      }
+    ]
+  },
+  "4g-gender-and-social-justice": {
+    "name": "Gender and Social Justice (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-history": {
+    "name": "History (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "hist-global-interactions",
+        "name": "Global Interactions Specialization"
+      },
+      {
+        "slug": "hist-international-relations",
+        "name": "International Relations Specialization"
+      },
+      {
+        "slug": "hist-revolution-war-and-upheaval",
+        "name": "Revolution, War, and Upheaval Specialization"
+      }
+    ]
+  },
+  "4g-kinesiology": {
+    "name": "Kinesiology (Bachelor of Science - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "kin-rehabilitation-sciences",
+        "name": "Rehabilitation Sciences Specialization"
+      }
+    ]
+  },
+  "4g-legal-studies": {
+    "name": "Legal Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-medieval-studies": {
+    "name": "Medieval Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-music": {
+    "name": "Music (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "music-church-music-and-worship",
+        "name": "Church Music and Worship Specialization"
+      },
+      {
+        "slug": "music-composition",
+        "name": "Composition Specialization"
+      },
+      {
+        "slug": "music-cultural-context-and-analysis",
+        "name": "Cultural Context and Analysis Specialization"
+      },
+      {
+        "slug": "music-performance",
+        "name": "Performance Specialization"
+      }
+    ]
+  },
+  "4g-peace-and-conflict-studies": {
+    "name": "Peace and Conflict Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "pacs-restorative-justice",
+        "name": "Restorative Justice Specialization"
+      }
+    ]
+  },
+  "4g-philosophy": {
+    "name": "Philosophy (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-political-science": {
+    "name": "Political Science (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "psci-international-relations",
+        "name": "International Relations Specialization"
+      }
+    ]
+  },
+  "4g-psychology": {
+    "name": "Psychology (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-religion-culture-and-spirituality": {
+    "name": "Religion, Culture, and Spirituality (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-sexualities-relationships-and-families": {
+    "name": "Sexualities, Relationships, and Families (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "srf-counselling",
+        "name": "Counselling Specialization"
+      }
+    ]
+  },
+  "4g-social-development-studies": {
+    "name": "Social Development Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "sds-diversity-and-equity",
+        "name": "Diversity and Equity Specialization"
+      },
+      {
+        "slug": "sds-education",
+        "name": "Education Specialization"
+      },
+      {
+        "slug": "sds-individual-well-being-and-development",
+        "name": "Individual Well-Being and Development Specialization"
+      },
+      {
+        "slug": "sds-social-policy-and-social-action",
+        "name": "Social Policy and Social Action Specialization"
+      },
+      {
+        "slug": "sds-social-work",
+        "name": "Social Work Specialization"
+      }
+    ]
+  },
+  "4g-sociology": {
+    "name": "Sociology (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "4g-spanish": {
+    "name": "Spanish (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "accounting-and-financial-management": {
+    "name": "Accounting and Financial Management (Bachelor of Accounting and Financial Management - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "afm-business-analytics",
+        "name": "Business Analytics Specialization"
+      },
+      {
+        "slug": "afm-enterprise-performance-and-risk",
+        "name": "Enterprise Performance and Risk Specialization"
+      },
+      {
+        "slug": "afm-entrepreneurial-mindset",
+        "name": "Entrepreneurial Mindset Specialization"
+      },
+      {
+        "slug": "afm-financial-markets",
+        "name": "Financial Markets Specialization"
+      },
+      {
+        "slug": "afm-professional-accountant",
+        "name": "Professional Accountant Specialization"
+      }
+    ]
+  },
+  "applied-mathematics-with-scientific-computing-and-scientific-machine-learning": {
+    "name": "Applied Mathematics with Scientific Computing and Scientific Machine Learning (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "architectural-engineering": {
+    "name": "Architectural Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ae-building-structures",
+        "name": "Building Structures Specialization"
+      },
+      {
+        "slug": "ae-building-systems",
+        "name": "Building Systems Specialization"
+      }
+    ]
+  },
+  "architectural-studies": {
+    "name": "Architectural Studies (Bachelor of Architectural Studies - Honours)",
+    "numberOfTerms": 8
+  },
+  "arts-and-business": {
+    "name": "Arts and Business",
+    "numberOfTerms": 8
+  },
+  "bba-and-bcs-double-degree": {
+    "name": "Business Administration and Computer Science Double Degree (Bachelor of Business Administration and Bachelor of Computer Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "cs-artificial-intelligence",
+        "name": "Artificial Intelligence Specialization"
+      },
+      {
+        "slug": "cs-bioinformatics",
+        "name": "Bioinformatics Specialization"
+      },
+      {
+        "slug": "cs-computational-fine-art",
+        "name": "Computational Fine Art Specialization"
+      },
+      {
+        "slug": "cs-digital-hardware",
+        "name": "Digital Hardware Specialization"
+      },
+      {
+        "slug": "cs-game-design",
+        "name": "Game Design Specialization"
+      },
+      {
+        "slug": "cs-human-computer-interaction",
+        "name": "Human-Computer Interaction Specialization"
+      },
+      {
+        "slug": "cs-software-engineering",
+        "name": "Software Engineering Specialization"
+      }
+    ]
+  },
+  "bba-and-bmath-double-degree": {
+    "name": "Business Administration and Mathematics Double Degree (Bachelor of Business Administration and Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "biochemistry": {
+    "name": "Biochemistry (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "biochemistry-biotechnology-specialization": {
+    "name": "Biochemistry - Biotechnology Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "biological-and-medical-physics": {
+    "name": "Biological and Medical Physics (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "biomedical-engineering": {
+    "name": "Biomedical Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "bme-biomaterials-and-tissues",
+        "name": "Biomaterials and Tissues Specialization"
+      },
+      {
+        "slug": "bme-biomechanical-and-rehabilitation-engineering",
+        "name": "Biomechanical and Rehabilitation Engineering Specialization"
+      },
+      {
+        "slug": "bme-biomedical-artificial-intelligence",
+        "name": "Biomedical Artificial Intelligence Specialization"
+      },
+      {
+        "slug": "bme-biomedical-imaging-technologies",
+        "name": "Biomedical Imaging Technologies Specialization"
+      },
+      {
+        "slug": "bme-medical-devices",
+        "name": "Medical Devices Specialization"
+      },
+      {
+        "slug": "bme-neural-engineering",
+        "name": "Neural Engineering Specialization"
+      }
+    ]
+  },
+  "biomedical-sciences": {
+    "name": "Biomedical Sciences (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "biostatistics": {
+    "name": "Biostatistics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "chemical-engineering": {
+    "name": "Chemical Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "che-chemical-process-modelling-optimization-and-control",
+        "name": "Chemical Process Modelling, Optimization and Control Specialization"
+      },
+      {
+        "slug": "che-energy-and-environmental-systems-and-processes",
+        "name": "Energy and Environmental Systems and Processes Specialization"
+      },
+      {
+        "slug": "che-materials-and-manufacturing-processes",
+        "name": "Materials and Manufacturing Processes Specialization"
+      }
+    ]
+  },
+  "chemistry-computational-specialization": {
+    "name": "Chemistry - Computational Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "civil-engineering": {
+    "name": "Civil Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "cive-building-science",
+        "name": "Building Science Specialization"
+      },
+      {
+        "slug": "cive-geotechnical",
+        "name": "Geotechnical Specialization"
+      },
+      {
+        "slug": "cive-structural",
+        "name": "Structural Specialization"
+      },
+      {
+        "slug": "cive-transportation",
+        "name": "Transportation Specialization"
+      },
+      {
+        "slug": "cive-water-resources",
+        "name": "Water Resources Specialization"
+      }
+    ]
+  },
+  "classics": {
+    "name": "Classics (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "climate-and-environmental-change": {
+    "name": "Climate and Environmental Change (Bachelor of Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "cec-aviation",
+        "name": "Aviation Specialization"
+      },
+      {
+        "slug": "cec-economy-and-development",
+        "name": "Economy and Development Specialization"
+      },
+      {
+        "slug": "cec-environment-society-and-well-being",
+        "name": "Environment, Society and Well-Being Specialization"
+      },
+      {
+        "slug": "cec-geographic-information-systems",
+        "name": "Geographic Information Systems Specialization"
+      },
+      {
+        "slug": "cec-remote-sensing",
+        "name": "Remote Sensing Specialization"
+      }
+    ]
+  },
+  "communication-arts-and-design-practice": {
+    "name": "Communication Arts and Design Practice (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "computational-mathematics": {
+    "name": "Computational Mathematics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "computer-engineering": {
+    "name": "Computer Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ce-communications-and-signal-processing",
+        "name": "Communications and Signal Processing Specialization"
+      },
+      {
+        "slug": "ce-quantum-engineering",
+        "name": "Quantum Engineering Specialization"
+      }
+    ]
+  },
+  "computing-and-financial-management": {
+    "name": "Computing and Financial Management (Bachelor of Computing and Financial Management - Honours)",
+    "numberOfTerms": 8
+  },
+  "data-science-bcs": {
+    "name": "Data Science (Bachelor of Computer Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "data-science-bmath": {
+    "name": "Data Science (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "earth-sciences": {
+    "name": "Earth Sciences (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "earth-sciences-geology-specialization": {
+    "name": "Earth Sciences - Geology Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "earth-sciences-geophysics-specialization": {
+    "name": "Earth Sciences - Geophysics Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "earth-sciences-hydrogeology": {
+    "name": "Earth Sciences - Hydrogeology Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "electrical-engineering": {
+    "name": "Electrical Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ee-communications-and-signal-processing",
+        "name": "Communications and Signal Processing Specialization"
+      },
+      {
+        "slug": "ee-quantum-engineering",
+        "name": "Quantum Engineering Specialization"
+      }
+    ]
+  },
+  "english-language-and-literature": {
+    "name": "English - Language and Literature (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "environment-and-business": {
+    "name": "Environment and Business (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "enbus-sustainable-finance",
+        "name": "Sustainable Finance Specialization"
+      }
+    ]
+  },
+  "environmental-engineering": {
+    "name": "Environmental Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "enve-energy-and-climate-change",
+        "name": "Energy and Climate Change Specialization"
+      },
+      {
+        "slug": "enve-modelling-and-data-analytics",
+        "name": "Modelling and Data Analytics Specialization"
+      },
+      {
+        "slug": "enve-pollution-and-restoration",
+        "name": "Pollution and Restoration Specialization"
+      },
+      {
+        "slug": "enve-sustainable-cities",
+        "name": "Sustainable Cities Specialization"
+      },
+      {
+        "slug": "enve-water-resources",
+        "name": "Water Resources Specialization"
+      }
+    ]
+  },
+  "environmental-sciences-ecology-specialization": {
+    "name": "Environmental Sciences - Ecology Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "environmental-sciences-geoscience-specialization": {
+    "name": "Environmental Sciences - Geoscience Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "environmental-sciences-water-science-specialization": {
+    "name": "Environmental Sciences - Water Science Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "fine-arts-general-studio-art": {
+    "name": "Fine Arts - General Studio Art (Bachelor of Arts - Three-Year General)",
+    "numberOfTerms": 6,
+    "specializations": [
+      {
+        "slug": "fine-digital-art",
+        "name": "Digital Art Specialization"
+      }
+    ]
+  },
+  "fine-arts-studio-practice": {
+    "name": "Fine Arts - Studio Practice (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "fine-digital-art",
+        "name": "Digital Art Specialization"
+      },
+      {
+        "slug": "fine-fine-arts-teaching-preparation",
+        "name": "Fine Arts - Teaching Preparation Specialization"
+      }
+    ]
+  },
+  "geography-and-aviation": {
+    "name": "Geography and Aviation (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ga-climate-change",
+        "name": "Climate Change Specialization"
+      },
+      {
+        "slug": "ga-earth-systems-science",
+        "name": "Earth Systems Science Specialization"
+      },
+      {
+        "slug": "ga-economy-and-development",
+        "name": "Economy and Development Specialization"
+      },
+      {
+        "slug": "ga-geographic-information-systems",
+        "name": "Geographic Information Systems Specialization"
+      },
+      {
+        "slug": "ga-environment-society-and-well-being",
+        "name": "Environment, Society and Well-Being Specialization"
+      },
+      {
+        "slug": "ga-remote-sensing",
+        "name": "Remote Sensing Specialization"
+      }
+    ]
+  },
+  "geological-engineering": {
+    "name": "Geological Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "geoe-geology",
+        "name": "Geology Specialization"
+      },
+      {
+        "slug": "geoe-hydrogeology",
+        "name": "Hydrogeology Specialization"
+      },
+      {
+        "slug": "geoe-soil-rock-and-structures",
+        "name": "Soil, Rock and Structures Specialization"
+      }
+    ]
+  },
+  "global-business-and-digital-arts": {
+    "name": "Global Business and Digital Arts (Bachelor of Global Business and Digital Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-actuarial-science": {
+    "name": "Actuarial Science (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "actsc-finance",
+        "name": "Finance Specialization"
+      },
+      {
+        "slug": "actsc-predictive-analytics",
+        "name": "Predictive Analytics Specialization"
+      }
+    ]
+  },
+  "h-anthropology": {
+    "name": "Anthropology (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-applied-mathematics": {
+    "name": "Applied Mathematics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "amath-biology",
+        "name": "Biology Specialization"
+      },
+      {
+        "slug": "amath-climate-and-sustainability",
+        "name": "Climate and Sustainability Specialization"
+      },
+      {
+        "slug": "amath-economics",
+        "name": "Economics Specialization"
+      },
+      {
+        "slug": "amath-engineering",
+        "name": "Engineering Specialization"
+      },
+      {
+        "slug": "amath-physics",
+        "name": "Physics Specialization"
+      }
+    ]
+  },
+  "h-ba-sds-and-h-bsw-double-degree": {
+    "name": "Social Development Studies and Social Work Double Degree (Bachelor of Arts - Honours and Bachelor of Social Work - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "sds-diversity-and-equity",
+        "name": "Diversity and Equity Specialization"
+      },
+      {
+        "slug": "sds-education",
+        "name": "Education Specialization"
+      },
+      {
+        "slug": "sds-individual-well-being-and-development",
+        "name": "Individual Well-Being and Development Specialization"
+      },
+      {
+        "slug": "sds-social-policy-and-social-action",
+        "name": "Social Policy and Social Action Specialization"
+      }
+    ]
+  },
+  "h-biology": {
+    "name": "Biology (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-chemistry": {
+    "name": "Chemistry (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-classical-studies": {
+    "name": "Classical Studies (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-combinatorics-and-optimization": {
+    "name": "Combinatorics and Optimization (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-communication-studies": {
+    "name": "Communication Studies (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "commst-media-studies",
+        "name": "Media Studies Specialization"
+      },
+      {
+        "slug": "commst-performance-studies",
+        "name": "Performance Studies Specialization"
+      },
+      {
+        "slug": "commst-public-advocacy",
+        "name": "Public Advocacy Specialization"
+      },
+      {
+        "slug": "commst-strategic-communication",
+        "name": "Strategic Communication Specialization"
+      }
+    ]
+  },
+  "h-computer-science-bcs": {
+    "name": "Computer Science (Bachelor of Computer Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "cs-artificial-intelligence",
+        "name": "Artificial Intelligence Specialization"
+      },
+      {
+        "slug": "cs-bioinformatics",
+        "name": "Bioinformatics Specialization"
+      },
+      {
+        "slug": "cs-business",
+        "name": "Business Specialization"
+      },
+      {
+        "slug": "cs-computational-fine-art",
+        "name": "Computational Fine Art Specialization"
+      },
+      {
+        "slug": "cs-digital-hardware",
+        "name": "Digital Hardware Specialization"
+      },
+      {
+        "slug": "cs-game-design",
+        "name": "Game Design Specialization"
+      },
+      {
+        "slug": "cs-human-computer-interaction",
+        "name": "Human-Computer Interaction Specialization"
+      },
+      {
+        "slug": "cs-software-engineering",
+        "name": "Software Engineering Specialization"
+      }
+    ]
+  },
+  "h-computer-science-bmath": {
+    "name": "Computer Science (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "cs-artificial-intelligence",
+        "name": "Artificial Intelligence Specialization"
+      },
+      {
+        "slug": "cs-bioinformatics",
+        "name": "Bioinformatics Specialization"
+      },
+      {
+        "slug": "cs-business",
+        "name": "Business Specialization"
+      },
+      {
+        "slug": "cs-computational-fine-art",
+        "name": "Computational Fine Art Specialization"
+      },
+      {
+        "slug": "cs-digital-hardware",
+        "name": "Digital Hardware Specialization"
+      },
+      {
+        "slug": "cs-game-design",
+        "name": "Game Design Specialization"
+      },
+      {
+        "slug": "cs-human-computer-interaction",
+        "name": "Human-Computer Interaction Specialization"
+      },
+      {
+        "slug": "cs-software-engineering",
+        "name": "Software Engineering Specialization"
+      }
+    ]
+  },
+  "h-economics": {
+    "name": "Economics (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "econ-econometrics",
+        "name": "Econometrics Specialization"
+      },
+      {
+        "slug": "econ-finance",
+        "name": "Finance Specialization"
+      },
+      {
+        "slug": "econ-intensive-economics",
+        "name": "Intensive Economics Specialization"
+      },
+      {
+        "slug": "econ-public-policy",
+        "name": "Public Policy Specialization"
+      }
+    ]
+  },
+  "h-english-creative-and-professional-writing": {
+    "name": "English - Creative and Professional Writing (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-intensive-english",
+        "name": "Intensive English Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "h-english-literature": {
+    "name": "English - Literature (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-intensive-english",
+        "name": "Intensive English Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "h-english-literature-and-rhetoric": {
+    "name": "English - Literature and Rhetoric (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-intensive-english",
+        "name": "Intensive English Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "h-english-rhetoric-media-and-professional-communication": {
+    "name": "English - Rhetoric, Media, and Professional Communication (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "engl-communication-design",
+        "name": "Communication Design Specialization"
+      },
+      {
+        "slug": "engl-creative-writing",
+        "name": "Creative Writing Specialization"
+      },
+      {
+        "slug": "engl-digital-media-studies",
+        "name": "Digital Media Studies Specialization"
+      },
+      {
+        "slug": "engl-global-literatures",
+        "name": "Global Literatures Specialization"
+      },
+      {
+        "slug": "engl-intensive-english",
+        "name": "Intensive English Specialization"
+      },
+      {
+        "slug": "engl-technical-writing",
+        "name": "Technical Writing Specialization"
+      }
+    ]
+  },
+  "h-environment-resources-and-sustainability": {
+    "name": "Environment, Resources and Sustainability (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-french": {
+    "name": "French (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "fr-french-teaching",
+        "name": "French Teaching Specialization"
+      },
+      {
+        "slug": "fr-intensive-french-and-francophone-literatures-and-cultures",
+        "name": "Intensive French and Francophone Literatures and Cultures Specialization"
+      },
+      {
+        "slug": "fr-professional-french",
+        "name": "Professional French Specialization"
+      }
+    ]
+  },
+  "h-gender-and-social-justice": {
+    "name": "Gender and Social Justice (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-geography-and-environmental-management": {
+    "name": "Geography and Environmental Management (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "gem-aviation",
+        "name": "Aviation Specialization"
+      },
+      {
+        "slug": "gem-climate-change",
+        "name": "Climate Change Specialization"
+      },
+      {
+        "slug": "gem-earth-systems-science",
+        "name": "Earth Systems Science Specialization"
+      },
+      {
+        "slug": "gem-economy-and-development",
+        "name": "Economy and Development Specialization"
+      },
+      {
+        "slug": "gem-environment-society-and-well-being",
+        "name": "Environment, Society and Well-Being Specialization"
+      },
+      {
+        "slug": "gem-geographic-information-systems",
+        "name": "Geographic Information Systems Specialization"
+      },
+      {
+        "slug": "gem-remote-sensing",
+        "name": "Remote Sensing Specialization"
+      }
+    ]
+  },
+  "h-geospatial-data-science": {
+    "name": "Geospatial Data Science (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "gds-aviation",
+        "name": "Aviation Specialization"
+      },
+      {
+        "slug": "gds-climate-change",
+        "name": "Climate Change Specialization"
+      },
+      {
+        "slug": "gds-earth-systems-science",
+        "name": "Earth Systems Science Specialization"
+      },
+      {
+        "slug": "gds-economy-and-development",
+        "name": "Economy and Development Specialization"
+      },
+      {
+        "slug": "gds-environment-society-and-well-being",
+        "name": "Environment, Society and Well-Being Specialization"
+      }
+    ]
+  },
+  "h-german": {
+    "name": "German (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-history": {
+    "name": "History (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "hist-global-interactions",
+        "name": "Global Interactions Specialization"
+      },
+      {
+        "slug": "hist-international-relations",
+        "name": "International Relations Specialization"
+      },
+      {
+        "slug": "hist-revolution-war-and-upheaval",
+        "name": "Revolution, War, and Upheaval Specialization"
+      }
+    ]
+  },
+  "h-kinesiology": {
+    "name": "Kinesiology (Bachelor of Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "kin-rehabilitation-sciences",
+        "name": "Rehabilitation Sciences Specialization"
+      }
+    ]
+  },
+  "h-legal-studies": {
+    "name": "Legal Studies (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-medieval-studies": {
+    "name": "Medieval Studies (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-music": {
+    "name": "Music (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "music-church-music-and-worship",
+        "name": "Church Music and Worship Specialization"
+      },
+      {
+        "slug": "music-composition",
+        "name": "Composition Specialization"
+      },
+      {
+        "slug": "music-cultural-context-and-analysis",
+        "name": "Cultural Context and Analysis Specialization"
+      },
+      {
+        "slug": "music-intensive-music",
+        "name": "Intensive Music Specialization"
+      },
+      {
+        "slug": "music-performance",
+        "name": "Performance Specialization"
+      }
+    ]
+  },
+  "h-peace-and-conflict-studies": {
+    "name": "Peace and Conflict Studies (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "pacs-restorative-justice",
+        "name": "Restorative Justice Specialization"
+      }
+    ]
+  },
+  "h-philosophy": {
+    "name": "Philosophy (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-physics": {
+    "name": "Physics (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-political-science": {
+    "name": "Political Science (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "psci-international-relations",
+        "name": "International Relations Specialization"
+      }
+    ]
+  },
+  "h-pure-mathematics": {
+    "name": "Pure Mathematics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-recreation-leadership-and-health": {
+    "name": "Recreation, Leadership, and Health (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-religion-culture-and-spirituality": {
+    "name": "Religion, Culture, and Spirituality (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-science": {
+    "name": "Science (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-sexualities-relationships-and-families": {
+    "name": "Sexualities, Relationships, and Families (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "srf-counselling",
+        "name": "Counselling Specialization"
+      },
+      {
+        "slug": "srf-human-services-practicum",
+        "name": "Human Services Practicum Specialization"
+      },
+      {
+        "slug": "srf-intensive-research",
+        "name": "Intensive Research Specialization"
+      }
+    ]
+  },
+  "h-social-development-studies": {
+    "name": "Social Development Studies (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "sds-diversity-and-equity",
+        "name": "Diversity and Equity Specialization"
+      },
+      {
+        "slug": "sds-education",
+        "name": "Education Specialization"
+      },
+      {
+        "slug": "sds-individual-well-being-and-development",
+        "name": "Individual Well-Being and Development Specialization"
+      },
+      {
+        "slug": "sds-social-policy-and-social-action",
+        "name": "Social Policy and Social Action Specialization"
+      },
+      {
+        "slug": "sds-social-work",
+        "name": "Social Work Specialization"
+      }
+    ]
+  },
+  "h-sociology": {
+    "name": "Sociology (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-spanish": {
+    "name": "Spanish (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-sport-and-recreation-management": {
+    "name": "Sport and Recreation Management (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-statistics": {
+    "name": "Statistics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-therapeutic-recreation": {
+    "name": "Therapeutic Recreation (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "h-visual-culture": {
+    "name": "Visual Culture (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8
+  },
+  "health-sciences": {
+    "name": "Health Sciences (Bachelor of Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "hs-health-research",
+        "name": "Health Research Specialization"
+      },
+      {
+        "slug": "hs-pre-clinical",
+        "name": "Pre-Clinical Specialization"
+      }
+    ]
+  },
+  "information-technology-management": {
+    "name": "Information Technology Management (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "international-development": {
+    "name": "International Development (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "indev-practice",
+        "name": "Practice Specialization"
+      },
+      {
+        "slug": "indev-research",
+        "name": "Research Specialization"
+      }
+    ]
+  },
+  "jh-actuarial-science": {
+    "name": "Actuarial Science (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-applied-mathematics": {
+    "name": "Applied Mathematics (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-biology": {
+    "name": "Biology (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-chemistry": {
+    "name": "Chemistry (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-combinatorics-and-optimization": {
+    "name": "Combinatorics and Optimization (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-computer-science-bcs": {
+    "name": "Computer Science (Bachelor of Computer Science - Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-computer-science-bmath": {
+    "name": "Computer Science (Bachelor of Mathematics - Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-environment-resources-and-sustainability": {
+    "name": "Environment, Resources and Sustainability (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-geography-and-environmental-management": {
+    "name": "Geography and Environmental Management (Joint Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "gem-aviation",
+        "name": "Aviation Specialization"
+      },
+      {
+        "slug": "gem-climate-change",
+        "name": "Climate Change Specialization"
+      },
+      {
+        "slug": "gem-earth-systems-science",
+        "name": "Earth Systems Science Specialization"
+      },
+      {
+        "slug": "gem-economy-and-development",
+        "name": "Economy and Development Specialization"
+      },
+      {
+        "slug": "gem-environment-society-and-well-being",
+        "name": "Environment, Society and Well-Being Specialization"
+      },
+      {
+        "slug": "gem-geographic-information-systems",
+        "name": "Geographic Information Systems Specialization"
+      },
+      {
+        "slug": "gem-remote-sensing",
+        "name": "Remote Sensing Specialization"
+      }
+    ]
+  },
+  "jh-geospatial-data-science": {
+    "name": "Geospatial Data Science (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-mathematics": {
+    "name": "Mathematics (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-physics": {
+    "name": "Physics (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-pure-mathematics": {
+    "name": "Pure Mathematics (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-recreation-leadership-and-health": {
+    "name": "Recreation, Leadership, and Health (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-sport-and-recreation-management": {
+    "name": "Sport and Recreation Management (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-statistics": {
+    "name": "Statistics (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "jh-therapeutic-recreation": {
+    "name": "Therapeutic Recreation (Joint Honours)",
+    "numberOfTerms": 8
+  },
+  "knowledge-integration": {
+    "name": "Knowledge Integration (Bachelor of Knowledge Integration - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ki-collaborative-design",
+        "name": "Collaborative Design Specialization"
+      },
+      {
+        "slug": "ki-science-technology-and-society",
+        "name": "Science, Technology, and Society Specialization"
+      }
+    ]
+  },
+  "management-engineering": {
+    "name": "Management Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "materials-and-nanosciences": {
+    "name": "Materials and Nanosciences (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "math-farm-chartered-financial-analyst-spec": {
+    "name": "Mathematics/Financial Analysis and Risk Management - Chartered Financial Analyst Specialization (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "math-farm-professional-risk-management-spec": {
+    "name": "Mathematics/Financial Analysis and Risk Management - Professional Risk Management Specialization (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-economics-ba": {
+    "name": "Mathematical Economics (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "mathecon-econometrics",
+        "name": "Econometrics Specialization"
+      },
+      {
+        "slug": "mathecon-finance",
+        "name": "Finance Specialization"
+      },
+      {
+        "slug": "mathecon-public-policy",
+        "name": "Public Policy Specialization"
+      }
+    ]
+  },
+  "mathematical-economics-bmath": {
+    "name": "Mathematical Economics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-finance": {
+    "name": "Mathematical Finance (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-optimization-business-specialization": {
+    "name": "Mathematical Optimization - Business Specialization (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-optimization-operations-research-specialization": {
+    "name": "Mathematical Optimization - Operations Research Specialization (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-physics-bmath": {
+    "name": "Mathematical Physics (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-physics-bsc": {
+    "name": "Mathematical Physics (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematical-studies": {
+    "name": "Mathematical Studies (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ms-business",
+        "name": "Business Specialization"
+      }
+    ]
+  },
+  "mathematics-business-administration": {
+    "name": "Mathematics/Business Administration (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mathematics-chartered-professional-accountancy": {
+    "name": "Mathematics/Chartered Professional Accountancy (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "cpa-data-analytics",
+        "name": "Data Analytics Specialization"
+      },
+      {
+        "slug": "cpa-finance",
+        "name": "Finance Specialization"
+      }
+    ]
+  },
+  "mathematics-teaching": {
+    "name": "Mathematics/Teaching (Bachelor of Mathematics - Honours)",
+    "numberOfTerms": 8
+  },
+  "mechanical-engineering": {
+    "name": "Mechanical Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "me-welding-and-joining",
+        "name": "Welding and Joining Specialization"
+      }
+    ]
+  },
+  "mechatronics-engineering": {
+    "name": "Mechatronics Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "medical-sciences": {
+    "name": "Medical Sciences (Bachelor of Medical Sciences - Honours)",
+    "numberOfTerms": 8
+  },
+  "medicinal-chemistry": {
+    "name": "Medicinal Chemistry (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "nanotechnology-engineering": {
+    "name": "Nanotechnology Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ne-nanobiosystems",
+        "name": "Nanobiosystems Specialization"
+      },
+      {
+        "slug": "ne-nanoelectronics",
+        "name": "Nanoelectronics Specialization"
+      },
+      {
+        "slug": "ne-nanofabrication",
+        "name": "Nanofabrication Specialization"
+      },
+      {
+        "slug": "ne-nanomaterials",
+        "name": "Nanomaterials Specialization"
+      }
+    ]
+  },
+  "optometry": {
+    "name": "Optometry (Doctor of Optometry)",
+    "numberOfTerms": 8
+  },
+  "pharmacy": {
+    "name": "Pharmacy (Doctor of Pharmacy)",
+    "numberOfTerms": 8
+  },
+  "physics-and-astronomy": {
+    "name": "Physics and Astronomy (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "planning": {
+    "name": "Planning (Bachelor of Environmental Studies - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "plan-environmental-planning",
+        "name": "Environmental Planning Specialization"
+      },
+      {
+        "slug": "plan-land-use-transportation-and-infrastructure-planning",
+        "name": "Land Use, Transportation, and Infrastructure Planning Specialization"
+      },
+      {
+        "slug": "plan-social-planning-and-community-development",
+        "name": "Social Planning and Community Development Specialization"
+      },
+      {
+        "slug": "plan-urban-design",
+        "name": "Urban Design Specialization"
+      }
+    ]
+  },
+  "psychology-ba": {
+    "name": "Psychology (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "psych-research-intensive",
+        "name": "Research Intensive Specialization"
+      }
+    ]
+  },
+  "psychology-bsc": {
+    "name": "Psychology (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "public-health": {
+    "name": "Public Health (Bachelor of Public Health - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "ph-health-research",
+        "name": "Health Research Specialization"
+      }
+    ]
+  },
+  "recreation-and-leisure-studies": {
+    "name": "Recreation and Leisure Studies (Bachelor of Arts - Four-Year General)",
+    "numberOfTerms": 8
+  },
+  "science-and-aviation": {
+    "name": "Science and Aviation (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "science-and-business": {
+    "name": "Science and Business (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "science-and-business-biochemistry-specialization": {
+    "name": "Science and Business - Biochemistry Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "science-and-business-biology-specialization": {
+    "name": "Science and Business - Biology Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "science-and-business-biotechnology-specialization": {
+    "name": "Science and Business - Biotechnology Specialization (Bachelor of Science - Honours)",
+    "numberOfTerms": 8
+  },
+  "science-and-financial-management": {
+    "name": "Science and Financial Management (Bachelor of Science and Financial Management - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "scfm-biotechnology",
+        "name": "Biotechnology Specialization"
+      },
+      {
+        "slug": "scfm-business-analytics",
+        "name": "Business Analytics Specialization"
+      },
+      {
+        "slug": "scfm-earth-and-water-science",
+        "name": "Earth and Water Science Specialization"
+      },
+      {
+        "slug": "scfm-financial-markets",
+        "name": "Financial Markets Specialization"
+      },
+      {
+        "slug": "scfm-physics-of-systems-and-energy",
+        "name": "Physics of Systems and Energy Specialization"
+      },
+      {
+        "slug": "scfm-professional-accountant",
+        "name": "Professional Accountant Specialization"
+      }
+    ]
+  },
+  "science-with-arts-major": {
+    "name": "Science (Joint Honours with Arts Major)",
+    "numberOfTerms": 8
+  },
+  "social-work": {
+    "name": "Social Work (Bachelor of Social Work - Honours)",
+    "numberOfTerms": 8
+  },
+  "software-engineering": {
+    "name": "Software Engineering (Bachelor of Software Engineering - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "se-artificial-intelligence",
+        "name": "Artificial Intelligence Specialization"
+      },
+      {
+        "slug": "se-business",
+        "name": "Business Specialization"
+      },
+      {
+        "slug": "se-computational-fine-art",
+        "name": "Computational Fine Art Specialization"
+      },
+      {
+        "slug": "se-human-computer-interaction",
+        "name": "Human-Computer Interaction Specialization"
+      }
+    ]
+  },
+  "sustainability-and-financial-management": {
+    "name": "Sustainability and Financial Management (Bachelor of Sustainability and Financial Management - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "sfm-corporate-sustainability",
+        "name": "Corporate Sustainability Specialization"
+      },
+      {
+        "slug": "sfm-government-policy-and-financial-markets",
+        "name": "Government Policy and Financial Markets Specialization"
+      },
+      {
+        "slug": "sfm-indigenous-entrepreneurship",
+        "name": "Indigenous Entrepreneurship Specialization"
+      }
+    ]
+  },
+  "systems-design-engineering": {
+    "name": "Systems Design Engineering (Bachelor of Applied Science - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "syde-human-factors-and-interfaces",
+        "name": "Human Factors and Interfaces Specialization"
+      },
+      {
+        "slug": "syde-intelligent-and-automated-systems",
+        "name": "Intelligent and Automated Systems Specialization"
+      },
+      {
+        "slug": "syde-physical-and-mechatronics-systems",
+        "name": "Physical and Mechatronics Systems Specialization"
+      },
+      {
+        "slug": "syde-societal-and-environmental-systems",
+        "name": "Societal and Environmental Systems Specialization"
+      }
+    ]
+  },
+  "theatre-and-performance": {
+    "name": "Theatre and Performance (Bachelor of Arts - Honours)",
+    "numberOfTerms": 8,
+    "specializations": [
+      {
+        "slug": "thperf-performance-and-production",
+        "name": "Performance and Production Specialization"
+      },
+      {
+        "slug": "thperf-production-and-design",
+        "name": "Production and Design Specialization"
+      },
+      {
+        "slug": "thperf-theatre-and-performance-studies",
+        "name": "Theatre and Performance Studies Specialization"
+      }
+    ]
+  }
+}
