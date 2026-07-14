@@ -333,8 +333,12 @@ export function isTermLetter(s: string | null | undefined): s is TermLetter {
 /** Span when a program declares none, and the clamp ceiling (`TermLetter` ≤ 4B). */
 export const DEFAULT_TERM_SPAN = 8;
 
-/** Academic terms a program spans, from `numberOfTerms` (engineering/absent ⇒ 8). */
-export function programTermSpan(program: Program): number {
+/**
+ * Academic terms a program spans, from `numberOfTerms` (engineering/absent ⇒ 8).
+ * Structural param so both a full `Program` and the client `ProgramMeta` fit —
+ * this is the one home of the default-span rule.
+ */
+export function programTermSpan(program: { numberOfTerms?: number }): number {
   return program.numberOfTerms ?? DEFAULT_TERM_SPAN;
 }
 

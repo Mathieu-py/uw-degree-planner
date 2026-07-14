@@ -12,11 +12,8 @@
 import { courseLevel, levelBucket } from "@/lib/courses/code";
 import type { Course } from "@/lib/courses/types";
 import type { TermLetter } from "@/lib/programs";
-import {
-  programIdentities,
-  programIdsTermSpan,
-  programReferencedCodes,
-} from "@/lib/programsRegistry";
+import { programIdentities, programIdsTermSpan } from "@/lib/programsMeta";
+import { programReferencedCodes } from "@/lib/programsRegistry";
 import type { TermId } from "@/lib/terms";
 import { isAcademicSlot } from "./derive";
 import { eligibleSlotIdsForCourse } from "./eligibleTerms";

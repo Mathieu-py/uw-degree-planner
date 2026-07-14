@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { programMeta } from "@/lib/programsMeta";
 import { getSpecialization, PROGRAMS } from "@/lib/programsRegistry";
 import {
   doubleDegreeSuggestionMessage,
@@ -39,12 +40,12 @@ describe("suggestedDoubleDegree", () => {
     }
   });
 
-  it("returns the packaged Program object alongside its id", () => {
+  it("returns the packaged program meta alongside its id", () => {
     const s = suggestedDoubleDegree([
       "h-social-development-studies",
       "social-work",
     ]);
-    expect(s?.program).toBe(PROGRAMS["h-ba-sds-and-h-bsw-double-degree"]);
+    expect(s?.program).toBe(programMeta("h-ba-sds-and-h-bsw-double-degree"));
   });
 
   it("returns null for unmapped, single, 3+, unknown, and empty selections", () => {

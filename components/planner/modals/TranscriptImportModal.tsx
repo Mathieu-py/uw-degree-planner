@@ -7,7 +7,7 @@ import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { countNoun, pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { joinProgramNames, type TermLetter } from "@/lib/programs";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { programMetaName } from "@/lib/programsMeta";
 import {
   type Categorized,
   categorize,
@@ -89,7 +89,7 @@ export function TranscriptImportModal({
 
   const detectedProgramName = joinProgramNames(
     parseResult.detectedProgramIds,
-    (id) => PROGRAMS[id]?.name,
+    (id) => programMetaName(id),
   );
 
   // Recognized total drives the headline ("N courses found …"); the unrecognized

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "@/lib/plan/types";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { buildProgramAudit } from "../buildProgramAudit";
 
 /**
@@ -38,7 +39,13 @@ function rollup(p: LocalPlan) {
   let sumCredited = 0;
   let sumDenom = 0;
   for (const id of p.programIds) {
-    const data = buildProgramAudit(p, id, EMPTY_CATALOG, []);
+    const data = buildProgramAudit(
+      p,
+      id,
+      PROGRAMS[id] ?? null,
+      EMPTY_CATALOG,
+      [],
+    );
     sumCredited += data.progress.creditedUnits;
     sumDenom += data.progress.denom;
   }
@@ -66,8 +73,20 @@ describe("cross-program rollup (real programs)", () => {
   });
 
   it("each program's denom is finite and contributes independently", () => {
-    const a = buildProgramAudit(plan([A, B], []), A, EMPTY_CATALOG, []);
-    const b = buildProgramAudit(plan([A, B], []), B, EMPTY_CATALOG, []);
+    const a = buildProgramAudit(
+      plan([A, B], []),
+      A,
+      PROGRAMS[A] ?? null,
+      EMPTY_CATALOG,
+      [],
+    );
+    const b = buildProgramAudit(
+      plan([A, B], []),
+      B,
+      PROGRAMS[B] ?? null,
+      EMPTY_CATALOG,
+      [],
+    );
     expect(a.progress.denom).toBe(15);
     expect(b.progress.denom).toBe(15);
     // A course placed for one program still credits only within that program's

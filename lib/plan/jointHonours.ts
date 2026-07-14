@@ -1,11 +1,11 @@
-import { type Program, programShortName } from "@/lib/programs";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { shortName } from "@/lib/programs";
+import { type ProgramMeta, programMeta } from "@/lib/programsMeta";
 
 /**
  * A Joint Honours plan is half a degree — matched by name, not the `jh-` prefix,
  * since `earth-sciences` and `science-with-arts-major` lack it.
  */
-export function isJointHonours(program: Program): boolean {
+export function isJointHonours(program: { name: string }): boolean {
   return /joint honours/i.test(program.name);
 }
 
@@ -14,7 +14,7 @@ export function isJointHonours(program: Program): boolean {
  * plans pair each other); every plan without "honours" is a General/professional
  * one, which doesn't qualify.
  */
-export function isHonours(program: Program): boolean {
+export function isHonours(program: { name: string }): boolean {
   return /honours/i.test(program.name);
 }
 
@@ -26,13 +26,13 @@ export function isHonours(program: Program): boolean {
  */
 export function unpairedJointHonours(
   programIds: readonly string[],
-): Program | null {
+): ProgramMeta | null {
   // Dedup ids first: a repeated id would otherwise pair with its own second
   // copy at a different array index (the j !== i check only excludes the same
   // position), letting a lone Joint Honours plan look partnered.
   const resolved = [...new Set(programIds)]
-    .map((id) => PROGRAMS[id])
-    .filter((p): p is Program => Boolean(p));
+    .map((id) => programMeta(id))
+    .filter((p): p is ProgramMeta => p !== null);
   for (let i = 0; i < resolved.length; i++) {
     if (!isJointHonours(resolved[i])) continue;
     if (!resolved.some((p, j) => j !== i && isHonours(p))) return resolved[i];
@@ -41,8 +41,8 @@ export function unpairedJointHonours(
 }
 
 /** Canonical "add a partner plan" copy, shared by every surface that warns. */
-export function jointHonoursPartnerMessage(program: Program): string {
-  return `Joint Honours is only half a degree — pair ${programShortName(program)} with a second honours plan to complete it.`;
+export function jointHonoursPartnerMessage(program: { name: string }): string {
+  return `Joint Honours is only half a degree — pair ${shortName(program.name)} with a second honours plan to complete it.`;
 }
 
 /** The partner-needed warning for a program selection, or null when it's fine. */

@@ -12,8 +12,8 @@ import {
 } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
 import type { ProgramIdentity } from "@/lib/programs";
-import { programContext } from "@/lib/programsRegistry";
 import { termInfo } from "@/lib/terms";
+import { usePlanProgramContext } from "@/lib/usePlanPrograms";
 
 export type TermState = "eligible" | "check" | "missing";
 
@@ -96,10 +96,7 @@ export function useTermOptions(
     specializationIds: Record<string, string>;
   } | null,
 ): { options: TermOption[]; alreadyIn: string | null; blocked: boolean } {
-  const { programs, programReferenced } = useMemo(
-    () => programContext(plan?.programIds, plan?.specializationIds),
-    [plan?.programIds, plan?.specializationIds],
-  );
+  const { programs, programReferenced } = usePlanProgramContext(plan);
   const placedAnywhere = useMemo(
     () => new Set((slots ?? []).flatMap((s) => s.courses.map((c) => c.code))),
     [slots],

@@ -31,7 +31,16 @@ vi.mock("@/lib/plan/storage", () => ({
   savePlan: savePlanMock,
 }));
 
+import { primeProgramsDetail } from "@/lib/programDetail";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { commitAddCourse } from "../commitAddCourse";
+
+// The block gate verifies a blocked read against program detail (absent /api
+// route here). Prime ONLY SYDE: the blocked test needs a resolvable verdict,
+// while the unresolved test relies on another program staying unloadable.
+primeProgramsDetail({
+  "systems-design-engineering": PROGRAMS["systems-design-engineering"],
+});
 
 const FALL = makeTermId(2025, "Fall"); // 1259 → "Fall 2025"
 const WINTER = makeTermId(2025, "Winter"); // 1251 → "Winter 2025"
@@ -209,6 +218,23 @@ describe("commitAddCourse — signed-out (local)", () => {
       course: makeCourse("anth101", { prereqs: "Anthropology students only" }),
     });
     expect(res).toEqual({ status: "blocked" });
+    expect(savePlanMock).not.toHaveBeenCalled();
+  });
+
+  it("is unresolved (falls back to the picker) when a blocked read can't be verified", async () => {
+    loadPlanMock.mockReturnValue({
+      ...localPlan([slot({ id: "a", position: "1A", termId: FALL })]),
+      // SE reads blocked too, but its detail isn't primed and can't be fetched
+      // here — the verdict is unknown, and must not present as an academic rule.
+      programIds: ["software-engineering"],
+    });
+    const res = await commitAddCourse({
+      isAuthed: false,
+      planId: null,
+      term: FALL,
+      course: makeCourse("anth101", { prereqs: "Anthropology students only" }),
+    });
+    expect(res).toEqual({ status: "unresolved" });
     expect(savePlanMock).not.toHaveBeenCalled();
   });
 

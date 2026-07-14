@@ -1,5 +1,9 @@
-import { type Program, programShortName } from "@/lib/programs";
-import { getSpecialization, PROGRAMS } from "@/lib/programsRegistry";
+import { shortName } from "@/lib/programs";
+import {
+  getSpecializationMeta,
+  type ProgramMeta,
+  programMeta,
+} from "@/lib/programsMeta";
 
 /** Order-insensitive key for a program-id pair. */
 function pairKey(a: string, b: string): string {
@@ -25,7 +29,7 @@ const DOUBLE_DEGREE_PAIRS: Record<string, string> = {
 
 export interface DoubleDegreeSuggestion {
   id: string;
-  program: Program;
+  program: ProgramMeta;
 }
 
 /**
@@ -39,13 +43,15 @@ export function suggestedDoubleDegree(
 ): DoubleDegreeSuggestion | null {
   if (programIds.length !== 2) return null;
   const id = DOUBLE_DEGREE_PAIRS[pairKey(programIds[0], programIds[1])];
-  const program = id ? PROGRAMS[id] : undefined;
+  const program = id ? programMeta(id) : null;
   return program ? { id, program } : null;
 }
 
 /** Canonical "switch to the packaged plan" copy for the suggestion banner. */
-export function doubleDegreeSuggestionMessage(program: Program): string {
-  return `These two plans are the packaged ${programShortName(program)} — switch for an accurate combined audit.`;
+export function doubleDegreeSuggestionMessage(program: {
+  name: string;
+}): string {
+  return `These two plans are the packaged ${shortName(program.name)} — switch for an accurate combined audit.`;
 }
 
 /**
@@ -62,7 +68,7 @@ export function swapToDoubleDegree(
   const carried: Record<string, string> = {};
   for (const oldId of programIds) {
     const slug = specializationIds[oldId];
-    if (slug && getSpecialization(doubleDegreeId, slug)) {
+    if (slug && getSpecializationMeta(doubleDegreeId, slug)) {
       carried[doubleDegreeId] = slug;
     }
   }

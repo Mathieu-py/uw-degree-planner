@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
+import { PROGRAMS } from "@/lib/programsRegistry";
 import { buildProgramAudit } from "../buildProgramAudit";
 
 /**
@@ -52,6 +53,7 @@ describe("term-agnostic degree credit", () => {
     const data = buildProgramAudit(
       planWithCourseAt("3A"),
       THREE_YEAR,
+      PROGRAMS[THREE_YEAR] ?? null,
       EMPTY_CATALOG,
       [],
     );
@@ -62,6 +64,7 @@ describe("term-agnostic degree credit", () => {
     const data = buildProgramAudit(
       planWithCourseAt("4A"),
       THREE_YEAR,
+      PROGRAMS[THREE_YEAR] ?? null,
       EMPTY_CATALOG,
       [],
     );
@@ -72,12 +75,14 @@ describe("term-agnostic degree credit", () => {
     const inSpan = buildProgramAudit(
       planWithCourseAt("3A"),
       THREE_YEAR,
+      PROGRAMS[THREE_YEAR] ?? null,
       EMPTY_CATALOG,
       [],
     );
     const pastSpan = buildProgramAudit(
       planWithCourseAt("4A"),
       THREE_YEAR,
+      PROGRAMS[THREE_YEAR] ?? null,
       EMPTY_CATALOG,
       [],
     );

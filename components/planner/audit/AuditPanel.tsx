@@ -6,11 +6,13 @@ import { countPlacementIssues } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "@/lib/plan/types";
 import { validatePlan } from "@/lib/plan/validate";
+import { getLoadedProgram } from "@/lib/programDetail";
 import {
   programCredential,
   programShortCode,
   programShortName,
 } from "@/lib/programs";
+import { useProgramsDetail } from "@/lib/usePlanPrograms";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
 import { AuditMacroList } from "./AuditMacroList";
 import type { ProgramAuditData } from "./buildProgramAudit";
@@ -75,17 +77,30 @@ export const AuditPanel = memo(function AuditPanel({
   }, [plan, catalogByCode]);
 
   const isMulti = plan.programIds.length > 1;
+  // Detail (rule trees) for the plan's programs is fetched on demand; the
+  // audit rebuilds once it lands.
+  const detailLoaded = useProgramsDetail(plan.programIds);
 
   // For a double degree, build every program's audit once (the rail needs all
   // their `pct`s, the detail needs the selected one's macros). Skipped for the
-  // common single-program case, where the card computes its own audit.
+  // common single-program case (the card computes its own audit) and while
+  // detail loads — null-program audits would be discarded by the placeholder.
   const programData = useMemo(() => {
-    if (plan.programIds.length <= 1) return null;
+    if (!detailLoaded || plan.programIds.length <= 1) return null;
     const map = new Map<string, ProgramAuditData>();
     for (const id of plan.programIds)
-      map.set(id, buildProgramAudit(plan, id, catalogByCode, issues));
+      map.set(
+        id,
+        buildProgramAudit(
+          plan,
+          id,
+          getLoadedProgram(id),
+          catalogByCode,
+          issues,
+        ),
+      );
     return map;
-  }, [plan, catalogByCode, issues]);
+  }, [plan, catalogByCode, issues, detailLoaded]);
 
   const [selectedId, setSelectedId] = useState(plan.programIds[0]);
 
@@ -98,8 +113,9 @@ export const AuditPanel = memo(function AuditPanel({
   }
 
   // Single program → the plain full-width card, exactly as before. Nothing to
-  // switch between, so no rail and no plan-level rollup header.
-  if (!isMulti || !programData) {
+  // switch between, so no rail and no plan-level rollup header. The card
+  // handles its own loading state.
+  if (!isMulti) {
     return (
       <aside className="w-full lg:w-[28.75rem] shrink-0 lg:h-full lg:flex lg:flex-col">
         <ProgramAuditCard
@@ -112,6 +128,15 @@ export const AuditPanel = memo(function AuditPanel({
           onAcknowledgeRequirement={onAcknowledgeRequirement}
           drag={drag}
         />
+      </aside>
+    );
+  }
+
+  // Two+ programs, detail still loading → placeholder.
+  if (!programData) {
+    return (
+      <aside className="w-full lg:w-[28.75rem] shrink-0 card-2 px-4 py-6 text-sm text-ink-3">
+        Loading degree audit…
       </aside>
     );
   }

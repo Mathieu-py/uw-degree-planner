@@ -28,7 +28,7 @@ import {
 } from "@/lib/plan/transcriptApply";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { joinProgramNames, type ProgramOption } from "@/lib/programs";
-import { programIdsTermSpan } from "@/lib/programsRegistry";
+import { programIdsTermSpan } from "@/lib/programsMeta";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";

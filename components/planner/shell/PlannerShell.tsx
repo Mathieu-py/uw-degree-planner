@@ -35,11 +35,8 @@ import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { joinProgramNames, type ProgramOption } from "@/lib/programs";
-import {
-  programIdentities,
-  programReferencedCodes,
-} from "@/lib/programsRegistry";
 import { termInfo } from "@/lib/terms";
+import { usePlanProgramContext } from "@/lib/usePlanPrograms";
 import { ProgramHeader } from "./ProgramHeader";
 import { usePlanEditors } from "./usePlanEditors";
 import { usePlannerModals } from "./usePlannerModals";
@@ -208,31 +205,11 @@ function PlannerShellInner({
       setMovingCourse(moving),
     [],
   );
-  // Codes the program(s) reference, so a stale restriction can't grey out a
-  // required course. Shared by the drag highlight and the picker. Unions across
-  // every program on the plan (double degree), each with its own specialization.
-  // (The `programIds` array ref is stable across slot edits — `{...plan, slots}`
-  // carries it over — so it's a sound memo dependency.)
-  const programReferenced = useMemo(() => {
-    const ids = plan?.programIds ?? [];
-    if (ids.length <= 1)
-      return programReferencedCodes(
-        ids[0],
-        ids[0] ? plan?.specializationIds?.[ids[0]] : null,
-      );
-    const out = new Set<string>();
-    ids.forEach((id) => {
-      const codes = programReferencedCodes(id, plan?.specializationIds?.[id]);
-      for (const c of codes) out.add(c);
-    });
-    return out;
-  }, [plan?.programIds, plan?.specializationIds]);
-  // Identities for every program (double degree → more than one); a restriction
-  // is judged against each. Shared by the drag highlight and the picker.
-  const programs = useMemo(
-    () => programIdentities(plan?.programIds, plan?.specializationIds),
-    [plan?.programIds, plan?.specializationIds],
-  );
+  // Program identities (small index) + the codes each program references
+  // (on-demand detail), unioned across a double degree. Referenced codes
+  // keep a stale restriction from greying out a required course. Both feed the
+  // drag highlight and the slot picker.
+  const { programs, programReferenced } = usePlanProgramContext(plan);
   // Eligible terms for the dragged course, from the synchronous `plan` (the drop
   // surface), not `deferredPlan`. Null when idle so the timeline skips the work.
   // Drives the green/muted tinting for both an audit add and a between-term move;

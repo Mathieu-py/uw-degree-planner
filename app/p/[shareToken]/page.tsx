@@ -4,7 +4,8 @@ import { cache } from "react";
 import { SharedPlanView } from "@/components/planner/viewer/SharedPlanView";
 import { loadTerm } from "@/lib/courses/data";
 import { loadSharedPlan } from "@/lib/plan/server/actions";
-import { getProgramOptions } from "@/lib/programsRegistry";
+import type { Program } from "@/lib/programs";
+import { getProgramOptions, PROGRAMS } from "@/lib/programsRegistry";
 import { PINNED_TERM } from "@/lib/terms";
 
 // generateMetadata and the page both need the shared plan; React.cache dedups
@@ -33,18 +34,28 @@ export default async function SharedPlanPage({ params }: PageProps) {
   const { shareToken } = await params;
   const result = await loadSharedPlanCached(shareToken);
   if (!result.ok || !result.data) notFound();
+  const plan = result.data;
 
   // Same tiny digest as /plan, so the shared view loads fast for cold visitors.
   const programOptions = getProgramOptions();
+
+  // Seed the audit's per-program detail server-side, so the shared view renders
+  // the audit in the initial HTML — cold visitors get no client fetch or flash.
+  const seedPrograms: Record<string, Program> = {};
+  for (const id of plan.programIds) {
+    const program = PROGRAMS[id];
+    if (program) seedPrograms[id] = program;
+  }
 
   const catalog = await loadTerm(PINNED_TERM);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 lg:px-6 py-4">
       <SharedPlanView
-        plan={result.data}
+        plan={plan}
         catalog={catalog}
         programOptions={programOptions}
+        seedPrograms={seedPrograms}
       />
     </div>
   );

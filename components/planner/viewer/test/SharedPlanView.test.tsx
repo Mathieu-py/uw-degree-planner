@@ -97,6 +97,7 @@ describe("SharedPlanView", () => {
         plan={makePlan()}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     expect(screen.getByText("My shared plan")).toBeTruthy();
@@ -108,6 +109,7 @@ describe("SharedPlanView", () => {
         plan={makePlan()}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     expect(screen.getByText("Shared · read-only")).toBeTruthy();
@@ -119,6 +121,7 @@ describe("SharedPlanView", () => {
         plan={makePlan()}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     expect(screen.getByTestId("timeline")).toBeTruthy();
@@ -131,6 +134,7 @@ describe("SharedPlanView", () => {
         plan={makePlan()}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     expect(screen.getByTestId("audit-panel")).toBeTruthy();
@@ -142,6 +146,7 @@ describe("SharedPlanView", () => {
         plan={makePlan()}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     // No drop handling and no eligibility highlight on the timeline…
@@ -163,6 +168,7 @@ describe("SharedPlanView", () => {
         plan={makePlan({ acknowledgedRequirements: acks })}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     const passedPlan = auditProps.current?.plan as
@@ -177,6 +183,7 @@ describe("SharedPlanView", () => {
         plan={makePlan({ stream: null })}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     expect(screen.getByTestId("timeline")).toBeTruthy();
@@ -188,6 +195,7 @@ describe("SharedPlanView", () => {
         plan={makePlan()}
         catalog={[]}
         programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
       />,
     );
     fireEvent.click(

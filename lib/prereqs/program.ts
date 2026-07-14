@@ -8,7 +8,7 @@
  */
 
 import type { Faculty, ProgramIdentity } from "@/lib/programs";
-import { programShortNames } from "@/lib/programsRegistry";
+import { programShortNames } from "@/lib/programsMeta";
 
 export interface ProgramConstraint {
   /** Program / faculty tokens the course is open to. */

@@ -1,6 +1,6 @@
 import { PASS_THRESHOLD } from "@/lib/plan/grades";
 import { TERM_LETTERS, type TermLetter } from "@/lib/programs";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { programMeta, programMetaEntries } from "@/lib/programsMeta";
 import type {
   CourseStatus,
   ParsedCourse,
@@ -288,10 +288,10 @@ function normalizeProgramName(s: string): string {
     .trim();
 }
 
-// Precomputed at module load: PROGRAMS is static, so re-normalizing per call
-// was wasted work.
+// Precomputed at module load: the program index is static, so re-normalizing
+// per call was wasted work.
 const NORMALIZED_PROGRAMS: ReadonlyArray<{ id: string; normalized: string }> =
-  Object.entries(PROGRAMS).map(([id, p]) => ({
+  programMetaEntries().map(([id, p]) => ({
     id,
     normalized: normalizeProgramName(p.name),
   }));
@@ -351,7 +351,7 @@ export function matchSpecializationFromPlan(
   const programId = matchProgramSlug(parts.slice(0, -1).join(" "));
   if (!programId) return null;
 
-  const program = PROGRAMS[programId];
+  const program = programMeta(programId);
   const specs = program?.specializations;
   if (!specs || specs.length === 0) return null;
 

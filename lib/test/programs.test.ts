@@ -15,13 +15,15 @@ import {
   walkRule,
 } from "../programs";
 import {
+  programIdentity,
+  programIdsTermSpan,
+  programShortNames,
+} from "../programsMeta";
+import {
   getProgramOptions,
   getSpecialization,
   PROGRAMS,
-  programIdentity,
-  programIdsTermSpan,
   programReferencedCodes,
-  programShortNames,
 } from "../programsRegistry";
 
 function hasAnyPick(node: RuleNode): boolean {

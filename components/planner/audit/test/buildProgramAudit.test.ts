@@ -1,48 +1,40 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "@/lib/plan/types";
+import type { Program } from "@/lib/programs";
+import { buildProgramAudit } from "../buildProgramAudit";
 
-// Synthetic PROGRAMS so the spec-owed folding is exercised WITHOUT
-// regenerating data/programs.json. Only PROGRAMS is overridden — everything else
-// (types, programReferencedCodes, …) stays real; programReferencedCodes returns an
-// empty set for these unknown ids, which is fine (no antireqs to exclude).
-vi.mock("@/lib/programsRegistry", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/lib/programsRegistry")>();
-  const emptyRules = { kind: "all", children: [] };
-  const spec = (slug: string, over: object = {}) => ({
-    slug,
-    name: slug,
-    kualiId: slug,
-    rules: emptyRules,
-    ...over,
-  });
-  // spec-a carries an unverified rule AND a dropped free elective; spec-b only an
-  // unverified rule. Both are attached to the same parent (as in production).
-  const base = {
-    kind: "flexible",
-    name: "Toy",
-    asOf: "2026",
-    rules: emptyRules,
-    specializations: [
-      spec("spec-a", {
-        unverifiedRequirements: ["REQ A"],
-        freeElectives: ["FREE A"],
-      }),
-      spec("spec-b", { unverifiedRequirements: ["REQ B"] }),
-    ],
-  };
-  return {
-    ...actual,
-    PROGRAMS: {
-      "p-nototal": base,
-      "p-total": { ...base, unitPlan: { totalUnits: 5 } },
-    } as typeof actual.PROGRAMS,
-  };
+// Synthetic programs so the spec-owed folding is exercised WITHOUT regenerating
+// data/programs.json. buildProgramAudit takes the resolved Program directly
+// and derives referenced codes from it, so these are just passed in — no registry
+// mock, no global reads.
+const emptyRules = { kind: "all", children: [] };
+const spec = (slug: string, over: object = {}) => ({
+  slug,
+  name: slug,
+  kualiId: slug,
+  rules: emptyRules,
+  ...over,
 });
-
-// Import AFTER the mock is registered (vi.mock is hoisted above this).
-const { buildProgramAudit } = await import("../buildProgramAudit");
+// spec-a carries an unverified rule AND a dropped free elective; spec-b only an
+// unverified rule. Both are attached to the same parent (as in production).
+const base = {
+  kind: "flexible",
+  name: "Toy",
+  asOf: "2026",
+  rules: emptyRules,
+  specializations: [
+    spec("spec-a", {
+      unverifiedRequirements: ["REQ A"],
+      freeElectives: ["FREE A"],
+    }),
+    spec("spec-b", { unverifiedRequirements: ["REQ B"] }),
+  ],
+};
+const PROGRAMS = {
+  "p-nototal": base,
+  "p-total": { ...base, unitPlan: { totalUnits: 5 } },
+} as unknown as Record<string, Program>;
 
 function mkPlan(
   programId: string,
@@ -65,6 +57,7 @@ const audit = (programId: string, specSlug: string | null, acked?: string[]) =>
   buildProgramAudit(
     mkPlan(programId, specSlug, acked),
     programId,
+    PROGRAMS[programId] ?? null,
     new Map<string, Course>(),
     [],
   );
