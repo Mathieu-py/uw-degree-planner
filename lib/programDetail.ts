@@ -64,6 +64,8 @@ export function createProgramDetailStore(
   function loadOne(slug: string): Promise<Program | null> {
     const cached = cache.get(slug);
     if (cached) return Promise.resolve(cached);
+    // A recorded 404 is settled — don't refetch it on every load() call.
+    if (missing.has(slug)) return Promise.resolve(null);
     const existing = inflight.get(slug);
     if (existing) return existing;
     const req = fetchDetail(slug)
@@ -80,7 +82,8 @@ export function createProgramDetailStore(
         }
         // 404 is an answer — the id isn't in this build's registry — so record
         // it and settle: surfaces render "unknown program" instead of loading.
-        if (r.status === 404 && !missing.has(slug)) {
+        // Unless a prime landed mid-flight: primed data outranks a stale 404.
+        if (r.status === 404 && !missing.has(slug) && !cache.has(slug)) {
           missing.add(slug);
           bump();
         }
