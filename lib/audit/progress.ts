@@ -555,7 +555,7 @@ export function computeDegreeProgress(
     ? deriveLevelFloors(program, placedList, unitsOf)
     : [];
   const allFloorsMet = levelFloors.every((f) =>
-    unitsMet(f.placedUnits, f.need),
+    unitsMet(f.placedUnits, f.needUnits),
   );
 
   const allComplete =

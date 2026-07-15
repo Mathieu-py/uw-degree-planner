@@ -144,7 +144,7 @@ describe("scoreAudit — structural invariants, every real program", () => {
       if (comm && !comm.alreadyInTree)
         satisfied += Math.min(progress.commCredit ?? comm.placed, comm.need);
       for (const f of progress.levelFloors)
-        satisfied += unitsMet(f.placedUnits, f.need) ? 1 : 0;
+        satisfied += unitsMet(f.placedUnits, f.needUnits) ? 1 : 0;
       expect(degree.count.satisfied).toBe(satisfied);
     }
   });

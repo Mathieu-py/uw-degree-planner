@@ -1,6 +1,10 @@
-import { poolMatch } from "@/lib/courses/code";
 import type { Program, UnitConstraint } from "@/lib/programs";
-import { programConstraints, UNIT_RE } from "./constraints";
+import {
+  deriveConstraintPools,
+  programConstraints,
+  UNIT_RE,
+  type UnitPoolRequirement,
+} from "./constraints";
 
 /**
  * Faculty breadth / distribution requirements arrive as verbatim notes
@@ -11,19 +15,9 @@ import { programConstraints, UNIT_RE } from "./constraints";
  * An independent subject filter: a course can satisfy breadth AND the major, so
  * it gates completion without inflating the unit-total denominator.
  */
-export interface BreadthRequirement {
-  /** Display name, e.g. "Humanities". */
-  title: string;
+export interface BreadthRequirement extends UnitPoolRequirement {
   /** Subject prefixes that satisfy it (uppercase), e.g. ["CLAS", "ENGL", …]. */
   subjects: string[];
-  /** Units required, exactly as the calendar states (e.g. 1.0). */
-  needUnits: number;
-  /** Units of placed courses whose subject is in `subjects`. */
-  placedUnits: number;
-  /** Those placed course codes (catalog form), for met chips / Browse. */
-  satisfiers: string[];
-  /** Verbatim requirement statement. */
-  sourceText: string;
 }
 
 /** A subject code: 1–10 letters, optionally with an internal slash/ampersand. */
@@ -68,20 +62,13 @@ export function deriveBreadthRequirements(
   placedCodes: Iterable<string>,
   unitsOf: (code: string) => number,
 ): BreadthRequirement[] {
-  const placed = [...placedCodes];
-  const out: BreadthRequirement[] = [];
-  for (const c of programConstraints(program)) {
-    const parsed = parseBreadthConstraint(c);
-    if (!parsed) continue;
-    const subjects = new Set(parsed.subjects.map((s) => s.toLowerCase()));
-    const satisfiers = placed.filter((code) => poolMatch(code, { subjects }));
-    const placedUnits = satisfiers.reduce(
-      (sum, code) => sum + unitsOf(code),
-      0,
-    );
-    out.push({ ...parsed, placedUnits, satisfiers });
-  }
-  return out;
+  return deriveConstraintPools(
+    program,
+    placedCodes,
+    unitsOf,
+    parseBreadthConstraint,
+    (p) => ({ subjects: new Set(p.subjects.map((s) => s.toLowerCase())) }),
+  );
 }
 
 /** Constraints that aren't trackable breadth — surfaced verbatim as notes. */

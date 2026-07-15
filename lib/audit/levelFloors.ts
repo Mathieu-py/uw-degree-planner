@@ -1,11 +1,11 @@
-import { poolMatch } from "@/lib/courses/code";
 import { countNoun } from "@/lib/format";
 import type { Program, UnitConstraint } from "@/lib/programs";
 import {
+  deriveConstraintPools,
   LEVEL_BOUND_RE,
-  programConstraints,
   subjectList,
   UNIT_RE,
+  type UnitPoolRequirement,
 } from "./constraints";
 
 /**
@@ -17,11 +17,7 @@ import {
  * `parseBreadthConstraint` rejects them). Like breadth, an independent filter
  * over the plan: they gate completion without inflating the unit denominator.
  */
-export interface LevelFloor {
-  /** Readable label, e.g. "14.5 units at the 200-level or above". */
-  title: string;
-  /** Units required. */
-  need: number;
+export interface LevelFloor extends UnitPoolRequirement {
   /** Inclusive level bound (bucketed to the hundred). One of these is set. */
   minLevel?: number;
   maxLevel?: number;
@@ -29,12 +25,6 @@ export interface LevelFloor {
   subjects?: string[];
   /** Optional subject exclude-list (lowercase prefixes). */
   excludeSubjects?: string[];
-  /** Placed units that satisfy the floor. */
-  placedUnits: number;
-  /** Placed course codes that contribute to the floor (for met chips / Browse). */
-  satisfiers: string[];
-  /** Verbatim requirement statement. */
-  sourceText: string;
 }
 
 const SUBJECTS_OF_RE =
@@ -49,8 +39,8 @@ export function parseLevelFloor(
   const um = src.match(UNIT_RE);
   const lm = src.match(LEVEL_BOUND_RE);
   if (!um || !lm) return null;
-  const need = Number(um[1]);
-  if (!Number.isFinite(need) || need <= 0) return null;
+  const needUnits = Number(um[1]);
+  if (!Number.isFinite(needUnits) || needUnits <= 0) return null;
 
   const level = Number(lm[1]);
   const above = !/below|lower/i.test(lm[2]);
@@ -60,7 +50,7 @@ export function parseLevelFloor(
   const excludeSubjects = exclMatch ? subjectList(exclMatch[1]) : [];
 
   const title =
-    countNoun(need, "unit") +
+    countNoun(needUnits, "unit") +
     (subjects.length
       ? ` of ${subjects.map((s) => s.toUpperCase()).join("/")}`
       : "") +
@@ -71,25 +61,12 @@ export function parseLevelFloor(
 
   return {
     title,
-    need,
+    needUnits,
     ...(above ? { minLevel: level } : { maxLevel: level }),
     ...(subjects.length ? { subjects } : {}),
     ...(excludeSubjects.length ? { excludeSubjects } : {}),
     sourceText: src,
   };
-}
-
-/** Whether a placed course's prefix + level satisfy a floor's bounds. */
-function matches(
-  code: string,
-  f: Omit<LevelFloor, "placedUnits" | "satisfiers">,
-): boolean {
-  return poolMatch(code, {
-    subjects: f.subjects && new Set(f.subjects),
-    minLevel: f.minLevel,
-    maxLevel: f.maxLevel,
-    excludeSubjects: f.excludeSubjects && new Set(f.excludeSubjects),
-  });
 }
 
 /** Whether a constraint is a level floor (so callers can avoid double-display). */
@@ -106,19 +83,17 @@ export function deriveLevelFloors(
   placedCodes: Iterable<string>,
   unitsOf: (code: string) => number,
 ): LevelFloor[] {
-  const placed = [...placedCodes];
-  const out: LevelFloor[] = [];
-  for (const c of programConstraints(program)) {
-    const f = parseLevelFloor(c);
-    if (!f) continue;
-    let placedUnits = 0;
-    const satisfiers: string[] = [];
-    for (const code of placed)
-      if (matches(code, f)) {
-        placedUnits += unitsOf(code);
-        satisfiers.push(code);
-      }
-    out.push({ ...f, placedUnits, satisfiers });
-  }
-  return out;
+  return deriveConstraintPools(
+    program,
+    placedCodes,
+    unitsOf,
+    parseLevelFloor,
+    // A placed course counts when its prefix + level satisfy the floor's bounds.
+    (f) => ({
+      subjects: f.subjects && new Set(f.subjects),
+      minLevel: f.minLevel,
+      maxLevel: f.maxLevel,
+      excludeSubjects: f.excludeSubjects && new Set(f.excludeSubjects),
+    }),
+  );
 }

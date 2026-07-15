@@ -1935,7 +1935,7 @@ describe("parseUnitPlan", () => {
     expect(note).toBeDefined();
     const floor = note ? parseLevelFloor(note) : null;
     expect(floor).not.toBeNull();
-    expect(floor?.need).toBe(2.0);
+    expect(floor?.needUnits).toBe(2.0);
     expect(floor?.minLevel).toBe(300);
   });
 });

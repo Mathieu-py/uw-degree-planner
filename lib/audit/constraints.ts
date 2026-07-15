@@ -1,3 +1,4 @@
+import { type PoolFilter, poolMatch } from "@/lib/courses/code";
 import type { Program, UnitConstraint } from "@/lib/programs";
 
 /**
@@ -12,6 +13,54 @@ export function programConstraints(program: Program): UnitConstraint[] {
     ...(program.unitPlan?.constraints ?? []),
     ...(program.degreeRequirements?.constraints ?? []),
   ];
+}
+
+/**
+ * A unit-scored requirement derived from a verbatim calendar constraint:
+ * stated in UNITS (as the calendar phrases it, never a fabricated course
+ * count — 0.5/course would under-credit a 1.0-unit course), scored against
+ * placed courses. Base shape of breadth requirements and level floors.
+ */
+export interface UnitPoolRequirement {
+  /** Display name. */
+  title: string;
+  /** Units required, exactly as the calendar states (e.g. 1.0). */
+  needUnits: number;
+  /** Units of placed courses matching the pool's filter. */
+  placedUnits: number;
+  /** Matching placed codes (catalog form), for met chips / Browse. */
+  satisfiers: string[];
+  /** Verbatim requirement statement. */
+  sourceText: string;
+}
+
+/**
+ * Parse each program constraint with `parse` (null ⇒ not this pool kind) and
+ * score the survivors: placed courses matching `poolMatch(code, filterOf(p))`
+ * become `satisfiers`, their units sum to `placedUnits`. The parsers stay
+ * per-kind — only this scoring loop is shared.
+ */
+export function deriveConstraintPools<P>(
+  program: Program,
+  placedCodes: Iterable<string>,
+  unitsOf: (code: string) => number,
+  parse: (c: UnitConstraint) => P | null,
+  filterOf: (parsed: P) => PoolFilter,
+): (P & { placedUnits: number; satisfiers: string[] })[] {
+  const placed = [...placedCodes];
+  const out: (P & { placedUnits: number; satisfiers: string[] })[] = [];
+  for (const c of programConstraints(program)) {
+    const parsed = parse(c);
+    if (!parsed) continue;
+    const filter = filterOf(parsed);
+    const satisfiers = placed.filter((code) => poolMatch(code, filter));
+    const placedUnits = satisfiers.reduce(
+      (sum, code) => sum + unitsOf(code),
+      0,
+    );
+    out.push({ ...parsed, placedUnits, satisfiers });
+  }
+  return out;
 }
 
 // --- Shared patterns for parsing constraint text (breadth / level-floor /
