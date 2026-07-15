@@ -1,7 +1,16 @@
+/**
+ * The programs subsystem, one directory, four tiers:
+ * - `index.ts` (this file) — pure types + helpers, no data imports. Safe anywhere.
+ * - `registry.ts` — SERVER-ONLY full registry (~2 MB programs.json).
+ * - `meta.ts` — client-safe light index (programs-index.json): names, spans,
+ *   identity/restriction matching.
+ * - `detail.ts` + `usePlanPrograms.ts` — client store fetching one program's
+ *   full detail from /api/programs/<slug>, and the React hooks over it.
+ */
 import { z } from "zod";
-import { describeRule } from "./requirements/describe";
-import { type RuleNode, RuleNodeSchema } from "./requirements/types";
-import { requiredCoursesIn, walkRule } from "./requirements/walk";
+import { describeRule } from "../requirements/describe";
+import { type RuleNode, RuleNodeSchema } from "../requirements/types";
+import { requiredCoursesIn, walkRule } from "../requirements/walk";
 
 // The requirement AST (RuleNode) and helpers live in `lib/requirements`;
 // re-export so `@/lib/programs` stays the stable entry point.

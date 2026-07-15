@@ -18,13 +18,13 @@ import {
   programIdentity,
   programIdsTermSpan,
   programShortNames,
-} from "../programsMeta";
+} from "../programs/meta";
 import {
   getProgramOptions,
   getSpecialization,
   PROGRAMS,
   programReferencedCodes,
-} from "../programsRegistry";
+} from "../programs/registry";
 
 function hasAnyPick(node: RuleNode): boolean {
   let found = false;

@@ -4,7 +4,7 @@ import {
   type RuleNode,
   type Specialization,
   walkRule,
-} from "./programs";
+} from "./index";
 
 // Explicit codes a rule tree names (lowercased). `subjectPool` matches by
 // prefix/level and `excluded` is forbidden-not-referenced, so both are skipped.

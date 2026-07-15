@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 // Type-only: erased at compile, so the 60 KB index JSON that programsMeta
 // imports never loads here. One shared shape keeps generator and reader in
 // lockstep — a field rename that touched only one side wouldn't compile.
-import type { ProgramMeta } from "../lib/programsMeta";
+import type { ProgramMeta } from "../lib/programs/meta";
 
 const DATA = join(process.cwd(), "data");
 

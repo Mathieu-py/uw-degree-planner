@@ -1,6 +1,6 @@
 import { PASS_THRESHOLD } from "@/lib/plan/grades";
 import { TERM_LETTERS, type TermLetter } from "@/lib/programs";
-import { programMeta, programMetaEntries } from "@/lib/programsMeta";
+import { programMeta, programMetaEntries } from "@/lib/programs/meta";
 import type {
   CourseStatus,
   ParsedCourse,

@@ -3,7 +3,7 @@ import {
   getSpecializationMeta,
   type ProgramMeta,
   programMeta,
-} from "@/lib/programsMeta";
+} from "@/lib/programs/meta";
 
 /** Order-insensitive key for a program-id pair. */
 function pairKey(a: string, b: string): string {

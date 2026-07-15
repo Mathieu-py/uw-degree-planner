@@ -1,5 +1,5 @@
 import { shortName } from "@/lib/programs";
-import { type ProgramMeta, programMeta } from "@/lib/programsMeta";
+import { type ProgramMeta, programMeta } from "@/lib/programs/meta";
 
 /**
  * A Joint Honours plan is half a degree — matched by name, not the `jh-` prefix,

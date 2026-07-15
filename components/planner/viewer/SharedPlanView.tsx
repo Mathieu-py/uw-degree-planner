@@ -21,8 +21,8 @@ import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
-import { programDetail } from "@/lib/programDetail";
 import { joinProgramNames, type Program } from "@/lib/programs";
+import { programDetail } from "@/lib/programs/detail";
 
 interface Props {
   plan: ServerPlan;

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { programDetail } from "./programDetail";
-import type { ProgramIdentity } from "./programs";
-import { programIdentities } from "./programsMeta";
+import { programDetail } from "./detail";
+import type { ProgramIdentity } from "./index";
+import { programIdentities } from "./meta";
 
 // Retry cadence while a program's detail hasn't loaded (network blip, transient
 // 5xx). Doubles up to the cap so an idle tab doesn't hammer the API.

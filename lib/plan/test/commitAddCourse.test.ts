@@ -31,8 +31,8 @@ vi.mock("@/lib/plan/storage", () => ({
   savePlan: savePlanMock,
 }));
 
-import { programDetail } from "@/lib/programDetail";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { programDetail } from "@/lib/programs/detail";
+import { PROGRAMS } from "@/lib/programs/registry";
 import { commitAddCourse } from "../commitAddCourse";
 
 // The block gate verifies a blocked read against program detail (absent /api

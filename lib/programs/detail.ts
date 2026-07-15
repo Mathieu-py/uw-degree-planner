@@ -1,5 +1,5 @@
-import { memoizedReferencedCodes } from "./programReferenced";
-import type { Program } from "./programs";
+import type { Program } from "./index";
+import { memoizedReferencedCodes } from "./referenced";
 
 // Client-side per-program detail store. Full detail (rule trees, electives,
 // spec rules) is fetched on demand from /api/programs/<slug> so the ~2 MB

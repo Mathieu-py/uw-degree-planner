@@ -1,11 +1,13 @@
-import programsData from "../data/programs.json";
-import { memoizedReferencedCodes } from "./programReferenced";
-import type { Program, ProgramOption, Specialization } from "./programs";
-import { validatePrograms } from "./programs";
+import "server-only";
+import programsData from "../../data/programs.json";
+import type { Program, ProgramOption, Specialization } from "./index";
+import { validatePrograms } from "./index";
+import { memoizedReferencedCodes } from "./referenced";
 
-// The validated slug→Program registry — SERVER-SIDE ONLY. It imports the ~2 MB
-// data/programs.json, so it must never enter a client bundle: the browser
-// uses @/lib/programsMeta (small index) + on-demand /api/programs/<slug> detail.
+// The validated slug→Program registry — SERVER-SIDE ONLY, enforced by the
+// "server-only" import above: a client-component import fails `next build`
+// instead of silently shipping the ~2 MB data/programs.json. The browser
+// uses @/lib/programs/meta (small index) + on-demand /api/programs/<slug> detail.
 // Only server components, the detail route handler, server actions, the scraper,
 // and tests import this. Parses at import to fail fast on malformed data.
 // Null prototype: slugs arrive from URLs (/api/programs/<slug>) and stored

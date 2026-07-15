@@ -25,7 +25,7 @@ import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ActionResult, ServerPlan } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { PlanSlot } from "@/lib/plan/types";
-import { useProgramsDetail } from "@/lib/usePlanPrograms";
+import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
 import { optionButtonClasses, TermOptionList } from "./TermOptionList";
 import { useTermOptions } from "./termOptions";
 import {

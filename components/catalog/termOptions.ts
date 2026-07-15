@@ -12,8 +12,8 @@ import {
 } from "@/lib/plan/derive";
 import type { PlanSlot } from "@/lib/plan/types";
 import type { ProgramIdentity } from "@/lib/programs";
+import { usePlanProgramContext } from "@/lib/programs/usePlanPrograms";
 import { termInfo } from "@/lib/terms";
-import { usePlanProgramContext } from "@/lib/usePlanPrograms";
 
 export type TermState = "eligible" | "check" | "missing";
 

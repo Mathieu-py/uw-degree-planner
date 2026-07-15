@@ -12,7 +12,7 @@ import type { PlanSnapshot } from "@/lib/plan/server/types";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import { programTermSpan, shortName } from "@/lib/programs";
-import { programIdsTermSpan, programMeta } from "@/lib/programsMeta";
+import { programIdsTermSpan, programMeta } from "@/lib/programs/meta";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import type { PickerContext } from "./usePlannerModals";
 

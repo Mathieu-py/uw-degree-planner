@@ -6,7 +6,7 @@ import { loadServerPlan, savePlanState } from "@/lib/plan/server/actions";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { PlanSlot } from "@/lib/plan/types";
-import { programDetail } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programs/detail";
 import { type TermId, termLabel } from "@/lib/terms";
 
 /**

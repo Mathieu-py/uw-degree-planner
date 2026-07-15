@@ -12,9 +12,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { deriveElectiveSections } from "@/lib/audit/electives";
 import { formatCourseCode } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
-import { programDetail } from "@/lib/programDetail";
 import type { Program, RuleNode, Specialization } from "@/lib/programs";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { programDetail } from "@/lib/programs/detail";
+import { PROGRAMS } from "@/lib/programs/registry";
 import { AuditPanel } from "../AuditPanel";
 
 // AuditPanel loads program detail on demand from /api/programs (absent in JSDOM);

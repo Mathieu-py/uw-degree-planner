@@ -1,11 +1,11 @@
-import programIndex from "../data/programs-index.json";
+import programIndex from "../../data/programs-index.json";
 import {
   DEFAULT_TERM_SPAN,
   type Faculty,
   type ProgramIdentity,
   programTermSpan,
   shortName,
-} from "./programs";
+} from "./index";
 
 // Client-safe index over programs — name, term span, and specialization
 // slug+name for every program, WITHOUT the ~2 MB of rule trees. Heavy

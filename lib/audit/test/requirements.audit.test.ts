@@ -12,7 +12,7 @@
 import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import { type Program, type RuleNode, TERM_LETTERS } from "../../programs";
-import { PROGRAMS } from "../../programsRegistry";
+import { PROGRAMS } from "../../programs/registry";
 import {
   type AuditNode,
   type AuditRoot,

@@ -7,7 +7,7 @@ import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { countNoun, pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { joinProgramNames, type TermLetter } from "@/lib/programs";
-import { programMetaName } from "@/lib/programsMeta";
+import { programMetaName } from "@/lib/programs/meta";
 import {
   type Categorized,
   categorize,

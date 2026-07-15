@@ -6,13 +6,13 @@ import { countPlacementIssues } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "@/lib/plan/types";
 import { validatePlan } from "@/lib/plan/validate";
-import { programDetail } from "@/lib/programDetail";
 import {
   programCredential,
   programShortCode,
   programShortName,
 } from "@/lib/programs";
-import { useProgramsDetail } from "@/lib/usePlanPrograms";
+import { programDetail } from "@/lib/programs/detail";
+import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
 import { AuditMacroList } from "./AuditMacroList";
 import type { ProgramAuditData } from "./buildProgramAudit";

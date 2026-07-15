@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deriveMacros } from "../../../components/planner/audit/deriveMacros";
 import { unitsMet } from "../../format";
 import { TERM_LETTERS } from "../../programs";
-import { PROGRAMS } from "../../programsRegistry";
+import { PROGRAMS } from "../../programs/registry";
 import { deriveCommunicationRequirement } from "../communication";
 import { compileAudit } from "../compile";
 import { foldFiniteElectivesIntoRules } from "../foldElectives";

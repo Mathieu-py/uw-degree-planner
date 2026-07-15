@@ -12,9 +12,9 @@ import { resolveAntireqCodes } from "@/lib/plan/validate";
 import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
-import { programDetail } from "@/lib/programDetail";
 import type { ProgramIdentity } from "@/lib/programs";
-import { programIdentities } from "@/lib/programsMeta";
+import { programDetail } from "@/lib/programs/detail";
+import { programIdentities } from "@/lib/programs/meta";
 import type { Course } from "./types";
 
 type CourseEligibilityState = "eligible" | "check" | "ineligible";

@@ -6,7 +6,7 @@ import {
   subjectPoolEligible,
 } from "@/lib/audit/electives";
 import type { ElectiveCategory, Program } from "@/lib/programs";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { PROGRAMS } from "@/lib/programs/registry";
 
 describe("classifyElective", () => {
   it("treats 'Complete N of the following' with an approved list as finite/draggable", () => {

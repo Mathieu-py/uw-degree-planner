@@ -13,8 +13,8 @@ import type { Course } from "@/lib/courses/types";
 import { fmtUnits } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
-import { referencedCodesOf } from "@/lib/programReferenced";
 import type { Program, Specialization } from "@/lib/programs";
+import { referencedCodesOf } from "@/lib/programs/referenced";
 import { deriveMacros } from "./deriveMacros";
 import type { Macro } from "./types";
 

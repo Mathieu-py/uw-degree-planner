@@ -5,7 +5,7 @@ import { SharedPlanView } from "@/components/planner/viewer/SharedPlanView";
 import { loadTerm } from "@/lib/courses/data";
 import { loadSharedPlan } from "@/lib/plan/server/actions";
 import type { Program } from "@/lib/programs";
-import { getProgramOptions, PROGRAMS } from "@/lib/programsRegistry";
+import { getProgramOptions, PROGRAMS } from "@/lib/programs/registry";
 import { PINNED_TERM } from "@/lib/terms";
 
 // generateMetadata and the page both need the shared plan; React.cache dedups

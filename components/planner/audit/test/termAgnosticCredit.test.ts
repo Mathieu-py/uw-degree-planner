@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
-import { PROGRAMS } from "@/lib/programsRegistry";
+import { PROGRAMS } from "@/lib/programs/registry";
 import { buildProgramAudit } from "../buildProgramAudit";
 
 /**

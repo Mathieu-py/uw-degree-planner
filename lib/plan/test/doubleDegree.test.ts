@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { programMeta } from "@/lib/programsMeta";
-import { getSpecialization, PROGRAMS } from "@/lib/programsRegistry";
+import { programMeta } from "@/lib/programs/meta";
+import { getSpecialization, PROGRAMS } from "@/lib/programs/registry";
 import {
   doubleDegreeSuggestionMessage,
   specsAfterDoubleDegreeSwap,

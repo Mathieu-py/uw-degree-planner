@@ -3,7 +3,7 @@ import { namedGroupLabel } from "../../../components/planner/audit/deriveMacros"
 import { equivalenceForCatalog } from "../../courses/equivalence";
 import { unitsMet } from "../../format";
 import { type Program, TERM_LETTERS } from "../../programs";
-import { PROGRAMS } from "../../programsRegistry";
+import { PROGRAMS } from "../../programs/registry";
 import {
   type AuditNode,
   compileAudit,
