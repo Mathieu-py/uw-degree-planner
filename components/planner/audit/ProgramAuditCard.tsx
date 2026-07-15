@@ -1,8 +1,8 @@
 "use client";
 
 import { memo } from "react";
+import type { ProgramAuditData } from "@/lib/audit/view/buildProgramAudit";
 import type { Course } from "@/lib/courses/types";
-import type { ProgramAuditData } from "./buildProgramAudit";
 import { ProgramAuditBody } from "./ProgramAuditBody";
 import type { AcknowledgeFn, DragWiring, DrillFn } from "./types";
 

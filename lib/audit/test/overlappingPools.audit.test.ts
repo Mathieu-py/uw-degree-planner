@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { deriveMacros } from "../../../components/planner/audit/deriveMacros";
 import type { LocalPlan } from "../../plan/types";
 import type { Program } from "../../programs";
 import { PROGRAMS } from "../../programs/registry";
 import { type AuditNode, compileAudit } from "../compile";
 import { computeDegreeProgress } from "../progress";
+import { deriveMacros } from "../view/deriveMacros";
 
 function makePlan(codes: string[]): LocalPlan {
   return {

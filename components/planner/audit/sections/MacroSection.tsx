@@ -1,8 +1,9 @@
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Ring } from "@/components/ui/Ring";
 import { ringFor } from "@/lib/audit/score";
+import type { Macro } from "@/lib/audit/view/types";
 import { NodeBody } from "../bodies/NodeBody";
-import type { Macro, OptionRenderProps } from "../types";
+import type { OptionRenderProps } from "../types";
 import { SectionRow } from "./SectionRow";
 
 /** Head-tile glyph per macro; the complete state swaps in a check. */

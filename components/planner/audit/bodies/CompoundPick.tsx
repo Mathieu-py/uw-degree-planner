@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import type { AuditNode } from "@/lib/audit/compile";
 import { optionMet, type ScoredNode } from "@/lib/audit/score";
+import { GENERIC_ALL } from "@/lib/audit/view/types";
 import { fmtUnits, pluralize, progressPct } from "@/lib/format";
 import { walkRule } from "@/lib/requirements/walk";
 import { MetChip, WarnChip } from "../cards/Chip";
@@ -12,7 +13,7 @@ import { Recede } from "../cards/Recede";
 import { RingLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
 import { StatusPill } from "../cards/StatusPill";
-import { GENERIC_ALL, type OptionRenderProps } from "../types";
+import type { OptionRenderProps } from "../types";
 import { OptionChip } from "./OptionChip";
 import { poolLevels } from "./SubjectPoolBody";
 

@@ -3,14 +3,16 @@
 import { memo, useMemo, useState } from "react";
 import { Ring } from "@/components/ui/Ring";
 import { countPlacementIssues } from "@/lib/audit/creditExclusion";
+import {
+  buildProgramAudit,
+  type ProgramAuditData,
+} from "@/lib/audit/view/buildProgramAudit";
 import type { Course } from "@/lib/courses/types";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import { programShortCode } from "@/lib/programs";
 import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
-import type { ProgramAuditData } from "./buildProgramAudit";
-import { buildProgramAudit } from "./buildProgramAudit";
 import { ProgramAuditBody } from "./ProgramAuditBody";
 import { ProgramAuditCard } from "./ProgramAuditCard";
 import type { AcknowledgeFn, DragWiring, DrillFn } from "./types";
