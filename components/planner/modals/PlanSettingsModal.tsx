@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ProgramOption } from "@/components/planner/shell/PlannerShell";
 import { Button } from "@/components/ui/Button";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { Picker } from "@/components/ui/Picker";
@@ -11,6 +10,7 @@ import { defaultStreamFor } from "@/lib/plan/defaultStream";
 import { swapToDoubleDegree } from "@/lib/plan/doubleDegree";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
+import type { ProgramOption } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
 import { DoubleDegreeSuggestion } from "./DoubleDegreeSuggestion";
 import { ProgramMultiSelect } from "./ProgramMultiSelect";

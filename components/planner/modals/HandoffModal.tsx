@@ -8,7 +8,7 @@ import { pluralize } from "@/lib/format";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { HandoffResolution } from "@/lib/plan/sync/useAnonHandoff";
 import type { LocalPlan } from "@/lib/plan/types";
-import { termInfo } from "@/lib/terms";
+import { termLabel } from "@/lib/terms";
 
 interface Props {
   localPlan: LocalPlan;
@@ -94,7 +94,7 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
 function summarize(plan: LocalPlan): string {
   const slotCount = plan.slots.reduce((sum, s) => sum + s.courses.length, 0);
   const start = plan.startTermId
-    ? (termInfo(plan.startTermId)?.label ?? `Term ${plan.startTermId}`)
+    ? termLabel(plan.startTermId)
     : "no start term";
   return `${slotCount} placed ${pluralize(slotCount, "course")} · ${start}`;
 }

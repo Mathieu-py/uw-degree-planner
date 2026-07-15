@@ -35,11 +35,6 @@ vi.mock("@/lib/plan/validate", () => ({
   issuesBySlot: () => new Map(),
 }));
 
-// PlannerShell is a heavy client module; we only need planSubtitle here.
-vi.mock("@/components/planner/shell/PlannerShell", () => ({
-  planSubtitle: () => "Co-op · 8 terms",
-}));
-
 // The "Duplicate to my plans" action pulls in router + auth + plan-list +
 // storage. Stub them so the view mounts in isolation; capture create() to
 // assert the duplicate flow.
