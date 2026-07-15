@@ -202,7 +202,7 @@ const ProgramsFileSchema = z.record(z.string(), ProgramSchema);
 /**
  * Validate a `slug → Program` map, throwing on the first violation. Lets the
  * scraper fail fast before writing, and backs the `PROGRAMS` registry's
- * fail-fast parse (see `@/lib/programsRegistry`).
+ * fail-fast parse (see `@/lib/programs/registry`).
  */
 export function validatePrograms(raw: unknown): Record<string, Program> {
   return ProgramsFileSchema.parse(raw);
@@ -230,7 +230,7 @@ export interface ProgramIdentity {
 
 /**
  * Short name = program name up to the first " (" (e.g. "Computer Science").
- * Exported for the registry's identity/short-name lookups (`@/lib/programsRegistry`).
+ * Exported for the registry's identity/short-name lookups (`@/lib/programs/registry`).
  */
 export function shortName(name: string): string {
   const paren = name.indexOf(" (");

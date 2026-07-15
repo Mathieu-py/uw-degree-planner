@@ -32,6 +32,18 @@ export function addCourseToSlot<T extends { slots: PlanSlot[] }>(
   };
 }
 
+/**
+ * Clone with fresh slot UUIDs. Required when seeding a copy of an existing
+ * plan: `save_plan_state` upserts by slot id, so reused ids PK-conflict with
+ * the source's rows. Course rows key on (slot_id, course_code) — fine as-is.
+ */
+export function reseedSlotIds<T extends { slots: PlanSlot[] }>(plan: T): T {
+  return {
+    ...plan,
+    slots: plan.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
+  };
+}
+
 /** Remove the course `code` from slot `slotId`. No-op if the slot or course is absent. */
 export function removeCourseFromSlot(
   plan: LocalPlan,

@@ -86,3 +86,18 @@ export function truncate(text: string | null | undefined, max = 140): string {
   if (text.length <= max) return text;
   return `${text.slice(0, max).trimEnd()}…`;
 }
+
+/** Humanize the error codes the plan server actions return. */
+export function serverActionError(code: string): string {
+  switch (code) {
+    case "not_authenticated":
+      return "Your session expired — please sign in again.";
+    case "snapshot_too_large":
+      return "This plan is too large to save.";
+    case "not_found":
+    case "not_found_or_unauthorized":
+      return "That plan is no longer available.";
+    default:
+      return "Couldn't save. Try again.";
+  }
+}

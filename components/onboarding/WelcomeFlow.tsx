@@ -19,9 +19,8 @@ import { completedCoursesFromPlan } from "@/lib/plan/derive";
 import { specsAfterDoubleDegreeSwap } from "@/lib/plan/doubleDegree";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { buildEmptySlots } from "@/lib/plan/sequence";
-import { toSnapshot } from "@/lib/plan/server/serialize";
-import { emptyPlan, savePlan } from "@/lib/plan/storage";
-import { usePlanList } from "@/lib/plan/sync/usePlanList";
+import { emptyPlan } from "@/lib/plan/storage";
+import { saveNewPlan, usePlanList } from "@/lib/plan/sync/usePlanList";
 import {
   applyTranscriptToPlan,
   detectStream,
@@ -217,18 +216,19 @@ export function WelcomeFlow({
     setBusy(true);
     setBuildError(null);
     try {
+      // Slot ids are already fresh here — buildPlan mints them — so no reseed.
       const finalPlan = await variants.applyTo(draftPlan);
-      if (isAuthed) {
-        const id = await create(NEW_PLAN_NAME, toSnapshot(finalPlan));
-        if (id) {
-          router.push(`/plan/${id}`);
-        } else {
-          setBuildError("Couldn't save your plan. Please try again.");
-          setBusy(false);
-        }
+      const route = await saveNewPlan({
+        isAuthed,
+        plan: finalPlan,
+        name: NEW_PLAN_NAME,
+        create,
+      });
+      if (route) {
+        router.push(route);
       } else {
-        savePlan(finalPlan);
-        router.push("/plan");
+        setBuildError("Couldn't save your plan. Please try again.");
+        setBusy(false);
       }
     } catch (err) {
       logError("Failed to build/save plan:", err);

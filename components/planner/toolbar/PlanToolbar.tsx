@@ -16,6 +16,10 @@ import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
 
+/** Bordered toolbar-bar chrome, shared with PlannerShell's anon local-plan bar. */
+export const INLINE_BAR_CLASS =
+  "flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0";
+
 interface Props {
   /** Anon users get no bar — they have a single local plan. */
   isAuthed: boolean;
@@ -229,7 +233,7 @@ function PlanToolbarAuthed({
     : null;
 
   const containerClass = inline
-    ? "flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0"
+    ? INLINE_BAR_CLASS
     : "flex items-center gap-2 rounded-lg border border-line bg-bg px-3 py-1.5";
 
   // Editing/confirming swap the dropdown for an inline bar. Card mode (non-

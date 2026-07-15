@@ -9,11 +9,10 @@ import {
   renamePlan,
   setPlanShare,
 } from "../server/actions";
+import { toSnapshot } from "../server/serialize";
 import type { PlanSnapshot, PlanSummary } from "../server/types";
-
-export interface UsePlanListArgs {
-  isAuthed: boolean;
-}
+import { savePlan } from "../storage";
+import type { LocalPlan } from "../types";
 
 export interface UsePlanListResult {
   /** Null while loading. Empty array means "authed, fetched, zero plans". */
@@ -105,7 +104,11 @@ export function __resetPlanListStoreForTests(): void {
   currentIsAuthed = null;
 }
 
-export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
+export function usePlanList({
+  isAuthed,
+}: {
+  isAuthed: boolean;
+}): UsePlanListResult {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
@@ -305,4 +308,24 @@ export function usePlanList({ isAuthed }: UsePlanListArgs): UsePlanListResult {
     duplicate,
     share,
   };
+}
+
+/**
+ * Persist a brand-new plan and return the route to it: authed → server row via
+ * `create` (null when that fails), anon → the localStorage demo slot. The fork
+ * shared by onboarding's "Build my plan" and the shared-view duplicate; callers
+ * own busy/error UI and reseed slot ids first when cloning an existing plan.
+ */
+export async function saveNewPlan(opts: {
+  isAuthed: boolean;
+  plan: LocalPlan;
+  name: string;
+  create: UsePlanListResult["create"];
+}): Promise<string | null> {
+  if (opts.isAuthed) {
+    const id = await opts.create(opts.name, toSnapshot(opts.plan));
+    return id ? `/plan/${id}` : null;
+  }
+  savePlan(opts.plan);
+  return "/plan";
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { addCourseToSlot, removeCourseFromSlot } from "../mutateSlots";
+import {
+  addCourseToSlot,
+  removeCourseFromSlot,
+  reseedSlotIds,
+} from "../mutateSlots";
 import type { LocalPlan } from "../types";
 
 const PLAN: LocalPlan = {
@@ -74,6 +78,34 @@ describe("addCourseToSlot", () => {
     expect(
       next.slots.find((s) => s.id === "1B")?.courses.map((c) => c.code),
     ).toEqual(["cs136", "cs246"]);
+  });
+});
+
+describe("reseedSlotIds", () => {
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+  it("mints fresh unique UUIDs and keeps everything else", () => {
+    const next = reseedSlotIds(PLAN);
+    const ids = next.slots.map((s) => s.id);
+    expect(ids.every((id) => UUID_RE.test(id))).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(next.slots.map((s) => ({ ...s, id: "x" }))).toEqual(
+      PLAN.slots.map((s) => ({ ...s, id: "x" })),
+    );
+    expect(next.stream).toBe(PLAN.stream);
+  });
+
+  it("does not mutate the input", () => {
+    reseedSlotIds(PLAN);
+    expect(PLAN.slots.map((s) => s.id)).toEqual(["1A", "1B"]);
+  });
+
+  it("is generic over the container (snapshot-shaped in, same shape out)", () => {
+    const snapshotLike = { programIds: ["se"], slots: PLAN.slots };
+    const next = reseedSlotIds(snapshotLike);
+    expect(next.programIds).toEqual(["se"]);
+    expect(next.slots[0].id).not.toBe("1A");
   });
 });
 

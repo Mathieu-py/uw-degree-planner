@@ -53,7 +53,7 @@ export function getSpecialization(
 /**
  * Every course code a program (+ optional specialization) references, over the
  * full server registry. The browser computes the same sets from loaded detail
- * (see `@/lib/programDetail`) via the same shared implementation; this is the
+ * (see `@/lib/programs/detail`) via the same shared implementation; this is the
  * server/test path (variant placement, unit tests).
  * Empty for an unknown/absent id — pinned, since the registry is immutable.
  */
