@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { reseedSlotIds } from "@/lib/plan/mutateSlots";
 import { mapDbError } from "@/lib/server/dbError";
 import { requireUser } from "@/lib/supabase/requireUser";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -148,16 +149,8 @@ export async function duplicatePlan(
 
   const source = loaded.data;
   const name = (nameOverride ?? `${source.name} (copy)`).trim();
-  // `save_plan_state` reuses the snapshot's slot UUIDs so UI slot identity
-  // survives a save (migrations/0002_save_plan_state.sql). For a duplicate
-  // that PK-conflicts with the source's slot rows, so mint fresh slot ids.
-  // Course rows key on (slot_id, course_code) with no client id, so they're fine.
-  const seed = toSnapshot(source);
-  const seedWithFreshSlotIds: PlanSnapshot = {
-    ...seed,
-    slots: seed.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
-  };
-  return createPlan({ name, seed: seedWithFreshSlotIds });
+  // Fresh slot ids or the seed PK-conflicts with the source (see reseedSlotIds).
+  return createPlan({ name, seed: reseedSlotIds(toSnapshot(source)) });
 }
 
 // ---------------------------------------------------------------------------

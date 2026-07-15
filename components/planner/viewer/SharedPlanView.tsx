@@ -11,11 +11,10 @@ import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { logError } from "@/lib/log";
 import { planSubtitle } from "@/lib/plan/format";
-import { toSnapshot } from "@/lib/plan/server/serialize";
+import { reseedSlotIds } from "@/lib/plan/mutateSlots";
 import type { ServerPlan } from "@/lib/plan/server/types";
-import { savePlan } from "@/lib/plan/storage";
 import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
-import { usePlanList } from "@/lib/plan/sync/usePlanList";
+import { saveNewPlan, usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { usePlanValidation } from "@/lib/plan/usePlanValidation";
 import {
@@ -70,32 +69,20 @@ export function SharedPlanView({
     "—",
   );
 
-  // "Duplicate to my plans" (mirrors WelcomeFlow's build): authed → server copy
-  // and route to it; anon → seed the local demo plan. Mint fresh slot ids
-  // either way to avoid PK conflicts on the seeded insert.
+  // "Duplicate to my plans": reseed slot ids (cloning an existing plan), then
+  // the shared authed/anon fork routes to the copy.
   async function onDuplicate() {
     if (busy) return;
     setBusy(true);
     try {
-      if (isAuthed) {
-        const snapshot = toSnapshot(localPlan);
-        const fresh = {
-          ...snapshot,
-          slots: snapshot.slots.map((s) => ({ ...s, id: crypto.randomUUID() })),
-        };
-        const id = await create(`${plan.name} (copy)`, fresh);
-        if (id) router.push(`/plan/${id}`);
-        else setBusy(false);
-      } else {
-        savePlan({
-          ...localPlan,
-          slots: localPlan.slots.map((s) => ({
-            ...s,
-            id: crypto.randomUUID(),
-          })),
-        });
-        router.push("/plan");
-      }
+      const route = await saveNewPlan({
+        isAuthed,
+        plan: reseedSlotIds(localPlan),
+        name: `${plan.name} (copy)`,
+        create,
+      });
+      if (route) router.push(route);
+      else setBusy(false);
     } catch (err) {
       logError("Failed to duplicate plan", err);
       setBusy(false);

@@ -14,6 +14,7 @@ import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
 import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
+import { serverActionError } from "@/lib/format";
 import { placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import {
@@ -28,14 +29,13 @@ import type { PlanSlot } from "@/lib/plan/types";
 import { programDetail } from "@/lib/programs/detail";
 import { programIdentities } from "@/lib/programs/meta";
 import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
-import { optionButtonClasses, TermOptionList } from "./TermOptionList";
-import { useTermOptions } from "./termOptions";
 import {
   ErrorBody,
   ProgramBlockedBody,
   StatusBody,
-  serverActionError,
-} from "./termPickerShared";
+} from "./CourseTermModalShell";
+import { optionButtonClasses, TermOptionList } from "./TermOptionList";
+import { useTermOptions } from "./termOptions";
 
 export type TermPickerStep = "plans" | "term";
 

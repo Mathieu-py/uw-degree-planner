@@ -16,7 +16,10 @@ import { TranscriptImportModal } from "@/components/planner/modals/TranscriptImp
 import { SlotPicker } from "@/components/planner/picker/SlotPicker";
 import { TermChoiceModal } from "@/components/planner/picker/TermChoiceModal";
 import { Timeline } from "@/components/planner/timeline/Timeline";
-import { PlanToolbar } from "@/components/planner/toolbar/PlanToolbar";
+import {
+  INLINE_BAR_CLASS,
+  PlanToolbar,
+} from "@/components/planner/toolbar/PlanToolbar";
 import { SaveStatusBadge } from "@/components/planner/toolbar/SaveStatusBadge";
 import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { ActionMenu } from "@/components/ui/ActionMenu";
@@ -517,7 +520,7 @@ function PlannerShellInner({
             ) : null}
           </PlanToolbar>
         ) : (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0">
+          <div className={INLINE_BAR_CLASS}>
             <span
               className="text-sm font-medium truncate max-w-[16rem]"
               title={activePlanName}

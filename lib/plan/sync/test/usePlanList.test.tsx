@@ -25,7 +25,15 @@ vi.mock("../../server/actions", () => ({
   duplicatePlan: duplicatePlanMock,
 }));
 
-import { __resetPlanListStoreForTests, usePlanList } from "../usePlanList";
+const { savePlanMock } = vi.hoisted(() => ({ savePlanMock: vi.fn() }));
+vi.mock("../../storage", () => ({ savePlan: savePlanMock }));
+
+import type { LocalPlan } from "../../types";
+import {
+  __resetPlanListStoreForTests,
+  saveNewPlan,
+  usePlanList,
+} from "../usePlanList";
 
 function mkSummary(overrides: Partial<PlanSummary> = {}): PlanSummary {
   return {
@@ -327,5 +335,60 @@ describe("usePlanList — refetch", () => {
     });
 
     expect(result.current.plans).toHaveLength(2);
+  });
+});
+
+describe("saveNewPlan", () => {
+  const plan: LocalPlan = {
+    schemaVersion: 3,
+    programIds: ["h-cs"],
+    specializationIds: {},
+    stream: "regular",
+    startTermId: 1239,
+    slots: [
+      { id: "s1", termId: 1239, position: "1A", isCoop: false, courses: [] },
+    ],
+    updatedAt: "2026-05-24T00:00:00.000Z",
+  };
+
+  it("authed: creates with a snapshot carrying the plan's slot ids, returns the route", async () => {
+    const create = vi.fn().mockResolvedValue("new-id");
+    const route = await saveNewPlan({
+      isAuthed: true,
+      plan,
+      name: "Copy",
+      create,
+    });
+    expect(route).toBe("/plan/new-id");
+    expect(create).toHaveBeenCalledTimes(1);
+    const [name, seed] = create.mock.calls[0];
+    expect(name).toBe("Copy");
+    expect(seed.slots.map((s: { id: string }) => s.id)).toEqual(["s1"]);
+    expect(savePlanMock).not.toHaveBeenCalled();
+  });
+
+  it("authed: returns null (no local write) when create fails", async () => {
+    const create = vi.fn().mockResolvedValue(null);
+    const route = await saveNewPlan({
+      isAuthed: true,
+      plan,
+      name: "Copy",
+      create,
+    });
+    expect(route).toBeNull();
+    expect(savePlanMock).not.toHaveBeenCalled();
+  });
+
+  it("anon: saves locally and returns /plan without touching create", async () => {
+    const create = vi.fn();
+    const route = await saveNewPlan({
+      isAuthed: false,
+      plan,
+      name: "Copy",
+      create,
+    });
+    expect(route).toBe("/plan");
+    expect(savePlanMock).toHaveBeenCalledWith(plan);
+    expect(create).not.toHaveBeenCalled();
   });
 });

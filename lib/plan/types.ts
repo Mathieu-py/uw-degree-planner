@@ -1,3 +1,4 @@
+import type { TermLetter } from "@/lib/programs";
 import type { TermId } from "@/lib/terms";
 
 /**
@@ -36,8 +37,6 @@ export const STREAM_OPTIONS: ReadonlyArray<{ value: Stream; label: string }> = [
   { value: "stream4", label: "Stream 4 co-op" },
   { value: "stream8", label: "Stream 8 co-op" },
 ];
-
-export type TermLetter = "1A" | "1B" | "2A" | "2B" | "3A" | "3B" | "4A" | "4B";
 
 export type CoopLabel = `coop${1 | 2 | 3 | 4 | 5 | 6}`;
 

@@ -70,3 +70,50 @@ export function CourseTermModalShell({
     </Modal>
   );
 }
+
+// Standard body states for the shell's children slot, shared by the pickers.
+
+/** Centered status line used while a plan list / plan loads. */
+export function StatusBody({ children }: { children: ReactNode }) {
+  return <p className="u-body py-4 text-center">{children}</p>;
+}
+
+/**
+ * Shown in place of the term list when a program/faculty restriction closes the
+ * course to the plan's program. Program eligibility is plan-level, so it's
+ * stated once here rather than disabling every term.
+ */
+export function ProgramBlockedBody() {
+  return (
+    <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-3 text-center">
+      This course isn't open to your program.
+    </p>
+  );
+}
+
+/** Centered error message with an optional retry button. */
+export function ErrorBody({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 py-4 text-center">
+      <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
+        {message}
+      </p>
+      {onRetry ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          className="self-center"
+        >
+          Try again
+        </Button>
+      ) : null}
+    </div>
+  );
+}

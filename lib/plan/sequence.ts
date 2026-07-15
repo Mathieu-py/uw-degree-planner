@@ -1,15 +1,8 @@
-import { TERM_LETTERS } from "@/lib/programs";
+import { TERM_LETTERS, type TermLetter } from "@/lib/programs";
 import { nextTerm, type TermId, type TermInfo, termInfo } from "@/lib/terms";
-import type {
-  CoopLabel,
-  PlanSlot,
-  SlotPosition,
-  Stream,
-  TermLetter,
-} from "./types";
+import type { CoopLabel, PlanSlot, SlotPosition, Stream } from "./types";
 
-// 1A–4B, the single source of truth shared with the audit. The annotation
-// makes membership drift between the two `TermLetter` unions a compile error.
+// 1A–4B, the single source of truth shared with the audit.
 const ACADEMIC_TERMS: readonly TermLetter[] = TERM_LETTERS;
 
 /**

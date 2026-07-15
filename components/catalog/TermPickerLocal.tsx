@@ -8,9 +8,9 @@ import { placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
+import { ProgramBlockedBody } from "./CourseTermModalShell";
 import { TermOptionList } from "./TermOptionList";
 import { useTermOptions } from "./termOptions";
-import { ProgramBlockedBody } from "./termPickerShared";
 
 /**
  * Signed-out add flow: the user has a single local plan in localStorage. Runs

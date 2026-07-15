@@ -49,11 +49,15 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/auth/store", () => ({
   useAuthState: () => ({ user: null, ready: true, isAuthed: true }),
 }));
-vi.mock("@/lib/plan/sync/usePlanList", () => ({
+// Keep the real saveNewPlan so the duplicate flow runs the actual fork (it
+// picks up the mocked toSnapshot/savePlan below); only the hook is stubbed.
+vi.mock("@/lib/plan/sync/usePlanList", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   usePlanList: () => ({ create: createMock }),
 }));
 vi.mock("@/lib/plan/storage", () => ({ savePlan: savePlanMock }));
-vi.mock("@/lib/plan/server/serialize", () => ({
+vi.mock("@/lib/plan/server/serialize", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   toSnapshot: (p: unknown) => ({ ...(p as object), slots: [] }),
 }));
 

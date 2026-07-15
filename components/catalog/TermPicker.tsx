@@ -4,10 +4,9 @@ import { useCallback, useState } from "react";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { useModalExit } from "@/lib/hooks/useModalExit";
-import { CourseTermModalShell } from "./CourseTermModalShell";
+import { CourseTermModalShell, StatusBody } from "./CourseTermModalShell";
 import { TermPickerAuthed, type TermPickerStep } from "./TermPickerAuthed";
 import { TermPickerLocal } from "./TermPickerLocal";
-import { StatusBody } from "./termPickerShared";
 
 /**
  * Course-first "Add" flow (catalog / course detail page): the course is fixed
