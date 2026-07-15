@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatCourseCode, formatPercent, truncate } from "../format";
+import {
+  describeActionError,
+  formatCourseCode,
+  formatPercent,
+  truncate,
+} from "../format";
 
 describe("formatPercent", () => {
   it("renders an em dash for null or undefined", () => {
@@ -48,5 +53,26 @@ describe("truncate", () => {
   it("defaults to max=140", () => {
     expect(truncate("x".repeat(140))).toBe("x".repeat(140));
     expect(truncate("x".repeat(141)).length).toBe(141);
+  });
+});
+
+describe("describeActionError", () => {
+  it("maps plan and account codes to their copy", () => {
+    expect(describeActionError("not_found_or_unauthorized")).toBe(
+      "That plan is no longer available.",
+    );
+    expect(describeActionError("username_taken")).toBe(
+      "That username is already taken.",
+    );
+  });
+  it("keeps bare not_found generic (domain-ambiguous: plans AND profiles)", () => {
+    expect(describeActionError("not_found")).toBe(
+      "Something went wrong. Try again.",
+    );
+  });
+  it("falls back to neutral copy for unknown codes", () => {
+    expect(describeActionError("share_token_collision")).toBe(
+      "Something went wrong. Try again.",
+    );
   });
 });
