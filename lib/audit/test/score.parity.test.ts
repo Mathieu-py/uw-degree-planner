@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { namedGroupLabel } from "../../../components/planner/audit/deriveMacros";
 import { equivalenceForCatalog } from "../../courses/equivalence";
 import { unitsMet } from "../../format";
 import { type Program, TERM_LETTERS } from "../../programs";
@@ -23,6 +22,7 @@ import {
   scoreAudit,
   scoreNode,
 } from "../score";
+import { namedGroupLabel } from "../view/deriveMacros";
 import { lcg } from "./fuzzRand";
 import { allCodes, makePlan, mixedUnitsOf, requiredOnly } from "./helpers";
 

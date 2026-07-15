@@ -1,10 +1,10 @@
 "use client";
 
+import type { ProgramAuditData } from "@/lib/audit/view/buildProgramAudit";
 import type { Course } from "@/lib/courses/types";
 import { programCredential, programShortName } from "@/lib/programs";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
 import { AuditMacroList } from "./AuditMacroList";
-import type { ProgramAuditData } from "./buildProgramAudit";
 import type { AcknowledgeFn, DragWiring, DrillFn } from "./types";
 import { UnverifiedRequirements } from "./UnverifiedRequirements";
 

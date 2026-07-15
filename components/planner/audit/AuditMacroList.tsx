@@ -1,6 +1,7 @@
+import type { Macro } from "@/lib/audit/view/types";
 import type { Course } from "@/lib/courses/types";
 import { MacroSection } from "./sections/MacroSection";
-import type { DragWiring, DrillFn, Macro } from "./types";
+import type { DragWiring, DrillFn } from "./types";
 
 interface Props {
   macros: Macro[];

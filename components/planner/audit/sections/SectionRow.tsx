@@ -1,4 +1,5 @@
 import { Icon } from "@/components/ui/Icon";
+import type { Section } from "@/lib/audit/view/types";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits, pluralize, unitsMet } from "@/lib/format";
 import { BreadthBody } from "../bodies/BreadthBody";
@@ -9,7 +10,7 @@ import { FindRow } from "../cards/FindRow";
 import { GlyphLead } from "../cards/RingLead";
 import { StatusCard } from "../cards/StatusCard";
 import { StatusPill } from "../cards/StatusPill";
-import type { DragWiring, DrillFn, Section } from "../types";
+import type { DragWiring, DrillFn } from "../types";
 
 /**
  * One requirement section rendered in the Status-Cards grammar. The `elective*`
