@@ -32,7 +32,7 @@ import { removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
-import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
+import { usePlanValidation } from "@/lib/plan/usePlanValidation";
 import { joinProgramNames, type ProgramOption } from "@/lib/programs";
 import { usePlanProgramContext } from "@/lib/programs/usePlanPrograms";
 import { termInfo } from "@/lib/terms";
@@ -159,21 +159,17 @@ function PlannerShellInner({
     () => new Set(catalog.map((c) => c.code)),
     [catalog],
   );
-  const catalogByCode = useMemo(
-    () => new Map(catalog.map((c) => [c.code, c])),
-    [catalog],
+  const { catalogByCode, issues, issuesPerSlot } = usePlanValidation(
+    plan,
+    catalog,
   );
 
-  const issues = useMemo(
-    () => (plan ? validatePlan(plan, catalogByCode) : []),
-    [plan, catalogByCode],
-  );
-  const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
-
-  // The audit panel recompiles the full rule tree on every plan change and is
-  // non-interactive, so feed it a deferred plan: the timeline updates
-  // synchronously while React recomputes the audit at lower priority.
+  // The audit recompiles the full rule tree per plan change, so it gets a
+  // deferred plan (timeline stays synchronous). Issues defer alongside —
+  // they're audit-memo deps, so live ones would drag the recompile back
+  // onto the urgent render.
   const deferredPlan = useDeferredValue(plan);
+  const deferredIssues = useDeferredValue(issues);
 
   // Code of the dragged audit chip, so the timeline can tint its eligible terms.
   const [draggingAddCode, setDraggingAddCode] = useState<string | null>(null);
@@ -448,9 +444,11 @@ function PlannerShellInner({
               titleId="audit-sheet-title"
               title="Degree audit"
             >
+              {/* plan and issues must fall back to live together (same commit). */}
               <AuditPanel
                 plan={deferredPlan ?? plan}
-                catalog={catalog}
+                catalogByCode={catalogByCode}
+                issues={deferredPlan ? deferredIssues : issues}
                 onDrillToRequirement={(codes, preset) => {
                   handleDrillToRequirement(codes, preset);
                   setAuditSheetOpen(false);
@@ -590,7 +588,8 @@ function PlannerShellInner({
           <div className="hidden lg:block lg:min-h-0">
             <AuditPanel
               plan={deferredPlan ?? plan}
-              catalog={catalog}
+              catalogByCode={catalogByCode}
+              issues={deferredPlan ? deferredIssues : issues}
               onDrillToRequirement={handleDrillToRequirement}
               onAcknowledgeRequirement={handleAcknowledgeRequirement}
               drag={auditDrag}

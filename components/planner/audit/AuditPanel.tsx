@@ -4,30 +4,27 @@ import { memo, useMemo, useState } from "react";
 import { Ring } from "@/components/ui/Ring";
 import { countPlacementIssues } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
+import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
-import { validatePlan } from "@/lib/plan/validate";
-import {
-  programCredential,
-  programShortCode,
-  programShortName,
-} from "@/lib/programs";
+import type { ValidationIssue } from "@/lib/plan/validate";
+import { programShortCode } from "@/lib/programs";
 import { programDetail } from "@/lib/programs/detail";
 import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
-import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
-import { AuditMacroList } from "./AuditMacroList";
 import type { ProgramAuditData } from "./buildProgramAudit";
 import { buildProgramAudit } from "./buildProgramAudit";
+import { ProgramAuditBody } from "./ProgramAuditBody";
 import { ProgramAuditCard } from "./ProgramAuditCard";
 import type { AcknowledgeFn, DragWiring, DrillFn } from "./types";
-import { UnverifiedRequirements } from "./UnverifiedRequirements";
 
 interface Props {
   plan: LocalPlan;
+  /** Shared `code → Course` lookup from usePlanValidation. */
+  catalogByCode: Map<string, Course>;
   /**
-   * Catalog for row titles and resolving a pool's eligible codes for Browse.
-   * Absent in read-only contexts → rows show code-only, no pool Browse.
+   * Plan-wide issues from usePlanValidation (the panel doesn't validate).
+   * Drives the per-program credit-exclusion overlay and the blocking note.
    */
-  catalog?: Course[];
+  issues: readonly ValidationIssue[];
   /**
    * One code → term picker; multiple (open pool / elective) → slot picker
    * pre-filtered to those codes. Omitted by the read-only view (rows inert).
@@ -52,41 +49,33 @@ const PROGRAM_TONES = [
 
 export const AuditPanel = memo(function AuditPanel({
   plan,
-  catalog,
+  catalogByCode,
+  issues,
   onDrillToRequirement,
   onAcknowledgeRequirement,
   drag,
 }: Props) {
-  const catalogByCode = useMemo(
-    () => new Map((catalog ?? []).map((c) => [c.code, c])),
-    [catalog],
+  // One per prereq-misplaced course + one per antireq conflict SET.
+  const blockingIssueCount = useMemo(
+    () => countPlacementIssues(issues),
+    [issues],
   );
 
-  // Plan-wide validation issues drive the per-program credit-exclusion overlay
-  // (built inside buildProgramAudit, since the antireq keeper is program-
-  // specific) and the header count. Needs the catalog for requisite strings.
-  // The count is one per prereq-misplaced course + one per antireq conflict SET.
-  const { issues, blockingIssueCount } = useMemo(() => {
-    if (catalogByCode.size === 0)
-      return {
-        issues: [] as ReturnType<typeof validatePlan>,
-        blockingIssueCount: 0,
-      };
-    const found = validatePlan(plan, catalogByCode);
-    return { issues: found, blockingIssueCount: countPlacementIssues(found) };
-  }, [plan, catalogByCode]);
+  // Plan-level lone-Joint-Honours warning; shown only in the single layout.
+  const jointHonoursPartner = useMemo(
+    () => jointHonoursWarning(plan.programIds),
+    [plan.programIds],
+  );
 
   const isMulti = plan.programIds.length > 1;
   // Detail (rule trees) for the plan's programs is fetched on demand; the
   // audit rebuilds once it lands.
   const detailLoaded = useProgramsDetail(plan.programIds);
 
-  // For a double degree, build every program's audit once (the rail needs all
-  // their `pct`s, the detail needs the selected one's macros). Skipped for the
-  // common single-program case (the card computes its own audit) and while
-  // detail loads — null-program audits would be discarded by the placeholder.
+  // Every program's audit (the multi rail needs all `pct`s; single is N=1),
+  // gated on detail so fetch-window audits aren't built and discarded.
   const programData = useMemo(() => {
-    if (!detailLoaded || plan.programIds.length <= 1) return null;
+    if (!detailLoaded) return null;
     const map = new Map<string, ProgramAuditData>();
     for (const id of plan.programIds)
       map.set(
@@ -112,31 +101,33 @@ export const AuditPanel = memo(function AuditPanel({
     );
   }
 
-  // Single program → the plain full-width card, exactly as before. Nothing to
-  // switch between, so no rail and no plan-level rollup header. The card
-  // handles its own loading state.
-  if (!isMulti) {
-    return (
-      <aside className="w-full lg:w-[28.75rem] shrink-0 lg:h-full lg:flex lg:flex-col">
-        <ProgramAuditCard
-          plan={plan}
-          programId={plan.programIds[0]}
-          catalogByCode={catalogByCode}
-          issues={issues}
-          blockingIssueCount={blockingIssueCount}
-          onDrillToRequirement={onDrillToRequirement}
-          onAcknowledgeRequirement={onAcknowledgeRequirement}
-          drag={drag}
-        />
-      </aside>
-    );
-  }
-
-  // Two+ programs, detail still loading → placeholder.
+  // Detail still loading → the one placeholder for both layouts.
   if (!programData) {
     return (
       <aside className="w-full lg:w-[28.75rem] shrink-0 card-2 px-4 py-6 text-sm text-ink-3">
         Loading degree audit…
+      </aside>
+    );
+  }
+
+  // Single program → the plain full-width card, exactly as before. Nothing to
+  // switch between, so no rail and no plan-level rollup header.
+  if (!isMulti) {
+    const data = programData.get(plan.programIds[0]);
+    // Always present (built above); narrows without a non-null assertion.
+    if (!data) return null;
+    return (
+      <aside className="w-full lg:w-[28.75rem] shrink-0 lg:h-full lg:flex lg:flex-col">
+        <ProgramAuditCard
+          data={data}
+          programId={plan.programIds[0]}
+          catalogByCode={catalogByCode}
+          blockingIssueCount={blockingIssueCount}
+          jointHonoursPartner={jointHonoursPartner}
+          onDrillToRequirement={onDrillToRequirement}
+          onAcknowledgeRequirement={onAcknowledgeRequirement}
+          drag={drag}
+        />
       </aside>
     );
   }
@@ -218,52 +209,19 @@ export const AuditPanel = memo(function AuditPanel({
 
           {/* Detail pane (selected program's full audit). */}
           <div className="mp-detail">
-            <div className="mp-detail-head">
-              <span
-                className="mp-tone"
-                style={{
-                  background: PROGRAM_TONES[activeIdx % PROGRAM_TONES.length],
-                }}
-              />
-              <div className="mp-detail-grow">
-                <span className="mp-detail-kicker">
-                  {activeIdx === 0 ? "Primary degree" : "Degree"}
-                </span>
-                <span className="mp-detail-name">
-                  {detail.program ? programShortName(detail.program) : activeId}
-                </span>
-                <span className="u-small mp-detail-clip">
-                  {detail.program ? programCredential(detail.program) : ""}
-                </span>
-              </div>
-              <div className="mp-detail-pct">
-                <span className="text-[26px] font-bold tracking-tight leading-none">
-                  {detail.progress.pct}%
-                </span>
-                <span className="u-small">{detail.headlineFraction}</span>
-              </div>
-            </div>
-            <div className="mp-bar" style={{ margin: "2px 0 4px" }}>
-              <span style={{ width: `${detail.progress.pct}%` }} />
-            </div>
-            <AuditAdvisoryNotes
-              estimatedDenom={detail.estimatedDenom}
-              blockingIssueCount={blockingIssueCount}
-            />
-            <UnverifiedRequirements
+            <ProgramAuditBody
+              data={detail}
               programId={activeId}
-              items={detail.unverifiedItems}
-              staleCount={detail.staleAcknowledgements.length}
-              onAcknowledge={onAcknowledgeRequirement}
-            />
-            <AuditMacroList
-              macros={detail.macros}
-              placedCodes={detail.placedCodes}
-              illegalCodes={detail.illegalCodes}
               catalogByCode={catalogByCode}
-              onDrill={onDrillToRequirement}
+              blockingIssueCount={blockingIssueCount}
+              onDrillToRequirement={onDrillToRequirement}
+              onAcknowledgeRequirement={onAcknowledgeRequirement}
               drag={drag}
-              className="mp-detail-body [scrollbar-width:thin]"
+              header={{
+                kind: "detail",
+                tone: PROGRAM_TONES[activeIdx % PROGRAM_TONES.length],
+                kicker: activeIdx === 0 ? "Primary degree" : "Degree",
+              }}
             />
           </div>
         </div>

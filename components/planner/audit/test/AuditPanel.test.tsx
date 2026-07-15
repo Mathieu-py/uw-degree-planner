@@ -11,6 +11,7 @@ import type { Course } from "@/lib/courses/types";
 import { COURSE_DRAG_MIME } from "@/lib/plan/dnd";
 import { fakeDataTransfer } from "@/lib/plan/test/fakeDataTransfer";
 import type { LocalPlan } from "@/lib/plan/types";
+import { validatePlan } from "@/lib/plan/validate";
 import { programDetail } from "@/lib/programs/detail";
 import { PROGRAMS } from "@/lib/programs/registry";
 import { AuditPanel } from "../AuditPanel";
@@ -66,6 +67,12 @@ function oneSlotPlan(programId: string, codes: string[]): LocalPlan {
   });
 }
 
+// Mirrors usePlanValidation's wiring so the panel gets production-shaped inputs.
+function auditProps(plan: LocalPlan, catalog: Course[] = []) {
+  const catalogByCode = new Map(catalog.map((c) => [c.code, c]));
+  return { plan, catalogByCode, issues: validatePlan(plan, catalogByCode) };
+}
+
 // An engineering program with an empty plan leaves every required course
 // unplaced, so the panel renders draggable `.cd-chip.drag` course chips.
 function engineeringProgramId(): string | undefined {
@@ -76,7 +83,7 @@ function engineeringProgramId(): string | undefined {
 
 describe("AuditPanel", () => {
   it("renders the 'Pick a program' empty state when programIds is empty", () => {
-    render(<AuditPanel plan={mkPlan()} />);
+    render(<AuditPanel {...auditProps(mkPlan())} />);
     expect(screen.queryByText(/pick a program/i)).not.toBeNull();
   });
 
@@ -94,7 +101,7 @@ describe("AuditPanel", () => {
     const calls: Array<[string, string, boolean]> = [];
     render(
       <AuditPanel
-        plan={mkPlan({ programIds: [programId] })}
+        {...auditProps(mkPlan({ programIds: [programId] }))}
         onAcknowledgeRequirement={(pid, t, acked) =>
           calls.push([pid, t, acked])
         }
@@ -120,10 +127,12 @@ describe("AuditPanel", () => {
     const text = program.unverifiedRequirements?.[0] as string;
     render(
       <AuditPanel
-        plan={mkPlan({
-          programIds: [programId],
-          acknowledgedRequirements: { [programId]: [text] },
-        })}
+        {...auditProps(
+          mkPlan({
+            programIds: [programId],
+            acknowledgedRequirements: { [programId]: [text] },
+          }),
+        )}
         onAcknowledgeRequirement={() => {}}
       />,
     );
@@ -142,7 +151,7 @@ describe("AuditPanel", () => {
     if (!engId) throw new Error("fixture: no engineering program in PROGRAMS");
     if (!flexId) throw new Error("fixture: no flexible program in PROGRAMS");
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: [engId, flexId] })} />,
+      <AuditPanel {...auditProps(mkPlan({ programIds: [engId, flexId] }))} />,
     );
     // A labelled plan header, but NO combined percentage — hand-picked programs
     // can't be combined into one accurate score, so each is audited on its own.
@@ -168,7 +177,7 @@ describe("AuditPanel", () => {
     if (!engId) throw new Error("fixture: no engineering program in PROGRAMS");
     if (!flexId) throw new Error("fixture: no flexible program in PROGRAMS");
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: [engId, flexId] })} />,
+      <AuditPanel {...auditProps(mkPlan({ programIds: [engId, flexId] }))} />,
     );
     const pips = container.querySelectorAll<HTMLButtonElement>(".mp-pip");
     fireEvent.click(pips[1]);
@@ -185,7 +194,7 @@ describe("AuditPanel", () => {
     expect(engId, "engineering program id not found").toBeDefined();
     if (!engId) return;
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: [engId] })} />,
+      <AuditPanel {...auditProps(mkPlan({ programIds: [engId] }))} />,
     );
 
     const aside = container.querySelector("aside");
@@ -205,7 +214,7 @@ describe("AuditPanel", () => {
     if (!engId) return;
     const { container } = render(
       <AuditPanel
-        plan={mkPlan({ programIds: [engId] })}
+        {...auditProps(mkPlan({ programIds: [engId] }))}
         onDrillToRequirement={() => {}}
       />,
     );
@@ -226,7 +235,7 @@ describe("AuditPanel", () => {
       // separate nested choice card.
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["jh-applied-mathematics"] })}
+          {...auditProps(mkPlan({ programIds: ["jh-applied-mathematics"] }))}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -254,7 +263,7 @@ describe("AuditPanel", () => {
   it("shows a count-based percent-complete headline", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
-    render(<AuditPanel plan={mkPlan({ programIds: [engId] })} />);
+    render(<AuditPanel {...auditProps(mkPlan({ programIds: [engId] }))} />);
     // One unified course-count headline ("X/Y · N% of degree planned"), not units.
     expect(screen.getByText(/of degree planned/i)).toBeTruthy();
   });
@@ -264,7 +273,7 @@ describe("AuditPanel", () => {
     if (!engId) return;
     const { container } = render(
       <AuditPanel
-        plan={mkPlan({ programIds: [engId] })}
+        {...auditProps(mkPlan({ programIds: [engId] }))}
         onDrillToRequirement={() => {}}
       />,
     );
@@ -287,7 +296,7 @@ describe("AuditPanel", () => {
     const drilled: string[][] = [];
     const { container } = render(
       <AuditPanel
-        plan={mkPlan({ programIds: [engId] })}
+        {...auditProps(mkPlan({ programIds: [engId] }))}
         onDrillToRequirement={(codes) => drilled.push(codes)}
       />,
     );
@@ -308,7 +317,7 @@ describe("AuditPanel", () => {
     let ended = 0;
     const { container, rerender } = render(
       <AuditPanel
-        plan={mkPlan({ programIds: [engId] })}
+        {...auditProps(mkPlan({ programIds: [engId] }))}
         onDrillToRequirement={() => {}}
         drag={{
           draggingCode: null,
@@ -332,7 +341,7 @@ describe("AuditPanel", () => {
     // With that code marked as dragging, its chip dims (.dim).
     rerender(
       <AuditPanel
-        plan={mkPlan({ programIds: [engId] })}
+        {...auditProps(mkPlan({ programIds: [engId] }))}
         onDrillToRequirement={() => {}}
         drag={{ draggingCode: started, onStart: () => {}, onEnd: () => {} }}
       />,
@@ -347,7 +356,9 @@ describe("AuditPanel", () => {
       // per-bucket unit layer (Degree units / Distribution rings / verify-manually
       // markers) is gone, so nothing on screen can contradict the count.
       const { container } = render(
-        <AuditPanel plan={mkPlan({ programIds: ["psychology-bsc"] })} />,
+        <AuditPanel
+          {...auditProps(mkPlan({ programIds: ["psychology-bsc"] }))}
+        />,
       );
       const aside = container.querySelector("aside");
       if (!aside) throw new Error("no aside");
@@ -368,8 +379,10 @@ describe("AuditPanel", () => {
       // two placed 0.5-unit free electives read as "1/<total> units" of progress.
       const { container } = render(
         <AuditPanel
-          plan={oneSlotPlan("psychology-bsc", ["aaa101", "aaa102"])}
-          catalog={[mkCourse("aaa101", 0.5), mkCourse("aaa102", 0.5)]}
+          {...auditProps(oneSlotPlan("psychology-bsc", ["aaa101", "aaa102"]), [
+            mkCourse("aaa101", 0.5),
+            mkCourse("aaa102", 0.5),
+          ])}
         />,
       );
       const aside = container.querySelector("aside");
@@ -389,7 +402,7 @@ describe("AuditPanel", () => {
       // unit" requirement (in units, as the calendar states it) under "Degree
       // requirements", with its eligible subjects shown.
       const { container } = render(
-        <AuditPanel plan={mkPlan({ programIds: ["h-history"] })} />,
+        <AuditPanel {...auditProps(mkPlan({ programIds: ["h-history"] }))} />,
       );
       const aside = container.querySelector("aside");
       if (!aside) throw new Error("no aside");
@@ -419,7 +432,9 @@ describe("AuditPanel", () => {
       // Two 0.5-unit PHIL courses (a Humanities subject in h-history, outside the
       // major picks) make 1.0 unit → satisfies the 1.0-unit Humanities breadth.
       const { container } = render(
-        <AuditPanel plan={oneSlotPlan("h-history", ["phil100", "phil101"])} />,
+        <AuditPanel
+          {...auditProps(oneSlotPlan("h-history", ["phil100", "phil101"]))}
+        />,
       );
       const aside = container.querySelector("aside");
       if (!aside) throw new Error("no aside");
@@ -446,7 +461,7 @@ describe("AuditPanel", () => {
       // unified headline (named + free = degree total), so the bar reflects the
       // whole degree, not just named requirements.
       const { container } = render(
-        <AuditPanel plan={mkPlan({ programIds: ["h-biology"] })} />,
+        <AuditPanel {...auditProps(mkPlan({ programIds: ["h-biology"] }))} />,
       );
       const aside = container.querySelector("aside");
       if (!aside) throw new Error("no aside");
@@ -464,7 +479,7 @@ describe("AuditPanel", () => {
       // the redundant "Complete all of the following" heading is dropped inside.
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["data-science-bcs"] })}
+          {...auditProps(mkPlan({ programIds: ["data-science-bcs"] }))}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -489,7 +504,7 @@ describe("AuditPanel", () => {
       // to a summary of the completed path; the full cards hide behind a toggle.
       const { container } = render(
         <AuditPanel
-          plan={oneSlotPlan("data-science-bcs", ["cs480", "cs448"])}
+          {...auditProps(oneSlotPlan("data-science-bcs", ["cs480", "cs448"]))}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -510,7 +525,7 @@ describe("AuditPanel", () => {
     () => {
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["data-science-bcs"] })}
+          {...auditProps(mkPlan({ programIds: ["data-science-bcs"] }))}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -539,7 +554,7 @@ describe("AuditPanel", () => {
       // under Electives.
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["biochemistry"] })}
+          {...auditProps(mkPlan({ programIds: ["biochemistry"] }))}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -572,10 +587,12 @@ describe("AuditPanel", () => {
       const id = "h-peace-and-conflict-studies";
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({
-            programIds: [id],
-            specializationIds: { [id]: "pacs-restorative-justice" },
-          })}
+          {...auditProps(
+            mkPlan({
+              programIds: [id],
+              specializationIds: { [id]: "pacs-restorative-justice" },
+            }),
+          )}
         />,
       );
       const spec = macroByLabel(container, /^Specialization$/i);
@@ -607,10 +624,12 @@ describe("AuditPanel", () => {
     const calls: Array<[string, string, boolean]> = [];
     render(
       <AuditPanel
-        plan={mkPlan({
-          programIds: [found.programId],
-          specializationIds: { [found.programId]: found.slug },
-        })}
+        {...auditProps(
+          mkPlan({
+            programIds: [found.programId],
+            specializationIds: { [found.programId]: found.slug },
+          }),
+        )}
         onAcknowledgeRequirement={(pid, t, acked) =>
           calls.push([pid, t, acked])
         }
@@ -633,7 +652,9 @@ describe("AuditPanel", () => {
       // requirements.
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["systems-design-engineering"] })}
+          {...auditProps(
+            mkPlan({ programIds: ["systems-design-engineering"] }),
+          )}
         />,
       );
       const electives = macroByLabel(container, /^Electives$/i);
@@ -658,7 +679,7 @@ describe("AuditPanel", () => {
       // so it renders flat — never behind a redundant dropdown. Only a pure
       // choice-list ("Approved Courses List") earns its own collapsible sub-group.
       const { container } = render(
-        <AuditPanel plan={mkPlan({ programIds: ["h-chemistry"] })} />,
+        <AuditPanel {...auditProps(mkPlan({ programIds: ["h-chemistry"] }))} />,
       );
       const subLabels = [
         ...container.querySelectorAll(".av-substrata-text"),
@@ -676,7 +697,7 @@ describe("AuditPanel", () => {
       // the "In List 1, …" constraints have a visible anchor in the audit.
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["computational-mathematics"] })}
+          {...auditProps(mkPlan({ programIds: ["computational-mathematics"] }))}
         />,
       );
       const subLabels = [
@@ -693,7 +714,7 @@ describe("AuditPanel", () => {
     () => {
       const { container } = render(
         <AuditPanel
-          plan={mkPlan({ programIds: ["data-science-bcs"] })}
+          {...auditProps(mkPlan({ programIds: ["data-science-bcs"] }))}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -714,7 +735,9 @@ describe("AuditPanel", () => {
     "places the co-op requirement note under the 'Co-op & other' macro",
     () => {
       const { container } = render(
-        <AuditPanel plan={mkPlan({ programIds: ["data-science-bcs"] })} />,
+        <AuditPanel
+          {...auditProps(mkPlan({ programIds: ["data-science-bcs"] }))}
+        />,
       );
       const other = [...container.querySelectorAll(".av-macro")].find((m) =>
         /co-op & other/i.test(
@@ -742,7 +765,7 @@ describe("AuditPanel", () => {
       (x) => x.label === "Additional constraint",
     ).length;
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: [programId] })} />,
+      <AuditPanel {...auditProps(mkPlan({ programIds: [programId] }))} />,
     );
     const other = [...container.querySelectorAll(".av-macro")].find((m) =>
       /co-op & other/i.test(
@@ -769,7 +792,7 @@ describe("AuditPanel", () => {
     const engId = engineeringProgramId();
     if (!engId) return;
     const { container } = render(
-      <AuditPanel plan={mkPlan({ programIds: [engId] })} />,
+      <AuditPanel {...auditProps(mkPlan({ programIds: [engId] }))} />,
     );
 
     // Unplaced courses still render as chips, but with no drag affordance and
@@ -778,4 +801,33 @@ describe("AuditPanel", () => {
     expect(container.querySelector(".cd-chip.drag")).toBeNull();
     expect(container.querySelector(".br4-split")).toBeNull();
   });
+
+  it.skipIf(!("jh-applied-mathematics" in PROGRAMS))(
+    "warns about a lone Joint Honours plan in the single card, never in the multi pane",
+    () => {
+      // The warning is plan-level (computed in the panel) but scoped to the
+      // single-program layout — the multi pane audits each program on its own.
+      render(
+        <AuditPanel
+          {...auditProps(mkPlan({ programIds: ["jh-applied-mathematics"] }))}
+        />,
+      );
+      expect(screen.queryByText(/half a degree/i)).not.toBeNull();
+      cleanup();
+
+      // JH + a non-honours partner: the plan-level warning is still non-null,
+      // but the master·detail layout must not surface it.
+      const engId = engineeringProgramId();
+      if (!engId) return;
+      const { container } = render(
+        <AuditPanel
+          {...auditProps(
+            mkPlan({ programIds: ["jh-applied-mathematics", engId] }),
+          )}
+        />,
+      );
+      expect(container.querySelector(".mp-detail")).not.toBeNull();
+      expect(screen.queryByText(/half a degree/i)).toBeNull();
+    },
+  );
 });

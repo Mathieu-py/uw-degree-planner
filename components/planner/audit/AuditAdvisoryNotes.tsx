@@ -13,10 +13,10 @@ interface Props {
 
 /**
  * The advisory `av-note` block under an audit headline — estimated denominator
- * and blocking placement issues. Shared by the single-program card
- * ({@link ProgramAuditCard}) and the master·detail pane ({@link AuditPanel}) so
- * the wording stays in one place. Unverified requirements are surfaced
- * separately as acknowledgeable rows ({@link UnverifiedRequirements}).
+ * and blocking placement issues. Rendered by {@link ProgramAuditBody} for both
+ * the single-program card and the master·detail pane, so the wording stays in
+ * one place. Unverified requirements are surfaced separately as acknowledgeable
+ * rows ({@link UnverifiedRequirements}).
  */
 export function AuditAdvisoryNotes({
   estimatedDenom,

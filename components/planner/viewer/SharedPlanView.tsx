@@ -17,7 +17,7 @@ import { savePlan } from "@/lib/plan/storage";
 import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
-import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
+import { usePlanValidation } from "@/lib/plan/usePlanValidation";
 import {
   joinProgramNames,
   type Program,
@@ -59,16 +59,10 @@ export function SharedPlanView({
   // without which an owner's acknowledged-to-100% plan reads 99% for viewers.
   const localPlan = useMemo<LocalPlan>(() => serverPlanToLocal(plan), [plan]);
 
-  const catalogByCode = useMemo(
-    () => new Map(catalog.map((c) => [c.code, c])),
-    [catalog],
+  const { catalogByCode, issues, issuesPerSlot } = usePlanValidation(
+    localPlan,
+    catalog,
   );
-
-  const issues = useMemo(
-    () => validatePlan(localPlan, catalogByCode),
-    [localPlan, catalogByCode],
-  );
-  const issuesPerSlot = useMemo(() => issuesBySlot(issues), [issues]);
 
   const programName = joinProgramNames(
     localPlan.programIds,
@@ -146,7 +140,11 @@ export function SharedPlanView({
             readOnly
           />
         </div>
-        <AuditPanel plan={localPlan} catalog={catalog} />
+        <AuditPanel
+          plan={localPlan}
+          catalogByCode={catalogByCode}
+          issues={issues}
+        />
       </div>
     </div>
   );
