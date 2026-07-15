@@ -1,17 +1,18 @@
-import { type PoolFilter, poolMatch } from "@/lib/courses/code";
+import { poolMatch } from "@/lib/courses/code";
 import {
   EMPTY_EQUIVALENCE,
   type EquivalenceIndex,
 } from "@/lib/courses/equivalence";
 import { unitsMet } from "@/lib/format";
-import { type Program, type RuleNode, walkRule } from "@/lib/programs";
+import { flatCoursePickOptions, type Program } from "@/lib/programs";
 import { type BreadthRequirement, deriveBreadthRequirements } from "./breadth";
 import { deriveCommunicationRequirement } from "./communication";
 import {
   type AuditNode,
   type AuditRoot,
   isSatisfied,
-  placementLegalityKey,
+  splitPlacementByLegality,
+  subjectPoolNodeFilter,
 } from "./compile";
 import {
   deriveElectiveSections,
@@ -127,13 +128,6 @@ interface UnitPool {
   owner?: AuditNode;
 }
 
-/** Every course code appearing in `courses` leaves under a node (pick pools). */
-function leafCodes(node: RuleNode, out: string[]): void {
-  walkRule(node, (n) => {
-    if (n.kind === "courses") out.push(...n.courses);
-  });
-}
-
 /**
  * The shared unit weight of a set of option codes, or undefined when they
  * differ (or the set is empty). Lets an unfilled pick reserve its options'
@@ -152,17 +146,6 @@ function uniformUnit(
     else if (u !== v) return undefined;
   }
   return u;
-}
-
-/** A subjectPool rule as a normalized (lowercased) {@link PoolFilter}. */
-function poolFilterOf(
-  node: Extract<RuleNode, { kind: "subjectPool" }>,
-): PoolFilter {
-  return {
-    subjects: new Set(node.subjectCodes.map((s) => s.toLowerCase())),
-    minLevel: node.minLevel,
-    maxLevel: node.maxLevel,
-  };
 }
 
 /**
@@ -195,15 +178,12 @@ function collect(
       // No selectMin ⇒ an optional pick: 0 required slots, so it neither gates
       // completion nor reserves units; its placed courses fall to free electives.
       const min = r.selectMin ?? 0;
-      // Mirror compilePick. When every option is a bare `courses` leaf, collapse
-      // them into one pool of `min` interchangeable slots ("1 of: A, B, C").
-      // Test r.children: compilePick collapses an all-`courses` pick to an empty
+      // A flat pick collapses into one pool of `min` interchangeable slots
+      // ("1 of: A, B, C") — the same shared predicate compilePick dispatches on.
+      // Pass `r` (the RULE node): compilePick collapses a flat pick to an empty
       // AuditNode.children, so node.children can't distinguish the two cases.
-      const allCoursesLeaves =
-        r.children.length > 0 && r.children.every((c) => c.kind === "courses");
-      if (allCoursesLeaves) {
-        const codes: string[] = [];
-        leafCodes(r, codes);
+      const codes = flatCoursePickOptions(r);
+      if (codes) {
         buckets.push({
           need: min,
           // Equivalence-aware (mirrors partitionByPlacement): an option's
@@ -246,7 +226,7 @@ function collect(
       break;
     }
     case "subjectPool": {
-      const f = poolFilterOf(r);
+      const f = subjectPoolNodeFilter(r);
       const eligible = [...placed].filter((c) => poolMatch(c, f));
       // Unit-stated pool ("2.0 units of X"): score by real units (a 1.0-unit
       // course counts as 1.0, never doubling the count). Count-stated pools stay
@@ -324,10 +304,7 @@ export function computeDegreeProgress(
 
   // Drop illegally-placed courses before crediting: one placed before its
   // prereqs (or in antireq conflict) can't honestly count toward the degree.
-  const illegalCodes = new Set<string>();
-  if (legality.size > 0)
-    for (const [code, p] of audit.placement)
-      if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
+  const { illegalCodes } = splitPlacementByLegality(audit.placement, legality);
 
   // Drop courses an `excluded` rule bars: they must never credit the headline
   // (named or free). They still surface as an excludedViolation on their row,

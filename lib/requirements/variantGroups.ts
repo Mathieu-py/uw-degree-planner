@@ -14,7 +14,7 @@ import type { Program, TermLetter } from "@/lib/programs";
 import { TERM_LETTERS } from "@/lib/programs";
 import { describeRule } from "./describe";
 import type { RuleNode } from "./types";
-import { functionallyMandatoryCourses } from "./walk";
+import { flatCoursePickOptions, functionallyMandatoryCourses } from "./walk";
 
 export interface VariantGroup {
   programId: string;
@@ -35,18 +35,13 @@ type PickNode = Extract<RuleNode, { kind: "pick" }>;
 
 /** Flat course options of an all-`courses` pick, deduped and sorted. */
 function optionsOf(node: PickNode): string[] {
-  return [
-    ...new Set(
-      node.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
-    ),
-  ].sort();
+  return (flatCoursePickOptions(node) ?? []).sort();
 }
 
 /** A pick the student genuinely decides: all-`courses` children, not mandatory. */
 function isPickable(node: PickNode): boolean {
-  if (node.children.length === 0) return false;
-  if (!node.children.every((c) => c.kind === "courses")) return false;
-  if (optionsOf(node).length === 0) return false;
+  const opts = flatCoursePickOptions(node);
+  if (opts === null || opts.length === 0) return false;
   // pick(N,N) whose option count equals N is mandatory — no choice to record.
   return functionallyMandatoryCourses(node) === null;
 }

@@ -10,7 +10,7 @@
  *  - `excluded`: never gates status; violations surface as UI warnings.
  */
 
-import { poolMatch } from "@/lib/courses/code";
+import { type PoolFilter, poolMatch } from "@/lib/courses/code";
 import {
   EMPTY_EQUIVALENCE,
   type EquivalenceIndex,
@@ -19,6 +19,7 @@ import { unitsMet } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import {
   describeRule,
+  flatCoursePickOptions,
   type Program,
   type RuleNode,
   type Specialization,
@@ -99,9 +100,24 @@ function statusFromPickCount(
   return count > 0 || anyPartial ? "partial" : "unmet";
 }
 
-/** Stable key for a placement, matching a slot-scoped legality issue. */
-export function placementLegalityKey(p: Placement): string {
+/** Stable key for a placement — must agree with the `slotId::code` keys
+ *  `creditExclusionKeys` (creditExclusion.ts) emits. */
+function placementLegalityKey(p: Placement): string {
   return `${p.slotId}::${p.code}`;
+}
+
+/** Partition placed codes by their placement's legality (see {@link placementLegalityKey}). */
+export function splitPlacementByLegality(
+  placement: PlacementMap,
+  legality: ReadonlySet<string>,
+): { legalCodes: Set<string>; illegalCodes: Set<string> } {
+  const legalCodes = new Set<string>();
+  const illegalCodes = new Set<string>();
+  for (const [code, p] of placement) {
+    if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
+    else legalCodes.add(code);
+  }
+  return { legalCodes, illegalCodes };
 }
 
 /** The subset of `satisfiers` whose placement has a blocking legality issue. */
@@ -250,15 +266,8 @@ function compilePick(
   equiv: EquivalenceIndex,
   unitsOf: (code: string) => number,
 ): AuditNode {
-  const allCoursesLeaves =
-    node.children.length > 0 &&
-    node.children.every((c) => c.kind === "courses");
-  if (allCoursesLeaves) {
-    const options = [
-      ...new Set(
-        node.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
-      ),
-    ];
+  const options = flatCoursePickOptions(node);
+  if (options) {
     const { satisfiers, missing } = partitionByPlacement(
       options,
       placement,
@@ -331,6 +340,17 @@ function compilePick(
   );
 }
 
+/** A `subjectPool` rule as a normalized (lowercased) {@link PoolFilter}. */
+export function subjectPoolNodeFilter(
+  node: Extract<RuleNode, { kind: "subjectPool" }>,
+): PoolFilter {
+  return {
+    subjects: new Set(node.subjectCodes.map((s) => s.toLowerCase())),
+    minLevel: node.minLevel,
+    maxLevel: node.maxLevel,
+  };
+}
+
 /**
  * A `subjectPool` node: count placed courses with a pooled prefix and in-bounds
  * level. Threshold is `selectCount` exactly.
@@ -347,11 +367,7 @@ function compileSubjectPool(
   legality: ReadonlySet<string>,
   unitsOf: (code: string) => number,
 ): AuditNode {
-  const filter = {
-    subjects: new Set(node.subjectCodes.map((s) => s.toLowerCase())),
-    minLevel: node.minLevel,
-    maxLevel: node.maxLevel,
-  };
+  const filter = subjectPoolNodeFilter(node);
   const satisfiers: Placement[] = [];
   for (const [code, p] of placement) {
     if (poolMatch(code, filter)) satisfiers.push(p);
