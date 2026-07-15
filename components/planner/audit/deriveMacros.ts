@@ -185,8 +185,8 @@ export function deriveMacros(
       });
     }
     levelFloors.forEach((f, i) => {
-      const done = Math.min(f.placedUnits, f.need);
-      const met = unitsMet(f.placedUnits, f.need);
+      const done = Math.min(f.placedUnits, f.needUnits);
+      const met = unitsMet(f.placedUnits, f.needUnits);
       degNeeded += 1;
       degSatisfied += met ? 1 : 0;
       const subjects = (f.subjects ?? []).map((s) => s.toUpperCase());
@@ -194,8 +194,8 @@ export function deriveMacros(
         kind: "levelFloor",
         key: `floor-${i}`,
         title: f.title,
-        caption: `${fmtUnits(done)} of ${fmtUnits(f.need)} units${subjects.length ? ` · ${subjects.length} subjects` : ""}`,
-        needUnits: f.need,
+        caption: `${fmtUnits(done)} of ${fmtUnits(f.needUnits)} units${subjects.length ? ` · ${subjects.length} subjects` : ""}`,
+        needUnits: f.needUnits,
         placedUnits: f.placedUnits,
         subjects,
         satisfiers: f.satisfiers,

@@ -17,7 +17,7 @@ describe("parseLevelFloor", () => {
     const f = parseLevelFloor(
       c("A minimum of 14.5 units must be at the 200-level or above."),
     );
-    expect(f?.need).toBe(14.5);
+    expect(f?.needUnits).toBe(14.5);
     expect(f?.minLevel).toBe(200);
     expect(f?.maxLevel).toBeUndefined();
     expect(f?.subjects).toBeUndefined();
@@ -29,7 +29,7 @@ describe("parseLevelFloor", () => {
         "3.0 units must be lecture courses at the 300-level or above (excluding SCI courses).",
       ),
     );
-    expect(f?.need).toBe(3.0);
+    expect(f?.needUnits).toBe(3.0);
     expect(f?.minLevel).toBe(300);
     expect(f?.excludeSubjects).toEqual(["sci"]);
   });
@@ -72,7 +72,7 @@ describe("deriveLevelFloors", () => {
     // bio350 + bio360 are 300+, bio250/engl101 are below → 1.0 unit placed.
     expect(floors).toHaveLength(1);
     expect(floors[0].placedUnits).toBe(1.0);
-    expect(floors[0].need).toBe(2.0);
+    expect(floors[0].needUnits).toBe(2.0);
   });
 });
 
