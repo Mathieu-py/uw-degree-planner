@@ -3,12 +3,14 @@ import type { LocalPlan, Stream } from "./types";
 
 /**
  * Human label for a co-op stream. Spells out "(no co-op)" for regular —
- * distinct from STREAM_OPTIONS' short segmented-control labels.
+ * distinct from STREAM_OPTIONS' short segmented-control labels. Null (a
+ * server plan whose stream was never set) renders as "—".
  */
-export function streamLabel(stream: Stream): string {
+export function streamLabel(stream: Stream | null): string {
   if (stream === "stream4") return "Stream 4 co-op";
   if (stream === "stream8") return "Stream 8 co-op";
-  return "Regular (no co-op)";
+  if (stream === "regular") return "Regular (no co-op)";
+  return "—";
 }
 
 /** One-line plan summary: stream · start term · slot count. */

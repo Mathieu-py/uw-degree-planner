@@ -12,18 +12,12 @@ import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuthState } from "@/lib/auth/store";
 import { countNoun } from "@/lib/format";
+import { streamLabel } from "@/lib/plan/format";
 import type { PlanSummary } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { joinProgramNames } from "@/lib/programs";
 
 type ViewMode = "grid" | "list";
-
-function streamLabel(stream: PlanSummary["stream"]): string {
-  if (stream === "stream4") return "Stream 4 co-op";
-  if (stream === "stream8") return "Stream 8 co-op";
-  if (stream === "regular") return "Regular";
-  return "—";
-}
 
 function formatUpdated(iso: string): string {
   const d = new Date(iso);

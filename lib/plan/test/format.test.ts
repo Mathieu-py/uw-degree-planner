@@ -21,6 +21,10 @@ describe("streamLabel", () => {
     expect(streamLabel("stream4")).toBe("Stream 4 co-op");
     expect(streamLabel("stream8")).toBe("Stream 8 co-op");
   });
+
+  it("renders an em dash for a never-set stream", () => {
+    expect(streamLabel(null)).toBe("—");
+  });
 });
 
 describe("planSubtitle", () => {
