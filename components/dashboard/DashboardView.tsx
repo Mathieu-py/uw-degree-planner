@@ -11,7 +11,7 @@ import { Pill } from "@/components/ui/Pill";
 import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuthState } from "@/lib/auth/store";
-import { countNoun } from "@/lib/format";
+import { countNoun, describeActionError } from "@/lib/format";
 import { streamLabel } from "@/lib/plan/format";
 import type { PlanSummary } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
@@ -35,7 +35,7 @@ export function DashboardView({
   programNames: Record<string, string>;
 }) {
   const { isAuthed, ready } = useAuthState();
-  const { plans, remove, duplicate } = usePlanList({ isAuthed });
+  const { plans, remove, duplicate, error } = usePlanList({ isAuthed });
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -145,6 +145,14 @@ export function DashboardView({
           <Stat label="Shared" value={String(sharedCount)} />
           <Stat label="Last updated" value={lastUpdated} />
         </div>
+
+        {/* A failed list mutation (delete/duplicate) reverts optimistically —
+            this banner is the only signal. The store clears it on next success. */}
+        {error ? (
+          <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
+            {describeActionError(error)}
+          </div>
+        ) : null}
 
         {/* View toggle */}
         <div className="flex items-center justify-between">

@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
+import { describeActionError } from "@/lib/format";
 import { buildCourseOrigin } from "@/lib/plan/courseOrigin";
 import { completedSetFromPlan, isAcademicSlot } from "@/lib/plan/derive";
 import { eligibleSlotIdsForCourse } from "@/lib/plan/eligibleTerms";
@@ -333,7 +334,9 @@ function PlannerShellInner({
       >
         <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
           <p className="font-medium">We couldn't load this plan.</p>
-          <p className="mt-1 text-xs opacity-80">{loadError}</p>
+          <p className="mt-1 text-xs opacity-80">
+            {describeActionError(loadError)}
+          </p>
           <p className="mt-2 text-xs opacity-80">
             Reload the page or pick a different plan from the toolbar.
           </p>

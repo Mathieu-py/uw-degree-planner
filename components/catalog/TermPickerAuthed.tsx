@@ -14,7 +14,7 @@ import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
 import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
-import { serverActionError } from "@/lib/format";
+import { describeActionError } from "@/lib/format";
 import { placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import {
@@ -268,7 +268,7 @@ export function TermPickerAuthed({
           message={
             loadError === "not_found"
               ? "That plan is no longer available."
-              : serverActionError(loadError)
+              : describeActionError(loadError)
           }
           onRetry={
             selectedPlanId ? () => void openPlan(selectedPlanId) : undefined
@@ -291,7 +291,7 @@ export function TermPickerAuthed({
       ) : null}
       {saveError ? (
         <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
-          {serverActionError(saveError)}
+          {describeActionError(saveError)}
         </p>
       ) : null}
     </>

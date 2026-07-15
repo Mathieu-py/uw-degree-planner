@@ -87,17 +87,26 @@ export function truncate(text: string | null | undefined, max = 140): string {
   return `${text.slice(0, max).trimEnd()}…`;
 }
 
-/** Humanize the error codes the plan server actions return. */
-export function serverActionError(code: string): string {
+/** Humanize the error codes server actions return (plan + account). */
+export function describeActionError(code: string): string {
   switch (code) {
     case "not_authenticated":
       return "Your session expired — please sign in again.";
     case "snapshot_too_large":
       return "This plan is too large to save.";
-    case "not_found":
+    // Plan-only code; bare "not_found" stays generic — updateProfile also
+    // returns it (missing profile row), where plan copy would be nonsense.
     case "not_found_or_unauthorized":
       return "That plan is no longer available.";
+    case "name_required":
+      return "Enter a name.";
+    case "username_required":
+      return "Enter a username.";
+    case "username_invalid":
+      return "3–20 characters, letters, numbers, and underscores only.";
+    case "username_taken":
+      return "That username is already taken.";
     default:
-      return "Couldn't save. Try again.";
+      return "Something went wrong. Try again.";
   }
 }

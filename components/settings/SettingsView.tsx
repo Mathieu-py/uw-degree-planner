@@ -11,22 +11,8 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { deleteAccount, updateProfile } from "@/lib/account/server/actions";
 import { publishUsername, useAuthState } from "@/lib/auth/store";
+import { describeActionError } from "@/lib/format";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-function usernameError(code: string): string {
-  switch (code) {
-    case "username_required":
-      return "Enter a username.";
-    case "username_invalid":
-      return "3–20 characters, letters, numbers, and underscores only.";
-    case "username_taken":
-      return "That username is already taken.";
-    case "not_authenticated":
-      return "Your session expired — please sign in again.";
-    default:
-      return "Couldn't save. Try again.";
-  }
-}
 
 export function SettingsView() {
   const { user, username, displayName, ready, isAuthed } = useAuthState();
@@ -171,11 +157,11 @@ function UsernameRow({ initialUsername }: { initialUsername: string }) {
         publishUsername(result.data.username);
         setSaved(true);
       } else {
-        setError(usernameError(result.error));
+        setError(describeActionError(result.error));
       }
     } catch {
       // Server-action transport failures reject instead of returning {ok:false}.
-      setError(usernameError("unknown"));
+      setError(describeActionError("unknown"));
     } finally {
       setBusy(false);
     }
