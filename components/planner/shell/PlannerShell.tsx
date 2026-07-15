@@ -32,7 +32,6 @@ import { removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
-import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
 import { joinProgramNames, type ProgramOption } from "@/lib/programs";
 import { usePlanProgramContext } from "@/lib/programs/usePlanPrograms";
@@ -41,8 +40,6 @@ import { ProgramHeader } from "./ProgramHeader";
 import { usePlanEditors } from "./usePlanEditors";
 import { usePlannerModals } from "./usePlannerModals";
 import { usePlannerRedirect } from "./usePlannerRedirect";
-
-export type { ProgramOption };
 
 interface Props {
   /** Active plan id from the `/plan/[planId]` route param; null at bare `/plan`. */
@@ -649,17 +646,4 @@ function PlannerLayout({
       {overlays}
     </>
   );
-}
-
-export function planSubtitle(plan: LocalPlan): string {
-  const stream =
-    plan.stream === "stream4"
-      ? "Stream 4 co-op"
-      : plan.stream === "stream8"
-        ? "Stream 8 co-op"
-        : "Regular (no co-op)";
-  const start = plan.startTermId
-    ? (termInfo(plan.startTermId)?.label ?? `Term ${plan.startTermId}`)
-    : "no start term";
-  return `${stream} · ${start} · ${plan.slots.length} slots`;
 }

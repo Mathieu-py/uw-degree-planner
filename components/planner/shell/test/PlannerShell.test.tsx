@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ProgramOption } from "../PlannerShell";
+import type { ProgramOption } from "@/lib/programs";
 
 const { routerReplaceMock } = vi.hoisted(() => ({
   routerReplaceMock: vi.fn(),

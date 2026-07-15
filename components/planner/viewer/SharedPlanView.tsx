@@ -4,16 +4,13 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Brand } from "@/components/chrome/Brand";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
-import {
-  type ProgramOption,
-  planSubtitle,
-} from "@/components/planner/shell/PlannerShell";
 import { Timeline } from "@/components/planner/timeline/Timeline";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { logError } from "@/lib/log";
+import { planSubtitle } from "@/lib/plan/format";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ServerPlan } from "@/lib/plan/server/types";
 import { savePlan } from "@/lib/plan/storage";
@@ -21,7 +18,11 @@ import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
-import { joinProgramNames, type Program } from "@/lib/programs";
+import {
+  joinProgramNames,
+  type Program,
+  type ProgramOption,
+} from "@/lib/programs";
 import { programDetail } from "@/lib/programs/detail";
 
 interface Props {

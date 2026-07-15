@@ -1,5 +1,6 @@
 "use client";
 
+import { streamLabel } from "@/lib/plan/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import { splitProgramName } from "@/lib/programs";
 
@@ -7,12 +8,6 @@ interface Props {
   programName: string;
   planName: string;
   plan: LocalPlan;
-}
-
-function streamLabel(stream: LocalPlan["stream"]): string {
-  if (stream === "stream4") return "Stream 4 co-op";
-  if (stream === "stream8") return "Stream 8 co-op";
-  return "Regular (no co-op)";
 }
 
 /**
