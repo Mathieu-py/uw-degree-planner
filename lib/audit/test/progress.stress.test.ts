@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import type { Program } from "../../programs";
-import {
-  compileAudit,
-  creditExclusionKeys,
-  type PlacementIssue,
-} from "../compile";
+import { compileAudit } from "../compile";
+import { creditExclusionKeys, type PlacementIssue } from "../creditExclusion";
 import { computeDegreeProgress } from "../progress";
 
 /**

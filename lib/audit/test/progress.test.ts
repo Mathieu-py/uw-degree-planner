@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Program } from "../../programs";
 import { PROGRAMS } from "../../programs/registry";
-import { compileAudit, creditExclusionKeys } from "../compile";
+import { compileAudit } from "../compile";
+import { creditExclusionKeys } from "../creditExclusion";
 import { deriveElectiveSections } from "../electives";
 import { foldFiniteElectivesIntoRules } from "../foldElectives";
 import { computeDegreeProgress } from "../progress";

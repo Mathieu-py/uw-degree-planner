@@ -1,9 +1,6 @@
 import type { AuditRoot } from "@/lib/audit/compile";
-import {
-  compileAudit,
-  creditExclusionKeys,
-  placementLegalityKey,
-} from "@/lib/audit/compile";
+import { compileAudit, placementLegalityKey } from "@/lib/audit/compile";
+import { creditExclusionKeys } from "@/lib/audit/creditExclusion";
 import { deriveElectiveSections } from "@/lib/audit/electives";
 import { foldFiniteElectivesIntoRules } from "@/lib/audit/foldElectives";
 import type { DegreeProgress } from "@/lib/audit/progress";
