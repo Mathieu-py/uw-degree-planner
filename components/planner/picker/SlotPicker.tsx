@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { CourseTable } from "@/components/courses/CourseTable";
+import { CourseTable } from "@/components/catalog/CourseTable";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";

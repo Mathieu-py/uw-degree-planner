@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { CourseTable } from "@/components/courses/CourseTable";
 import { FilterSidebar } from "@/components/planner/picker/FilterSidebar";
 import {
   PICKER_PAGE_SIZE,
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import type { SortKey } from "@/lib/courses/courseSort";
 import type { Course } from "@/lib/courses/types";
 import { pluralize } from "@/lib/format";
+import { CourseTable } from "./CourseTable";
 import { TermPicker } from "./TermPicker";
 
 // No placed/completed context on the catalog: it's a plan-independent browse
