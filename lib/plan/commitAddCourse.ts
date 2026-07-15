@@ -1,4 +1,4 @@
-import { isCourseBlockedForPlan } from "@/lib/courses/courseEligibility";
+import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
 import { isAcademicSlot, placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
@@ -7,6 +7,7 @@ import { toSnapshot } from "@/lib/plan/server/serialize";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { PlanSlot } from "@/lib/plan/types";
 import { programDetail } from "@/lib/programs/detail";
+import { programIdentities } from "@/lib/programs/meta";
 import { type TermId, termLabel } from "@/lib/terms";
 
 /**
@@ -14,7 +15,7 @@ import { type TermId, termLabel } from "@/lib/terms";
  * where plan + target term are already chosen so there's no term step.
  *
  * The no-preloaded-plan variant of the term pickers: it load→modify→saves rather
- * than editing a plan already in state. Same gates ({@link isCourseBlockedForPlan}
+ * than editing a plan already in state. Same gates ({@link isProgramBlocked}
  * + {@link placedCourseLabel}) and sinks (`savePlanState` / `savePlan` over
  * {@link addCourseToSlot}) as the pickers, so no add path drifts.
  */
@@ -30,19 +31,29 @@ export type CommitAddResult =
 
 /**
  * The program/faculty gate, cache-first: referenced codes only ever SUPPRESS a
- * block, so an unrestricted course needs no detail fetch. A blocked read may
- * still be a stale restriction the program's own rules override — load detail
- * and re-check. If detail can't load, the verdict is unknown, not blocked:
- * a network failure must not present as an academic rule.
+ * block, so an unrestricted course needs no detail fetch. A blocked read may be
+ * a stale restriction the program's own rules override — load and re-check.
+ * If detail can't load the verdict is unknown, not blocked: a network failure
+ * must not present as an academic rule.
  */
 async function blockGate(
   course: Course,
   plan: { programIds?: string[]; specializationIds?: Record<string, string> },
 ): Promise<"open" | "blocked" | "unknown"> {
-  if (!isCourseBlockedForPlan(course, plan)) return "open";
+  const programs = programIdentities(plan.programIds, plan.specializationIds);
+  // Re-read refs per check: the awaited load fills the store between calls.
+  const blocked = () =>
+    isProgramBlocked(course, {
+      programs,
+      programReferenced: programDetail.planReferencedCodes(
+        plan.programIds,
+        plan.specializationIds,
+      ),
+    });
+  if (!blocked()) return "open";
   await programDetail.load(plan.programIds ?? []);
   if (!programDetail.areLoaded(plan.programIds ?? [])) return "unknown";
-  return isCourseBlockedForPlan(course, plan) ? "blocked" : "open";
+  return blocked() ? "blocked" : "open";
 }
 
 /**

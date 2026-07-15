@@ -13,6 +13,7 @@ import type {
   ServerPlan,
 } from "@/lib/plan/server/types";
 import type { PlanSlot } from "@/lib/plan/types";
+import { programDetail } from "@/lib/programs/detail";
 import { makeTermId } from "@/lib/terms";
 import { makeCourse, slot } from "./fixtures";
 
@@ -236,6 +237,57 @@ describe("TermPicker — signed in", () => {
     expect(screen.getByText(/Not open to your program/i)).toBeTruthy();
     // The engineering plan can take it — still selectable.
     expect(screen.getByRole("button", { name: /SYDE plan/ })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+
+  it("keeps a barred plan selectable when its loaded program references the course", async () => {
+    // Both programs are math-faculty and primed (fetch is dead in JSDOM; the
+    // union must load for suppression to apply) — only the one referencing
+    // the course stays selectable. Ids must not collide with the previous
+    // test, which needs its programs unloaded.
+    programDetail.prime({
+      "data-science-bcs": {
+        kind: "flexible",
+        name: "DS Stub (Bachelor of Computer Science)",
+        asOf: "2026-01-01",
+        rules: { kind: "courses", courses: ["math239"] },
+      },
+      "computational-mathematics": {
+        kind: "flexible",
+        name: "CM Stub (Bachelor of Mathematics)",
+        asOf: "2026-01-01",
+        rules: { kind: "courses", courses: ["stat231"] },
+      },
+    });
+    mockPlanList([
+      mkSummary({
+        id: "ds",
+        name: "DS plan",
+        programIds: ["data-science-bcs"],
+      }),
+      mkSummary({
+        id: "cm",
+        name: "CM plan",
+        programIds: ["computational-mathematics"],
+      }),
+    ]);
+    render(
+      <TermPicker
+        course={makeCourse({
+          code: "math239",
+          prereqs: "Not open to Faculty of Math students.",
+        })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    // computational-mathematics doesn't reference math239 → the wall holds.
+    const cm = await screen.findByRole("button", { name: /CM plan/ });
+    expect(cm).toHaveProperty("disabled", true);
+    // data-science-bcs names math239 in its rules → wall suppressed.
+    expect(screen.getByRole("button", { name: /DS plan/ })).toHaveProperty(
       "disabled",
       false,
     );

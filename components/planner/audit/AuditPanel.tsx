@@ -8,7 +8,6 @@ import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import { programShortCode } from "@/lib/programs";
-import { programDetail } from "@/lib/programs/detail";
 import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
 import type { ProgramAuditData } from "./buildProgramAudit";
 import { buildProgramAudit } from "./buildProgramAudit";
@@ -70,12 +69,12 @@ export const AuditPanel = memo(function AuditPanel({
   const isMulti = plan.programIds.length > 1;
   // Detail (rule trees) for the plan's programs is fetched on demand; the
   // audit rebuilds once it lands.
-  const detailLoaded = useProgramsDetail(plan.programIds);
+  const { programs } = useProgramsDetail(plan.programIds);
 
   // Every program's audit (the multi rail needs all `pct`s; single is N=1),
-  // gated on detail so fetch-window audits aren't built and discarded.
+  // gated on resolved detail so fetch-window audits aren't built and discarded.
   const programData = useMemo(() => {
-    if (!detailLoaded) return null;
+    if (!programs) return null;
     const map = new Map<string, ProgramAuditData>();
     for (const id of plan.programIds)
       map.set(
@@ -83,13 +82,13 @@ export const AuditPanel = memo(function AuditPanel({
         buildProgramAudit(
           plan,
           id,
-          programDetail.get(id),
+          programs.get(id) ?? null,
           catalogByCode,
           issues,
         ),
       );
     return map;
-  }, [plan, catalogByCode, issues, detailLoaded]);
+  }, [plan, catalogByCode, issues, programs]);
 
   const [selectedId, setSelectedId] = useState(plan.programIds[0]);
 

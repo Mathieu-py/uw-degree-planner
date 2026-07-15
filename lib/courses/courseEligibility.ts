@@ -13,8 +13,6 @@ import { resolveCoreqs, resolvePrereqs } from "@/lib/prereqs/cache";
 import { describeMissingPrereqs } from "@/lib/prereqs/describe";
 import { evaluate } from "@/lib/prereqs/satisfied";
 import type { ProgramIdentity } from "@/lib/programs";
-import { programDetail } from "@/lib/programs/detail";
-import { programIdentities } from "@/lib/programs/meta";
 import type { Course } from "./types";
 
 type CourseEligibilityState = "eligible" | "check" | "ineligible";
@@ -228,28 +226,6 @@ export function isProgramBlocked(
     assumeCoursesUncertain: true,
   });
   return !pre.satisfied && pre.blockedByProgram;
-}
-
-/**
- * Is `course` closed to a plan by a program/faculty restriction? Identities +
- * referenced codes + {@link isProgramBlocked} in one gate so every add surface
- * agrees. `plan` is any plan or summary carrying program ids. Referenced codes
- * come from the client detail store, so callers must `programDetail.load`
- * the plan's programs first — else a referenced course is briefly not
- * suppressed (fail-safe: it may read blocked until detail lands). A blocked
- * read with detail still missing is "unknown", not a verdict — one-shot
- * callers must re-check after loading (see `commitAddCourse`).
- */
-export function isCourseBlockedForPlan(
-  course: Course,
-  plan: { programIds?: string[]; specializationIds?: Record<string, string> },
-): boolean {
-  const programs = programIdentities(plan.programIds, plan.specializationIds);
-  const programReferenced = programDetail.planReferencedCodes(
-    plan.programIds,
-    plan.specializationIds,
-  );
-  return isProgramBlocked(course, { programs, programReferenced });
 }
 
 /**
