@@ -34,15 +34,44 @@ afterEach(() => {
 });
 
 describe("useProgramsDetail", () => {
-  it("reports unloaded ids as false and fetches their detail", async () => {
-    fetchMock.mockResolvedValue(okResponse(mkProgram(["CS 115"])));
+  it("reports unloaded ids, fetches their detail, and resolves the programs", async () => {
+    const program = mkProgram(["CS 115"]);
+    fetchMock.mockResolvedValue(okResponse(program));
     const { result } = renderHook(() => useProgramsDetail(["upd-basic"]));
 
-    expect(result.current).toBe(false);
+    expect(result.current).toEqual({ loaded: false, programs: null });
     expect(fetchMock).toHaveBeenCalledWith("/api/programs/upd-basic");
 
     await act(async () => {});
-    expect(result.current).toBe(true);
+    expect(result.current.loaded).toBe(true);
+    expect(result.current.programs?.get("upd-basic")).toEqual(program);
+  });
+
+  it("keeps a stable loading identity across rerenders", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+    const { result, rerender } = renderHook(() =>
+      useProgramsDetail(["upd-stable"]),
+    );
+    await act(async () => {});
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
+  it("maps an authoritative 404 to a null entry with loaded true", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 404 } as Response);
+    const { result } = renderHook(() => useProgramsDetail(["upd-missing"]));
+
+    await act(async () => {});
+    expect(result.current.loaded).toBe(true);
+    expect(result.current.programs?.get("upd-missing")).toBeNull();
+  });
+
+  it("resolves empty ids immediately without fetching", () => {
+    const { result } = renderHook(() => useProgramsDetail([]));
+    expect(result.current.loaded).toBe(true);
+    expect(result.current.programs?.size).toBe(0);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("retries failed loads with 2s/4s/8s/16s backoff capped at 30s", async () => {

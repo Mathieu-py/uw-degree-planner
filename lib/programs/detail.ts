@@ -26,7 +26,11 @@ export interface ProgramDetailStore {
   subscribe(listener: () => void): () => void;
   /** Bumps whenever a program lands — the snapshot for useSyncExternalStore. */
   version(): number;
-  /** Union of referenced codes across a plan's programs, each with its own spec. */
+  /**
+   * Union of referenced codes across a plan's programs, each with its own spec.
+   * Reads only what's cached — unloaded programs contribute nothing (fail-safe:
+   * under-suppresses). Callers gate on load state or load-and-recheck.
+   */
   planReferencedCodes(
     programIds: readonly string[] | null | undefined,
     specializationIds?: Record<string, string>,

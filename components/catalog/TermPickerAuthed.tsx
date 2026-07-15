@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
-import { isCourseBlockedForPlan } from "@/lib/courses/courseEligibility";
+import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
 import { placedCourseLabel } from "@/lib/plan/derive";
 import { addCourseToSlot } from "@/lib/plan/mutateSlots";
@@ -25,6 +25,8 @@ import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { ActionResult, ServerPlan } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { PlanSlot } from "@/lib/plan/types";
+import { programDetail } from "@/lib/programs/detail";
+import { programIdentities } from "@/lib/programs/meta";
 import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
 import { optionButtonClasses, TermOptionList } from "./TermOptionList";
 import { useTermOptions } from "./termOptions";
@@ -83,22 +85,27 @@ export function TermPickerAuthed({
   );
 
   // Program eligibility is per-plan, not per-term, so it's decided here rather
-  // than showing every term disabled. Summaries carry the programIds we need.
-  // Referenced-code suppression reads the client detail cache, so load every
-  // summary's programs first; blockedPlanIds recomputes once they land.
+  // than showing every term disabled. The hook loads the union across all
+  // summaries; blockedPlanIds recomputes as detail lands.
   const summaryProgramIds = useMemo(
     () => (plans ?? []).flatMap((p) => p.programIds ?? []),
     [plans],
   );
-  const detailLoaded = useProgramsDetail(summaryProgramIds);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: isCourseBlockedForPlan reads a cache filled when detailLoaded flips.
+  const detail = useProgramsDetail(summaryProgramIds);
   const blockedPlanIds = useMemo(() => {
     const set = new Set<string>();
     for (const p of plans ?? []) {
-      if (isCourseBlockedForPlan(course, p)) set.add(p.id);
+      // Refs only suppress, so unloaded detail = judged with none (fail-safe).
+      const blocked = isProgramBlocked(course, {
+        programs: programIdentities(p.programIds, p.specializationIds),
+        programReferenced: detail.loaded
+          ? programDetail.planReferencedCodes(p.programIds, p.specializationIds)
+          : undefined,
+      });
+      if (blocked) set.add(p.id);
     }
     return set;
-  }, [plans, course, detailLoaded]);
+  }, [plans, course, detail]);
 
   // Which of the user's plans already hold this course? One RLS-scoped read,
   // keyed only on the course, so it runs once when the picker opens.
