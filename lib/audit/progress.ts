@@ -20,18 +20,17 @@ import {
   subjectPoolFilter,
 } from "./electives";
 import { deriveLevelFloors, type LevelFloor } from "./levelFloors";
-import { assignUnitPools, maxBipartiteMatch } from "./matching";
+import {
+  assignUnitPools,
+  type MatchResult,
+  maxBipartiteMatch,
+} from "./matching";
 
 /**
  * The degree headline as a single UNITS bar: `creditedUnits / totalUnits`.
- * Denominator = the degree's authoritative size (`unitPlan.totalUnits`);
- * numerator credits each placed course's units to at most one requirement,
- * plus the free-elective remainder, capped at total.
- *
- * Units, not a course count: courses aren't uniformly 0.5 unit (0.25 labs/PD,
- * 1.0 full-year), so a count never reconciles with the unit-defined size.
- * The denominator is one fixed number we only ASSIGN into and cap, so
- * redundant scraped rules can't push past 100%.
+ * Units, not a course count — courses aren't uniformly 0.5 (0.25 labs, 1.0
+ * full-year). The denominator is one fixed number credit is only ASSIGNED
+ * into and capped at, so redundant scraped rules can't push past 100%.
  */
 export interface DegreeProgress {
   /** The degree's total units (the denominator), null when unknown. */
@@ -42,11 +41,8 @@ export interface DegreeProgress {
   creditedUnits: number;
   /** Headline 0–100, held below 100 until every requirement is met. */
   pct: number;
-  /**
-   * Structured reqs done: every bucket filled + breadth/floors met + nothing
-   * unverified. Can be true while free-elective units are still unplaced — use
-   * `pct === 100` for "degree fully done", not this flag.
-   */
+  /** Structured reqs done (buckets + breadth/floors + nothing unverified). Can
+   *  hold with free-elective units unplaced — "fully done" is `pct === 100`. */
   allComplete: boolean;
   /** Free-elective room in the degree (units, ≥ 0). */
   freeUnits: number;
@@ -54,36 +50,21 @@ export interface DegreeProgress {
   breadthRequirements: BreadthRequirement[];
   /** Faculty level-floor requirements ("X units at the 200-level+"), scored. */
   levelFloors: LevelFloor[];
-  /**
-   * `unverifiedRequirements` not yet acknowledged on the plan. Non-empty ⇒
-   * headline held below 100%. Surfaced near the headline so "check with your
-   * advisor" is actionable.
-   */
+  /** Unacknowledged `unverifiedRequirements` — non-empty holds the headline
+   *  below 100%; surfaced near it so "check with your advisor" is actionable. */
   owedUnverified: string[];
-  /**
-   * Per-rule-node distinct credit from the global bipartite match: how many of
-   * each owning {@link AuditNode}'s slots a UNIQUE course actually filled. Read
-   * by the audit panel (keyed by node identity) so a requirement ROW reflects the
-   * same one-course-per-slot assignment as this headline — an overlapping pool
-   * (e.g. "1 additional ENGL course") shows unmet once its courses are claimed by
-   * named requirements, not re-counted. (`needed` comes from `summarize`.)
-   */
+  /** Per-node filled-slot counts from the global match (keyed by node
+   *  identity): rows read the SAME one-course-per-slot credit as the headline,
+   *  so an overlapping pool shows unmet once named requirements claim its courses. */
   nodeFill: NodeFill;
-  /**
-   * Per-elective credit (index-aligned to `deriveElectiveSections`): a finite
-   * elective's filled count or a pool's credited units, so the Electives chip
-   * reads the same match credit as the headline. Sparse — no entry for "browse".
-   */
+  /** Per-elective match credit, index-aligned to `deriveElectiveSections`
+   *  (filled count / credited units; sparse — no entry for "browse"). */
   electiveCredit: number[];
-  /**
-   * The actual courses the match assigned to each owning rule node — the codes
-   * behind `nodeFill`'s counts. Lets a requirement row show WHICH courses credit
-   * it, so an overlapping pool doesn't chip a course a named requirement claimed.
-   */
+  /** The codes behind `nodeFill`'s counts, per node — a row chips exactly what
+   *  credits it, not a course another requirement claimed. */
   nodeAssigned: NodeAssigned;
-  /** Match credit of the communication bucket (absent when there is none, or
-   *  it lives in the rule tree). The minimums row reads this so it can't show
-   *  done while another bucket claimed the course and the slot sits unfilled. */
+  /** Match credit of the communication bucket (absent when none, or in-tree) —
+   *  keeps the minimums row honest when another bucket claimed the course. */
   commCredit?: number;
 }
 
@@ -100,41 +81,26 @@ interface Bucket {
   eligible: string[];
   /** Claim priority for tied assignments (see `MatchBucket.rank`, matching.ts). */
   rank?: number;
-  /**
-   * Units to reserve per UNFILLED slot (filled slots use real units). A
-   * required course knows its exact units; a pool/pick/elective slot can't,
-   * so ~0.5.
-   */
+  /** Units reserved per UNFILLED slot (filled slots use real units): exact for
+   *  a required course, ~0.5 for pool/pick/elective slots. */
   estimateUnit?: number;
-  /**
-   * The rule-tree node these slots belong to, when one exists (rule-tree
-   * buckets only — elective/communication buckets have no node). After the
-   * match, each owner's filled-slot total feeds `nodeFill`, so the panel's
-   * requirement rows read the SAME one-course-per-slot credit as the headline
-   * instead of an independent per-node count that double-credits overlapping
-   * pools.
-   */
+  /** Owning rule-tree node (elective/communication buckets have none); its
+   *  filled total feeds `nodeFill`, so rows share the headline's credit. */
   owner?: AuditNode;
 }
 
-/**
- * A units-scored requirement (a unit-stated `subjectPool`, or an elective unit
- * pool): a 1.0-unit course counts as 1.0, unlike a count {@link Bucket}. `owner`
- * is set for rule-tree pools so their row matches the headline.
- */
+/** A units-scored requirement (unit-stated `subjectPool` or elective unit pool):
+ *  a 1.0-unit course counts 1.0, unlike a count {@link Bucket}. `owner` is set
+ *  for rule-tree pools so their row matches the headline. */
 interface UnitPool {
   needUnits: number;
   eligible: string[];
   owner?: AuditNode;
 }
 
-/**
- * The shared unit weight of a set of option codes, or undefined when they
- * differ (or the set is empty). Lets an unfilled pick reserve its options'
- * real weight — a 1.0-unit full-year pick must reserve 1.0, not a flat 0.5, or
- * free-elective room is overstated. Mixed-weight options stay ambiguous → the
- * caller falls back to the 0.5 default.
- */
+/** The shared unit weight of the option codes, or undefined when mixed/empty.
+ *  An unfilled 1.0-unit pick must reserve 1.0, not a flat 0.5, or free-elective
+ *  room is overstated; mixed weights fall back to the 0.5 default. */
 function uniformUnit(
   codes: readonly string[],
   unitsOf: (code: string) => number,
@@ -149,14 +115,10 @@ function uniformUnit(
 }
 
 /**
- * Walk a rule tree, collecting volume buckets and required-course codes.
- * `courses` under `all` are all-required (one singleton each); a `subjectPool`
- * filters by prefix/level; `excluded` is ignored. Picks mirror {@link compilePick}:
- * an all-`courses` pick collapses into one pool, a compound pick credits only its
- * genuinely-satisfied option-groups (see the `pick` case).
- *
- * `placedMatches` maps a requirement code to the real PLACED codes satisfying
- * it (exact, else cross-listed equivalents), so every pass counts a course once.
+ * Walk a rule tree, collecting volume buckets and required-course codes:
+ * `courses` under `all` are all-required, `subjectPool` filters by prefix/level,
+ * `excluded` is ignored, picks mirror {@link compilePick}. `placedMatches` maps
+ * a code to its placed self/cross-listed twins, so each course counts once.
  */
 function collect(
   node: AuditNode,
@@ -170,36 +132,32 @@ function collect(
   const r = node.ruleNode;
   switch (r.kind) {
     case "courses":
-      // First leaf to name a code owns its singleton bucket (codes rarely repeat
-      // across leaves; first-wins keeps the owner stable).
+      // First leaf naming a code owns its singleton bucket (first-wins keeps
+      // the owner stable).
       for (const c of r.courses) if (!required.has(c)) required.set(c, node);
       break;
     case "pick": {
-      // No selectMin ⇒ an optional pick: 0 required slots, so it neither gates
-      // completion nor reserves units; its placed courses fall to free electives.
+      // No selectMin ⇒ optional: 0 slots — gates nothing, reserves nothing.
       const min = r.selectMin ?? 0;
-      // A flat pick collapses into one pool of `min` interchangeable slots
-      // ("1 of: A, B, C") — the same shared predicate compilePick dispatches on.
-      // Pass `r` (the RULE node): compilePick collapses a flat pick to an empty
-      // AuditNode.children, so node.children can't distinguish the two cases.
+      // A flat pick collapses into one pool of `min` interchangeable slots.
+      // Test `r`, not node.children: compilePick empties a flat pick's children.
       const codes = flatCoursePickOptions(r);
       if (codes) {
         buckets.push({
           need: min,
-          // Equivalence-aware (mirrors partitionByPlacement): an option's
-          // placed cross-listed twin fills the slot under its REAL code.
+          // Equivalence-aware: a placed cross-listed twin fills the slot
+          // under its REAL code.
           eligible: [...new Set(codes.flatMap(placedMatches))],
-          // Reserve the options' real weight when uniform (e.g. a full-year
-          // 1.0-unit pick), else the 0.5 default via the matcher.
+          // The options' real weight when uniform (e.g. a 1.0-unit full-year
+          // pick), else the matcher's 0.5 default.
           estimateUnit: uniformUnit(codes, unitsOf),
           owner: node,
         });
         break;
       }
-      // Compound pick ("1 of: {A and B} or {C and D}"): a single course must NOT
-      // satisfy a whole group. Credit genuinely-satisfied children up to `min`,
-      // heaviest-first so a tight free pool keeps the higher-unit group named;
-      // reserve the rest at the flat per-slot estimate.
+      // Compound pick: one course must NOT satisfy a whole group. Credit
+      // satisfied children up to `min`, heaviest-first so a tight free pool
+      // keeps the higher-unit group named; reserve the rest at the flat estimate.
       const satisfiedChildren = node.children
         .filter(isSatisfied)
         .map((child) => ({
@@ -228,9 +186,8 @@ function collect(
     case "subjectPool": {
       const f = subjectPoolNodeFilter(r);
       const eligible = [...placed].filter((c) => poolMatch(c, f));
-      // Unit-stated pool ("2.0 units of X"): score by real units (a 1.0-unit
-      // course counts as 1.0, never doubling the count). Count-stated pools stay
-      // slot-based.
+      // Unit-stated pool ("2.0 units of X") scores by real units (a 1.0-unit
+      // course counts 1.0); count-stated pools stay slot-based.
       if (r.needUnits !== undefined)
         unitPools.push({ needUnits: r.needUnits, eligible, owner: node });
       else buckets.push({ need: r.selectCount, eligible, owner: node });
@@ -259,71 +216,30 @@ function collectExcluded(node: AuditNode, out: Set<string>): void {
   for (const c of node.children) collectExcluded(c, out);
 }
 
+/** Append match-assigned codes to an owner node's list (skips ownerless/empty). */
+function assignToNode(
+  nodeAssigned: NodeAssigned,
+  owner: AuditNode | undefined,
+  codes: string[],
+): void {
+  if (!owner || codes.length === 0) return;
+  const cur = nodeAssigned.get(owner);
+  if (cur) cur.push(...codes);
+  else nodeAssigned.set(owner, [...codes]);
+}
+
 /**
- * Compute the unified degree-progress headline.
- *
- * @param unitsOf units of a placed course (caller defaults unknown codes to 0.5).
- * @param legality slot-scoped keys of illegally-placed courses, from
- *   `creditExclusionKeys`. Excluded from credit so they never inflate the headline
- *   (still shown met-but-flagged on their row).
- * @param equiv course-equivalence index. MUST match what `compileAudit`
- *   was given, else a twin marks the tree row met while this leaves its bucket
- *   unfilled — pct stuck below 100 with every row green.
+ * Rule-tree buckets: `collect` every root, then convert the required-course
+ * map into rank-0 singleton buckets ahead of the rank-1 picks/pools. Returns
+ * the bucket/pool lists the elective step appends to.
  */
-export function computeDegreeProgress(
-  audit: AuditRoot,
-  program: Program | null,
+function buildRuleBuckets(
+  roots: readonly (AuditNode | null)[],
+  placed: ReadonlySet<string>,
+  placedMatches: (code: string) => string[],
   unitsOf: (code: string) => number,
-  legality: ReadonlySet<string> = new Set(),
-  equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
-  /**
-   * Verbatim `unverifiedRequirements` the student manually confirmed; an
-   * acknowledged one stops gating the 100% headline ("not unmet, just unverified").
-   */
-  acknowledged: ReadonlySet<string> = new Set(),
-  /**
-   * The program's elective sections. Optional so callers/tests can omit it; when
-   * present it MUST be the same array `deriveMacros` receives, so the credit at
-   * `electiveCredit[i]` lines up with the i-th elective. buildProgramAudit
-   * computes it once and threads it to both; omit to derive locally.
-   */
-  electiveSections?: ElectiveSection[],
-  /**
-   * The owed `unverifiedRequirements` to gate on — already merged by the caller
-   * (the program's own PLUS any selected specialization's owed items, deduped;
-   * buildProgramAudit does this once). Omitted ⇒ fall back to the program's own,
-   * so callers with no specialization keep program-level gating for free.
-   */
-  unverifiedRequirements?: readonly string[],
-): DegreeProgress {
-  const roots: (AuditNode | null)[] = [
-    audit.flexibleRoot,
-    audit.specializationRoot,
-    ...(audit.byTerm ? Object.values(audit.byTerm) : []),
-  ];
-
-  // Drop illegally-placed courses before crediting: one placed before its
-  // prereqs (or in antireq conflict) can't honestly count toward the degree.
-  const { illegalCodes } = splitPlacementByLegality(audit.placement, legality);
-
-  // Drop courses an `excluded` rule bars: they must never credit the headline
-  // (named or free). They still surface as an excludedViolation on their row,
-  // so this only stops silent inflation.
-  const excludedCodes = new Set<string>();
-  for (const root of roots) if (root) collectExcluded(root, excludedCodes);
-
-  const placedList = [...audit.placement.keys()].filter(
-    (c) => !illegalCodes.has(c) && !excludedCodes.has(c),
-  );
-  const placed = new Set(placedList);
-
-  // Real placed codes satisfying a requirement code: the exact code, else its
-  // placed cross-listed equivalents (never the unplaced requirement code).
-  const placedMatches = (code: string): string[] => {
-    if (placed.has(code)) return [code];
-    return equiv.classOf(code).filter((m) => m !== code && placed.has(m));
-  };
-
+  equiv: EquivalenceIndex,
+): { buckets: Bucket[]; unitPools: UnitPool[] } {
   const ruleBuckets: Bucket[] = [];
   const unitPools: UnitPool[] = [];
   const required = new Map<string, AuditNode>();
@@ -340,18 +256,14 @@ export function computeDegreeProgress(
         unitsOf,
       );
 
-  // Required courses → singleton buckets; each reserves its real catalog units.
-  // Collapse to one bucket per equivalence class first (mirrors compileAudit's
-  // partitionByPlacement, keyed on the sorted class head): a leaf naming
-  // both twins of one course — or two leaves each naming a twin — is ONE
-  // required course, not two slots, else the headline demands two placements
-  // where the compiled tree shows the row met by a single one.
+  // Required courses → rank-0 singleton buckets, ONE per equivalence class
+  // (mirrors partitionByPlacement): a leaf naming both twins of one course is
+  // one slot, else the headline demands two placements where the compiled tree
+  // shows the row met by one.
   //
-  // Rank 0 — first claim on ties: a course both named individually and
-  // pool-eligible credits the NAMED slot. The calendar states pools as
-  // "Complete N additional … courses" (Kuali, e.g. Actuarial Science):
-  // "additional" means beyond the named list, which already contains
-  // pool-eligible courses (ACTSC 431/446 are 400-level ACTSC).
+  // Rank 0 wins ties: a course both named and pool-eligible credits the NAMED
+  // slot — the calendar states pools as "Complete N additional … courses"
+  // (Kuali, e.g. Actuarial Science), "additional" meaning beyond the named list.
   const buckets: Bucket[] = [];
   const requiredClasses = new Map<string, { code: string; owner: AuditNode }>();
   for (const [code, owner] of required) {
@@ -371,19 +283,29 @@ export function computeDegreeProgress(
   // Rank 1 — picks and count-stated pools claim in tree order after the named
   // core; rank 2 — elective lists and communication take what's left.
   buckets.push(...ruleBuckets.map((b) => ({ ...b, rank: 1 })));
+  return { buckets, unitPools };
+}
 
-  // Finite electives (consolidated upstream so overlapping pools count once)
-  // and unit-based subject pools ("0.5 unit of BIOL/CHEM/… at 200+").
-  // Option lists and placement keys are both catalog-lowercase, so the exact
-  // `placed.has`/`filter` matches below are case-safe; nothing normalizes here.
-  //
-  // Subject pools are scored by UNITS, not a 0.5-derived course count: a single
-  // 1.0-unit course satisfies "1.0 unit of X", and a 0.25 lab counts for what it
-  // weighs. They're assigned in a units pass after the count-based matcher
-  // (below), like breadth/level floors. `unitPools` already holds
-  // any unit-stated `subjectPool` from the tree. Map each elective to the
-  // bucket/pool it becomes (keyed by identity, robust to the sort below) so the
-  // chip reads the same match credit as the headline, not a double-count.
+/**
+ * Append rank-2 buckets IN PLACE: finite electives (consolidated upstream so
+ * overlapping pools count once), unit-based subject pools (scored by UNITS in
+ * `creditUnitPools` — a single 1.0-unit course satisfies "1.0 unit of X"), and
+ * the communication requirement. The returned maps tie each elective to its
+ * bucket/pool so the Electives chip reads the same credit as the headline.
+ * Option lists and placement keys are both catalog-lowercase; nothing normalizes.
+ */
+function buildElectiveAndCommBuckets(
+  program: Program | null,
+  electiveSections: ElectiveSection[] | undefined,
+  placedList: readonly string[],
+  placedMatches: (code: string) => string[],
+  buckets: Bucket[],
+  unitPools: UnitPool[],
+): {
+  electiveBucketIndex: Map<number, number>;
+  electivePool: Map<number, UnitPool>;
+  commBucketIndex: number | null;
+} {
   const electiveBucketIndex = new Map<number, number>();
   const electivePool = new Map<number, UnitPool>();
   let commBucketIndex: number | null = null;
@@ -419,49 +341,54 @@ export function computeDegreeProgress(
       });
     }
   }
+  return { electiveBucketIndex, electivePool, commBucketIndex };
+}
 
-  // Optimal unique assignment of courses to slots (maxBipartiteMatch): each
-  // matched course credits exactly one bucket, so overlapping pools can't
-  // double-count and a satisfiable set is never left spuriously unfilled.
-  // Courses a unit pool could use are matched LAST, so buckets consume as few
-  // of them as a maximum matching allows — a pick must not burn a pool's only
-  // course when a non-pool alternative fills the same slot.
+/**
+ * Optimal unique assignment of courses to slots (maxBipartiteMatch): each
+ * course credits exactly one bucket, so overlapping pools can't double-count.
+ * Pool-eligible courses match LAST — a pick must not burn a unit pool's only
+ * course when a non-pool alternative fills the same slot.
+ */
+function runMatch(
+  buckets: readonly Bucket[],
+  unitPools: readonly UnitPool[],
+): MatchResult & { nodeFill: NodeFill; nodeAssigned: NodeAssigned } {
   const poolEligible = new Set(unitPools.flatMap((p) => p.eligible));
-  const { filledByBucket, codesByBucket, matched } = maxBipartiteMatch(
-    buckets,
-    { matchLast: poolEligible },
-  );
+  const match = maxBipartiteMatch(buckets, { matchLast: poolEligible });
 
-  // Per-node distinct credit: each owner's filled-slot total (a node can own
-  // several buckets — a multi-course leaf, a pick + residual). `nodeAssigned`
+  // Per-node distinct credit (a node can own several buckets); `nodeAssigned`
   // keeps the codes behind the counts so rows chip exactly what credits them.
   const nodeFill: NodeFill = new WeakMap();
   const nodeAssigned: NodeAssigned = new WeakMap();
-  const assignToNode = (owner: AuditNode | undefined, codes: string[]) => {
-    if (!owner || codes.length === 0) return;
-    const cur = nodeAssigned.get(owner);
-    if (cur) cur.push(...codes);
-    else nodeAssigned.set(owner, [...codes]);
-  };
   for (let bi = 0; bi < buckets.length; bi++) {
     const owner = buckets[bi].owner;
     if (!owner) continue;
-    nodeFill.set(owner, (nodeFill.get(owner) ?? 0) + filledByBucket[bi]);
-    assignToNode(owner, codesByBucket[bi]);
+    nodeFill.set(owner, (nodeFill.get(owner) ?? 0) + match.filledByBucket[bi]);
+    assignToNode(nodeAssigned, owner, match.codesByBucket[bi]);
   }
+  return { ...match, nodeFill, nodeAssigned };
+}
 
-  // Unit pools (a unit-stated `subjectPool` rule, or a unit-based elective pool):
-  // credit leftover (not-yet-matched) courses toward each pool's REAL
-  // unit target, after the matcher so named requirements keep first claim. Consumed
-  // courses join `matched` (credited once, not reusable by a free elective); any
-  // shortfall reserves named space so it shrinks free room and gates completion.
-  //
-  // `assignUnitPools` is weight-aware and order-independent over the
-  // leftovers, and the matcher above consumes as few pool-eligible courses as
-  // possible. Known residual: a bucket forced to choose BETWEEN two
-  // pool-eligible courses still picks by list order (resolving that needs a
-  // joint solve); >32-contested overlaps degrade to the old greedy (`exact`
-  // deliberately unobserved — never worse than earlier).
+/**
+ * Credit leftover (unmatched) courses toward each unit pool's REAL target,
+ * after the matcher so named requirements keep first claim. Consumed courses
+ * join `matched` (never reusable as free electives); shortfall reserves named
+ * space, shrinking free room and gating completion. Known residual: a bucket
+ * choosing BETWEEN two pool-eligible courses still picks by list order, and
+ * >32-contested overlaps degrade to the old greedy.
+ */
+function creditUnitPools(
+  unitPools: readonly UnitPool[],
+  matched: Set<string>,
+  unitsOf: (code: string) => number,
+  nodeFill: NodeFill,
+  nodeAssigned: NodeAssigned,
+): {
+  allPoolsMet: boolean;
+  poolShortfall: number;
+  poolCredit: Map<UnitPool, number>;
+} {
   const poolAssign = assignUnitPools(
     unitPools.map((p) => ({
       needUnits: p.needUnits,
@@ -478,25 +405,40 @@ export function computeDegreeProgress(
     const got = poolAssign.got[i];
     const credit = Math.min(got, pool.needUnits);
     poolCredit.set(pool, credit);
-    // Rule-tree pools own a node → record credited units (capped at need) so the
-    // row matches the headline; elective pools have no owner.
+    // Rule-tree pools own a node → credited units (capped at need) feed its
+    // row; elective pools have no owner.
     if (pool.owner)
       nodeFill.set(pool.owner, (nodeFill.get(pool.owner) ?? 0) + credit);
-    assignToNode(pool.owner, poolAssign.usedByPool[i]);
+    assignToNode(nodeAssigned, pool.owner, poolAssign.usedByPool[i]);
     if (!unitsMet(got, pool.needUnits)) {
       poolShortfall += pool.needUnits - got;
       allPoolsMet = false;
     }
   });
+  return { allPoolsMet, poolShortfall, poolCredit };
+}
 
-  // Per-elective credit for the panel chip: a finite elective's filled count, a
-  // pool's credited units — both post-match, so a claimed course isn't re-counted.
-  const electiveCredit: number[] = [];
-  for (const [i, bi] of electiveBucketIndex)
-    electiveCredit[i] = filledByBucket[bi];
-  for (const [i, pool] of electivePool)
-    electiveCredit[i] = poolCredit.get(pool) ?? 0;
-
+/**
+ * The unit ledger: named volume (real units of matched courses + per-slot
+ * estimates for unfilled slots) against the degree total; the remainder is
+ * free-elective room, filled by leftover placed courses.
+ */
+function computeFreeUnits(
+  program: Program | null,
+  buckets: readonly Bucket[],
+  filledByBucket: readonly number[],
+  matched: ReadonlySet<string>,
+  placedList: readonly string[],
+  unitsOf: (code: string) => number,
+  allPoolsMet: boolean,
+  poolShortfall: number,
+): {
+  totalUnits: number | null;
+  denom: number;
+  freeUnits: number;
+  creditedUnits: number;
+  allBucketsFilled: boolean;
+} {
   // Roll up: real units of matched courses + per-slot estimate for unfilled
   // slots, so a 1.0-unit pick costs the free pool a full unit, not a flat 0.5.
   let namedCreditedUnits = 0;
@@ -531,26 +473,48 @@ export function computeDegreeProgress(
   // but must never reach credit, or an empty plan would show progress.
   const creditedUnits = Math.min(namedCreditedUnits + freeCreditedUnits, denom);
 
+  return { totalUnits, denom, freeUnits, creditedUnits, allBucketsFilled };
+}
+
+/**
+ * The completion gates: breadth and level floors (independent filters that
+ * block 100% without inflating the denominator), still-owed unverified
+ * requirements, and the final pct with its false-100 guard.
+ */
+function gateCompletion(
+  program: Program | null,
+  placedList: readonly string[],
+  unitsOf: (code: string) => number,
+  acknowledged: ReadonlySet<string>,
+  unverifiedRequirements: readonly string[] | undefined,
+  allBucketsFilled: boolean,
+  creditedUnits: number,
+  denom: number,
+): {
+  breadthRequirements: BreadthRequirement[];
+  levelFloors: LevelFloor[];
+  owedUnverified: string[];
+  allComplete: boolean;
+  pct: number;
+} {
   // Breadth is an independent filter (a course may satisfy breadth AND the
-  // major), so it gates 100% without inflating the denominator. Tracked in
-  // units, as the calendar states it.
+  // major): gates 100% without inflating the denominator. Tracked in units.
   const breadthRequirements = program
     ? deriveBreadthRequirements(program, placedList, unitsOf)
     : [];
   const allBreadthMet = breadthRequirements.every((b) =>
     unitsMet(b.placedUnits, b.needUnits),
   );
-  // "Couldn't auto-verify" ≠ "unmet": an acknowledged requirement no longer gates
-  // the headline. Only still-owed (unacknowledged) ones do. The owed list is the
-  // caller's pre-merged one (program + selected spec); absent it, the program's own.
+  // "Couldn't auto-verify" ≠ "unmet": acknowledged items stop gating. The owed
+  // list is the caller's pre-merged one; absent it, the program's own.
   const owedUnverified = (
     unverifiedRequirements ??
     program?.unverifiedRequirements ??
     []
   ).filter((r) => !acknowledged.has(r));
 
-  // Level floors ("X units at the 200-level+") gate completion like breadth:
-  // an overlapping filter that blocks 100% without inflating the denominator.
+  // Level floors ("X units at the 200-level+") gate like breadth: an
+  // overlapping filter, no denominator inflation.
   const levelFloors = program
     ? deriveLevelFloors(program, placedList, unitsOf)
     : [];
@@ -564,13 +528,131 @@ export function computeDegreeProgress(
     allFloorsMet &&
     owedUnverified.length === 0;
   const raw = denom > 0 ? Math.round((creditedUnits / denom) * 100) : 0;
-  // Require full VOLUME for 100, not just the structured gates: `allComplete` can
-  // hold with free-elective units unplaced (creditedUnits < denom), where
-  // `Math.round` would otherwise round ~99.6% up to a false 100.
+  // Full VOLUME required for 100: `allComplete` can hold with free-elective
+  // units unplaced, where Math.round would round ~99.6% up to a false 100.
   const pct =
     allComplete && unitsMet(creditedUnits, denom)
       ? Math.min(raw, 100)
       : Math.min(raw, 99);
+
+  return { breadthRequirements, levelFloors, owedUnverified, allComplete, pct };
+}
+
+/**
+ * Compute the unified degree-progress headline.
+ *
+ * @param unitsOf units of a placed course (unknown codes default 0.5 upstream).
+ * @param legality slot-scoped illegal-placement keys from `creditExclusionKeys`,
+ *   excluded from credit (still shown met-but-flagged on their row).
+ * @param equiv MUST match what `compileAudit` got, else a twin marks the tree
+ *   row met while its bucket sits unfilled — pct stuck below 100, rows green.
+ */
+export function computeDegreeProgress(
+  audit: AuditRoot,
+  program: Program | null,
+  unitsOf: (code: string) => number,
+  legality: ReadonlySet<string> = new Set(),
+  equiv: EquivalenceIndex = EMPTY_EQUIVALENCE,
+  /** Manually confirmed `unverifiedRequirements` (verbatim); acknowledged ones
+   *  stop gating the 100% headline ("not unmet, just unverified"). */
+  acknowledged: ReadonlySet<string> = new Set(),
+  /** MUST be the same array `deriveMacros` receives, so `electiveCredit[i]`
+   *  lines up with the i-th elective (buildProgramAudit threads one instance
+   *  to both); omit to derive locally. */
+  electiveSections?: ElectiveSection[],
+  /** Owed items to gate on, pre-merged by the caller (program + selected spec,
+   *  deduped — buildProgramAudit does this once). Omitted ⇒ the program's own. */
+  unverifiedRequirements?: readonly string[],
+): DegreeProgress {
+  const roots: (AuditNode | null)[] = [
+    audit.flexibleRoot,
+    audit.specializationRoot,
+    ...(audit.byTerm ? Object.values(audit.byTerm) : []),
+  ];
+
+  // Drop illegally-placed courses before crediting: one placed before its
+  // prereqs (or in antireq conflict) can't honestly count toward the degree.
+  const { illegalCodes } = splitPlacementByLegality(audit.placement, legality);
+
+  // Courses an `excluded` rule bars never credit the headline (named or free);
+  // they still surface as excludedViolations on their row.
+  const excludedCodes = new Set<string>();
+  for (const root of roots) if (root) collectExcluded(root, excludedCodes);
+
+  const placedList = [...audit.placement.keys()].filter(
+    (c) => !illegalCodes.has(c) && !excludedCodes.has(c),
+  );
+  const placed = new Set(placedList);
+
+  // Real placed codes satisfying a requirement code: the exact code, else its
+  // placed cross-listed equivalents (never the unplaced requirement code).
+  const placedMatches = (code: string): string[] => {
+    if (placed.has(code)) return [code];
+    return equiv.classOf(code).filter((m) => m !== code && placed.has(m));
+  };
+
+  const { buckets, unitPools } = buildRuleBuckets(
+    roots,
+    placed,
+    placedMatches,
+    unitsOf,
+    equiv,
+  );
+
+  const { electiveBucketIndex, electivePool, commBucketIndex } =
+    buildElectiveAndCommBuckets(
+      program,
+      electiveSections,
+      placedList,
+      placedMatches,
+      buckets,
+      unitPools,
+    );
+
+  const { filledByBucket, matched, nodeFill, nodeAssigned } = runMatch(
+    buckets,
+    unitPools,
+  );
+
+  const { allPoolsMet, poolShortfall, poolCredit } = creditUnitPools(
+    unitPools,
+    matched,
+    unitsOf,
+    nodeFill,
+    nodeAssigned,
+  );
+
+  // Per-elective credit for the panel chip: a finite elective's filled count, a
+  // pool's credited units — both post-match, so a claimed course isn't re-counted.
+  const electiveCredit: number[] = [];
+  for (const [i, bi] of electiveBucketIndex)
+    electiveCredit[i] = filledByBucket[bi];
+  for (const [i, pool] of electivePool)
+    electiveCredit[i] = poolCredit.get(pool) ?? 0;
+
+  const { totalUnits, denom, freeUnits, creditedUnits, allBucketsFilled } =
+    computeFreeUnits(
+      program,
+      buckets,
+      filledByBucket,
+      matched,
+      placedList,
+      unitsOf,
+      allPoolsMet,
+      poolShortfall,
+    );
+
+  const { breadthRequirements, levelFloors, owedUnverified, allComplete, pct } =
+    gateCompletion(
+      program,
+      placedList,
+      unitsOf,
+      acknowledged,
+      unverifiedRequirements,
+      allBucketsFilled,
+      creditedUnits,
+      denom,
+    );
 
   return {
     totalUnits,
