@@ -1,5 +1,5 @@
 import type { AuditRoot } from "@/lib/audit/compile";
-import { compileAudit, placementLegalityKey } from "@/lib/audit/compile";
+import { compileAudit, splitPlacementByLegality } from "@/lib/audit/compile";
 import { creditExclusionKeys } from "@/lib/audit/creditExclusion";
 import { deriveElectiveSections } from "@/lib/audit/electives";
 import { foldFiniteElectivesIntoRules } from "@/lib/audit/foldElectives";
@@ -182,9 +182,7 @@ export function buildProgramAudit(
   const placedCodes = new Set(audit.placement.keys());
   // Illegally-placed codes: still in `placedCodes` (shown on their row) but
   // flagged and excluded from ring counts + headline.
-  const illegalCodes = new Set<string>();
-  for (const [code, p] of audit.placement)
-    if (legality.has(placementLegalityKey(p))) illegalCodes.add(code);
+  const { illegalCodes } = splitPlacementByLegality(audit.placement, legality);
 
   return {
     program,

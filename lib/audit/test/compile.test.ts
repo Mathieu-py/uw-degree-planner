@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
 import type { Program, RuleNode } from "../../programs";
-import { compileAudit, isLegallyMet, summarize } from "../compile";
+import {
+  compileAudit,
+  isLegallyMet,
+  splitPlacementByLegality,
+  summarize,
+} from "../compile";
 import { buildPlacementMap } from "../placement";
 
 function makePlan(slots: LocalPlan["slots"]): LocalPlan {
@@ -488,6 +493,32 @@ describe("summarize", () => {
       excludedViolationCount: 2,
     });
     expect(audit.flexibleRoot.status).toBe("met");
+  });
+});
+
+describe("splitPlacementByLegality", () => {
+  it("partitions codes by their placement's slot-scoped legality key", () => {
+    const placement = buildPlacementMap(
+      makePlan([slot("s1", 1239, ["cs115"]), slot("s2", 1249, ["cs350"])]),
+    );
+    const { legalCodes, illegalCodes } = splitPlacementByLegality(
+      placement,
+      new Set(["s1::cs115"]),
+    );
+    expect([...illegalCodes]).toEqual(["cs115"]);
+    expect([...legalCodes]).toEqual(["cs350"]);
+  });
+
+  it("marks every code legal when legality is empty", () => {
+    const placement = buildPlacementMap(
+      makePlan([slot("s1", 1239, ["cs115", "cs350"])]),
+    );
+    const { legalCodes, illegalCodes } = splitPlacementByLegality(
+      placement,
+      new Set(),
+    );
+    expect(illegalCodes.size).toBe(0);
+    expect([...legalCodes].sort()).toEqual(["cs115", "cs350"]);
   });
 });
 

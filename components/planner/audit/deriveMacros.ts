@@ -6,7 +6,7 @@ import { deriveCommunicationRequirement } from "@/lib/audit/communication";
 import {
   type AuditNode,
   type AuditRoot,
-  placementLegalityKey,
+  splitPlacementByLegality,
 } from "@/lib/audit/compile";
 import {
   deriveElectiveSections,
@@ -112,9 +112,10 @@ export function deriveMacros(
 
   // Count like the headline: illegally-placed courses don't credit, keeping the
   // elective/communication counts consistent with the degree rows.
-  const placedCodes = new Set<string>();
-  for (const [code, p] of audit.placement)
-    if (!legality.has(placementLegalityKey(p))) placedCodes.add(code);
+  const { legalCodes: placedCodes } = splitPlacementByLegality(
+    audit.placement,
+    legality,
+  );
 
   // ---- Degree requirements: required core, flattened ----
   // Headers sum the rendered blocks' capped credits (what the sub-rings show),

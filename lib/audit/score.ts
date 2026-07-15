@@ -7,7 +7,7 @@
  */
 
 import { progressPct, unitsMet } from "@/lib/format";
-import type { TermLetter } from "@/lib/programs";
+import { flatCoursePickOptions, type TermLetter } from "@/lib/programs";
 import {
   type AuditNode,
   type AuditRoot,
@@ -60,11 +60,12 @@ function flatChoiceOptions(node: AuditNode): string[] | null {
   if ((r.selectMin ?? 1) !== 1 || (r.selectMax ?? 1) !== 1) return null;
   const opts: string[] = [];
   if (node.children.length === 0) {
-    // Compiler-unioned course leaves: each code is its own option.
-    for (const c of r.children) {
-      if (c.kind !== "courses") return null;
-      opts.push(...c.courses);
-    }
+    // Compiler-unioned course leaves: each code is its own option. A childless
+    // rule stays [] (vacuous), not null (compound) — only a non-`courses` child
+    // makes it compound.
+    const flat = r.children.length === 0 ? [] : flatCoursePickOptions(r);
+    if (!flat) return null;
+    opts.push(...flat);
   } else {
     for (const child of node.children) {
       const sub = flatChoiceOptions(child);
@@ -83,14 +84,8 @@ function flatChoiceOptions(node: AuditNode): string[] | null {
 export function pickOptions(node: AuditNode): string[] | null {
   const r = node.ruleNode;
   if (r.kind !== "pick") return null;
-  const allCourses =
-    r.children.length > 0 && r.children.every((c) => c.kind === "courses");
-  if (allCourses)
-    return [
-      ...new Set(
-        r.children.flatMap((c) => (c.kind === "courses" ? c.courses : [])),
-      ),
-    ];
+  const flatPool = flatCoursePickOptions(r);
+  if (flatPool) return flatPool;
   const flat = flatChoiceOptions(node);
   return flat && flat.length > 0 ? flat : null;
 }

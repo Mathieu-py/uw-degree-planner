@@ -9,6 +9,25 @@ export function walkRule(node: RuleNode, visit: (n: RuleNode) => void): void {
 }
 
 /**
+ * Flat course options of a `pick` whose children are ALL `courses` leaves,
+ * deduped in first-occurrence order; null when the pick is compound (any
+ * non-`courses` child, or no children). The one definition of "flat pick",
+ * shared by the compiler, headline, scorer, and variant picker — they must
+ * agree or the tree, headline, cards, and picker silently diverge.
+ */
+export function flatCoursePickOptions(
+  node: Extract<RuleNode, { kind: "pick" }>,
+): string[] | null {
+  if (node.children.length === 0) return null;
+  const out: string[] = [];
+  for (const c of node.children) {
+    if (c.kind !== "courses") return null;
+    out.push(...c.courses);
+  }
+  return [...new Set(out)];
+}
+
+/**
  * A `pick` whose `selectMin` equals its unique course-leaf count is
  * functionally mandatory (Kuali sometimes emits mandatory rules as `pick(1,1)`
  * not `all`). Returns the flat course codes if so, else null.
