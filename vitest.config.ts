@@ -9,6 +9,20 @@ import { defineConfig } from "vitest/config";
 // each .svg as a tiny React component so <Icon> renders cleanly in tests.
 export default defineConfig({
   plugins: [
+    // `server-only` (imported by the registry and other server modules) throws
+    // at import under Node resolution — the guard is meant for `next build`,
+    // where only client bundles trip it. Tests legitimately run server modules,
+    // so resolve it to an empty module here.
+    {
+      name: "server-only-as-stub",
+      enforce: "pre",
+      resolveId(id: string) {
+        if (id === "server-only") return "\0server-only";
+      },
+      load(id: string) {
+        if (id === "\0server-only") return "export {};";
+      },
+    },
     {
       name: "svg-as-stub",
       enforce: "pre",

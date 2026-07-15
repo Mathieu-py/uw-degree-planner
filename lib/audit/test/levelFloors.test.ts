@@ -4,7 +4,8 @@ import {
   isLevelFloor,
   parseLevelFloor,
 } from "@/lib/audit/levelFloors";
-import { PROGRAMS, type Program, type UnitConstraint } from "@/lib/programs";
+import type { Program, UnitConstraint } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programs/registry";
 
 const c = (sourceText: string): UnitConstraint => ({
   label: "Floor",

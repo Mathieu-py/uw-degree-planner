@@ -27,11 +27,8 @@ import {
   detectStream,
 } from "@/lib/plan/transcriptApply";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
-import {
-  joinProgramNames,
-  type ProgramOption,
-  programIdsTermSpan,
-} from "@/lib/programs";
+import { joinProgramNames, type ProgramOption } from "@/lib/programs";
+import { programIdsTermSpan } from "@/lib/programs/meta";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";

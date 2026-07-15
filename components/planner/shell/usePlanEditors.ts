@@ -11,12 +11,8 @@ import { toSnapshot } from "@/lib/plan/server/serialize";
 import type { PlanSnapshot } from "@/lib/plan/server/types";
 import { applyTranscriptToPlan } from "@/lib/plan/transcriptApply";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
-import {
-  PROGRAMS,
-  programIdsTermSpan,
-  programShortName,
-  programTermSpan,
-} from "@/lib/programs";
+import { programTermSpan, shortName } from "@/lib/programs";
+import { programIdsTermSpan, programMeta } from "@/lib/programs/meta";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
 import type { PickerContext } from "./usePlannerModals";
 
@@ -163,11 +159,11 @@ export function usePlanEditors({
           // Name the program that now caps the plan (its span equals the new,
           // shorter max), so the user knows why terms disappeared.
           const driver = next.programIds
-            .map((id) => PROGRAMS[id])
-            .find((p) => p && programTermSpan(p) === newSpan);
+            .map((id) => programMeta(id))
+            .find((m) => m && programTermSpan(m) === newSpan);
           const lead = streamChanged
             ? `Switched stream to ${next.stream}.`
-            : `${driver ? programShortName(driver) : "Your plan"} spans ${newSpan} terms.`;
+            : `${driver ? shortName(driver.name) : "Your plan"} spans ${newSpan} terms.`;
           setImportBanner(
             `${lead} ${countNoun(droppedCodes.length, "course")} no longer fit and ${pluralize(droppedCodes.length, "was", "were")} removed: ${droppedCodes.join(", ")}.`,
           );

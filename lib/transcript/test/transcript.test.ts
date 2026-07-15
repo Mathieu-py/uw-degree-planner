@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programs/registry";
 import {
   matchProgramSlug,
   matchSpecializationFromPlan,

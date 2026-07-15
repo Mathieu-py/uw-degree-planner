@@ -6,6 +6,7 @@ import { loadServerPlan, savePlanState } from "@/lib/plan/server/actions";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { PlanSlot } from "@/lib/plan/types";
+import { programDetail } from "@/lib/programs/detail";
 import { type TermId, termLabel } from "@/lib/terms";
 
 /**
@@ -21,8 +22,28 @@ export type CommitAddResult =
   | { status: "added"; termLabel: string }
   | { status: "already-placed"; label: string }
   | { status: "blocked" } // closed to the plan's program/faculty
-  | { status: "unresolved" } // term no longer maps to a slot, or no plan loaded
+  // Term no longer maps to a slot, no plan loaded, or the block check couldn't
+  // be resolved (program detail unavailable) — the caller falls back to the
+  // full picker rather than asserting a verdict.
+  | { status: "unresolved" }
   | { status: "error"; error: string };
+
+/**
+ * The program/faculty gate, cache-first: referenced codes only ever SUPPRESS a
+ * block, so an unrestricted course needs no detail fetch. A blocked read may
+ * still be a stale restriction the program's own rules override — load detail
+ * and re-check. If detail can't load, the verdict is unknown, not blocked:
+ * a network failure must not present as an academic rule.
+ */
+async function blockGate(
+  course: Course,
+  plan: { programIds?: string[]; specializationIds?: Record<string, string> },
+): Promise<"open" | "blocked" | "unknown"> {
+  if (!isCourseBlockedForPlan(course, plan)) return "open";
+  await programDetail.load(plan.programIds ?? []);
+  if (!programDetail.areLoaded(plan.programIds ?? [])) return "unknown";
+  return isCourseBlockedForPlan(course, plan) ? "blocked" : "open";
+}
 
 /**
  * The academic slot for `term`, preferring a non-coop/non-pre slot (belt-and-
@@ -62,7 +83,9 @@ export async function commitAddCourse({
     // slips through the one-click path.
     const placed = placedCourseLabel(plan.slots, course);
     if (placed) return { status: "already-placed", label: placed };
-    if (isCourseBlockedForPlan(course, plan)) return { status: "blocked" };
+    const gate = await blockGate(course, plan);
+    if (gate === "blocked") return { status: "blocked" };
+    if (gate === "unknown") return { status: "unresolved" };
     const slot = slotForTerm(plan.slots, term);
     if (!slot) return { status: "unresolved" };
 
@@ -82,7 +105,9 @@ export async function commitAddCourse({
 
   const placed = placedCourseLabel(plan.slots, course);
   if (placed) return { status: "already-placed", label: placed };
-  if (isCourseBlockedForPlan(course, plan)) return { status: "blocked" };
+  const gate = await blockGate(course, plan);
+  if (gate === "blocked") return { status: "blocked" };
+  if (gate === "unknown") return { status: "unresolved" };
   const slot = slotForTerm(plan.slots, term);
   if (!slot) return { status: "unresolved" };
 

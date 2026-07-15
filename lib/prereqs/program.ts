@@ -7,11 +7,8 @@
  * takeable course.
  */
 
-import {
-  type Faculty,
-  type ProgramIdentity,
-  programShortNames,
-} from "@/lib/programs";
+import type { Faculty, ProgramIdentity } from "@/lib/programs";
+import { programShortNames } from "@/lib/programs/meta";
 
 export interface ProgramConstraint {
   /** Program / faculty tokens the course is open to. */

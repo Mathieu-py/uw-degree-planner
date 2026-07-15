@@ -6,7 +6,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { PROGRAMS, type RuleNode } from "../../programs";
+import type { RuleNode } from "../../programs";
+import { PROGRAMS } from "../../programs/registry";
 import { PINNED_TERM } from "../../terms";
 import { validateCoursesFile } from "../validation";
 

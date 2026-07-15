@@ -17,6 +17,8 @@ This app encodes University of Waterloo academic rules (prerequisites, antirequi
 
 Keep comments short — one line where possible, a few at most. Explain the non-obvious reason, trade-off, or gotcha; don't narrate what the code plainly says or restate the identifier. Cut hedging and ceremony. (The academic-rule citations above are the deliberate exception — keep those, just tighten the prose.)
 
+**No issue or PR numbers in code comments** (`#31`, `#123`, etc.). They rot and mean nothing to a future reader without the tracker open — state the actual reason or behavior instead. Put the issue reference in the commit/PR, not the source. (Test `describe`/`it` titles are exempt — naming a test after its issue is fine.)
+
 ## Tests
 
 Tests live in `test/` subfolders next to the code they cover (e.g. `lib/test/filters.test.ts`, `lib/prereqs/test/parse.test.ts`). Vitest's default discovery picks them up; no extra config needed.

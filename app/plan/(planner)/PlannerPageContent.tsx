@@ -1,6 +1,6 @@
 import { PlannerShell } from "@/components/planner/shell/PlannerShell";
 import { loadTerm } from "@/lib/courses/data";
-import { getProgramOptions, PROGRAMS } from "@/lib/programs";
+import { getProgramOptions, PROGRAMS } from "@/lib/programs/registry";
 import { PINNED_TERM } from "@/lib/terms";
 
 /**

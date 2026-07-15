@@ -14,7 +14,7 @@ import { fmtUnits } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
 import type { Program, Specialization } from "@/lib/programs";
-import { PROGRAMS, programReferencedCodes } from "@/lib/programs";
+import { referencedCodesOf } from "@/lib/programs/referenced";
 import { deriveMacros } from "./deriveMacros";
 import type { Macro } from "./types";
 
@@ -58,22 +58,29 @@ export interface ProgramAuditData {
 export function buildProgramAudit(
   plan: LocalPlan,
   programId: string,
+  program: Program | null,
   catalogByCode: Map<string, Course>,
   issues: readonly ValidationIssue[],
 ): ProgramAuditData {
-  const program = PROGRAMS[programId] ?? null;
   const specId = plan.specializationIds[programId] ?? null;
+  // The selected specialization (heavy: its own rules/electives), resolved once
+  // from the loaded detail and reused for referenced codes + owed requirements.
+  const selectedSpec = specId
+    ? (program?.specializations?.find((s) => s.slug === specId) ?? null)
+    : null;
   // Fold finite "choose N of a list" requirements (e.g. an "Approved Courses
   // List") into the rule tree as picks, so they render/count under Degree
-  // requirements — not as a separate Electives row. Local to this audit; global
-  // PROGRAMS is untouched, so `programReferencedCodes` still sees the same codes.
+  // requirements — not as a separate Electives row. Local to this audit; the
+  // un-folded `program` still feeds `referencedCodesOf`, so codes are unaffected.
   const auditedProgram = program ? foldFiniteElectivesIntoRules(program) : null;
   const unitsOf = (code: string) => catalogByCode.get(code)?.units ?? 0.5;
 
   // Credit one member of each antireq conflict (program-required, else higher
   // units); hold out prereq-misplaced courses. Per-program: "required" is
   // program-specific.
-  const referenced = programReferencedCodes(programId, specId);
+  const referenced = program
+    ? referencedCodesOf(program, selectedSpec)
+    : new Set<string>();
   const legality = creditExclusionKeys(issues, { referenced, unitsOf });
 
   // Credit follows the calendar's requirements, NOT the term a course is taken
@@ -118,9 +125,6 @@ export function buildProgramAudit(
     ...(spec.unverifiedRequirements ?? []),
     ...(noTotal ? (spec.freeElectives ?? []) : []),
   ];
-  const selectedSpec = specId
-    ? (program?.specializations?.find((s) => s.slug === specId) ?? null)
-    : null;
   // Merge the program's own owed requirements with the selected spec's ONCE
   // (deduped): this single list drives both the acknowledgeable UI rows and the
   // headline gate, so computeDegreeProgress no longer re-merges internally.

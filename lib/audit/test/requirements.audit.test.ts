@@ -11,12 +11,8 @@
 // requirements — the "audit report" half of this file.
 import { describe, expect, it } from "vitest";
 import type { LocalPlan } from "../../plan/types";
-import {
-  PROGRAMS,
-  type Program,
-  type RuleNode,
-  TERM_LETTERS,
-} from "../../programs";
+import { type Program, type RuleNode, TERM_LETTERS } from "../../programs";
+import { PROGRAMS } from "../../programs/registry";
 import {
   type AuditNode,
   type AuditRoot,

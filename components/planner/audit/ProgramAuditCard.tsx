@@ -5,6 +5,8 @@ import type { Course } from "@/lib/courses/types";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
+import { programDetail } from "@/lib/programs/detail";
+import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
 import { AuditMacroList } from "./AuditMacroList";
 import { buildProgramAudit } from "./buildProgramAudit";
@@ -45,9 +47,22 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
   onAcknowledgeRequirement,
   drag,
 }: Props) {
+  const detailLoaded = useProgramsDetail([programId]);
+  const loadedProgram = programDetail.get(programId);
+  // Gated on detail: an audit built against a null program during the fetch
+  // window would only be thrown away by the loading branch below.
   const data = useMemo(
-    () => buildProgramAudit(plan, programId, catalogByCode, issues),
-    [plan, programId, catalogByCode, issues],
+    () =>
+      detailLoaded
+        ? buildProgramAudit(
+            plan,
+            programId,
+            loadedProgram,
+            catalogByCode,
+            issues,
+          )
+        : null,
+    [detailLoaded, plan, programId, loadedProgram, catalogByCode, issues],
   );
 
   // A lone Joint Honours plan is only half a degree. Plan-level, so keyed
@@ -56,6 +71,14 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
     () => jointHonoursWarning(plan.programIds),
     [plan.programIds],
   );
+
+  if (!data) {
+    return (
+      <div className="card px-4 py-6 text-sm text-ink-3">
+        Loading degree audit…
+      </div>
+    );
+  }
 
   const {
     program,

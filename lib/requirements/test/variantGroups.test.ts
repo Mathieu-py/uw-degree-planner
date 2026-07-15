@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { PROGRAMS, type Program } from "@/lib/programs";
+import type { Program } from "@/lib/programs";
+import { PROGRAMS } from "@/lib/programs/registry";
 import { enumerateVariantGroups } from "../variantGroups";
 
 describe("enumerateVariantGroups", () => {

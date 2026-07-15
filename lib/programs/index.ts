@@ -1,8 +1,16 @@
+/**
+ * The programs subsystem, one directory, four tiers:
+ * - `index.ts` (this file) — pure types + helpers, no data imports. Safe anywhere.
+ * - `registry.ts` — SERVER-ONLY full registry (~2 MB programs.json).
+ * - `meta.ts` — client-safe light index (programs-index.json): names, spans,
+ *   identity/restriction matching.
+ * - `detail.ts` + `usePlanPrograms.ts` — client store fetching one program's
+ *   full detail from /api/programs/<slug>, and the React hooks over it.
+ */
 import { z } from "zod";
-import programsData from "../data/programs.json";
-import { describeRule } from "./requirements/describe";
-import { type RuleNode, RuleNodeSchema } from "./requirements/types";
-import { requiredCoursesIn, walkRule } from "./requirements/walk";
+import { describeRule } from "../requirements/describe";
+import { type RuleNode, RuleNodeSchema } from "../requirements/types";
+import { requiredCoursesIn, walkRule } from "../requirements/walk";
 
 // The requirement AST (RuleNode) and helpers live in `lib/requirements`;
 // re-export so `@/lib/programs` stays the stable entry point.
@@ -192,14 +200,13 @@ export type Program = z.infer<typeof ProgramSchema>;
 const ProgramsFileSchema = z.record(z.string(), ProgramSchema);
 
 /**
- * Validate a `slug → Program` map, throwing on the first violation. Parses
- * bundled `programs.json` at import; lets the scraper fail fast before writing.
+ * Validate a `slug → Program` map, throwing on the first violation. Lets the
+ * scraper fail fast before writing, and backs the `PROGRAMS` registry's
+ * fail-fast parse (see `@/lib/programsRegistry`).
  */
 export function validatePrograms(raw: unknown): Record<string, Program> {
   return ProgramsFileSchema.parse(raw);
 }
-
-export const PROGRAMS: Record<string, Program> = validatePrograms(programsData);
 
 /** A UWaterloo undergraduate faculty (see {@link FACULTIES}). */
 export type Faculty = (typeof FACULTIES)[number];
@@ -222,54 +229,10 @@ export interface ProgramIdentity {
 }
 
 /**
- * Alternate names per program short name (lowercased) — the vocabulary that
- * resolves prereq program-restrictions to a student's plan, matching the
- * phrasings upstream prose uses ("Architecture students", "BBA/BMath"). Consumed
- * by `programIdentity` + `programShortNames`, NOT by abbreviations (rail/pip
- * codes come from `subjectCode` + `PROGRAM_CODE_OVERRIDES`). Because these are
- * prose tokens, multi-word and slashed forms belong here; they have no subject-
- * code equivalent. A miss only narrows coverage (falls back to "check"), never
- * correctness.
+ * Short name = program name up to the first " (" (e.g. "Computer Science").
+ * Exported for the registry's identity/short-name lookups (`@/lib/programsRegistry`).
  */
-const PROGRAM_RESTRICTION_ALIASES: Record<string, string[]> = {
-  "computer science": ["cs"],
-  "software engineering": ["se"],
-  "systems design engineering": ["syde"],
-  // UWFlow says "Architecture students only"; the registry calls these
-  // "Architectural Studies" / "Architectural Engineering".
-  "architectural studies": ["architecture"],
-  "architectural engineering": ["architecture"],
-  "accounting and financial management": ["afm"],
-  "computing and financial management": ["cfm"],
-  "mathematical finance": ["math fin", "math finance"],
-  "business administration and mathematics double degree": [
-    "bba/bmath",
-    "bba and bmath",
-    "busmath",
-  ],
-  "business administration and computer science double degree": [
-    "bba/bcs",
-    "bba and bcs",
-    "bba/bmath or bba/cs",
-  ],
-};
-
-/** Degree-type substring (inside the program name's parentheses) → faculty. */
-const DEGREE_FACULTY: Array<[string, Faculty]> = [
-  ["bachelor of applied science", "engineering"],
-  ["bachelor of software engineering", "engineering"],
-  ["bachelor of architectural studies", "engineering"],
-  ["bachelor of mathematics", "mathematics"],
-  ["bachelor of computer science", "mathematics"],
-  ["bachelor of computing and financial management", "mathematics"],
-  ["bachelor of environmental studies", "environment"],
-  ["bachelor of arts", "arts"],
-  ["bachelor of science", "science"],
-  ["bachelor of public health", "health"],
-];
-
-/** Short name = program name up to the first " (" (e.g. "Computer Science"). */
-function shortName(name: string): string {
+export function shortName(name: string): string {
   const paren = name.indexOf(" (");
   return (paren === -1 ? name : name.slice(0, paren)).trim();
 }
@@ -358,57 +321,6 @@ export function programCredential(program: Program): string {
   return m ? m[1].replace(/\s-\s/g, " · ").trim() : "";
 }
 
-/** Faculty from the degree-type clause inside the name, or null if ambiguous. */
-function facultyFromName(name: string): Faculty | null {
-  const lower = name.toLowerCase();
-  for (const [needle, faculty] of DEGREE_FACULTY) {
-    if (lower.includes(needle)) return faculty;
-  }
-  return null;
-}
-
-/**
- * Build a {@link ProgramIdentity} for a program (and optional specialization),
- * or null when the program id is unknown. A specialization name, when present,
- * is added as an extra matchable name.
- */
-export function programIdentity(
-  programId: string | null | undefined,
-  specializationId?: string | null,
-): ProgramIdentity | null {
-  if (!programId) return null;
-  const program = PROGRAMS[programId];
-  if (!program) return null;
-  const short = shortName(program.name).toLowerCase();
-  const names = new Set<string>([
-    short,
-    ...(PROGRAM_RESTRICTION_ALIASES[short] ?? []),
-  ]);
-  if (specializationId) {
-    const spec = getSpecialization(programId, specializationId);
-    if (spec) names.add(spec.name.toLowerCase());
-  }
-  return {
-    programId,
-    names: [...names],
-    faculty: facultyFromName(program.name),
-  };
-}
-
-/**
- * Identities for every program on a plan (double degrees carry more than one),
- * each with its own specialization; unknown ids drop out. Lets eligibility judge
- * a restriction against *all* the student's programs, not just the primary.
- */
-export function programIdentities(
-  programIds: readonly string[] | null | undefined,
-  specializationIds: Record<string, string> = {},
-): ProgramIdentity[] {
-  return (programIds ?? [])
-    .map((id) => programIdentity(id, specializationIds[id] ?? null))
-    .filter((p): p is ProgramIdentity => p !== null);
-}
-
 /**
  * Join a plan's program names for display — "A + B" for a double degree.
  * `resolve` supplies each name (e.g. `PROGRAMS[id]?.name`); unresolved ids drop,
@@ -423,48 +335,20 @@ export function joinProgramNames(
   return joined || fallback;
 }
 
-/**
- * Lowercased set of every program short name + alias — the recognition
- * vocabulary for {@link matchProgram}. A restriction resolves to "block" only
- * when every program it names is recognized here.
- */
-let shortNamesCache: ReadonlySet<string> | null = null;
-export function programShortNames(): ReadonlySet<string> {
-  if (shortNamesCache) return shortNamesCache;
-  const out = new Set<string>();
-  for (const id of Object.keys(PROGRAMS)) {
-    const short = shortName(PROGRAMS[id].name).toLowerCase();
-    out.add(short);
-    for (const alias of PROGRAM_RESTRICTION_ALIASES[short] ?? [])
-      out.add(alias);
-  }
-  shortNamesCache = out;
-  return out;
-}
-
 export function isTermLetter(s: string | null | undefined): s is TermLetter {
   return s != null && (TERM_LETTERS as readonly string[]).includes(s);
 }
 
 /** Span when a program declares none, and the clamp ceiling (`TermLetter` ≤ 4B). */
-const DEFAULT_TERM_SPAN = 8;
-
-/** Academic terms a program spans, from `numberOfTerms` (engineering/absent ⇒ 8). */
-export function programTermSpan(program: Program): number {
-  return program.numberOfTerms ?? DEFAULT_TERM_SPAN;
-}
+export const DEFAULT_TERM_SPAN = 8;
 
 /**
- * Plan length for a set of programs: the longest known program's span (a double
- * degree runs as long as its longer leg), or 8 when none/unknown.
+ * Academic terms a program spans, from `numberOfTerms` (engineering/absent ⇒ 8).
+ * Structural param so both a full `Program` and the client `ProgramMeta` fit —
+ * this is the one home of the default-span rule.
  */
-export function programIdsTermSpan(programIds: readonly string[]): number {
-  let span = 0;
-  for (const id of programIds) {
-    const program = PROGRAMS[id];
-    if (program) span = Math.max(span, programTermSpan(program));
-  }
-  return span || DEFAULT_TERM_SPAN;
+export function programTermSpan(program: { numberOfTerms?: number }): number {
+  return program.numberOfTerms ?? DEFAULT_TERM_SPAN;
 }
 
 export interface ProgramOption {
@@ -473,22 +357,6 @@ export interface ProgramOption {
   kind: Program["kind"];
   /** Home faculty, for the program picker's filter + grouping; absent if unknown. */
   faculty?: Faculty;
-}
-
-/**
- * The `(id, name, kind, faculty)` digest of every program, sorted by name.
- * Shipped to the client instead of full programs.json so the picker works
- * without trees.
- */
-export function getProgramOptions(): ProgramOption[] {
-  return Object.entries(PROGRAMS)
-    .map(([id, p]) => ({
-      id,
-      name: p.name,
-      kind: p.kind,
-      ...(p.faculty ? { faculty: p.faculty } : {}),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
@@ -506,25 +374,11 @@ export function splitProgramName(name: string): {
   return m ? { title: m[1], degree: m[2] } : { title: name };
 }
 
-/** A flat `id → name` lookup for labelling plan cards client-side. */
-export function programNameMap(): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(PROGRAMS).map(([id, p]) => [id, p.name]),
-  );
-}
-
-export function getSpecialization(
-  programId: string,
-  specializationSlug: string,
-): Specialization | null {
-  const program = PROGRAMS[programId];
-  return (
-    program?.specializations?.find((s) => s.slug === specializationSlug) ?? null
-  );
-}
-
-/** Every rule-tree root of a program: one per term for engineering, the single tree for flexible. */
-function programRuleRoots(program: Program): RuleNode[] {
+/**
+ * Every rule-tree root of a program: one per term for engineering, the single
+ * tree for flexible. Exported for the registry's `programReferencedCodes`.
+ */
+export function programRuleRoots(program: Program): RuleNode[] {
   return program.kind === "engineering"
     ? TERM_LETTERS.map((t) => program.terms[t])
     : [program.rules];
@@ -540,76 +394,4 @@ export function getRequiredCourses(program: Program): string[] {
     for (const c of requiredCoursesIn(root)) out.add(c);
   }
   return [...out].sort();
-}
-
-const EMPTY_CODE_SET: ReadonlySet<string> = new Set();
-const referencedCodesCache = new Map<string, ReadonlySet<string>>();
-
-/** Collect every explicit course code a rule tree names (lowercased). */
-function collectReferenced(root: RuleNode, out: Set<string>): void {
-  // Only `courses` names explicit codes (`excluded` is forbidden, not
-  // referenced; `subjectPool` matches by prefix/level).
-  walkRule(root, (n) => {
-    if (n.kind === "courses") {
-      for (const c of n.courses) out.add(c.toLowerCase());
-    }
-  });
-}
-
-/**
- * Every course code the program (+ optional specialization) references,
- * lowercased. Broader than {@link getRequiredCourses}: includes choice-group
- * options and elective pools. Lets eligibility suppress a stale program
- * restriction (a program can't require a course its own restriction blocks).
- * Memoized.
- */
-export function programReferencedCodes(
-  programId: string | null | undefined,
-  specializationId?: string | null,
-): ReadonlySet<string> {
-  if (!programId) return EMPTY_CODE_SET;
-  const key = `${programId}::${specializationId ?? ""}`;
-  const cached = referencedCodesCache.get(key);
-  if (cached) return cached;
-
-  const program = PROGRAMS[programId];
-  if (!program) {
-    referencedCodesCache.set(key, EMPTY_CODE_SET);
-    return EMPTY_CODE_SET;
-  }
-
-  const out = new Set<string>();
-  for (const root of programRuleRoots(program)) collectReferenced(root, out);
-  for (const e of program.electives ?? []) {
-    for (const c of e.approvedCourses ?? []) out.add(c.toLowerCase());
-  }
-  if (specializationId) {
-    const spec = getSpecialization(programId, specializationId);
-    if (spec?.rules) collectReferenced(spec.rules, out);
-    for (const e of spec?.electives ?? []) {
-      for (const c of e.approvedCourses ?? []) out.add(c.toLowerCase());
-    }
-  }
-
-  referencedCodesCache.set(key, out);
-  return out;
-}
-
-/**
- * A plan's program identities + all referenced codes — the inputs every
- * eligibility check needs. Spans a double degree's programs, merging each one's
- * specialization codes.
- */
-export function programContext(
-  programIds: string[] | undefined,
-  specializationIds: Record<string, string> | undefined,
-): { programs: ProgramIdentity[]; programReferenced: ReadonlySet<string> } {
-  const programs = programIdentities(programIds, specializationIds);
-  const programReferenced = new Set<string>();
-  for (const id of programIds ?? []) {
-    for (const c of programReferencedCodes(id, specializationIds?.[id])) {
-      programReferenced.add(c);
-    }
-  }
-  return { programs, programReferenced };
 }
