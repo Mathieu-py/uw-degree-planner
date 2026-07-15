@@ -6,7 +6,7 @@ import { countPlacementIssues } from "@/lib/audit/compile";
 import type { Course } from "@/lib/courses/types";
 import type { LocalPlan } from "@/lib/plan/types";
 import { validatePlan } from "@/lib/plan/validate";
-import { getLoadedProgram } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programDetail";
 import {
   programCredential,
   programShortCode,
@@ -94,7 +94,7 @@ export const AuditPanel = memo(function AuditPanel({
         buildProgramAudit(
           plan,
           id,
-          getLoadedProgram(id),
+          programDetail.get(id),
           catalogByCode,
           issues,
         ),

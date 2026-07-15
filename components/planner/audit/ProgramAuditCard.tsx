@@ -5,7 +5,7 @@ import type { Course } from "@/lib/courses/types";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
 import type { ValidationIssue } from "@/lib/plan/validate";
-import { getLoadedProgram } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programDetail";
 import { useProgramsDetail } from "@/lib/usePlanPrograms";
 import { AuditAdvisoryNotes } from "./AuditAdvisoryNotes";
 import { AuditMacroList } from "./AuditMacroList";
@@ -48,7 +48,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
   drag,
 }: Props) {
   const detailLoaded = useProgramsDetail([programId]);
-  const loadedProgram = getLoadedProgram(programId);
+  const loadedProgram = programDetail.get(programId);
   // Gated on detail: an audit built against a null program during the fetch
   // window would only be thrown away by the loading branch below.
   const data = useMemo(

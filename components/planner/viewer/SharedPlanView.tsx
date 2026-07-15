@@ -21,7 +21,7 @@ import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { issuesBySlot, validatePlan } from "@/lib/plan/validate";
-import { primeProgramsDetail } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programDetail";
 import { joinProgramNames, type Program } from "@/lib/programs";
 
 interface Props {
@@ -47,7 +47,7 @@ export function SharedPlanView({
   // Prime the detail cache from the server-provided programs so AuditPanel
   // renders synchronously (SSR + hydration) instead of fetching. Idempotent and
   // cheap — the plan's 1–2 programs.
-  primeProgramsDetail(seedPrograms);
+  programDetail.prime(seedPrograms);
 
   const router = useRouter();
   const { isAuthed, ready } = useAuthState();

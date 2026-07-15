@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import {
-  areProgramsLoaded,
-  loadedPlanReferencedCodes,
-  loadProgramsDetail,
-  programsDetailVersion,
-  subscribeProgramsDetail,
-} from "./programDetail";
+import { programDetail } from "./programDetail";
 import type { ProgramIdentity } from "./programs";
 import { programIdentities } from "./programsMeta";
 
@@ -35,20 +29,20 @@ export function useProgramsDetail(
   );
   const key = ids.join(",");
   useSyncExternalStore(
-    subscribeProgramsDetail,
-    programsDetailVersion,
-    programsDetailVersion,
+    programDetail.subscribe,
+    programDetail.version,
+    programDetail.version,
   );
-  const loaded = areProgramsLoaded(ids);
+  const loaded = programDetail.areLoaded(ids);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `key` captures `ids`.
   useEffect(() => {
-    if (areProgramsLoaded(ids)) return;
+    if (programDetail.areLoaded(ids)) return;
     let alive = true;
     let delay = RETRY_BASE_MS;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const attempt = () => {
-      void loadProgramsDetail(ids).then(() => {
-        if (!alive || areProgramsLoaded(ids)) return;
+      void programDetail.load(ids).then(() => {
+        if (!alive || programDetail.areLoaded(ids)) return;
         timer = setTimeout(attempt, delay);
         delay = Math.min(delay * 2, RETRY_MAX_MS);
       });
@@ -81,7 +75,10 @@ export function usePlanProgramContext(
     // `loaded` gates the recompute: until detail arrives the union is empty;
     // the store subscription re-renders and flips it true once detail lands.
     if (!loaded) return EMPTY_CODES;
-    return loadedPlanReferencedCodes(plan?.programIds, plan?.specializationIds);
+    return programDetail.planReferencedCodes(
+      plan?.programIds,
+      plan?.specializationIds,
+    );
   }, [plan?.programIds, plan?.specializationIds, loaded]);
   return { programs, programReferenced };
 }

@@ -31,14 +31,14 @@ vi.mock("@/lib/plan/storage", () => ({
   savePlan: savePlanMock,
 }));
 
-import { primeProgramsDetail } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programDetail";
 import { PROGRAMS } from "@/lib/programsRegistry";
 import { commitAddCourse } from "../commitAddCourse";
 
 // The block gate verifies a blocked read against program detail (absent /api
 // route here). Prime ONLY SYDE: the blocked test needs a resolvable verdict,
 // while the unresolved test relies on another program staying unloadable.
-primeProgramsDetail({
+programDetail.prime({
   "systems-design-engineering": PROGRAMS["systems-design-engineering"],
 });
 

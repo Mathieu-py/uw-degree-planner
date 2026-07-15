@@ -6,7 +6,7 @@ import { loadServerPlan, savePlanState } from "@/lib/plan/server/actions";
 import { toSnapshot } from "@/lib/plan/server/serialize";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { PlanSlot } from "@/lib/plan/types";
-import { areProgramsLoaded, loadProgramsDetail } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programDetail";
 import { type TermId, termLabel } from "@/lib/terms";
 
 /**
@@ -40,8 +40,8 @@ async function blockGate(
   plan: { programIds?: string[]; specializationIds?: Record<string, string> },
 ): Promise<"open" | "blocked" | "unknown"> {
   if (!isCourseBlockedForPlan(course, plan)) return "open";
-  await loadProgramsDetail(plan.programIds ?? []);
-  if (!areProgramsLoaded(plan.programIds ?? [])) return "unknown";
+  await programDetail.load(plan.programIds ?? []);
+  if (!programDetail.areLoaded(plan.programIds ?? [])) return "unknown";
   return isCourseBlockedForPlan(course, plan) ? "blocked" : "open";
 }
 

@@ -12,14 +12,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { deriveElectiveSections } from "@/lib/audit/electives";
 import { formatCourseCode } from "@/lib/format";
 import type { LocalPlan } from "@/lib/plan/types";
-import { primeProgramsDetail } from "@/lib/programDetail";
+import { programDetail } from "@/lib/programDetail";
 import type { Program, RuleNode, Specialization } from "@/lib/programs";
 import { PROGRAMS } from "@/lib/programsRegistry";
 import { AuditPanel } from "../AuditPanel";
 
 // AuditPanel loads program detail on demand from /api/programs (absent in JSDOM);
-// prime the client cache so the audit renders synchronously.
-primeProgramsDetail(PROGRAMS);
+// prime the client store so the audit renders synchronously.
+programDetail.prime(PROGRAMS);
 
 afterEach(cleanup);
 
