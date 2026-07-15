@@ -153,6 +153,21 @@ describe("SharedPlanView", () => {
     expect(auditProps.current?.drag).toBeUndefined();
   });
 
+  it("threads its own validation results into the audit panel", () => {
+    // The panel no longer validates — the view passes usePlanValidation's
+    // outputs down (validatePlan is mocked to [] above).
+    render(
+      <SharedPlanView
+        plan={makePlan()}
+        catalog={[]}
+        programOptions={PROGRAM_OPTIONS}
+        seedPrograms={{}}
+      />,
+    );
+    expect(auditProps.current?.issues).toEqual([]);
+    expect(auditProps.current?.catalogByCode).toBeInstanceOf(Map);
+  });
+
   it("preserves acknowledgedRequirements when adapting the shared plan", () => {
     // Regression: the inline adapter used to drop acknowledgedRequirements, so a
     // plan its owner acknowledged to 100% rendered 99% (all rules un-acked) for

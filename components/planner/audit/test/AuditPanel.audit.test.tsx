@@ -97,6 +97,8 @@ describe("AuditPanel cross-program mapping audit", () => {
       render(
         <AuditPanel
           plan={emptyPlan(programId, specId)}
+          catalogByCode={new Map()}
+          issues={[]}
           onDrillToRequirement={() => {}}
         />,
       );
@@ -116,6 +118,8 @@ describe("AuditPanel cross-program mapping audit", () => {
     const { container } = render(
       <AuditPanel
         plan={emptyPlan(programId, null)}
+        catalogByCode={new Map()}
+        issues={[]}
         onDrillToRequirement={() => {}}
       />,
     );
@@ -170,6 +174,8 @@ describe("AuditPanel cross-program mapping audit", () => {
     const { container } = render(
       <AuditPanel
         plan={emptyPlan(programId, spec.slug)}
+        catalogByCode={new Map()}
+        issues={[]}
         onDrillToRequirement={() => {}}
       />,
     );
