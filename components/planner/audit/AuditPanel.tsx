@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState } from "react";
 import { Ring } from "@/components/ui/Ring";
-import { countPlacementIssues } from "@/lib/audit/compile";
+import { countPlacementIssues } from "@/lib/audit/creditExclusion";
 import type { Course } from "@/lib/courses/types";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import type { LocalPlan } from "@/lib/plan/types";
