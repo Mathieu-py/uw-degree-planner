@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import type { Course } from "@/lib/courses/types";
-import { placedCourseLabel } from "@/lib/plan/derive";
-import { addCourseToSlot } from "@/lib/plan/mutateSlots";
+import { applyAddToPlan } from "@/lib/plan/commitAddCourse";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import { ProgramBlockedBody } from "./CourseTermModalShell";
@@ -25,7 +24,6 @@ export function TermPickerLocal({
   onAdded: (label: string) => void;
   justAdded: boolean;
 }) {
-  const code = course.code.toLowerCase();
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
 
   const { options, alreadyIn, blocked } = useTermOptions(
@@ -34,17 +32,16 @@ export function TermPickerLocal({
     plan,
   );
 
-  function addTo(slot: PlanSlot, label: string) {
+  async function addTo(slot: PlanSlot, label: string) {
     if (!plan) return;
-    // A course belongs in exactly one term; the option buttons disable once
-    // it's placed, but guard here too (twin-aware) so the writer can't duplicate.
-    if (placedCourseLabel(plan.slots, course) !== null) return;
-    const next = addCourseToSlot(plan, slot.id, { code });
-    if (next === plan) return;
+    // The core re-runs the placed/block gates the option buttons enforce, so
+    // the writer can't duplicate or bypass them.
+    const applied = await applyAddToPlan(plan, slot, course);
+    if (applied.status !== "added") return;
     // Only reflect the add and report success if the write stuck (localStorage
     // can be full/unavailable). savePlan re-stamps updatedAt itself.
-    if (!savePlan(next)) return;
-    setPlan(next);
+    if (!savePlan(applied.plan)) return;
+    setPlan(applied.plan);
     onAdded(label);
   }
 

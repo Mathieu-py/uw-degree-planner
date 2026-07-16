@@ -30,7 +30,11 @@ vi.mock("@/lib/plan/storage", () => ({
 
 import { programDetail } from "@/lib/programs/detail";
 import { PROGRAMS } from "@/lib/programs/registry";
-import { commitAddCourse } from "../commitAddCourse";
+import {
+  type ApplyAddResult,
+  applyAddToPlan,
+  commitAddCourse,
+} from "../commitAddCourse";
 
 // The block gate verifies a blocked read against program detail (absent /api
 // route here). Prime ONLY SYDE: the blocked test needs a resolvable verdict,
@@ -335,5 +339,76 @@ describe("commitAddCourse — signed-in (server)", () => {
       course: makeCourse("cs246"),
     });
     expect(res).toEqual({ status: "error", error: "snapshot_too_large" });
+  });
+});
+
+// The pickers hand the core a chosen PlanSlot instead of a term; the gate
+// sequence must behave identically for that shape.
+describe("applyAddToPlan — direct slot target (picker path)", () => {
+  it("adds into exactly the given slot, bypassing term resolution", async () => {
+    const coop = slot({
+      id: "coop",
+      position: "coop1",
+      termId: WINTER,
+      isCoop: true,
+    });
+    const plan = localPlan([
+      coop,
+      slot({ id: "acad", position: "1B", termId: WINTER }),
+    ]);
+    // A term target would prefer the academic slot; the slot target must not.
+    const res: ApplyAddResult<LocalPlan> = await applyAddToPlan(
+      plan,
+      coop,
+      makeCourse("CS246"),
+    );
+    expect(res.status).toBe("added");
+    if (res.status !== "added") return;
+    expect(res.plan).not.toBe(plan);
+    expect(
+      res.plan.slots.find((s) => s.id === "coop")?.courses.map((c) => c.code),
+    ).toEqual(["cs246"]);
+    expect(res.plan.slots.find((s) => s.id === "acad")?.courses).toEqual([]);
+  });
+
+  it("refuses a course closed to the plan's program", async () => {
+    const target = slot({ id: "a", position: "1A", termId: FALL });
+    const res = await applyAddToPlan(
+      { ...localPlan([target]), programIds: ["systems-design-engineering"] },
+      target,
+      makeCourse("anth101", { prereqs: "Anthropology students only" }),
+    );
+    expect(res).toEqual({ status: "blocked" });
+  });
+
+  it("reports already-placed over blocked", async () => {
+    const target = slot({ id: "b", position: "1B", termId: WINTER });
+    const res = await applyAddToPlan(
+      {
+        ...localPlan([
+          slot({
+            id: "a",
+            position: "1A",
+            termId: FALL,
+            courses: [{ code: "anth101" }],
+          }),
+          target,
+        ]),
+        programIds: ["systems-design-engineering"],
+      },
+      target,
+      makeCourse("anth101", { prereqs: "Anthropology students only" }),
+    );
+    expect(res).toEqual({ status: "already-placed", label: "Fall 2025" });
+  });
+
+  it("is unresolved when a blocked read can't be verified", async () => {
+    const target = slot({ id: "a", position: "1A", termId: FALL });
+    const res = await applyAddToPlan(
+      { ...localPlan([target]), programIds: ["software-engineering"] },
+      target,
+      makeCourse("anth101", { prereqs: "Anthropology students only" }),
+    );
+    expect(res).toEqual({ status: "unresolved" });
   });
 });

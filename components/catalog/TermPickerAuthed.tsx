@@ -15,8 +15,7 @@ import { Icon } from "@/components/ui/Icon";
 import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
 import { describeActionError } from "@/lib/format";
-import { placedCourseLabel } from "@/lib/plan/derive";
-import { addCourseToSlot } from "@/lib/plan/mutateSlots";
+import { applyAddToPlan } from "@/lib/plan/commitAddCourse";
 import {
   loadServerPlan,
   plansContainingCourse,
@@ -161,20 +160,24 @@ export function TermPickerAuthed({
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !serverPlan || !selectedPlanId) return;
-    if (placedCourseLabel(serverPlan.slots, course) !== null) return;
-    const updated = addCourseToSlot(serverPlan, slot.id, { code });
-    if (updated === serverPlan) return;
+    // Saving flips before the await so a double-click can't slip past the guard.
     setSaving(true);
     setSaveError(null);
+    const applied = await applyAddToPlan(serverPlan, slot, course);
+    if (applied.status !== "added") {
+      // Placed/blocked adds are prevented upstream; nothing new to report.
+      setSaving(false);
+      return;
+    }
     // savePlanState is a full atomic REPLACE, so send the entire updated plan to
     // avoid clobbering its other courses.
-    const res = await savePlanState(selectedPlanId, toSnapshot(updated));
+    const res = await savePlanState(selectedPlanId, toSnapshot(applied.plan));
     setSaving(false);
     if (!res.ok) {
       setSaveError(res.error);
       return;
     }
-    setServerPlan(updated);
+    setServerPlan(applied.plan);
     onAdded(label);
   }
 

@@ -1,7 +1,11 @@
 import type { Course } from "@/lib/courses/types";
 import type { PlanSlot } from "@/lib/plan/types";
 
-/** A minimal valid `Course`; override any field via `over`. */
+/**
+ * A minimal valid `Course`; override any field via `over`. Note: clicking an
+ * add for a program-restricted course requires priming `programDetail` first —
+ * an unverifiable block verdict makes `applyAddToPlan` silently refuse.
+ */
 export function makeCourse(over: Partial<Course> = {}): Course {
   return {
     id: 1,

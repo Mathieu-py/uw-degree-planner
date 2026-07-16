@@ -11,9 +11,9 @@ import { TermPickerLocal } from "./TermPickerLocal";
 /**
  * Course-first "Add" flow (catalog / course detail page): the course is fixed
  * and the user chooses plan + term here. The inverse is the slot-first
- * {@link SlotPicker} (term fixed, course chosen). Both write through the shared
- * `addCourseToSlot` + `savePlanState`/`savePlan` sinks; see also the detail
- * page's one-click {@link lib/plan/commitAddCourse} variant.
+ * {@link SlotPicker} (term fixed, course chosen). Both pickers and the detail
+ * page's one-click {@link lib/plan/commitAddCourse} variant gate and mutate
+ * through the shared `applyAddToPlan` core.
  *
  * Signed-out users edit their local plan; signed-in users pick a server plan
  * first, then the same term picker. `onAdded` fires after a successful add in
