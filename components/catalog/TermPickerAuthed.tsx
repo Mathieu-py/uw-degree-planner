@@ -23,12 +23,13 @@ import {
   savePlanState,
 } from "@/lib/plan/server/actions";
 import { toSnapshot } from "@/lib/plan/server/serialize";
-import type { ActionResult, ServerPlan } from "@/lib/plan/server/types";
+import type { ServerPlan } from "@/lib/plan/server/types";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { PlanSlot } from "@/lib/plan/types";
 import { programDetail } from "@/lib/programs/detail";
 import { programIdentities } from "@/lib/programs/meta";
 import { useProgramsDetail } from "@/lib/programs/usePlanPrograms";
+import type { ActionResult } from "@/lib/server/actions";
 import {
   ErrorBody,
   ProgramBlockedBody,

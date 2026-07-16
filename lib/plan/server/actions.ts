@@ -2,8 +2,12 @@
 
 import { randomBytes } from "node:crypto";
 import { reseedSlotIds } from "@/lib/plan/mutateSlots";
-import { mapDbError } from "@/lib/server/dbError";
-import { requireUser } from "@/lib/supabase/requireUser";
+import {
+  type ActionResult,
+  mapDbError,
+  requireAffectedRow,
+  withUser,
+} from "@/lib/server/actions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   assembleServerPlan,
@@ -14,12 +18,7 @@ import {
   planRowToSummary,
   toSnapshot,
 } from "./serialize";
-import type {
-  ActionResult,
-  PlanSnapshot,
-  PlanSummary,
-  ServerPlan,
-} from "./types";
+import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 import { snapshotError } from "./validate";
 
 const PLAN_COLUMNS =
@@ -34,16 +33,15 @@ const COURSE_COLUMNS = "id, slot_id, course_code, grade, ordinal";
 // ---------------------------------------------------------------------------
 
 export async function listPlans(): Promise<ActionResult<PlanSummary[]>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  return withUser(async ({ client }) => {
+    const { data, error } = await client
+      .from("plans")
+      .select(PLAN_COLUMNS)
+      .order("updated_at", { ascending: false });
 
-  const { data, error } = await auth.client
-    .from("plans")
-    .select(PLAN_COLUMNS)
-    .order("updated_at", { ascending: false });
-
-  if (error) return { ok: false, error: mapDbError(error, "listPlans") };
-  return { ok: true, data: (data as PlanRow[]).map(planRowToSummary) };
+    if (error) return { ok: false, error: mapDbError(error, "listPlans") };
+    return { ok: true, data: (data as PlanRow[]).map(planRowToSummary) };
+  });
 }
 
 /**
@@ -55,32 +53,31 @@ export async function listPlans(): Promise<ActionResult<PlanSummary[]>> {
 export async function plansContainingCourse(
   courseCode: string,
 ): Promise<ActionResult<string[]>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  return withUser(async ({ client }) => {
+    const code = courseCode.trim().toLowerCase();
+    if (!code) return { ok: true, data: [] };
 
-  const code = courseCode.trim().toLowerCase();
-  if (!code) return { ok: true, data: [] };
+    const { data, error } = await client
+      .from("plan_courses")
+      .select("plan_slots!inner(plan_id)")
+      .eq("course_code", code);
 
-  const { data, error } = await auth.client
-    .from("plan_courses")
-    .select("plan_slots!inner(plan_id)")
-    .eq("course_code", code);
+    if (error) {
+      return { ok: false, error: mapDbError(error, "plansContainingCourse") };
+    }
 
-  if (error) {
-    return { ok: false, error: mapDbError(error, "plansContainingCourse") };
-  }
-
-  // PostgREST types a to-one embed as an object but can surface an array;
-  // accept both so a relationship-shape change can't silently drop ids.
-  const ids = new Set<string>();
-  for (const row of (data ?? []) as Array<{
-    plan_slots: { plan_id: string } | { plan_id: string }[] | null;
-  }>) {
-    const ps = row.plan_slots;
-    if (Array.isArray(ps)) for (const x of ps) ids.add(x.plan_id);
-    else if (ps) ids.add(ps.plan_id);
-  }
-  return { ok: true, data: [...ids] };
+    // PostgREST types a to-one embed as an object but can surface an array;
+    // accept both so a relationship-shape change can't silently drop ids.
+    const ids = new Set<string>();
+    for (const row of (data ?? []) as Array<{
+      plan_slots: { plan_id: string } | { plan_id: string }[] | null;
+    }>) {
+      const ps = row.plan_slots;
+      if (Array.isArray(ps)) for (const x of ps) ids.add(x.plan_id);
+      else if (ps) ids.add(ps.plan_id);
+    }
+    return { ok: true, data: [...ids] };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -99,40 +96,39 @@ export interface CreatePlanInput {
 export async function createPlan(
   input: CreatePlanInput,
 ): Promise<ActionResult<{ id: string }>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  return withUser(async ({ client, userId }) => {
+    const name = input.name.trim();
+    if (!name) return { ok: false, error: "name_required" };
 
-  const name = input.name.trim();
-  if (!name) return { ok: false, error: "name_required" };
+    const { data, error } = await client
+      .from("plans")
+      .insert({ owner_id: userId, name })
+      .select("id")
+      .single();
 
-  const { data, error } = await auth.client
-    .from("plans")
-    .insert({ owner_id: auth.userId, name })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    return {
-      ok: false,
-      error: error ? mapDbError(error, "createPlan") : "insert_failed",
-    };
-  }
-
-  if (input.seed) {
-    const seedResult = await savePlanStateWithClient(
-      auth.client,
-      data.id,
-      input.seed,
-    );
-    if (!seedResult.ok) {
-      // Roll back the empty plan so the user isn't left with an orphan.
-      // Best-effort; we surface the original seed error, not any rollback one.
-      await auth.client.from("plans").delete().eq("id", data.id);
-      return seedResult;
+    if (error || !data) {
+      return {
+        ok: false,
+        error: error ? mapDbError(error, "createPlan") : "insert_failed",
+      };
     }
-  }
 
-  return { ok: true, data: { id: data.id } };
+    if (input.seed) {
+      const seedResult = await savePlanStateWithClient(
+        client,
+        data.id,
+        input.seed,
+      );
+      if (!seedResult.ok) {
+        // Roll back the empty plan so the user isn't left with an orphan.
+        // Best-effort; we surface the original seed error, not any rollback one.
+        await client.from("plans").delete().eq("id", data.id);
+        return seedResult;
+      }
+    }
+
+    return { ok: true, data: { id: data.id } };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -160,51 +156,53 @@ export async function duplicatePlan(
 export async function loadServerPlan(
   planId: string,
 ): Promise<ActionResult<ServerPlan | null>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  return withUser(async ({ client }) => {
+    const { data: planData, error: planError } = await client
+      .from("plans")
+      .select(PLAN_COLUMNS)
+      .eq("id", planId)
+      .maybeSingle();
 
-  const { data: planData, error: planError } = await auth.client
-    .from("plans")
-    .select(PLAN_COLUMNS)
-    .eq("id", planId)
-    .maybeSingle();
+    if (planError) {
+      return { ok: false, error: mapDbError(planError, "loadServerPlan.plan") };
+    }
+    if (!planData) return { ok: true, data: null };
 
-  if (planError) {
-    return { ok: false, error: mapDbError(planError, "loadServerPlan.plan") };
-  }
-  if (!planData) return { ok: true, data: null };
+    const { data: slotData, error: slotError } = await client
+      .from("plan_slots")
+      .select(SLOT_COLUMNS)
+      .eq("plan_id", planId);
 
-  const { data: slotData, error: slotError } = await auth.client
-    .from("plan_slots")
-    .select(SLOT_COLUMNS)
-    .eq("plan_id", planId);
-
-  if (slotError) {
-    return { ok: false, error: mapDbError(slotError, "loadServerPlan.slots") };
-  }
-
-  const slotIds = (slotData as PlanSlotRow[]).map((s) => s.id);
-  let courses: PlanCourseRow[] = [];
-  if (slotIds.length > 0) {
-    const { data: courseData, error: courseError } = await auth.client
-      .from("plan_courses")
-      .select(COURSE_COLUMNS)
-      .in("slot_id", slotIds);
-    if (courseError) {
+    if (slotError) {
       return {
         ok: false,
-        error: mapDbError(courseError, "loadServerPlan.courses"),
+        error: mapDbError(slotError, "loadServerPlan.slots"),
       };
     }
-    courses = courseData as PlanCourseRow[];
-  }
 
-  const plan = assembleServerPlan(
-    planData as PlanRow,
-    slotData as PlanSlotRow[],
-    courses,
-  );
-  return { ok: true, data: plan };
+    const slotIds = (slotData as PlanSlotRow[]).map((s) => s.id);
+    let courses: PlanCourseRow[] = [];
+    if (slotIds.length > 0) {
+      const { data: courseData, error: courseError } = await client
+        .from("plan_courses")
+        .select(COURSE_COLUMNS)
+        .in("slot_id", slotIds);
+      if (courseError) {
+        return {
+          ok: false,
+          error: mapDbError(courseError, "loadServerPlan.courses"),
+        };
+      }
+      courses = courseData as PlanCourseRow[];
+    }
+
+    const plan = assembleServerPlan(
+      planData as PlanRow,
+      slotData as PlanSlotRow[],
+      courses,
+    );
+    return { ok: true, data: plan };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -215,9 +213,9 @@ export async function savePlanState(
   planId: string,
   snapshot: PlanSnapshot,
 ): Promise<ActionResult<void>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
-  return savePlanStateWithClient(auth.client, planId, snapshot);
+  return withUser(({ client }) =>
+    savePlanStateWithClient(client, planId, snapshot),
+  );
 }
 
 async function savePlanStateWithClient(
@@ -244,25 +242,23 @@ export async function renamePlan(
   planId: string,
   name: string,
 ): Promise<ActionResult<void>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  return withUser(async ({ client }) => {
+    const trimmed = name.trim();
+    if (!trimmed) return { ok: false, error: "name_required" };
 
-  const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "name_required" };
+    // `.select('id')` returns the updated rows so requireAffectedRow can tell
+    // success from "RLS hid the row".
+    const { data, error } = await client
+      .from("plans")
+      .update({ name: trimmed })
+      .eq("id", planId)
+      .select("id");
 
-  // `.select('id')` returns the updated rows so we can detect "0 rows updated"
-  // (plan didn't exist OR wasn't owned — RLS hides both the same way).
-  const { data, error } = await auth.client
-    .from("plans")
-    .update({ name: trimmed })
-    .eq("id", planId)
-    .select("id");
-
-  if (error) return { ok: false, error: mapDbError(error, "renamePlan") };
-  if (!data || data.length === 0) {
-    return { ok: false, error: "not_found_or_unauthorized" };
-  }
-  return { ok: true, data: undefined };
+    if (error) return { ok: false, error: mapDbError(error, "renamePlan") };
+    const missing = requireAffectedRow(data);
+    if (missing) return missing;
+    return { ok: true, data: undefined };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -278,42 +274,41 @@ export async function setPlanShare(
   planId: string,
   enable: boolean,
 ): Promise<ActionResult<{ shareToken: string | null }>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  // Explicit T: the two ok branches return `null` and `string` tokens, which
+  // inference won't widen to `string | null` on its own.
+  return withUser<{ shareToken: string | null }>(async ({ client }) => {
+    if (!enable) {
+      const { data, error } = await client
+        .from("plans")
+        .update({ share_token: null })
+        .eq("id", planId)
+        .select("id");
+      if (error) {
+        return { ok: false, error: mapDbError(error, "setPlanShare.disable") };
+      }
+      const missing = requireAffectedRow(data);
+      if (missing) return missing;
+      return { ok: true, data: { shareToken: null } };
+    }
 
-  if (!enable) {
-    const { data, error } = await auth.client
-      .from("plans")
-      .update({ share_token: null })
-      .eq("id", planId)
-      .select("id");
-    if (error) {
-      return { ok: false, error: mapDbError(error, "setPlanShare.disable") };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const token = randomBytes(16).toString("base64url");
+      const { data, error } = await client
+        .from("plans")
+        .update({ share_token: token })
+        .eq("id", planId)
+        .select("id");
+      if (error) {
+        // Postgres unique_violation; retry once before bubbling up.
+        if (error.code === "23505" && attempt === 0) continue;
+        return { ok: false, error: mapDbError(error, "setPlanShare.enable") };
+      }
+      const missing = requireAffectedRow(data);
+      if (missing) return missing;
+      return { ok: true, data: { shareToken: token } };
     }
-    if (!data || data.length === 0) {
-      return { ok: false, error: "not_found_or_unauthorized" };
-    }
-    return { ok: true, data: { shareToken: null } };
-  }
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const token = randomBytes(16).toString("base64url");
-    const { data, error } = await auth.client
-      .from("plans")
-      .update({ share_token: token })
-      .eq("id", planId)
-      .select("id");
-    if (error) {
-      // Postgres unique_violation; retry once before bubbling up.
-      if (error.code === "23505" && attempt === 0) continue;
-      return { ok: false, error: mapDbError(error, "setPlanShare.enable") };
-    }
-    if (!data || data.length === 0) {
-      return { ok: false, error: "not_found_or_unauthorized" };
-    }
-    return { ok: true, data: { shareToken: token } };
-  }
-  return { ok: false, error: "share_token_collision" };
+    return { ok: false, error: "share_token_collision" };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -340,21 +335,17 @@ export async function loadSharedPlan(
 // ---------------------------------------------------------------------------
 
 export async function deletePlan(planId: string): Promise<ActionResult<void>> {
-  const auth = await requireUser();
-  if (!auth.ok) return { ok: false, error: auth.error };
+  return withUser(async ({ client }) => {
+    // FK on-delete-cascade (0001_initial.sql) clears slots and courses.
+    const { data, error } = await client
+      .from("plans")
+      .delete()
+      .eq("id", planId)
+      .select("id");
 
-  // Same trick as renamePlan: ask for the deleted rows back to tell success
-  // from "RLS hid the row". FK on-delete-cascade (0001_initial.sql) clears
-  // slots and courses.
-  const { data, error } = await auth.client
-    .from("plans")
-    .delete()
-    .eq("id", planId)
-    .select("id");
-
-  if (error) return { ok: false, error: mapDbError(error, "deletePlan") };
-  if (!data || data.length === 0) {
-    return { ok: false, error: "not_found_or_unauthorized" };
-  }
-  return { ok: true, data: undefined };
+    if (error) return { ok: false, error: mapDbError(error, "deletePlan") };
+    const missing = requireAffectedRow(data);
+    if (missing) return missing;
+    return { ok: true, data: undefined };
+  });
 }
