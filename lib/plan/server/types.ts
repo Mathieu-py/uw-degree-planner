@@ -49,12 +49,3 @@ export interface PlanSnapshot {
   programScrapeVersion: string | null;
   slots: PlanSlot[];
 }
-
-/**
- * Uniform result shape for every server action, so the UI pattern-matches on
- * `ok` instead of try/catch and surfaces `error` in a banner. Programmer
- * errors (missing env, bad argument types) still throw.
- */
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };

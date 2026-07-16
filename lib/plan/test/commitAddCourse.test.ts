@@ -1,11 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Course } from "@/lib/courses/types";
-import type {
-  ActionResult,
-  PlanSnapshot,
-  ServerPlan,
-} from "@/lib/plan/server/types";
+import type { PlanSnapshot, ServerPlan } from "@/lib/plan/server/types";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
+import type { ActionResult } from "@/lib/server/actions";
 import { makeTermId } from "@/lib/terms";
 
 // Storage + server actions are the only side-effecting deps; mock them so the
