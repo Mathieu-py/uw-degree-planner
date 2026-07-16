@@ -25,6 +25,7 @@ export function TermPickerLocal({
   justAdded: boolean;
 }) {
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
+  const [saving, setSaving] = useState(false);
 
   const { options, alreadyIn, blocked } = useTermOptions(
     course,
@@ -33,14 +34,21 @@ export function TermPickerLocal({
   );
 
   async function addTo(slot: PlanSlot, label: string) {
-    if (!plan) return;
-    // The core re-runs the placed/block gates the option buttons enforce, so
-    // the writer can't duplicate or bypass them.
+    if (saving || !plan) return;
+    // Saving flips before the await so a double-click can't slip past the guard;
+    // the core also re-runs the placed/block gates the buttons enforce (no bypass).
+    setSaving(true);
     const applied = await applyAddToPlan(plan, slot, course);
-    if (applied.status !== "added") return;
+    if (applied.status !== "added") {
+      setSaving(false);
+      return;
+    }
     // Only reflect the add and report success if the write stuck (localStorage
     // can be full/unavailable). savePlan re-stamps updatedAt itself.
-    if (!savePlan(applied.plan)) return;
+    if (!savePlan(applied.plan)) {
+      setSaving(false);
+      return;
+    }
     setPlan(applied.plan);
     onAdded(label);
   }
@@ -73,6 +81,7 @@ export function TermPickerLocal({
       options={options}
       alreadyIn={alreadyIn}
       justAdded={justAdded}
+      busy={saving}
       onPick={addTo}
     />
   );
