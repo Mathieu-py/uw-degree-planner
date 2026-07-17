@@ -58,7 +58,7 @@ export function TermPickerAuthed({
   justAdded: boolean;
 }) {
   const code = course.code.toLowerCase();
-  const { plans, loading, error: listError, refetch } = usePlanList(true);
+  const { plans, loading, loadError: listError, refetch } = usePlanList(true);
 
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [serverPlan, setServerPlan] = useState<ServerPlan | null>(null);

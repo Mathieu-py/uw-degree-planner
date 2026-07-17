@@ -1,8 +1,10 @@
 "use client";
 
 import { Fragment, useCallback, useMemo, useState } from "react";
-import { DoubleDegreeSuggestion } from "@/components/planner/modals/DoubleDegreeSuggestion";
-import { ProgramStreamFields } from "@/components/planner/modals/ProgramStreamFields";
+import {
+  ProgramFields,
+  ProgramNotices,
+} from "@/components/planner/modals/ProgramFields";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Dropzone } from "@/components/ui/Dropzone";
@@ -11,7 +13,6 @@ import { Icon } from "@/components/ui/Icon";
 import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
 import { countNoun, pluralize } from "@/lib/format";
-import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { detectStream } from "@/lib/plan/transcriptApply";
 import { STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { useStreamSuggestion } from "@/lib/plan/useStreamSuggestion";
@@ -103,27 +104,6 @@ export function WelcomeFlow({
     (id) => programOptions.find((p) => p.id === id)?.name,
     "your program",
   );
-  // A lone Joint Honours plan is only half a degree — prompt for a partner.
-  const jointHonoursPartner = jointHonoursWarning(programIds);
-  const partnerBanner = jointHonoursPartner ? (
-    <p className="flex items-start gap-1.5 rounded-[8px] border border-partial bg-partial-soft px-3 py-2 text-xs text-ink-2">
-      <Icon
-        name="warning"
-        size="xs"
-        aria-hidden="true"
-        className="mt-0.5 shrink-0 text-partial"
-      />
-      <span>{jointHonoursPartner}</span>
-    </p>
-  ) : null;
-  // A hand-picked pair that packages into a single double degree — offer the swap
-  // handleProgramChange collapses to the single id and re-suggests stream.
-  const doubleDegreeSuggestion = (
-    <DoubleDegreeSuggestion
-      programIds={programIds}
-      onAccept={(id) => handleProgramChange([id])}
-    />
-  );
   return (
     <div className="px-7 py-8">
       <div className="mx-auto w-full max-w-[880px] flex flex-col gap-5">
@@ -199,7 +179,7 @@ export function WelcomeFlow({
 
               <Field label="Program">
                 {() => (
-                  <ProgramStreamFields
+                  <ProgramFields
                     programOptions={programOptions}
                     selected={programIds}
                     onChange={handleProgramChange}
@@ -259,7 +239,7 @@ export function WelcomeFlow({
                 ) : null}
                 <Field label="Program">
                   {() => (
-                    <ProgramStreamFields
+                    <ProgramFields
                       programOptions={programOptions}
                       selected={programIds}
                       onChange={setProgramIds}
@@ -285,8 +265,10 @@ export function WelcomeFlow({
                   <b>{programName}</b> plan starting{" "}
                   <b>{fallTerms.find((t) => t.id === startTermId)?.label}</b>.
                 </p>
-                {partnerBanner}
-                {doubleDegreeSuggestion}
+                <ProgramNotices
+                  programIds={programIds}
+                  onAcceptDoubleDegree={(id) => handleProgramChange([id])}
+                />
                 {variants.groups.length > 0 ? (
                   <div className="flex flex-col gap-3 border-t border-line pt-4">
                     <h3 className="u-h3 text-[15px]">Course choices</h3>

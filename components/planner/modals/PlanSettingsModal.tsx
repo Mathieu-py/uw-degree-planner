@@ -11,7 +11,7 @@ import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { useStreamSuggestion } from "@/lib/plan/useStreamSuggestion";
 import type { ProgramOption } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
-import { ProgramStreamFields } from "./ProgramStreamFields";
+import { ProgramFields } from "./ProgramFields";
 
 interface SpecOption {
   slug: string;
@@ -124,7 +124,7 @@ export function PlanSettingsModal({
           <span className="text-[12.5px] font-semibold text-ink-2">
             Programs
           </span>
-          <ProgramStreamFields
+          <ProgramFields
             programOptions={programOptions}
             selected={programIds}
             onChange={patchPrograms}

@@ -37,7 +37,12 @@ export function useTranscriptUpload(
         onParsed?.(result);
       } catch (err) {
         logError("Transcript PDF extraction failed:", err);
-        setError("Couldn't read that PDF. Try a Quest transcript export.");
+        // extractTextFromPdf throws actionable messages — surface them verbatim.
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Couldn't read that PDF. Try a Quest transcript export.",
+        );
       } finally {
         setBusy(false);
       }

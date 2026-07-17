@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Icon } from "@/components/ui/Icon";
@@ -49,7 +49,6 @@ export function TranscriptImportModal({
     busy: isExtracting,
     error: extractError,
     onFile,
-    reset,
   } = useTranscriptUpload();
   const [included, setIncluded] = useState<Set<string>>(new Set());
 
@@ -57,10 +56,6 @@ export function TranscriptImportModal({
   function handleFile(file: File | undefined) {
     setIncluded(new Set());
     onFile(file);
-  }
-  function handleReplace() {
-    setIncluded(new Set());
-    reset();
   }
 
   const parseResult = uploaded ?? EMPTY_PARSE;
@@ -143,7 +138,7 @@ export function TranscriptImportModal({
           <FileRow
             fileName={fileName}
             busy={isExtracting}
-            onReplace={handleReplace}
+            onFile={handleFile}
           />
         )}
 
@@ -216,12 +211,16 @@ export function TranscriptImportModal({
 function FileRow({
   fileName,
   busy,
-  onReplace,
+  onFile,
+  accept = "application/pdf,.pdf",
 }: {
   fileName: string;
   busy: boolean;
-  onReplace: () => void;
+  onFile: (file: File | undefined) => void;
+  accept?: string;
 }) {
+  // Replace re-triggers this input: one click, and cancelling keeps the current file.
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex items-center gap-2.5 px-3 py-2.5 border border-line rounded-[10px] bg-bg-2">
       <span className="text-accent shrink-0">
@@ -244,10 +243,22 @@ function FileRow({
           )}
         </span>
       </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="sr-only"
+        disabled={busy}
+        onChange={(e) => onFile(e.target.files?.[0])}
+        // Clear so re-selecting the same PDF still fires onChange.
+        onClick={(e) => {
+          (e.target as HTMLInputElement).value = "";
+        }}
+      />
       <Button
         variant="outline"
         size="sm"
-        onClick={onReplace}
+        onClick={() => inputRef.current?.click()}
         disabled={busy}
         className="shrink-0"
       >
