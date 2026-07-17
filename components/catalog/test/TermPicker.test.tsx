@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -142,7 +143,8 @@ describe("TermPicker", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Winter 2025/ }));
 
-    expect(savePlanMock).toHaveBeenCalledOnce();
+    // The write lands after the async gate sequence in applyAddToPlan.
+    await waitFor(() => expect(savePlanMock).toHaveBeenCalledOnce());
     const saved = savePlanMock.mock.calls[0][0];
     const placed = slotsWithCode(saved, "cs246");
     expect(placed.map((s) => s.id)).toEqual(["b"]);
@@ -171,7 +173,7 @@ describe("TermPicker", () => {
     );
   });
 
-  it("does not write a duplicate when the course is already placed", () => {
+  it("does not write a duplicate when the course is already placed", async () => {
     loadPlanMock.mockReturnValue(
       makePlan([
         slot({
@@ -186,8 +188,11 @@ describe("TermPicker", () => {
     render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
 
     // The buttons are disabled, but fire the handler directly to prove the
-    // writer-level guard also refuses (defense in depth).
-    fireEvent.click(screen.getByRole("button", { name: /Winter 2025/ }));
+    // writer-level guard also refuses (defense in depth). The act wrap flushes
+    // the async gate sequence so the negative assertion isn't vacuous.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Winter 2025/ }));
+    });
     expect(savePlanMock).not.toHaveBeenCalled();
   });
 

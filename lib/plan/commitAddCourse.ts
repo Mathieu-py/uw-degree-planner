@@ -15,9 +15,8 @@ import { type TermId, termLabel } from "@/lib/terms";
  * where plan + target term are already chosen so there's no term step.
  *
  * The no-preloaded-plan variant of the term pickers: it load→modify→saves rather
- * than editing a plan already in state. Same gates ({@link isProgramBlocked}
- * + {@link placedCourseLabel}) and sinks (`savePlanState` / `savePlan` over
- * {@link addCourseToSlot}) as the pickers, so no add path drifts.
+ * than editing a plan already in state. The pickers consume the same
+ * {@link applyAddToPlan} core, so no add path drifts.
  */
 export type CommitAddResult =
   | { status: "added"; termLabel: string }
@@ -67,6 +66,50 @@ function slotForTerm(slots: PlanSlot[], term: TermId): PlanSlot | undefined {
   );
 }
 
+/** Plan shape shared by LocalPlan and ServerPlan — all the core needs. */
+type AddablePlan = {
+  slots: PlanSlot[];
+  programIds?: string[];
+  specializationIds?: Record<string, string>;
+};
+
+export type ApplyAddResult<T> =
+  | { status: "added"; plan: T }
+  | { status: "already-placed"; label: string }
+  | { status: "blocked" } // closed to the plan's program/faculty
+  | { status: "unresolved" }; // no slot for the term, or block verdict unknown
+
+/**
+ * The shared gate/mutate core behind every add path: already-placed outranks
+ * the block, then {@link blockGate}, then the mutation. Pure w.r.t. persistence
+ * — callers own their load/save pair.
+ */
+export async function applyAddToPlan<T extends AddablePlan>(
+  plan: T,
+  target: TermId | PlanSlot,
+  course: Course,
+): Promise<ApplyAddResult<T>> {
+  const placed = placedCourseLabel(plan.slots, course);
+  if (placed) return { status: "already-placed", label: placed };
+  const gate = await blockGate(course, plan);
+  if (gate === "blocked") return { status: "blocked" };
+  if (gate === "unknown") return { status: "unresolved" };
+  const slot =
+    typeof target === "number" ? slotForTerm(plan.slots, target) : target;
+  if (!slot) return { status: "unresolved" };
+
+  const updated = addCourseToSlot(plan, slot.id, {
+    code: course.code.toLowerCase(),
+  });
+  if (updated === plan) {
+    return {
+      status: "already-placed",
+      label: slot.termId !== null ? termLabel(slot.termId) : "your plan",
+    };
+  }
+  return { status: "added", plan: updated };
+}
+
 export async function commitAddCourse({
   isAuthed,
   planId,
@@ -78,8 +121,6 @@ export async function commitAddCourse({
   term: TermId;
   course: Course;
 }): Promise<CommitAddResult> {
-  const code = course.code.toLowerCase();
-
   if (isAuthed) {
     // Signed-in plans always carry their id in the picker link; without one we
     // can't resolve a server plan — fall back to the full picker.
@@ -87,25 +128,11 @@ export async function commitAddCourse({
     const res = await loadServerPlan(planId);
     if (!res.ok) return { status: "error", error: res.error };
     if (!res.data) return { status: "error", error: "not_found" };
-    const plan = res.data;
 
-    // Already-placed outranks the block (matches the term pickers). The block
-    // gate is the one the slot picker enforces — no program-blocked course
-    // slips through the one-click path.
-    const placed = placedCourseLabel(plan.slots, course);
-    if (placed) return { status: "already-placed", label: placed };
-    const gate = await blockGate(course, plan);
-    if (gate === "blocked") return { status: "blocked" };
-    if (gate === "unknown") return { status: "unresolved" };
-    const slot = slotForTerm(plan.slots, term);
-    if (!slot) return { status: "unresolved" };
-
-    const updated = addCourseToSlot(plan, slot.id, { code });
-    if (updated === plan) {
-      return { status: "already-placed", label: termLabel(term) };
-    }
+    const applied = await applyAddToPlan(res.data, term, course);
+    if (applied.status !== "added") return applied;
     // Full atomic REPLACE — send the whole plan so other courses aren't clobbered.
-    const save = await savePlanState(planId, toSnapshot(updated));
+    const save = await savePlanState(planId, toSnapshot(applied.plan));
     if (!save.ok) return { status: "error", error: save.error };
     return { status: "added", termLabel: termLabel(term) };
   }
@@ -114,19 +141,9 @@ export async function commitAddCourse({
   const plan = loadPlan();
   if (!plan) return { status: "unresolved" };
 
-  const placed = placedCourseLabel(plan.slots, course);
-  if (placed) return { status: "already-placed", label: placed };
-  const gate = await blockGate(course, plan);
-  if (gate === "blocked") return { status: "blocked" };
-  if (gate === "unknown") return { status: "unresolved" };
-  const slot = slotForTerm(plan.slots, term);
-  if (!slot) return { status: "unresolved" };
-
-  const updated = addCourseToSlot(plan, slot.id, { code });
-  if (updated === plan) {
-    return { status: "already-placed", label: termLabel(term) };
-  }
+  const applied = await applyAddToPlan(plan, term, course);
+  if (applied.status !== "added") return applied;
   // savePlan re-stamps updatedAt itself.
-  if (!savePlan(updated)) return { status: "error", error: "save_failed" };
+  if (!savePlan(applied.plan)) return { status: "error", error: "save_failed" };
   return { status: "added", termLabel: termLabel(term) };
 }

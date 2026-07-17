@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -345,8 +346,11 @@ describe("TermPicker — signed in", () => {
     expect(await screen.findByText(/Already placed in Fall 2025/)).toBeTruthy();
     const winter = screen.getByRole("button", { name: /Winter 2025/ });
     expect(winter).toHaveProperty("disabled", true);
-    // Fire anyway to prove the writer-level guard refuses.
-    fireEvent.click(winter);
+    // Fire anyway to prove the writer-level guard refuses. The act wrap flushes
+    // the async gate sequence so the negative assertion isn't vacuous.
+    await act(async () => {
+      fireEvent.click(winter);
+    });
     expect(savePlanStateMock).not.toHaveBeenCalled();
   });
 
