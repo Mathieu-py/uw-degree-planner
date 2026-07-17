@@ -10,7 +10,7 @@ description: Build/launch/drive recipe for verifying changes in the running app 
 ```powershell
 # New runtime exports in type-heavy modules go stale under Turbopack HMR —
 # clear the cache before judging a change (see project memory).
-rm -rf .next
+Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
 pnpm dev        # ready in ~2s on http://localhost:3000
 ```
 
@@ -20,7 +20,7 @@ Browsers are already installed (`~/AppData/Local/ms-playwright`). pnpm hides
 transitive deps, so require the direct devDep:
 
 ```js
-const { chromium } = require("c:/dev/university-course-selection/node_modules/@playwright/test");
+const { chromium } = require("@playwright/test");
 ```
 
 Signed-out demo plan (no Supabase needed), cribbed from `e2e/plan.spec.ts`:

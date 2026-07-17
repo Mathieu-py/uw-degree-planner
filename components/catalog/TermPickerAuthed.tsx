@@ -163,22 +163,24 @@ export function TermPickerAuthed({
     // Saving flips before the await so a double-click can't slip past the guard.
     setSaving(true);
     setSaveError(null);
-    const applied = await applyAddToPlan(serverPlan, slot, course);
-    if (applied.status !== "added") {
+    try {
+      const applied = await applyAddToPlan(serverPlan, slot, course);
       // Placed/blocked adds are prevented upstream; nothing new to report.
+      if (applied.status !== "added") return;
+      // savePlanState is a full atomic REPLACE, so send the entire updated plan to
+      // avoid clobbering its other courses.
+      const res = await savePlanState(selectedPlanId, toSnapshot(applied.plan));
+      if (!res.ok) {
+        setSaveError(res.error);
+        return;
+      }
+      setServerPlan(applied.plan);
+      onAdded(label);
+    } finally {
+      // Clears busy on every exit — including a rejected savePlanState (network
+      // failure), which would otherwise leave the picker stuck disabled.
       setSaving(false);
-      return;
     }
-    // savePlanState is a full atomic REPLACE, so send the entire updated plan to
-    // avoid clobbering its other courses.
-    const res = await savePlanState(selectedPlanId, toSnapshot(applied.plan));
-    setSaving(false);
-    if (!res.ok) {
-      setSaveError(res.error);
-      return;
-    }
-    setServerPlan(applied.plan);
-    onAdded(label);
   }
 
   // ---- Plan-selection step ----
