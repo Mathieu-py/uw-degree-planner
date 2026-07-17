@@ -104,11 +104,7 @@ export function __resetPlanListStoreForTests(): void {
   currentIsAuthed = null;
 }
 
-export function usePlanList({
-  isAuthed,
-}: {
-  isAuthed: boolean;
-}): UsePlanListResult {
+export function usePlanList(isAuthed: boolean): UsePlanListResult {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {

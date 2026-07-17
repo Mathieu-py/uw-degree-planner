@@ -35,7 +35,7 @@ export function DashboardView({
   programNames: Record<string, string>;
 }) {
   const { isAuthed, ready } = useAuthState();
-  const { plans, remove, duplicate, error } = usePlanList({ isAuthed });
+  const { plans, remove, duplicate, error } = usePlanList(isAuthed);
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [confirmId, setConfirmId] = useState<string | null>(null);

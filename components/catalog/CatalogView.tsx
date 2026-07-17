@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FilterSidebar } from "@/components/planner/picker/FilterSidebar";
+import { TermPicker } from "@/components/planner/picker/TermPicker";
 import {
   PICKER_PAGE_SIZE,
   useFilteredCourses,
@@ -13,7 +14,6 @@ import type { SortKey } from "@/lib/courses/courseSort";
 import type { Course } from "@/lib/courses/types";
 import { pluralize } from "@/lib/format";
 import { CourseTable } from "./CourseTable";
-import { TermPicker } from "./TermPicker";
 
 // No placed/completed context on the catalog: it's a plan-independent browse
 // surface, so eligibility isn't computed (no Status column — that's the picker).

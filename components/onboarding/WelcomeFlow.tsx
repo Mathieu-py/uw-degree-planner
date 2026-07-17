@@ -1,38 +1,26 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useMemo, useState } from "react";
 import { DoubleDegreeSuggestion } from "@/components/planner/modals/DoubleDegreeSuggestion";
-import { ProgramMultiSelect } from "@/components/planner/modals/ProgramMultiSelect";
+import { ProgramStreamFields } from "@/components/planner/modals/ProgramStreamFields";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { Dropzone } from "@/components/ui/Dropzone";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
-import { useAuthState } from "@/lib/auth/store";
-import { NEW_PLAN_NAME } from "@/lib/constants";
 import { countNoun, pluralize } from "@/lib/format";
-import { logError } from "@/lib/log";
-import { defaultStreamFor } from "@/lib/plan/defaultStream";
-import { completedCoursesFromPlan } from "@/lib/plan/derive";
-import { specsAfterDoubleDegreeSwap } from "@/lib/plan/doubleDegree";
 import { jointHonoursWarning } from "@/lib/plan/jointHonours";
-import { buildEmptySlots } from "@/lib/plan/sequence";
-import { emptyPlan } from "@/lib/plan/storage";
-import { saveNewPlan, usePlanList } from "@/lib/plan/sync/usePlanList";
-import {
-  applyTranscriptToPlan,
-  detectStream,
-} from "@/lib/plan/transcriptApply";
-import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
+import { detectStream } from "@/lib/plan/transcriptApply";
+import { STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
+import { useStreamSuggestion } from "@/lib/plan/useStreamSuggestion";
 import { joinProgramNames, type ProgramOption } from "@/lib/programs";
-import { programIdsTermSpan } from "@/lib/programs/meta";
 import { KNOWN_TERMS, makeTermId, termLabel } from "@/lib/terms";
-import { parseTranscript } from "@/lib/transcript/parse";
-import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
+import { useTranscriptUpload } from "@/lib/transcript/useTranscriptUpload";
 import { useVariantPicker } from "./useVariantPicker";
+import { useWelcomeSubmit } from "./useWelcomeSubmit";
 import { VariantPicker } from "./VariantPicker";
 
 const STEPS = ["Set up", "Review"] as const;
@@ -42,10 +30,6 @@ export function WelcomeFlow({
 }: {
   programOptions: ProgramOption[];
 }) {
-  const router = useRouter();
-  const { isAuthed } = useAuthState();
-  const { create } = usePlanList({ isAuthed });
-
   const fallTerms = useMemo(
     () => KNOWN_TERMS.filter((t) => t.season === "Fall"),
     [],
@@ -53,131 +37,66 @@ export function WelcomeFlow({
 
   const [step, setStep] = useState(0);
   const [programIds, setProgramIds] = useState<string[]>([]);
-  const [stream, setStream] = useState<Stream>("regular");
-  // Once the user picks a stream by hand, stop auto-suggesting on program change.
-  const [streamTouched, setStreamTouched] = useState(false);
+  const { stream, setStream, setStreamManually, suggestForPrograms } =
+    useStreamSuggestion("regular");
   const [startTermId, setStartTermId] = useState<number>(() => {
     const currentFall = makeTermId(new Date().getFullYear(), "Fall");
     if (fallTerms.some((t) => t.id === currentFall)) return currentFall;
     return fallTerms[0]?.id ?? currentFall;
   });
-  const [parseResult, setParseResult] = useState<TranscriptParseResult | null>(
-    null,
-  );
-  const [parsing, setParsing] = useState(false);
-  const [parseError, setParseError] = useState<string | null>(null);
-  const [dragActive, setDragActive] = useState(false);
   // False when co-op but the stream is undetectable — shows a confirm hint.
   const [streamConfident, setStreamConfident] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [buildError, setBuildError] = useState<string | null>(null);
-  // Manual-onboarding variant picker. Transcript path skips it — placed
-  // courses already resolve every choice.
-  const variants = useVariantPicker({
-    programIds,
-    stream,
-    enabled: !parseResult,
-  });
 
-  async function onFile(file: File | undefined) {
-    if (!file) return;
-    setParsing(true);
-    setParseError(null);
-    try {
-      const text = await extractTextFromPdf(file);
-      const result = parseTranscript(text);
-      setParseResult(result);
-      // Always sync — a re-upload that detects nothing must clear stale ids.
+  // Sync the detected program + stream from a fresh transcript parse. A
+  // re-upload that detects nothing still clears stale ids; manual/explicit
+  // choices win elsewhere.
+  const handleParsed = useCallback(
+    (result: TranscriptParseResult) => {
       setProgramIds(result.detectedProgramIds);
-      const detectedStream = detectStream(result);
-      if (detectedStream) {
-        setStream(detectedStream);
+      const detected = detectStream(result);
+      if (detected) {
+        setStream(detected);
         setStreamConfident(true);
       } else if (result.detectedSystemOfStudy === "coop") {
         // Co-op but undetectable — default to the common Stream 8, ask to confirm.
         setStream("stream8");
         setStreamConfident(false);
       }
-    } catch (err) {
-      logError("PDF parsing failed in onFile:", err);
-      setParseError("Couldn't read that PDF. Try a Quest transcript export.");
-    } finally {
-      setParsing(false);
-    }
-  }
+    },
+    [setStream],
+  );
+  const {
+    parseResult,
+    busy: parsing,
+    error: parseError,
+    onFile,
+    reset: resetUpload,
+  } = useTranscriptUpload(handleParsed);
 
-  function onDragOver(e: React.DragEvent) {
-    e.preventDefault(); // required so the drop event fires
-    setDragActive(true);
-  }
-  function onDragLeave(e: React.DragEvent) {
-    e.preventDefault();
-    // Ignore leaves into descendant nodes (e.g. the hidden file input); only
-    // clear on a real exit of the dropzone.
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-      setDragActive(false);
-    }
-  }
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDragActive(false);
-    onFile(e.dataTransfer.files?.[0]);
-  }
+  // Manual-onboarding variant picker. Transcript path skips it — placed courses
+  // already resolve every choice.
+  const variants = useVariantPicker({
+    programIds,
+    stream,
+    enabled: !parseResult,
+  });
 
   function handleProgramChange(next: string[]) {
     setProgramIds(next);
-    // Manual pick pre-fills the co-op stream from the program's default.
-    // A transcript-detected stream (parseResult) and an explicit choice both win.
-    if (!parseResult && !streamTouched) {
-      const suggested = defaultStreamFor(next, startTermId);
-      if (suggested) setStream(suggested);
-    }
+    // Manual pick pre-fills the co-op stream from the program's default; a
+    // transcript-detected stream (locked) and an explicit choice both win.
+    suggestForPrograms(next, startTermId, parseResult !== null);
   }
 
-  function handleStreamChange(next: Stream) {
-    setStream(next);
-    setStreamTouched(true);
-  }
-
-  const buildPlan = useCallback((): LocalPlan => {
-    const mintId = () => crypto.randomUUID();
-    // Plan length follows the longest selected program (6 for Three-Year
-    // General, else 8; empty ⇒ 8).
-    const numAcademicTerms = programIdsTermSpan(programIds);
-    if (parseResult) {
-      const { plan } = applyTranscriptToPlan(parseResult, {
-        stream,
-        includedUnrecognized: new Set<string>(),
-        mintId,
-        numAcademicTerms,
-      });
-      // Honour programs the user corrected in review; keep only detected
-      // specializations whose program is still on the plan. A double-degree swap
-      // re-keys a still-valid spec onto the packaged plan first, so it
-      // isn't lost — parity with PlanSettingsModal.
-      const detectedSpecs = specsAfterDoubleDegreeSwap(
-        parseResult.detectedProgramIds,
-        plan.specializationIds,
-        programIds,
-      );
-      return {
-        ...plan,
-        programIds,
-        specializationIds: Object.fromEntries(
-          Object.entries(detectedSpecs).filter(([pid]) =>
-            programIds.includes(pid),
-          ),
-        ),
-      };
-    }
-    return {
-      ...emptyPlan(),
+  const { draftPlan, placedCount, busy, buildError, submit } = useWelcomeSubmit(
+    {
+      parseResult,
       programIds,
       stream,
       startTermId,
-      slots: buildEmptySlots(startTermId, stream, mintId, numAcademicTerms),
-    };
-  }, [parseResult, programIds, stream, startTermId]);
+      applyVariants: variants.applyTo,
+    },
+  );
 
   const programName = joinProgramNames(
     programIds,
@@ -205,38 +124,6 @@ export function WelcomeFlow({
       onAccept={(id) => handleProgramChange([id])}
     />
   );
-  // Build once, reused for both the review preview and the save.
-  const draftPlan = useMemo(() => buildPlan(), [buildPlan]);
-  const placedCount = parseResult
-    ? completedCoursesFromPlan(draftPlan).length
-    : 0;
-
-  async function build() {
-    if (busy) return;
-    setBusy(true);
-    setBuildError(null);
-    try {
-      // Slot ids are already fresh here — buildPlan mints them — so no reseed.
-      const finalPlan = await variants.applyTo(draftPlan);
-      const route = await saveNewPlan({
-        isAuthed,
-        plan: finalPlan,
-        name: NEW_PLAN_NAME,
-        create,
-      });
-      if (route) {
-        router.push(route);
-      } else {
-        setBuildError("Couldn't save your plan. Please try again.");
-        setBusy(false);
-      }
-    } catch (err) {
-      logError("Failed to build/save plan:", err);
-      setBuildError("Couldn't build your plan. Please try again.");
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="px-7 py-8">
       <div className="mx-auto w-full max-w-[880px] flex flex-col gap-5">
@@ -266,30 +153,12 @@ export function WelcomeFlow({
                 </p>
               </div>
 
-              <label
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={onDrop}
-                className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed bg-bg-2 px-6 py-9 text-center cursor-pointer transition-colors hover:border-accent-bg hover:bg-accent-soft ${
-                  dragActive
-                    ? "border-accent-bg bg-accent-soft"
-                    : "border-line-2"
-                }`}
-              >
-                <Icon name="upload" size="lg" className="text-ink-3" />
-                <span className="text-sm font-medium text-ink">
-                  {parsing ? "Reading…" : "Choose a PDF or drop it here"}
-                </span>
-                <small className="text-[12.5px] text-ink-3">
-                  Parsed in your browser — never uploaded
-                </small>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  onChange={(e) => onFile(e.target.files?.[0])}
-                />
-              </label>
+              <Dropzone
+                onFile={onFile}
+                busy={parsing}
+                label="Choose a PDF or drop it here"
+                className="flex-1 px-6 py-9"
+              />
 
               {parseError ? <Alert>{parseError}</Alert> : null}
 
@@ -305,7 +174,7 @@ export function WelcomeFlow({
                   <button
                     type="button"
                     onClick={() => {
-                      setParseResult(null);
+                      resetUpload();
                       setStreamConfident(true);
                     }}
                     className="shrink-0 text-ink-2 underline hover:text-ink"
@@ -330,15 +199,14 @@ export function WelcomeFlow({
 
               <Field label="Program">
                 {() => (
-                  <ProgramMultiSelect
+                  <ProgramStreamFields
                     programOptions={programOptions}
                     selected={programIds}
                     onChange={handleProgramChange}
+                    onAcceptDoubleDegree={(id) => handleProgramChange([id])}
                   />
                 )}
               </Field>
-              {partnerBanner}
-              {doubleDegreeSuggestion}
               <Field label="Start term (1A)">
                 {(id) => (
                   <Picker
@@ -357,7 +225,7 @@ export function WelcomeFlow({
                   <SegmentedRadio
                     options={STREAM_OPTIONS}
                     value={stream}
-                    onChange={handleStreamChange}
+                    onChange={setStreamManually}
                     ariaLabel="Co-op stream"
                   />
                 )}
@@ -389,29 +257,26 @@ export function WelcomeFlow({
                     if that's wrong.
                   </p>
                 ) : null}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Program">
-                    {() => (
-                      <ProgramMultiSelect
-                        programOptions={programOptions}
-                        selected={programIds}
-                        onChange={setProgramIds}
-                      />
-                    )}
-                  </Field>
-                  <Field label="Co-op stream">
-                    {() => (
-                      <SegmentedRadio
-                        options={STREAM_OPTIONS}
-                        value={stream}
-                        onChange={handleStreamChange}
-                        ariaLabel="Co-op stream"
-                      />
-                    )}
-                  </Field>
-                </div>
-                {partnerBanner}
-                {doubleDegreeSuggestion}
+                <Field label="Program">
+                  {() => (
+                    <ProgramStreamFields
+                      programOptions={programOptions}
+                      selected={programIds}
+                      onChange={setProgramIds}
+                      onAcceptDoubleDegree={(id) => handleProgramChange([id])}
+                    />
+                  )}
+                </Field>
+                <Field label="Co-op stream">
+                  {() => (
+                    <SegmentedRadio
+                      options={STREAM_OPTIONS}
+                      value={stream}
+                      onChange={setStreamManually}
+                      ariaLabel="Co-op stream"
+                    />
+                  )}
+                </Field>
               </>
             ) : (
               <>
@@ -462,7 +327,7 @@ export function WelcomeFlow({
             <Button
               variant="brand"
               size="md"
-              onClick={build}
+              onClick={submit}
               disabled={busy || programIds.length === 0}
             >
               {busy ? "Building…" : "Build my plan"}

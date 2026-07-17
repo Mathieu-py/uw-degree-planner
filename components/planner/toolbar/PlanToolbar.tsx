@@ -12,6 +12,7 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import { FIELD_CLASSES } from "@/components/ui/Input";
 import { useDropdown } from "@/components/ui/useDropdown";
+import { describeActionError } from "@/lib/format";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
@@ -97,9 +98,7 @@ function PlanToolbarAuthed({
   extraItems?: MenuItem[];
 }) {
   const router = useRouter();
-  const { plans, rename, remove, duplicate, share } = usePlanList({
-    isAuthed: true,
-  });
+  const { plans, rename, remove, duplicate, share, error } = usePlanList(true);
 
   const [editing, setEditing] = useState(false);
   const [editingName, setEditingName] = useState("");
@@ -494,6 +493,14 @@ function PlanToolbarAuthed({
           {trailing}
         </div>
       </div>
+      {/* A failed rename/delete/duplicate/share reverts optimistically — this
+          banner is the only signal on the planner route. Cleared on next success
+          by the shared usePlanList store, so no dismiss wiring. */}
+      {error ? (
+        <div className="w-full rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
+          {describeActionError(error)}
+        </div>
+      ) : null}
     </>
   );
 }

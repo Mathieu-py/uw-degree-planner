@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { TermPicker } from "@/components/catalog/TermPicker";
+import { TermPicker } from "@/components/planner/picker/TermPicker";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import type { Course } from "@/lib/courses/types";

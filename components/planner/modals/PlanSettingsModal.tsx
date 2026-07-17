@@ -6,14 +6,12 @@ import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
 import { useModalExit } from "@/lib/hooks/useModalExit";
-import { defaultStreamFor } from "@/lib/plan/defaultStream";
 import { swapToDoubleDegree } from "@/lib/plan/doubleDegree";
-import { jointHonoursWarning } from "@/lib/plan/jointHonours";
 import { type LocalPlan, STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
+import { useStreamSuggestion } from "@/lib/plan/useStreamSuggestion";
 import type { ProgramOption } from "@/lib/programs";
 import { termInfo } from "@/lib/terms";
-import { DoubleDegreeSuggestion } from "./DoubleDegreeSuggestion";
-import { ProgramMultiSelect } from "./ProgramMultiSelect";
+import { ProgramStreamFields } from "./ProgramStreamFields";
 
 interface SpecOption {
   slug: string;
@@ -51,9 +49,9 @@ export function PlanSettingsModal({
   const [specializationIds, setSpecializationIds] = useState<
     Record<string, string>
   >(plan.specializationIds);
-  const [stream, setStream] = useState<Stream>(plan.stream);
-  // Once the user picks a stream by hand, stop auto-suggesting on program change.
-  const [streamTouched, setStreamTouched] = useState(false);
+  const { stream, setStreamManually, suggestForPrograms } = useStreamSuggestion(
+    plan.stream,
+  );
 
   const programName = useMemo(() => {
     const map: Record<string, string> = {};
@@ -79,12 +77,7 @@ export function PlanSettingsModal({
         Object.entries(prev).filter(([pid]) => next.includes(pid)),
       ),
     );
-    // Suggest the new primary program's default stream, unless the user
-    // has already chosen one by hand. Null = no program to key on → leave it.
-    if (!streamTouched) {
-      const suggested = defaultStreamFor(next, plan.startTermId);
-      if (suggested) setStream(suggested);
-    }
+    suggestForPrograms(next, plan.startTermId);
   }
 
   function setSpec(programId: string, slug: string) {
@@ -107,13 +100,8 @@ export function PlanSettingsModal({
     );
     setProgramIds(next.programIds);
     setSpecializationIds(next.specializationIds);
-    if (!streamTouched) {
-      const suggested = defaultStreamFor(next.programIds, plan.startTermId);
-      if (suggested) setStream(suggested);
-    }
+    suggestForPrograms(next.programIds, plan.startTermId);
   }
-
-  const jointHonoursPartner = jointHonoursWarning(programIds);
 
   const programsDirty = !sameIds(programIds, plan.programIds);
   const specDirty = !sameSpecMap(specializationIds, plan.specializationIds);
@@ -136,25 +124,23 @@ export function PlanSettingsModal({
           <span className="text-[12.5px] font-semibold text-ink-2">
             Programs
           </span>
-          <ProgramMultiSelect
+          <ProgramStreamFields
             programOptions={programOptions}
             selected={programIds}
             onChange={patchPrograms}
-          />
-          {noPrograms ? (
-            <span className="text-partial mt-0.5">
-              Pick at least one program — your plan needs one to audit against.
-            </span>
-          ) : jointHonoursPartner ? (
-            <span className="text-partial mt-0.5">{jointHonoursPartner}</span>
-          ) : programIds.length > 1 ? (
-            <span className="text-ink-3 mt-0.5">
-              Double degree — your audit shows one section per program.
-            </span>
-          ) : null}
-          <DoubleDegreeSuggestion
-            programIds={programIds}
-            onAccept={acceptDoubleDegree}
+            onAcceptDoubleDegree={acceptDoubleDegree}
+            note={
+              noPrograms ? (
+                <span className="text-partial mt-0.5">
+                  Pick at least one program — your plan needs one to audit
+                  against.
+                </span>
+              ) : programIds.length > 1 ? (
+                <span className="text-ink-3 mt-0.5">
+                  Double degree — your audit shows one section per program.
+                </span>
+              ) : null
+            }
           />
         </div>
 
@@ -200,10 +186,7 @@ export function PlanSettingsModal({
           <SegmentedRadio
             options={STREAM_OPTIONS}
             value={stream}
-            onChange={(v) => {
-              setStream(v);
-              setStreamTouched(true);
-            }}
+            onChange={setStreamManually}
             ariaLabel="Co-op stream"
           />
           {streamDirty ? (

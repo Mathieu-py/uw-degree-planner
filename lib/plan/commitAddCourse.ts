@@ -110,6 +110,56 @@ export async function applyAddToPlan<T extends AddablePlan>(
   return { status: "added", plan: updated };
 }
 
+/** `ok: false` bails the add; `error` (server path) surfaces via `onError`. */
+type AddPersistResult = { ok: boolean; error?: string };
+
+/**
+ * The picker-side save wrapper shared by TermPickerAuthed/Local: flip busy, apply
+ * the add, bail on anything but a real "added", persist via the caller's writer,
+ * then reflect the new plan and report success. The `saving` and plan-presence
+ * guards stay with the caller (they read its state); this owns the busy flag
+ * around the write so a rejected write can't leave the picker stuck disabled.
+ */
+export async function runAddToPlanState<T extends AddablePlan>({
+  plan,
+  slot,
+  course,
+  label,
+  setSaving,
+  persist,
+  onSaved,
+  onAdded,
+  onError,
+}: {
+  plan: T;
+  slot: PlanSlot;
+  course: Course;
+  label: string;
+  setSaving: (saving: boolean) => void;
+  persist: (plan: T) => Promise<AddPersistResult> | AddPersistResult;
+  onSaved: (plan: T) => void;
+  onAdded: (label: string) => void;
+  onError?: (error: string) => void;
+}): Promise<void> {
+  // Saving flips before the await so a double-click can't slip past the caller's
+  // guard; the core re-runs the placed/block gates too (no bypass).
+  setSaving(true);
+  try {
+    const applied = await applyAddToPlan(plan, slot, course);
+    // Placed/blocked adds are prevented upstream; nothing new to report.
+    if (applied.status !== "added") return;
+    const res = await persist(applied.plan);
+    if (!res.ok) {
+      if (res.error) onError?.(res.error);
+      return;
+    }
+    onSaved(applied.plan);
+    onAdded(label);
+  } finally {
+    setSaving(false);
+  }
+}
+
 export async function commitAddCourse({
   isAuthed,
   planId,

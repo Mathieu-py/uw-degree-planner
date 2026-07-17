@@ -15,7 +15,7 @@ import { Icon } from "@/components/ui/Icon";
 import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
 import { describeActionError } from "@/lib/format";
-import { applyAddToPlan } from "@/lib/plan/commitAddCourse";
+import { runAddToPlanState } from "@/lib/plan/commitAddCourse";
 import {
   loadServerPlan,
   plansContainingCourse,
@@ -58,12 +58,7 @@ export function TermPickerAuthed({
   justAdded: boolean;
 }) {
   const code = course.code.toLowerCase();
-  const {
-    plans,
-    loading,
-    error: listError,
-    refetch,
-  } = usePlanList({ isAuthed: true });
+  const { plans, loading, error: listError, refetch } = usePlanList(true);
 
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [serverPlan, setServerPlan] = useState<ServerPlan | null>(null);
@@ -160,27 +155,22 @@ export function TermPickerAuthed({
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !serverPlan || !selectedPlanId) return;
-    // Saving flips before the await so a double-click can't slip past the guard.
-    setSaving(true);
     setSaveError(null);
-    try {
-      const applied = await applyAddToPlan(serverPlan, slot, course);
-      // Placed/blocked adds are prevented upstream; nothing new to report.
-      if (applied.status !== "added") return;
-      // savePlanState is a full atomic REPLACE, so send the entire updated plan to
-      // avoid clobbering its other courses.
-      const res = await savePlanState(selectedPlanId, toSnapshot(applied.plan));
-      if (!res.ok) {
-        setSaveError(res.error);
-        return;
-      }
-      setServerPlan(applied.plan);
-      onAdded(label);
-    } finally {
-      // Clears busy on every exit — including a rejected savePlanState (network
-      // failure), which would otherwise leave the picker stuck disabled.
-      setSaving(false);
-    }
+    await runAddToPlanState({
+      plan: serverPlan,
+      slot,
+      course,
+      label,
+      setSaving,
+      // Full atomic REPLACE — send the whole plan so other courses aren't clobbered.
+      persist: async (p) => {
+        const res = await savePlanState(selectedPlanId, toSnapshot(p));
+        return res.ok ? { ok: true } : { ok: false, error: res.error };
+      },
+      onSaved: setServerPlan,
+      onAdded,
+      onError: setSaveError,
+    });
   }
 
   // ---- Plan-selection step ----

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import type { Course } from "@/lib/courses/types";
-import { applyAddToPlan } from "@/lib/plan/commitAddCourse";
+import { runAddToPlanState } from "@/lib/plan/commitAddCourse";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import { ProgramBlockedBody } from "./CourseTermModalShell";
@@ -35,22 +35,18 @@ export function TermPickerLocal({
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !plan) return;
-    // Saving flips before the await so a double-click can't slip past the guard;
-    // the core also re-runs the placed/block gates the buttons enforce (no bypass).
-    setSaving(true);
-    const applied = await applyAddToPlan(plan, slot, course);
-    if (applied.status !== "added") {
-      setSaving(false);
-      return;
-    }
-    // Only reflect the add and report success if the write stuck (localStorage
-    // can be full/unavailable). savePlan re-stamps updatedAt itself.
-    if (!savePlan(applied.plan)) {
-      setSaving(false);
-      return;
-    }
-    setPlan(applied.plan);
-    onAdded(label);
+    // savePlan re-stamps updatedAt; a failed write (localStorage full/unavailable)
+    // reports ok:false so the add isn't reflected. No error banner for local.
+    await runAddToPlanState({
+      plan,
+      slot,
+      course,
+      label,
+      setSaving,
+      persist: (p) => ({ ok: savePlan(p) }),
+      onSaved: setPlan,
+      onAdded,
+    });
   }
 
   if (!plan) {

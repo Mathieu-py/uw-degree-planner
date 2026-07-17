@@ -59,14 +59,14 @@ describe("usePlanList — initial fetch", () => {
     const rows = [mkSummary({ id: "a" }), mkSummary({ id: "b" })];
     listPlansMock.mockResolvedValue({ ok: true, data: rows });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toEqual(rows));
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
   it("does not fetch when not authed and exposes plans as null", () => {
-    const { result } = renderHook(() => usePlanList({ isAuthed: false }));
+    const { result } = renderHook(() => usePlanList(false));
     expect(listPlansMock).not.toHaveBeenCalled();
     expect(result.current.plans).toBeNull();
     expect(result.current.loading).toBe(false);
@@ -74,7 +74,7 @@ describe("usePlanList — initial fetch", () => {
 
   it("surfaces a list error and clears plans to an empty array", async () => {
     listPlansMock.mockResolvedValue({ ok: false, error: "list failed" });
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.error).toBe("list failed"));
     expect(result.current.plans).toEqual([]);
   });
@@ -88,7 +88,7 @@ describe("usePlanList — create", () => {
     });
     createPlanMock.mockResolvedValue({ ok: true, data: { id: "new" } });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toHaveLength(1));
 
     let newId: string | null = null;
@@ -106,7 +106,7 @@ describe("usePlanList — create", () => {
     listPlansMock.mockResolvedValue({ ok: true, data: [] });
     createPlanMock.mockResolvedValue({ ok: false, error: "name_required" });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toEqual([]));
 
     let newId: string | null = "untouched";
@@ -128,7 +128,7 @@ describe("usePlanList — rename", () => {
     });
     renamePlanMock.mockResolvedValue({ ok: true, data: undefined });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans?.[0]?.name).toBe("Old"));
 
     await act(async () => {
@@ -149,7 +149,7 @@ describe("usePlanList — rename", () => {
       error: "not_found_or_unauthorized",
     });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans?.[0]?.name).toBe("Old"));
 
     let ok: boolean = true;
@@ -168,7 +168,7 @@ describe("usePlanList — rename", () => {
       data: [mkSummary({ id: "a", name: "Old" })],
     });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans?.[0]?.name).toBe("Old"));
 
     let ok: boolean = true;
@@ -190,7 +190,7 @@ describe("usePlanList — remove", () => {
     });
     deletePlanMock.mockResolvedValue({ ok: true, data: undefined });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toHaveLength(2));
 
     await act(async () => {
@@ -212,7 +212,7 @@ describe("usePlanList — remove", () => {
       error: "not_found_or_unauthorized",
     });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toHaveLength(3));
 
     let ok: boolean = true;
@@ -243,7 +243,7 @@ describe("usePlanList — duplicate", () => {
     });
     duplicatePlanMock.mockResolvedValue({ ok: true, data: { id: "copy-1" } });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toHaveLength(1));
 
     let newId: string | null = null;
@@ -274,7 +274,7 @@ describe("usePlanList — duplicate", () => {
     });
     duplicatePlanMock.mockResolvedValue({ ok: false, error: "not_found" });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toHaveLength(1));
 
     let newId: string | null = "untouched";
@@ -301,7 +301,7 @@ describe("usePlanList — duplicate", () => {
       data: [mkSummary({ id: "copy-1", name: "Original (copy)" })],
     });
 
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toEqual([]));
 
     await act(async () => {
@@ -323,7 +323,7 @@ describe("usePlanList — refetch", () => {
       ok: true,
       data: [mkSummary({ id: "a" })],
     });
-    const { result } = renderHook(() => usePlanList({ isAuthed: true }));
+    const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.plans).toHaveLength(1));
 
     listPlansMock.mockResolvedValueOnce({

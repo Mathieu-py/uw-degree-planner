@@ -51,7 +51,7 @@ export function SharedPlanView({
 
   const router = useRouter();
   const { isAuthed, ready } = useAuthState();
-  const { create } = usePlanList({ isAuthed });
+  const { create } = usePlanList(isAuthed);
   const [busy, setBusy] = useState(false);
 
   // Shared projection keeps every audited field — notably acknowledgedRequirements,
