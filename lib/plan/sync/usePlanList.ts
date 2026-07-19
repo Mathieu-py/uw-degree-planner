@@ -84,6 +84,9 @@ let currentIsAuthed: boolean | null = null;
 
 async function refetchInternal(isAuthed: boolean): Promise<void> {
   if (!isAuthed) {
+    // Bump the token so a listPlans still in flight from the authed session
+    // can't repopulate the store after logout — its late result fails the check.
+    fetchToken++;
     setState({ plans: null, loadError: null, loading: false });
     return;
   }
@@ -94,7 +97,9 @@ async function refetchInternal(isAuthed: boolean): Promise<void> {
   if (result.ok) {
     setState({ plans: result.data, loadError: null, loading: false });
   } else {
-    setState({ plans: [], loadError: result.error, loading: false });
+    // Preserve plans (null on first load, or the previous list) so a transient
+    // failure isn't read as "zero plans" — consumers surface loadError instead.
+    setState({ loadError: result.error, loading: false });
   }
 }
 

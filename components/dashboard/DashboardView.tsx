@@ -35,7 +35,8 @@ export function DashboardView({
   programNames: Record<string, string>;
 }) {
   const { isAuthed, ready } = useAuthState();
-  const { plans, remove, duplicate, error } = usePlanList(isAuthed);
+  const { plans, remove, duplicate, error, loadError, refetch } =
+    usePlanList(isAuthed);
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -73,6 +74,29 @@ export function DashboardView({
             >
               Open demo planner
             </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // A failed list fetch (no cached plans) is a load error, not "zero plans" —
+  // show a retry instead of the empty-dashboard chrome.
+  if (loadError && plans === null) {
+    return (
+      <div className="section">
+        <div className="container-lg flex flex-col items-start gap-4">
+          <Eyebrow>My plans</Eyebrow>
+          <div className="flex w-full flex-col items-start gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
+            <div className="flex flex-col gap-1">
+              <p className="font-medium">We couldn't load your plans.</p>
+              <p className="text-xs opacity-80">
+                {describeActionError(loadError)}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void refetch()}>
+              Try again
+            </Button>
           </div>
         </div>
       </div>

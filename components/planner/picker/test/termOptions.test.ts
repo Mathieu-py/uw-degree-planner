@@ -3,7 +3,7 @@ import { enrichCourse } from "@/lib/courses/filters";
 import type { BaseCourse, Course } from "@/lib/courses/types";
 import type { PlanSlot } from "@/lib/plan/types";
 import { makeTermId } from "@/lib/terms";
-import { alreadyInLabel, computeTermOptions } from "../termOptions";
+import { computeTermOptions } from "../termOptions";
 
 const FALL_2025 = makeTermId(2025, "Fall"); // → "Fall 2025"
 const WINTER_2025 = makeTermId(2025, "Winter"); // → "Winter 2025"
@@ -146,28 +146,5 @@ describe("computeTermOptions", () => {
   });
 });
 
-describe("alreadyInLabel", () => {
-  it("returns the term label when the course is placed in a dated slot", () => {
-    const slots = [
-      slot({
-        id: "a",
-        position: "1A",
-        termId: FALL_2025,
-        courses: [{ code: "cs246" }],
-      }),
-    ];
-    expect(alreadyInLabel(slots, "cs246")).toBe("Fall 2025");
-  });
-
-  it("returns 'your plan' for a course placed in an undated (pre) slot", () => {
-    const slots = [
-      slot({ id: "p", position: "pre", courses: [{ code: "cs246" }] }),
-    ];
-    expect(alreadyInLabel(slots, "cs246")).toBe("your plan");
-  });
-
-  it("returns null when the course is not placed anywhere", () => {
-    const slots = [slot({ id: "a", position: "1A", termId: FALL_2025 })];
-    expect(alreadyInLabel(slots, "cs246")).toBeNull();
-  });
-});
+// Placement labelling for the "already placed" banner lives in
+// placedCourseLabel (lib/plan/derive) and is covered by useTermOptions.

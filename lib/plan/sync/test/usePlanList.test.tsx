@@ -72,11 +72,12 @@ describe("usePlanList — initial fetch", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("surfaces a list error and clears plans to an empty array", async () => {
+  it("surfaces a list error and preserves plans (not zeroed)", async () => {
     listPlansMock.mockResolvedValue({ ok: false, error: "list failed" });
     const { result } = renderHook(() => usePlanList(true));
     await waitFor(() => expect(result.current.loadError).toBe("list failed"));
-    expect(result.current.plans).toEqual([]);
+    // Preserved as null (first load) so a failure isn't read as "zero plans".
+    expect(result.current.plans).toBeNull();
   });
 });
 

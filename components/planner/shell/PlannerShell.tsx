@@ -92,7 +92,7 @@ function PlannerShellInner({
     clearLocalPlan,
     flushSave,
   } = usePlanSync({ isAuthed, planId });
-  const { plans, create } = usePlanList(isAuthed);
+  const { plans, create, loadError: listLoadError } = usePlanList(isAuthed);
   const activePlanName =
     isAuthed && planId
       ? (plans?.find((p) => p.id === planId)?.name ?? "Untitled plan")
@@ -243,6 +243,19 @@ function PlannerShellInner({
   // The redirect effect above is navigating (to /plan/new or the most recent
   // plan); skeleton so the planner never flashes empty.
   if (!plan) {
+    // At bare /plan a list-load failure can't resolve a redirect target, so show
+    // the error rather than a skeleton that would never resolve.
+    if (planId === null && listLoadError) {
+      return (
+        <PlannerLoadState
+          kind="error"
+          isAuthed={isAuthed}
+          planId={planId}
+          loadError={listLoadError}
+          handoffElement={handoffElement}
+        />
+      );
+    }
     return (
       <PlannerLoadState
         kind="redirecting"
@@ -602,7 +615,9 @@ function buildPickerMeta(
   const completedBefore =
     slot.termId !== null
       ? completedSetFromPlan(plan, slot.termId)
-      : completedSetFromPlan(plan);
+      : // Pre-arrival is the earliest slot — nothing precedes it, so no prereqs
+        // count as met (all-completed would falsely satisfy them).
+        new Set<string>();
   const placedCodes = new Set(
     plan.slots.flatMap((s) => s.courses.map((c) => c.code)),
   );

@@ -62,6 +62,11 @@ export function WelcomeFlow({
         // Co-op but undetectable — default to the common Stream 8, ask to confirm.
         setStream("stream8");
         setStreamConfident(false);
+      } else {
+        // Non-coop with no detected stream → regular; reset so a prior PDF's
+        // coop / low-confidence state can't linger across a re-upload.
+        setStream("regular");
+        setStreamConfident(true);
       }
     },
     [setStream],

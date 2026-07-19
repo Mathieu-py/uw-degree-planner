@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import {
-  act,
   cleanup,
   fireEvent,
   render,
@@ -103,6 +102,7 @@ function mockPlanList(
     plans,
     loading: false,
     error: null,
+    loadError: null,
     refetch: vi.fn(),
     create: vi.fn(),
     rename: vi.fn(),
@@ -327,7 +327,7 @@ describe("TermPicker — signed in", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it("flags an already-placed course and never saves a duplicate", async () => {
+  it("flags an already-placed course and disables every term", async () => {
     mockPlanList([mkSummary()]);
     loadServerPlanMock.mockResolvedValue({
       ok: true,
@@ -346,12 +346,8 @@ describe("TermPicker — signed in", () => {
     expect(await screen.findByText(/Already placed in Fall 2025/)).toBeTruthy();
     const winter = screen.getByRole("button", { name: /Winter 2025/ });
     expect(winter).toHaveProperty("disabled", true);
-    // Fire anyway to prove the writer-level guard refuses. The act wrap flushes
-    // the async gate sequence so the negative assertion isn't vacuous.
-    await act(async () => {
-      fireEvent.click(winter);
-    });
-    expect(savePlanStateMock).not.toHaveBeenCalled();
+    // The writer-level guard (defense in depth) is covered directly in
+    // lib/plan/test/commitAddCourse.test.ts.
   });
 
   it("surfaces a load failure with a retry", async () => {

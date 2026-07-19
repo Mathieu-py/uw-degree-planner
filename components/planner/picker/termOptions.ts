@@ -71,18 +71,6 @@ export function computeTermOptions(
 }
 
 /**
- * Where the course already lives, as a human label, or null if unplaced. The
- * picker uses this to show an "already placed" banner and disable every option.
- */
-export function alreadyInLabel(slots: PlanSlot[], code: string): string | null {
-  const slot = slots.find((s) => s.courses.some((c) => c.code === code));
-  if (!slot) return null;
-  return slot.termId !== null
-    ? (termInfo(slot.termId)?.label ?? "your plan")
-    : "your plan";
-}
-
-/**
  * Shared hook behind every course→term "add" surface: {@link computeTermOptions}
  * + {@link placedCourseLabel} (twin-aware), plus a plan-level `blocked` flag (a
  * program block is term-independent, so callers surface it once, not per term).

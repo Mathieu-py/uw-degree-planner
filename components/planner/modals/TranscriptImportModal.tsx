@@ -249,6 +249,8 @@ function FileRow({
         accept={accept}
         className="sr-only"
         disabled={busy}
+        tabIndex={-1}
+        aria-hidden="true"
         onChange={(e) => onFile(e.target.files?.[0])}
         // Clear so re-selecting the same PDF still fires onChange.
         onClick={(e) => {

@@ -45,9 +45,12 @@ export function Dropzone({
       onDrop={(e) => {
         e.preventDefault();
         setDragActive(false);
+        // Honour the same disabled={busy} the input has, so a drop can't start a
+        // second parse while one is in flight.
+        if (busy) return;
         onFile(e.dataTransfer.files?.[0]);
       }}
-      className={`flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed bg-bg-2 text-center cursor-pointer transition-colors hover:border-accent-bg hover:bg-accent-soft ${
+      className={`flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed bg-bg-2 text-center cursor-pointer transition-colors hover:border-accent-bg hover:bg-accent-soft focus-within:border-accent-bg focus-within:ring-2 focus-within:ring-accent-bg/40 ${
         dragActive ? "border-accent-bg bg-accent-soft" : "border-line-2"
       } ${className}`}
     >
@@ -64,7 +67,7 @@ export function Dropzone({
       <input
         type="file"
         accept={accept}
-        className="hidden"
+        className="sr-only"
         disabled={busy}
         onChange={(e) => onFile(e.target.files?.[0])}
         // Clear so re-selecting the same PDF still fires onChange.

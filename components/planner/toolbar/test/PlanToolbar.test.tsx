@@ -57,6 +57,7 @@ function mount(opts: {
     plans,
     loading: false,
     error: null,
+    loadError: null,
     refetch: vi.fn(),
     create: opts.create ?? vi.fn(),
     rename: opts.rename ?? vi.fn(),

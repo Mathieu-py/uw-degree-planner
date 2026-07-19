@@ -26,6 +26,7 @@ export function TermPickerLocal({
 }) {
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { options, alreadyIn, blocked } = useTermOptions(
     course,
@@ -35,17 +36,26 @@ export function TermPickerLocal({
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !plan) return;
-    // savePlan re-stamps updatedAt; a failed write (localStorage full/unavailable)
-    // reports ok:false so the add isn't reflected. No error banner for local.
+    setSaveError(null);
+    // savePlan re-stamps updatedAt; a failed write (localStorage full/disabled)
+    // surfaces a banner and isn't reflected.
     await runAddToPlanState({
       plan,
       slot,
       course,
       label,
       setSaving,
-      persist: (p) => ({ ok: savePlan(p) }),
+      persist: (p) =>
+        savePlan(p)
+          ? { ok: true }
+          : {
+              ok: false,
+              error:
+                "Couldn't save to this browser — storage may be full or disabled.",
+            },
       onSaved: setPlan,
       onAdded,
+      onError: setSaveError,
     });
   }
 
@@ -73,12 +83,19 @@ export function TermPickerLocal({
   if (blocked) return <ProgramBlockedBody />;
 
   return (
-    <TermOptionList
-      options={options}
-      alreadyIn={alreadyIn}
-      justAdded={justAdded}
-      busy={saving}
-      onPick={addTo}
-    />
+    <>
+      <TermOptionList
+        options={options}
+        alreadyIn={alreadyIn}
+        justAdded={justAdded}
+        busy={saving}
+        onPick={addTo}
+      />
+      {saveError ? (
+        <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
+          {saveError}
+        </p>
+      ) : null}
+    </>
   );
 }

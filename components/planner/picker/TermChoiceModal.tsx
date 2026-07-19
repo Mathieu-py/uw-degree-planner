@@ -58,6 +58,7 @@ export function TermChoiceModal({
         options={options}
         alreadyIn={alreadyIn}
         justAdded={addedTo !== null}
+        busy={addedTo !== null}
         onPick={handlePick}
       />
     </CourseTermModalShell>
