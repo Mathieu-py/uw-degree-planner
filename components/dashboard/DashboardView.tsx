@@ -87,7 +87,10 @@ export function DashboardView({
       <div className="section">
         <div className="container-lg flex flex-col items-start gap-4">
           <Eyebrow>My plans</Eyebrow>
-          <div className="flex w-full flex-col items-start gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
+          <div
+            role="alert"
+            className="flex w-full flex-col items-start gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger"
+          >
             <div className="flex flex-col gap-1">
               <p className="font-medium">We couldn't load your plans.</p>
               <p className="text-xs opacity-80">

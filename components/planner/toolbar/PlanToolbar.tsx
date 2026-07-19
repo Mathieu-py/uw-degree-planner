@@ -224,7 +224,10 @@ function PlanToolbarAuthed({
   // than silently hiding the toolbar.
   if (loadError && plans === null) {
     return (
-      <div className="flex w-full items-center justify-between gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
+      <div
+        role="alert"
+        className="flex w-full items-center justify-between gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger"
+      >
         <span>{describeActionError(loadError)}</span>
         <Button
           variant="outline"
@@ -516,7 +519,10 @@ function PlanToolbarAuthed({
           banner is the only signal on the planner route. Cleared on next success
           by the shared usePlanList store, so no dismiss wiring. */}
       {error ? (
-        <div className="w-full rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="w-full rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger"
+        >
           {describeActionError(error)}
         </div>
       ) : null}
