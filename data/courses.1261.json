@@ -1,7 +1,7 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-07-12T09:11:45.165Z",
-  "courseCount": 10717,
+  "fetchedAt": "2026-07-19T09:14:22.554Z",
+  "courseCount": 10719,
   "courses": [
     {
       "id": 9965,
@@ -1142,6 +1142,11 @@
           "enrollment_capacity": 96
         },
         {
+          "id": 9096,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 6124,
           "enrollment_total": 42,
           "enrollment_capacity": 96
@@ -1906,13 +1911,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 7801,
-          "enrollment_total": 20,
-          "enrollment_capacity": 24
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "crossListed": [
         "cs476"
@@ -2441,7 +2440,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 5989,
+          "enrollment_total": 15,
+          "enrollment_capacity": 30
+        }
+      ]
     },
     {
       "id": 79,
@@ -4146,14 +4151,14 @@
       },
       "sections": [
         {
-          "id": 9039,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 5075,
           "enrollment_total": 67,
           "enrollment_capacity": 80
+        },
+        {
+          "id": 9039,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.75,
@@ -4598,8 +4603,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": [],
       "units": 0.5,
@@ -9789,8 +9794,8 @@
       "rating": {
         "easy": 0.7076612903225806,
         "useful": 0.7930327868852459,
-        "liked": 0.6536585365853659,
-        "filled_count": 205
+        "liked": 0.6553398058252428,
+        "filled_count": 206
       },
       "sections": [
         {
@@ -19506,7 +19511,7 @@
       "sections": [
         {
           "id": 3194,
-          "enrollment_total": 21,
+          "enrollment_total": 20,
           "enrollment_capacity": 50
         }
       ],
@@ -20241,7 +20246,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7845,
+          "enrollment_total": 5,
+          "enrollment_capacity": 5
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "avia204"
@@ -21648,7 +21659,7 @@
       "sections": [
         {
           "id": 9032,
-          "enrollment_total": 1,
+          "enrollment_total": 2,
           "enrollment_capacity": 1
         },
         {
@@ -22382,7 +22393,18 @@
         "liked": 0.5479951397326853,
         "filled_count": 823
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7054,
+          "enrollment_total": 153,
+          "enrollment_capacity": 350
+        },
+        {
+          "id": 8095,
+          "enrollment_total": 62,
+          "enrollment_capacity": 70
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -22980,8 +23002,8 @@
       "rating": {
         "easy": 0.3629032258064516,
         "useful": 0.934931506849315,
-        "liked": 0.8490566037735849,
-        "filled_count": 371
+        "liked": 0.8494623655913979,
+        "filled_count": 372
       },
       "sections": [
         {
@@ -25604,7 +25626,13 @@
         "liked": 0.9,
         "filled_count": 10
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7008,
+          "enrollment_total": 137,
+          "enrollment_capacity": 154
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -30983,7 +31011,7 @@
       "id": 10678,
       "code": "bme522",
       "name": "Foundations of Artificial Intelligence",
-      "prereqs": "One of BME122, CS240, CS240E, ECE250, MSE240/MSCI240, MTE140, SYDE223; Biomedical or Systems Design Eng or Level at least 4A Computer, Management or Mechatronics Eng or Mechatronics Eng Option.",
+      "prereqs": "One of BME122, CS240/CS240E, ECE250, MSE240/MSCI240, MTE140, SYDE223; Biomedical or Systems Design Eng or at least 4A Management or Mechatronics Eng or Comp. Eng Option or Mechatronics Eng Option.",
       "coreqs": null,
       "antireqs": "CHE523,CS480,CS486,ECE457A,ECE457B",
       "rating": {
@@ -31562,13 +31590,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 5175,
-          "enrollment_total": 10,
-          "enrollment_capacity": 25
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "bme487"
@@ -31957,10 +31979,10 @@
       "coreqs": "",
       "antireqs": "AFM131/ARBUS101, COMM101",
       "rating": {
-        "easy": 0.45454545454545453,
-        "useful": 0.5409090909090909,
-        "liked": 0.28160919540229884,
-        "filled_count": 174
+        "easy": 0.45045045045045046,
+        "useful": 0.5427927927927928,
+        "liked": 0.28,
+        "filled_count": 175
       },
       "sections": [
         {
@@ -31992,10 +32014,10 @@
       "coreqs": "",
       "antireqs": "COMM102",
       "rating": {
-        "easy": 0.4375,
-        "useful": 0.41964285714285715,
-        "liked": 0.26262626262626265,
-        "filled_count": 99
+        "easy": 0.4342105263157895,
+        "useful": 0.4166666666666667,
+        "liked": 0.26,
+        "filled_count": 100
       },
       "sections": [
         {
@@ -33043,48 +33065,7 @@
         "liked": 0.2222222222222222,
         "filled_count": 9
       },
-      "sections": [
-        {
-          "id": 6220,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6048,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6070,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6080,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6091,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6110,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6136,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6148,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1000
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -37844,13 +37825,7 @@
         "liked": 0.6470588235294118,
         "filled_count": 17
       },
-      "sections": [
-        {
-          "id": 4493,
-          "enrollment_total": 61,
-          "enrollment_capacity": 70
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -40009,8 +39984,8 @@
       "rating": {
         "easy": 0.5553935860058309,
         "useful": 0.8079710144927537,
-        "liked": 0.5679012345679012,
-        "filled_count": 567
+        "liked": 0.5669014084507042,
+        "filled_count": 568
       },
       "sections": [
         {
@@ -40057,8 +40032,8 @@
       "rating": {
         "easy": 0.6706827309236948,
         "useful": 0.7580971659919028,
-        "liked": 0.6407322654462243,
-        "filled_count": 437
+        "liked": 0.639269406392694,
+        "filled_count": 438
       },
       "sections": [
         {
@@ -47599,13 +47574,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8778,
-          "enrollment_total": 5,
-          "enrollment_capacity": 10
-        }
-      ]
+      "sections": []
     },
     {
       "id": 1119,
@@ -48609,8 +48578,8 @@
       "rating": {
         "easy": 0.9254385964912281,
         "useful": 0.27238805970149255,
-        "liked": 0.8816,
-        "filled_count": 625
+        "liked": 0.8817891373801917,
+        "filled_count": 626
       },
       "sections": [
         {
@@ -50896,6 +50865,11 @@
       },
       "sections": [
         {
+          "id": 9079,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 6269,
           "enrollment_total": 114,
           "enrollment_capacity": 200
@@ -50909,11 +50883,6 @@
           "id": 5809,
           "enrollment_total": 78,
           "enrollment_capacity": 120
-        },
-        {
-          "id": 9079,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -53793,13 +53762,7 @@
         "liked": 0.5,
         "filled_count": 4
       },
-      "sections": [
-        {
-          "id": 5966,
-          "enrollment_total": 45,
-          "enrollment_capacity": 96
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "afm276",
@@ -54324,10 +54287,10 @@
       "coreqs": null,
       "antireqs": "GENE191",
       "rating": {
-        "easy": 0.546875,
-        "useful": 0.40625,
-        "liked": 0.5,
-        "filled_count": 52
+        "easy": 0.5588235294117647,
+        "useful": 0.411764705882353,
+        "liked": 0.5094339622641509,
+        "filled_count": 53
       },
       "sections": [
         {
@@ -54419,7 +54382,7 @@
         },
         {
           "id": 3970,
-          "enrollment_total": 21,
+          "enrollment_total": 20,
           "enrollment_capacity": 25
         },
         {
@@ -54635,10 +54598,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7268041237113402,
-        "useful": 0.6881443298969072,
-        "liked": 0.8115942028985508,
-        "filled_count": 207
+        "easy": 0.7295918367346939,
+        "useful": 0.6887755102040817,
+        "liked": 0.8125,
+        "filled_count": 208
       },
       "sections": [
         {
@@ -54734,28 +54697,7 @@
         "liked": 0.5217391304347826,
         "filled_count": 23
       },
-      "sections": [
-        {
-          "id": 3961,
-          "enrollment_total": 26,
-          "enrollment_capacity": 26
-        },
-        {
-          "id": 3960,
-          "enrollment_total": 23,
-          "enrollment_capacity": 26
-        },
-        {
-          "id": 3959,
-          "enrollment_total": 25,
-          "enrollment_capacity": 26
-        },
-        {
-          "id": 3929,
-          "enrollment_total": 26,
-          "enrollment_capacity": 26
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -56867,8 +56809,8 @@
       "coreqs": null,
       "antireqs": "CS114, CS136, CS137, CS138, CS146, PHYS236, PHYS239, MSE240, NE111",
       "rating": {
-        "easy": 0.7469135802469136,
-        "useful": 0.886734693877551,
+        "easy": 0.7479508196721312,
+        "useful": 0.8851626016260162,
         "liked": 0.795,
         "filled_count": 400
       },
@@ -57003,10 +56945,10 @@
       "coreqs": null,
       "antireqs": "AE121, BME121, CS115, CS137, CS138, CS145, CIVE121, ECE150, ME101, MSE121, PHYS236, SYDE121",
       "rating": {
-        "easy": 0.6693198263386396,
-        "useful": 0.8415593705293276,
-        "liked": 0.8641975308641975,
-        "filled_count": 1134
+        "easy": 0.6694364161849711,
+        "useful": 0.8414285714285714,
+        "liked": 0.8643171806167401,
+        "filled_count": 1135
       },
       "sections": [
         {
@@ -57040,10 +56982,10 @@
       "coreqs": "CS136L.",
       "antireqs": "CS137, CS138, CS146, PHYS239",
       "rating": {
-        "easy": 0.56875,
-        "useful": 0.9193396226415095,
-        "liked": 0.8006872852233677,
-        "filled_count": 873
+        "easy": 0.5690978886756238,
+        "useful": 0.9194915254237288,
+        "liked": 0.8009153318077803,
+        "filled_count": 874
       },
       "sections": [
         {
@@ -57138,10 +57080,10 @@
       "coreqs": "CS136 or CS146",
       "antireqs": null,
       "rating": {
-        "easy": 0.7393162393162394,
-        "useful": 0.8867521367521367,
-        "liked": 0.7331081081081081,
-        "filled_count": 296
+        "easy": 0.7415254237288136,
+        "useful": 0.885593220338983,
+        "liked": 0.734006734006734,
+        "filled_count": 297
       },
       "sections": [
         {
@@ -58866,7 +58808,7 @@
       "sections": [
         {
           "id": 9014,
-          "enrollment_total": 1,
+          "enrollment_total": 2,
           "enrollment_capacity": 1
         },
         {
@@ -59084,6 +59026,11 @@
       },
       "sections": [
         {
+          "id": 9083,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 5800,
           "enrollment_total": 31,
           "enrollment_capacity": 90
@@ -59092,11 +59039,6 @@
           "id": 6161,
           "enrollment_total": 21,
           "enrollment_capacity": 90
-        },
-        {
-          "id": 9083,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -59132,8 +59074,8 @@
       "rating": {
         "easy": 0.7407786885245902,
         "useful": 0.7004132231404959,
-        "liked": 0.7701863354037267,
-        "filled_count": 322
+        "liked": 0.7708978328173375,
+        "filled_count": 323
       },
       "sections": [
         {
@@ -59210,7 +59152,7 @@
       "sections": [
         {
           "id": 9015,
-          "enrollment_total": 2,
+          "enrollment_total": 4,
           "enrollment_capacity": 1
         },
         {
@@ -59457,6 +59399,11 @@
       },
       "sections": [
         {
+          "id": 9084,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 8746,
           "enrollment_total": 80,
           "enrollment_capacity": 80
@@ -59470,11 +59417,6 @@
           "id": 5792,
           "enrollment_total": 79,
           "enrollment_capacity": 80
-        },
-        {
-          "id": 9084,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -60593,8 +60535,8 @@
       "rating": {
         "easy": 0.42857142857142855,
         "useful": 0.6428571428571429,
-        "liked": 0.5555555555555556,
-        "filled_count": 9
+        "liked": 0.6,
+        "filled_count": 10
       },
       "sections": [
         {
@@ -60702,6 +60644,11 @@
       },
       "sections": [
         {
+          "id": 9082,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 6100,
           "enrollment_total": 57,
           "enrollment_capacity": 70
@@ -60710,11 +60657,6 @@
           "id": 5802,
           "enrollment_total": 68,
           "enrollment_capacity": 70
-        },
-        {
-          "id": 9082,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61257,10 +61199,15 @@
       "rating": {
         "easy": 0.3597560975609756,
         "useful": 0.8475609756097561,
-        "liked": 0.7,
-        "filled_count": 70
+        "liked": 0.704225352112676,
+        "filled_count": 71
       },
       "sections": [
+        {
+          "id": 9016,
+          "enrollment_total": 3,
+          "enrollment_capacity": 1
+        },
         {
           "id": 6206,
           "enrollment_total": 45,
@@ -61270,11 +61217,6 @@
           "id": 6207,
           "enrollment_total": 24,
           "enrollment_capacity": 70
-        },
-        {
-          "id": 9016,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61518,6 +61460,11 @@
       },
       "sections": [
         {
+          "id": 9018,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 6102,
           "enrollment_total": 54,
           "enrollment_capacity": 67
@@ -61526,11 +61473,6 @@
           "id": 5804,
           "enrollment_total": 37,
           "enrollment_capacity": 57
-        },
-        {
-          "id": 9018,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61631,19 +61573,19 @@
       "rating": {
         "easy": 0.55,
         "useful": 0.5067567567567568,
-        "liked": 0.5573770491803278,
-        "filled_count": 122
+        "liked": 0.5609756097560976,
+        "filled_count": 123
       },
       "sections": [
+        {
+          "id": 9033,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
+        },
         {
           "id": 5806,
           "enrollment_total": 35,
           "enrollment_capacity": 70
-        },
-        {
-          "id": 9033,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61797,6 +61739,11 @@
       },
       "sections": [
         {
+          "id": 9085,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 8740,
           "enrollment_total": 54,
           "enrollment_capacity": 60
@@ -61810,11 +61757,6 @@
           "id": 5807,
           "enrollment_total": 56,
           "enrollment_capacity": 60
-        },
-        {
-          "id": 9085,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61959,6 +61901,11 @@
         "filled_count": 4
       },
       "sections": [
+        {
+          "id": 9090,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
         {
           "id": 9031,
           "enrollment_total": 1,
@@ -63609,18 +63556,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8831,
-          "enrollment_total": 25,
-          "enrollment_capacity": 24
-        },
-        {
-          "id": 6497,
-          "enrollment_total": 9,
-          "enrollment_capacity": 25
-        }
-      ]
+      "sections": []
     },
     {
       "id": 1554,
@@ -67541,10 +67477,10 @@
       "coreqs": null,
       "antireqs": "CIVE153, ENVE153, GEOE153",
       "rating": {
-        "easy": 0.7529585798816568,
-        "useful": 0.3125,
-        "liked": 0.484251968503937,
-        "filled_count": 254
+        "easy": 0.7544117647058823,
+        "useful": 0.3121301775147929,
+        "liked": 0.48627450980392156,
+        "filled_count": 255
       },
       "sections": [
         {
@@ -67589,10 +67525,10 @@
       "coreqs": null,
       "antireqs": "ENVS195",
       "rating": {
-        "easy": 0.9138888888888889,
-        "useful": 0.475,
-        "liked": 0.7625,
-        "filled_count": 160
+        "easy": 0.9148351648351648,
+        "useful": 0.4725274725274725,
+        "liked": 0.7639751552795031,
+        "filled_count": 161
       },
       "sections": [
         {
@@ -68764,13 +68700,7 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [
-        {
-          "id": 7001,
-          "enrollment_total": 26,
-          "enrollment_capacity": 40
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -71467,10 +71397,10 @@
       "coreqs": null,
       "antireqs": "ECE103, ECE155, MATH229, MATH239, MATH249",
       "rating": {
-        "easy": 0.4879032258064516,
-        "useful": 0.5532786885245902,
-        "liked": 0.618421052631579,
-        "filled_count": 152
+        "easy": 0.4880952380952381,
+        "useful": 0.5524193548387096,
+        "liked": 0.6209150326797386,
+        "filled_count": 153
       },
       "sections": [
         {
@@ -72544,7 +72474,18 @@
         "liked": 0.5585585585585585,
         "filled_count": 222
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4709,
+          "enrollment_total": 136,
+          "enrollment_capacity": 150
+        },
+        {
+          "id": 4714,
+          "enrollment_total": 130,
+          "enrollment_capacity": 148
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -73276,7 +73217,13 @@
         "liked": 0.9166666666666666,
         "filled_count": 24
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9104,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "ece429"
@@ -78208,7 +78155,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8327,
+          "enrollment_total": 31,
+          "enrollment_capacity": 35
+        }
+      ]
     },
     {
       "id": 2077,
@@ -78617,10 +78570,10 @@
       "coreqs": null,
       "antireqs": "ECE486, ECE780 Topic 3",
       "rating": {
-        "easy": null,
-        "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "easy": 0.75,
+        "useful": 1,
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": []
     },
@@ -79427,10 +79380,10 @@
       "coreqs": null,
       "antireqs": "ECON101",
       "rating": {
-        "easy": 0.8809523809523809,
-        "useful": 0.5476190476190477,
-        "liked": 0.8064516129032258,
-        "filled_count": 62
+        "easy": 0.8863636363636364,
+        "useful": 0.5681818181818181,
+        "liked": 0.8095238095238095,
+        "filled_count": 63
       },
       "sections": [
         {
@@ -79452,10 +79405,10 @@
       "coreqs": null,
       "antireqs": "ECON102",
       "rating": {
-        "easy": 0.765625,
-        "useful": 0.578125,
-        "liked": 0.6585365853658537,
-        "filled_count": 41
+        "easy": 0.7794117647058824,
+        "useful": 0.6029411764705882,
+        "liked": 0.6666666666666666,
+        "filled_count": 42
       },
       "sections": [
         {
@@ -81589,14 +81542,14 @@
       },
       "sections": [
         {
-          "id": 3454,
-          "enrollment_total": 77,
-          "enrollment_capacity": 108
-        },
-        {
           "id": 9078,
           "enrollment_total": 1,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 3454,
+          "enrollment_total": 77,
+          "enrollment_capacity": 108
         }
       ],
       "units": 0.5,
@@ -81688,14 +81641,14 @@
       },
       "sections": [
         {
-          "id": 3150,
-          "enrollment_total": 38,
-          "enrollment_capacity": 80
-        },
-        {
           "id": 9067,
           "enrollment_total": 2,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 3150,
+          "enrollment_total": 38,
+          "enrollment_capacity": 80
         }
       ],
       "units": 0.5,
@@ -82311,8 +82264,8 @@
       "rating": {
         "easy": 0.5852272727272727,
         "useful": 0.7954545454545454,
-        "liked": 0.6764705882352942,
-        "filled_count": 68
+        "liked": 0.6811594202898551,
+        "filled_count": 69
       },
       "sections": [
         {
@@ -83654,14 +83607,14 @@
       },
       "sections": [
         {
-          "id": 8067,
-          "enrollment_total": 18,
-          "enrollment_capacity": 20
-        },
-        {
           "id": 9068,
           "enrollment_total": 2,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 8067,
+          "enrollment_total": 18,
+          "enrollment_capacity": 20
         }
       ],
       "units": 0.5,
@@ -85983,7 +85936,13 @@
         "liked": 1,
         "filled_count": 2
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6723,
+          "enrollment_total": 9,
+          "enrollment_capacity": 22
+        }
+      ]
     },
     {
       "id": 2276,
@@ -86100,7 +86059,13 @@
         "liked": 1,
         "filled_count": 2
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7652,
+          "enrollment_total": 151,
+          "enrollment_capacity": 170
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -89706,6 +89671,11 @@
       },
       "sections": [
         {
+          "id": 9074,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 4332,
           "enrollment_total": 39,
           "enrollment_capacity": 40
@@ -89719,11 +89689,6 @@
           "id": 4192,
           "enrollment_total": 34,
           "enrollment_capacity": 35
-        },
-        {
-          "id": 9074,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -94911,10 +94876,10 @@
       "coreqs": null,
       "antireqs": "EARTH122",
       "rating": {
-        "easy": 0.8096846846846847,
-        "useful": 0.7217194570135747,
-        "liked": 0.7483660130718954,
-        "filled_count": 306
+        "easy": 0.8071748878923767,
+        "useful": 0.722972972972973,
+        "liked": 0.749185667752443,
+        "filled_count": 307
       },
       "sections": [
         {
@@ -99351,12 +99316,12 @@
       },
       "sections": [
         {
-          "id": 3282,
+          "id": 3283,
           "enrollment_total": 25,
           "enrollment_capacity": 25
         },
         {
-          "id": 3283,
+          "id": 3282,
           "enrollment_total": 25,
           "enrollment_capacity": 25
         }
@@ -100875,12 +100840,12 @@
       },
       "sections": [
         {
-          "id": 8832,
+          "id": 8853,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
         {
-          "id": 8853,
+          "id": 8832,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         }
@@ -107348,7 +107313,7 @@
     {
       "id": 10624,
       "code": "gds387",
-      "name": "Spatial Databases",
+      "name": "Artificial Intelligence in Geospatial Data Science",
       "prereqs": "GDS281/GEOG281/PLAN281;",
       "coreqs": null,
       "antireqs": "GEOG387",
@@ -108042,10 +108007,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.35374149659863946,
-        "useful": 0.5986394557823129,
-        "liked": 0.5352112676056338,
-        "filled_count": 213
+        "easy": 0.35135135135135137,
+        "useful": 0.5962837837837838,
+        "liked": 0.5327102803738317,
+        "filled_count": 214
       },
       "sections": [
         {
@@ -108824,14 +108789,14 @@
       },
       "sections": [
         {
-          "id": 9030,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 9048,
           "enrollment_total": 1,
           "enrollment_capacity": 0
+        },
+        {
+          "id": 9030,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -110376,8 +110341,8 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.9017094017094017,
-        "useful": 0.5635775862068966,
+        "easy": 0.902127659574468,
+        "useful": 0.5654506437768241,
         "liked": 0.7836990595611285,
         "filled_count": 319
       },
@@ -111681,10 +111646,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.4107142857142857,
-        "useful": 0.9285714285714286,
-        "liked": 0.7777777777777778,
-        "filled_count": 18
+        "easy": 0.4,
+        "useful": 0.9,
+        "liked": 0.7368421052631579,
+        "filled_count": 19
       },
       "sections": []
     },
@@ -113593,13 +113558,7 @@
         "liked": 0.8,
         "filled_count": 5
       },
-      "sections": [
-        {
-          "id": 5644,
-          "enrollment_total": 68,
-          "enrollment_capacity": 75
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "geog474"
@@ -114949,6 +114908,11 @@
       },
       "sections": [
         {
+          "id": 9006,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 8977,
           "enrollment_total": 1,
           "enrollment_capacity": 1
@@ -114960,11 +114924,6 @@
         },
         {
           "id": 5576,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 9006,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         }
@@ -117963,13 +117922,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 2821,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -121069,16 +121022,10 @@
       "rating": {
         "easy": 0.6693548387096774,
         "useful": 0.3225806451612903,
-        "liked": 0.3626373626373626,
-        "filled_count": 91
+        "liked": 0.358695652173913,
+        "filled_count": 92
       },
-      "sections": [
-        {
-          "id": 8072,
-          "enrollment_total": 34,
-          "enrollment_capacity": 60
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "ahs107"
@@ -121821,13 +121768,7 @@
         "liked": 0.35294117647058826,
         "filled_count": 34
       },
-      "sections": [
-        {
-          "id": 3421,
-          "enrollment_total": 119,
-          "enrollment_capacity": 120
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -122976,10 +122917,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.875,
-        "useful": 0.5625,
-        "liked": 0.2857142857142857,
-        "filled_count": 7
+        "easy": 0.85,
+        "useful": 0.6,
+        "liked": 0.375,
+        "filled_count": 8
       },
       "sections": [
         {
@@ -126288,13 +126229,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 3253,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        }
-      ]
+      "sections": []
     },
     {
       "id": 3664,
@@ -126531,8 +126466,8 @@
       "rating": {
         "easy": 0.8712121212121212,
         "useful": 0.7878787878787878,
-        "liked": 0.8725490196078431,
-        "filled_count": 204
+        "liked": 0.8731707317073171,
+        "filled_count": 205
       },
       "sections": [],
       "units": 0.5,
@@ -126563,8 +126498,8 @@
       "rating": {
         "easy": 0.8295454545454546,
         "useful": 0.6856060606060606,
-        "liked": 0.7863247863247863,
-        "filled_count": 117
+        "liked": 0.7899159663865546,
+        "filled_count": 119
       },
       "sections": [
         {
@@ -126609,10 +126544,16 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.3333333333333333,
-        "liked": 0.25,
-        "filled_count": 4
+        "liked": 0.4,
+        "filled_count": 5
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7705,
+          "enrollment_total": 273,
+          "enrollment_capacity": 300
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -127762,7 +127703,13 @@
         "liked": 0.42857142857142855,
         "filled_count": 21
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 2953,
+          "enrollment_total": 35,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -127970,13 +127917,7 @@
         "liked": 0.9,
         "filled_count": 10
       },
-      "sections": [
-        {
-          "id": 3010,
-          "enrollment_total": 114,
-          "enrollment_capacity": 114
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "hlth460"
@@ -131397,6 +131338,36 @@
       "sections": []
     },
     {
+      "id": 10818,
+      "code": "hlth667m",
+      "name": "Generative AI Core Techniques, Architectures and Algorithms for Data Representation and Generation",
+      "prereqs": null,
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10817,
+      "code": "hlth668m",
+      "name": "Applied Generative AI in Health: Evaluation, Safety, Governance, and Responsible Use",
+      "prereqs": null,
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
       "id": 3763,
       "code": "hlth671",
       "name": "Psychopharmacology",
@@ -131598,28 +131569,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8903,
-          "enrollment_total": 2,
-          "enrollment_capacity": 2
-        },
-        {
-          "id": 8948,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 9000,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 3042,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        }
-      ]
+      "sections": []
     },
     {
       "id": 8977,
@@ -134722,7 +134672,13 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8055,
+          "enrollment_total": 15,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.5,
       "crossListed": [
         "rcs318"
@@ -137815,10 +137771,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.85,
+        "easy": 0.875,
         "useful": 0.5,
-        "liked": 0.7692307692307693,
-        "filled_count": 13
+        "liked": 0.7857142857142857,
+        "filled_count": 14
       },
       "sections": [
         {
@@ -140638,7 +140594,13 @@
         "liked": 0,
         "filled_count": 1
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9103,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "kin414"
@@ -141337,13 +141299,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8713,
-          "enrollment_total": 3,
-          "enrollment_capacity": 10
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -141469,7 +141425,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 9102,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ]
     },
     {
       "id": 8498,
@@ -143079,7 +143041,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3075,
+          "enrollment_total": 7,
+          "enrollment_capacity": 15
+        }
+      ]
     },
     {
       "id": 4143,
@@ -143316,7 +143284,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3003,
+          "enrollment_total": 22,
+          "enrollment_capacity": 60
+        }
+      ]
     },
     {
       "id": 4154,
@@ -144308,13 +144282,7 @@
         "liked": 0.9333333333333333,
         "filled_count": 30
       },
-      "sections": [
-        {
-          "id": 6679,
-          "enrollment_total": 35,
-          "enrollment_capacity": 40
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "prereqAst": {
         "kind": "course",
@@ -146144,7 +146112,13 @@
         "liked": 0.75,
         "filled_count": 8
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3403,
+          "enrollment_total": 34,
+          "enrollment_capacity": 35
+        }
+      ],
       "units": 0.5,
       "crossListed": [
         "hist236"
@@ -148929,10 +148903,10 @@
       "coreqs": null,
       "antireqs": "MATH114, MATH115, MATH136, MATH146, NE112",
       "rating": {
-        "easy": 0.6884615384615385,
-        "useful": 0.5595238095238095,
-        "liked": 0.532608695652174,
-        "filled_count": 92
+        "easy": 0.6818181818181819,
+        "useful": 0.55859375,
+        "liked": 0.5268817204301075,
+        "filled_count": 93
       },
       "sections": [
         {
@@ -149173,10 +149147,10 @@
       "coreqs": null,
       "antireqs": "MATH119, MATH128, MATH138, MATH148",
       "rating": {
-        "easy": 0.5145914396887159,
-        "useful": 0.8677606177606177,
-        "liked": 0.7883369330453563,
-        "filled_count": 463
+        "easy": 0.5125968992248062,
+        "useful": 0.8682692307692308,
+        "liked": 0.7887931034482759,
+        "filled_count": 464
       },
       "sections": [
         {
@@ -149556,10 +149530,10 @@
       "coreqs": null,
       "antireqs": "MATH145",
       "rating": {
-        "easy": 0.44331896551724137,
-        "useful": 0.8358974358974359,
-        "liked": 0.7893890675241158,
-        "filled_count": 1866
+        "easy": 0.4435831180017227,
+        "useful": 0.8360375747224594,
+        "liked": 0.7895018746652384,
+        "filled_count": 1867
       },
       "sections": [
         {
@@ -149613,10 +149587,10 @@
       "coreqs": null,
       "antireqs": "MATH106, MATH114, MATH115, MATH146, NE112",
       "rating": {
-        "easy": 0.44911858974358976,
-        "useful": 0.7813504823151125,
-        "liked": 0.6363636363636364,
-        "filled_count": 1045
+        "easy": 0.4496,
+        "useful": 0.7817014446227929,
+        "liked": 0.6367112810707457,
+        "filled_count": 1046
       },
       "sections": [
         {
@@ -149723,10 +149697,10 @@
       "coreqs": null,
       "antireqs": "MATH116, MATH117, MATH127, MATH147",
       "rating": {
-        "easy": 0.5591216216216216,
-        "useful": 0.8293010752688172,
-        "liked": 0.6851996867658575,
-        "filled_count": 1277
+        "easy": 0.5593792172739541,
+        "useful": 0.8295302013422818,
+        "liked": 0.6854460093896714,
+        "filled_count": 1278
       },
       "sections": [
         {
@@ -149765,10 +149739,10 @@
       "coreqs": null,
       "antireqs": "MATH118, MATH119, MATH128, MATH148",
       "rating": {
-        "easy": 0.4642857142857143,
-        "useful": 0.833767361111111,
-        "liked": 0.6762886597938145,
-        "filled_count": 970
+        "easy": 0.4643478260869565,
+        "useful": 0.8336221837088388,
+        "liked": 0.6766220391349125,
+        "filled_count": 971
       },
       "sections": [
         {
@@ -150239,8 +150213,8 @@
       "rating": {
         "easy": 0.34130434782608693,
         "useful": 0.5387931034482758,
-        "liked": 0.5064102564102564,
-        "filled_count": 156
+        "liked": 0.5095541401273885,
+        "filled_count": 157
       },
       "sections": [
         {
@@ -151519,13 +151493,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 6273,
-          "enrollment_total": 85,
-          "enrollment_capacity": 100
-        }
-      ]
+      "sections": []
     },
     {
       "id": 7882,
@@ -151672,13 +151640,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 6635,
-          "enrollment_total": 16,
-          "enrollment_capacity": 20
-        }
-      ]
+      "sections": []
     },
     {
       "id": 4390,
@@ -151696,7 +151658,7 @@
       "sections": [
         {
           "id": 6345,
-          "enrollment_total": 37,
+          "enrollment_total": 33,
           "enrollment_capacity": 20
         }
       ],
@@ -152740,8 +152702,8 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.734375,
-        "useful": 0.8515625,
+        "easy": 0.7348484848484849,
+        "useful": 0.8560606060606061,
         "liked": 0.8260869565217391,
         "filled_count": 46
       },
@@ -152895,8 +152857,8 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.32432432432432434,
-        "useful": 0.8092105263157895,
+        "easy": 0.3289473684210526,
+        "useful": 0.8076923076923077,
         "liked": 0.625,
         "filled_count": 48
       },
@@ -152984,8 +152946,8 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.3333333333333333,
-        "useful": 0.6875,
+        "easy": 0.33,
+        "useful": 0.68,
         "liked": 0.4864864864864865,
         "filled_count": 37
       },
@@ -153524,8 +153486,8 @@
       "rating": {
         "easy": 0.34615384615384615,
         "useful": 0.8461538461538461,
-        "liked": 0.8518518518518519,
-        "filled_count": 27
+        "liked": 0.8214285714285714,
+        "filled_count": 28
       },
       "sections": [],
       "units": 0.5,
@@ -154210,8 +154172,8 @@
       "rating": {
         "easy": 0.7894736842105263,
         "useful": 0.7222222222222222,
-        "liked": 0.8888888888888888,
-        "filled_count": 27
+        "liked": 0.8928571428571429,
+        "filled_count": 28
       },
       "sections": [],
       "units": 0.5,
@@ -154423,8 +154385,8 @@
       "rating": {
         "easy": 0.5,
         "useful": 0.9615384615384616,
-        "liked": 0.8235294117647058,
-        "filled_count": 17
+        "liked": 0.7777777777777778,
+        "filled_count": 18
       },
       "sections": [],
       "units": 0.5,
@@ -154617,8 +154579,8 @@
       "rating": {
         "easy": 1,
         "useful": 0.75,
-        "liked": 0.875,
-        "filled_count": 8
+        "liked": 0.8888888888888888,
+        "filled_count": 9
       },
       "sections": [],
       "units": 0.5,
@@ -157086,7 +157048,7 @@
       "sections": [
         {
           "id": 9034,
-          "enrollment_total": 5,
+          "enrollment_total": 7,
           "enrollment_capacity": 1
         }
       ]
@@ -159313,10 +159275,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.85,
-        "useful": 0.8,
-        "liked": 0.8,
-        "filled_count": 15
+        "easy": 0.875,
+        "useful": 0.75,
+        "liked": 0.8125,
+        "filled_count": 16
       },
       "sections": [],
       "units": 0.75,
@@ -159379,10 +159341,10 @@
       "coreqs": null,
       "antireqs": "BME121, ECE150, MTE121/GENE121, SYDE121",
       "rating": {
-        "easy": 0.2916666666666667,
-        "useful": 0.5833333333333334,
-        "liked": 0.2,
-        "filled_count": 15
+        "easy": 0.2857142857142857,
+        "useful": 0.6428571428571429,
+        "liked": 0.1875,
+        "filled_count": 16
       },
       "sections": [],
       "units": 0.5,
@@ -159406,10 +159368,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.9166666666666666,
-        "useful": 0.8333333333333334,
-        "liked": 0.875,
-        "filled_count": 8
+        "easy": 0.875,
+        "useful": 0.875,
+        "liked": 0.8888888888888888,
+        "filled_count": 9
       },
       "sections": [
         {
@@ -159550,10 +159512,10 @@
       "coreqs": null,
       "antireqs": "MSE331/MSCI331",
       "rating": {
-        "easy": null,
-        "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "easy": 0.5,
+        "useful": 1,
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": [],
       "units": 0.5,
@@ -159582,10 +159544,10 @@
       "coreqs": null,
       "antireqs": "BME122, CS240/CS240E, ECE250, MTE140 and SYDE223",
       "rating": {
-        "easy": 0.75,
-        "useful": 0.875,
-        "liked": 0.8333333333333334,
-        "filled_count": 6
+        "easy": 0.5,
+        "useful": 0.8333333333333334,
+        "liked": 0.7142857142857143,
+        "filled_count": 7
       },
       "sections": [],
       "units": 0.5,
@@ -159632,10 +159594,10 @@
       "coreqs": null,
       "antireqs": "CS338, CS348",
       "rating": {
-        "easy": 1,
+        "easy": 0.75,
         "useful": 0.5,
         "liked": 1,
-        "filled_count": 1
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -159678,10 +159640,10 @@
       "coreqs": null,
       "antireqs": "AE224, BME213, CHE220, CIVE224, ECE203, ECE306, ECON221, ENVE224, ME202, MTE201, NE215, STAT231, SYDE212",
       "rating": {
-        "easy": 0.625,
+        "easy": 0.5833333333333334,
         "useful": 1,
-        "liked": 0.8,
-        "filled_count": 5
+        "liked": 0.8333333333333334,
+        "filled_count": 6
       },
       "sections": [],
       "units": 0.5,
@@ -159723,9 +159685,9 @@
       "antireqs": "ECE307, STAT332",
       "rating": {
         "easy": 0,
-        "useful": 0.5,
+        "useful": 0.75,
         "liked": 0,
-        "filled_count": 1
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -159768,10 +159730,10 @@
       "coreqs": null,
       "antireqs": "AE392, BME364, CIVE392, ECE390, ENVE392, GEOE392, SYDE262",
       "rating": {
-        "easy": 0.6428571428571429,
-        "useful": 0.4642857142857143,
-        "liked": 0.4838709677419355,
-        "filled_count": 31
+        "easy": 0.6166666666666667,
+        "useful": 0.4666666666666667,
+        "liked": 0.46875,
+        "filled_count": 32
       },
       "sections": [
         {
@@ -159818,9 +159780,9 @@
       "antireqs": "ECON101, ECON201",
       "rating": {
         "easy": 0.25,
-        "useful": 0,
-        "liked": 0,
-        "filled_count": 1
+        "useful": 0.375,
+        "liked": 0.5,
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -159837,9 +159799,9 @@
       "antireqs": null,
       "rating": {
         "easy": 0.25,
-        "useful": 0.875,
-        "liked": 0.25,
-        "filled_count": 4
+        "useful": 0.8333333333333334,
+        "liked": 0.2,
+        "filled_count": 5
       },
       "sections": [],
       "units": 0.5,
@@ -160015,6 +159977,11 @@
         "filled_count": 5
       },
       "sections": [
+        {
+          "id": 9091,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
         {
           "id": 5227,
           "enrollment_total": 86,
@@ -164254,14 +164221,14 @@
       },
       "sections": [
         {
-          "id": 5269,
-          "enrollment_total": 102,
-          "enrollment_capacity": 134
-        },
-        {
           "id": 9027,
           "enrollment_total": 1,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 5269,
+          "enrollment_total": 102,
+          "enrollment_capacity": 134
         }
       ],
       "units": 0.5,
@@ -164301,14 +164268,14 @@
       },
       "sections": [
         {
-          "id": 4616,
-          "enrollment_total": 102,
-          "enrollment_capacity": 120
-        },
-        {
           "id": 9029,
           "enrollment_total": 1,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 4616,
+          "enrollment_total": 102,
+          "enrollment_capacity": 120
         }
       ],
       "units": 0.5,
@@ -165259,10 +165226,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.8926991150442478,
-        "useful": 0.45685840707964603,
-        "liked": 0.4537712895377129,
-        "filled_count": 822
+        "easy": 0.8931718061674009,
+        "useful": 0.4581497797356828,
+        "liked": 0.45443499392466585,
+        "filled_count": 823
       },
       "sections": [],
       "units": 0,
@@ -168093,10 +168060,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5357142857142857,
-        "useful": 0.375,
-        "liked": 0.35714285714285715,
-        "filled_count": 28
+        "easy": 0.59375,
+        "useful": 0.453125,
+        "liked": 0.4,
+        "filled_count": 30
       },
       "sections": [
         {
@@ -168398,10 +168365,10 @@
       "coreqs": null,
       "antireqs": "AE123, (BME294 and BME294L), CIVE123, ECE140, ENVE123, GENE123, GEOE123, ME123, MTE120, SYDE292",
       "rating": {
-        "easy": 0.35,
-        "useful": 0.86,
-        "liked": 0.7843137254901961,
-        "filled_count": 51
+        "easy": 0.36607142857142855,
+        "useful": 0.875,
+        "liked": 0.7962962962962963,
+        "filled_count": 54
       },
       "sections": [
         {
@@ -172996,13 +172963,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 7007,
-          "enrollment_total": 95,
-          "enrollment_capacity": 97
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -175787,12 +175748,12 @@
       },
       "sections": [
         {
-          "id": 4392,
+          "id": 4393,
           "enrollment_total": 0,
           "enrollment_capacity": 3
         },
         {
-          "id": 4393,
+          "id": 4392,
           "enrollment_total": 0,
           "enrollment_capacity": 3
         }
@@ -176139,10 +176100,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.8027950310559007,
-        "useful": 0.18333333333333332,
-        "liked": 0.07926829268292683,
-        "filled_count": 1312
+        "easy": 0.8031007751937984,
+        "useful": 0.18304953560371517,
+        "liked": 0.07920792079207921,
+        "filled_count": 1313
       },
       "sections": [
         {
@@ -176212,10 +176173,10 @@
       "coreqs": null,
       "antireqs": "PD2",
       "rating": {
-        "easy": 0.45664739884393063,
-        "useful": 0.1199421965317919,
-        "liked": 0.04524886877828054,
-        "filled_count": 442
+        "easy": 0.4568965517241379,
+        "useful": 0.11925287356321838,
+        "liked": 0.045146726862302484,
+        "filled_count": 443
       },
       "sections": [
         {
@@ -181824,7 +181785,13 @@
         "liked": 0.7647058823529411,
         "filled_count": 17
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3532,
+          "enrollment_total": 26,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -182215,7 +182182,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 9099,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ]
     },
     {
       "id": 5205,
@@ -185321,10 +185294,10 @@
       "coreqs": null,
       "antireqs": "PHYS111, PHYS121; First year Engineering students only",
       "rating": {
-        "easy": 0.18354430379746836,
-        "useful": 0.7457081545064378,
-        "liked": 0.4401114206128134,
-        "filled_count": 359
+        "easy": 0.18277310924369747,
+        "useful": 0.7425213675213675,
+        "liked": 0.4388888888888889,
+        "filled_count": 360
       },
       "sections": [
         {
@@ -187730,9 +187703,9 @@
       "id": 10764,
       "code": "phys357",
       "name": "Statistical Mechanics and Thermodynamics",
-      "prereqs": null,
+      "prereqs": "1 of AMATH250, AMATH251, MATH228; 1 of ECE206, MATH212, MATH217, MATH237, MATH247, NE217; 1 of PHYS267, STAT220, STAT230, STAT240; (AMATH271 or PHYS121) or PHYS111 with a grade of at least 80%.",
       "coreqs": null,
-      "antireqs": null,
+      "antireqs": "CHEM254, ECE403, PHYS358, PHYS359",
       "rating": {
         "easy": null,
         "useful": null,
@@ -188505,7 +188478,7 @@
       "id": 10648,
       "code": "phys376",
       "name": "Relativistic Physics",
-      "prereqs": null,
+      "prereqs": "PHYS242; One of AMATH231, ECE206, MATH212, MATH227, NE217; One of AMATH271, PHYS263",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -189719,9 +189692,9 @@
       "id": 10659,
       "code": "phys457",
       "name": "Advanced Statistical Mechanics",
-      "prereqs": null,
+      "prereqs": "PHYS357; One of AMATH373, CHEM356, PHYS233, PHYS234; One of CS114, CS116, CS136, CS146.",
       "coreqs": null,
-      "antireqs": null,
+      "antireqs": "PHYS359",
       "rating": {
         "easy": null,
         "useful": null,
@@ -191046,13 +191019,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8212,
-          "enrollment_total": 6,
-          "enrollment_capacity": 30
-        }
-      ]
+      "sections": []
     },
     {
       "id": 5483,
@@ -191391,13 +191358,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 6954,
-          "enrollment_total": 1,
-          "enrollment_capacity": 30
-        }
-      ]
+      "sections": []
     },
     {
       "id": 5503,
@@ -192673,10 +192634,10 @@
       "coreqs": null,
       "antireqs": "ENBUS306, ERS302, INTEG340",
       "rating": {
-        "easy": 0.5625,
+        "easy": 0.53125,
         "useful": 0.5277777777777778,
-        "liked": 0.17647058823529413,
-        "filled_count": 17
+        "liked": 0.16666666666666666,
+        "filled_count": 18
       },
       "sections": [],
       "units": 0.5,
@@ -195906,6 +195867,11 @@
           "id": 5766,
           "enrollment_total": 59,
           "enrollment_capacity": 66
+        },
+        {
+          "id": 9095,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -203220,8 +203186,8 @@
       "rating": {
         "easy": 0.6629383313180169,
         "useful": 0.7267512077294686,
-        "liked": 0.7917316692667706,
-        "filled_count": 1282
+        "liked": 0.7918939984411536,
+        "filled_count": 1283
       },
       "sections": [],
       "units": 0.5,
@@ -203345,12 +203311,17 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7122395833333334,
-        "useful": 0.7087765957446809,
-        "liked": 0.7202797202797203,
-        "filled_count": 286
+        "easy": 0.7137305699481865,
+        "useful": 0.7063492063492064,
+        "liked": 0.7212543554006968,
+        "filled_count": 287
       },
       "sections": [
+        {
+          "id": 9094,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
         {
           "id": 3867,
           "enrollment_total": 313,
@@ -204348,13 +204319,7 @@
         "liked": 0.4634146341463415,
         "filled_count": 82
       },
-      "sections": [
-        {
-          "id": 3161,
-          "enrollment_total": 209,
-          "enrollment_capacity": 210
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "arts280",
@@ -205620,10 +205585,10 @@
       "coreqs": null,
       "antireqs": "SRF306",
       "rating": {
-        "easy": 0.8333333333333334,
-        "useful": 0.7777777777777778,
-        "liked": 0.8333333333333334,
-        "filled_count": 18
+        "easy": 0.85,
+        "useful": 0.75,
+        "liked": 0.8421052631578947,
+        "filled_count": 19
       },
       "sections": [],
       "units": 0.5,
@@ -205800,7 +205765,13 @@
         "liked": 0.4,
         "filled_count": 5
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3891,
+          "enrollment_total": 35,
+          "enrollment_capacity": 100
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -206061,7 +206032,13 @@
         "liked": 0.8333333333333334,
         "filled_count": 18
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8361,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "psych393",
@@ -210822,28 +210799,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 3304,
-          "enrollment_total": 8,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3305,
-          "enrollment_total": 3,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3306,
-          "enrollment_total": 3,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3307,
-          "enrollment_total": 2,
-          "enrollment_capacity": 9
-        }
-      ]
+      "sections": []
     },
     {
       "id": 6151,
@@ -212931,7 +212887,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3410,
+          "enrollment_total": 1,
+          "enrollment_capacity": 7
+        }
+      ]
     },
     {
       "id": 6261,
@@ -226491,8 +226453,8 @@
       "rating": {
         "easy": 0.8530927835051546,
         "useful": 0.4505208333333333,
-        "liked": 0.3548387096774194,
-        "filled_count": 124
+        "liked": 0.352,
+        "filled_count": 125
       },
       "sections": [
         {
@@ -232216,7 +232178,13 @@
         "liked": 0,
         "filled_count": 1
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8262,
+          "enrollment_total": 28,
+          "enrollment_capacity": 28
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -239750,7 +239718,13 @@
         "liked": 0.8235294117647058,
         "filled_count": 17
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5984,
+          "enrollment_total": 30,
+          "enrollment_capacity": 40
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "stat202",
@@ -240580,6 +240554,11 @@
       },
       "sections": [
         {
+          "id": 9077,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 6286,
           "enrollment_total": 38,
           "enrollment_capacity": 123
@@ -240588,11 +240567,6 @@
           "id": 6134,
           "enrollment_total": 79,
           "enrollment_capacity": 125
-        },
-        {
-          "id": 9077,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -240802,7 +240776,13 @@
         "liked": 0.7090909090909091,
         "filled_count": 55
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 6002,
+          "enrollment_total": 71,
+          "enrollment_capacity": 100
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -241568,6 +241548,11 @@
         "filled_count": 67
       },
       "sections": [
+        {
+          "id": 9092,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
         {
           "id": 5777,
           "enrollment_total": 141,
@@ -245088,7 +245073,7 @@
       "id": 10656,
       "code": "syde163",
       "name": "Introduction to Design 2",
-      "prereqs": null,
+      "prereqs": "Level at least 1B Systems Design Engineering",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -245469,7 +245454,7 @@
       "id": 10623,
       "code": "syde251",
       "name": "Introduction to Socio-Ecological Systems",
-      "prereqs": null,
+      "prereqs": "SYDE152; Level at least 2B Systems Design Engineering students",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -245826,9 +245811,9 @@
       "id": 10618,
       "code": "syde288",
       "name": "Physics 2: Dynamics",
-      "prereqs": null,
+      "prereqs": "Level at least 1B Systems Design Engineering.",
       "coreqs": null,
-      "antireqs": null,
+      "antireqs": "BME288/BME182, MTE182, SYDE182",
       "rating": {
         "easy": null,
         "useful": null,
@@ -246132,9 +246117,9 @@
       "id": 10718,
       "code": "syde321",
       "name": "Introduction to Responsible Artificial Intelligence Systems",
-      "prereqs": null,
+      "prereqs": "SYDE212; Level at least 3A Systems Design Engineering students.",
       "coreqs": null,
-      "antireqs": null,
+      "antireqs": "CS480, SYDE577",
       "rating": {
         "easy": null,
         "useful": null,
@@ -246547,7 +246532,7 @@
       "id": 10627,
       "code": "syde364",
       "name": "Design Consultation",
-      "prereqs": null,
+      "prereqs": "Level at least 3B Systems Design Engineering",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -247234,7 +247219,13 @@
         "liked": 0.7,
         "filled_count": 10
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4689,
+          "enrollment_total": 24,
+          "enrollment_capacity": 26
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -248301,7 +248292,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8863,
+          "enrollment_total": 14,
+          "enrollment_capacity": 25
+        }
+      ]
     },
     {
       "id": 8917,
@@ -249785,7 +249782,13 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7926,
+          "enrollment_total": 30,
+          "enrollment_capacity": 30
+        }
+      ],
       "units": 0.5,
       "crossListed": [
         "commst282"
@@ -253354,7 +253357,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7930,
+          "enrollment_total": 40,
+          "enrollment_capacity": 80
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "fine319"
