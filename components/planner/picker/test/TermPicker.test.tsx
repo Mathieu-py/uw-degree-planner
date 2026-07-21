@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import {
-  act,
   cleanup,
   fireEvent,
   render,
@@ -171,29 +170,6 @@ describe("TermPicker", () => {
       "disabled",
       true,
     );
-  });
-
-  it("does not write a duplicate when the course is already placed", async () => {
-    loadPlanMock.mockReturnValue(
-      makePlan([
-        slot({
-          id: "a",
-          position: "1A",
-          termId: FALL_2025,
-          courses: [{ code: "cs246" }],
-        }),
-        slot({ id: "b", position: "1B", termId: WINTER_2025 }),
-      ]),
-    );
-    render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
-
-    // The buttons are disabled, but fire the handler directly to prove the
-    // writer-level guard also refuses (defense in depth). The act wrap flushes
-    // the async gate sequence so the negative assertion isn't vacuous.
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Winter 2025/ }));
-    });
-    expect(savePlanMock).not.toHaveBeenCalled();
   });
 
   it("shows a program-block notice instead of terms when the course is closed to the plan's program", () => {

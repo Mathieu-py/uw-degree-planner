@@ -63,7 +63,7 @@ export function CourseTermModalShell({
               <Icon name="check" size="xs" aria-hidden="true" />
             </span>
           ) : (
-            "Ineligible terms are disabled"
+            "Terms missing prerequisites are flagged, not blocked"
           )}
         </span>
       </footer>

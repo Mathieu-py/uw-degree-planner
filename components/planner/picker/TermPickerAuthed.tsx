@@ -15,7 +15,8 @@ import { Icon } from "@/components/ui/Icon";
 import { isProgramBlocked } from "@/lib/courses/courseEligibility";
 import type { Course } from "@/lib/courses/types";
 import { describeActionError } from "@/lib/format";
-import { applyAddToPlan } from "@/lib/plan/commitAddCourse";
+import { useKeyedAsync } from "@/lib/hooks/useKeyedAsync";
+import { runAddToPlanState } from "@/lib/plan/commitAddCourse";
 import {
   loadServerPlan,
   plansContainingCourse,
@@ -40,9 +41,8 @@ import { useTermOptions } from "./termOptions";
 export type TermPickerStep = "plans" | "term";
 
 /**
- * Signed-in add flow: pick which server plan to add to, then a term within it;
- * persisted via a read-modify-write `savePlanState`. `step` is owned by the
- * parent {@link TermPicker} so it can title the modal accordingly.
+ * Signed-in add flow: pick a server plan, then a term within it. `step` is
+ * owned by the parent {@link TermPicker} so it can title the modal.
  */
 export function TermPickerAuthed({
   course,
@@ -58,35 +58,40 @@ export function TermPickerAuthed({
   justAdded: boolean;
 }) {
   const code = course.code.toLowerCase();
-  const {
-    plans,
-    loading,
-    error: listError,
-    refetch,
-  } = usePlanList({ isAuthed: true });
+  const { plans, loading, loadError: listError, refetch } = usePlanList(true);
 
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [serverPlan, setServerPlan] = useState<ServerPlan | null>(null);
-  const [loadingPlan, setLoadingPlan] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Plan ids that already contain this course — shown disabled. Null until the
-  // lookup resolves; a failed lookup just leaves every plan selectable.
+  // Plans already holding this course show disabled; a failed lookup leaves all selectable.
   const [containing, setContaining] = useState<Set<string> | null>(null);
 
-  // serverPlan is null during the plan-picker step and mid-load, so options stay
-  // empty until a plan resolves. `blocked` guards the term step for the single-
-  // plan auto-advance case (the plan step below is skipped there).
+  // Keyed load drops stale responses so serverPlan can't desync from
+  // selectedPlanId; not-found maps to an error so `success` carries a real plan.
+  const loadPlanById = useCallback(
+    async (id: string): Promise<ActionResult<ServerPlan>> => {
+      const res = await loadServerPlan(id);
+      if (!res.ok) return res;
+      if (res.data === null) return { ok: false, error: "not_found" };
+      return { ok: true, data: res.data };
+    },
+    [],
+  );
+  const load = useKeyedAsync(selectedPlanId, loadPlanById);
+  const serverPlan = load.state.status === "success" ? load.state.data : null;
+  const loadingPlan = load.state.status === "loading";
+  const loadError = load.state.status === "error" ? load.state.error : null;
+
+  // Options stay empty until a plan resolves; `blocked` guards the term step
+  // in the single-plan auto-advance case (the plan step is skipped there).
   const { options, alreadyIn, blocked } = useTermOptions(
     course,
     serverPlan?.slots,
     serverPlan,
   );
 
-  // Program eligibility is per-plan, not per-term, so it's decided here rather
-  // than showing every term disabled. The hook loads the union across all
-  // summaries; blockedPlanIds recomputes as detail lands.
+  // Program eligibility is per-plan, not per-term, so it's decided here;
+  // blockedPlanIds recomputes as program detail lands.
   const summaryProgramIds = useMemo(
     () => (plans ?? []).flatMap((p) => p.programIds ?? []),
     [plans],
@@ -107,8 +112,7 @@ export function TermPickerAuthed({
     return set;
   }, [plans, course, detail]);
 
-  // Which of the user's plans already hold this course? One RLS-scoped read,
-  // keyed only on the course, so it runs once when the picker opens.
+  // One RLS-scoped read, keyed on the course, so it runs once per picker open.
   useEffect(() => {
     let live = true;
     void plansContainingCourse(code).then((res: ActionResult<string[]>) => {
@@ -119,68 +123,50 @@ export function TermPickerAuthed({
     };
   }, [code]);
 
-  const openPlan = useCallback(
-    async (planId: string) => {
-      setSelectedPlanId(planId);
-      setServerPlan(null);
-      setLoadError(null);
+  // Advance to the term step; useKeyedAsync handles loading and stale-drop.
+  const selectPlan = useCallback(
+    (planId: string) => {
       setSaveError(null);
       setStep("term");
-      setLoadingPlan(true);
-      const res = await loadServerPlan(planId);
-      setLoadingPlan(false);
-      if (!res.ok) {
-        setLoadError(res.error);
-        return;
-      }
-      if (!res.data) {
-        setLoadError("not_found");
-        return;
-      }
-      setServerPlan(res.data);
+      setSelectedPlanId(planId);
     },
     [setStep],
   );
 
-  // Exactly one plan: skip the plan-picker step. The `!selectedPlanId` guard
-  // keeps it from re-running after it advances.
+  // Exactly one plan: skip the plan-picker step; `!selectedPlanId` stops re-runs.
   useEffect(() => {
     if (plans && plans.length === 1 && step === "plans" && !selectedPlanId) {
-      void openPlan(plans[0].id);
+      selectPlan(plans[0].id);
     }
-  }, [plans, step, selectedPlanId, openPlan]);
+  }, [plans, step, selectedPlanId, selectPlan]);
 
   function backToPlans() {
+    // Clearing the key resets the keyed load and drops in-flight responses.
     setStep("plans");
     setSelectedPlanId(null);
-    setServerPlan(null);
-    setLoadError(null);
     setSaveError(null);
   }
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !serverPlan || !selectedPlanId) return;
-    // Saving flips before the await so a double-click can't slip past the guard.
-    setSaving(true);
     setSaveError(null);
-    try {
-      const applied = await applyAddToPlan(serverPlan, slot, course);
-      // Placed/blocked adds are prevented upstream; nothing new to report.
-      if (applied.status !== "added") return;
-      // savePlanState is a full atomic REPLACE, so send the entire updated plan to
-      // avoid clobbering its other courses.
-      const res = await savePlanState(selectedPlanId, toSnapshot(applied.plan));
-      if (!res.ok) {
-        setSaveError(res.error);
-        return;
-      }
-      setServerPlan(applied.plan);
-      onAdded(label);
-    } finally {
-      // Clears busy on every exit — including a rejected savePlanState (network
-      // failure), which would otherwise leave the picker stuck disabled.
-      setSaving(false);
-    }
+    await runAddToPlanState({
+      plan: serverPlan,
+      slot,
+      course,
+      label,
+      setSaving,
+      // Full-plan REPLACE targeting the loaded plan's own id (not
+      // selectedPlanId), so a desync can't write one plan's data into another.
+      persist: async (p) => {
+        const res = await savePlanState(p.id, toSnapshot(p));
+        return res.ok ? { ok: true } : { ok: false, error: res.error };
+      },
+      // Keep terms disabled through the close animation (blocks a double-add).
+      onSaved: load.setData,
+      onAdded,
+      onError: setSaveError,
+    });
   }
 
   // ---- Plan-selection step ----
@@ -217,8 +203,7 @@ export function TermPickerAuthed({
       // Auto-advance effect is firing; show the load placeholder, not the list.
       return <StatusBody>Loading plan…</StatusBody>;
     }
-    // Wait for the membership lookup so plans already holding the course render
-    // disabled from the start rather than flipping after a beat.
+    // Wait for the membership lookup so held plans render disabled from the start.
     if (containing === null)
       return <StatusBody>Loading your plans…</StatusBody>;
     return (
@@ -231,7 +216,7 @@ export function TermPickerAuthed({
               key={p.id}
               type="button"
               disabled={has || isBlocked}
-              onClick={() => void openPlan(p.id)}
+              onClick={() => selectPlan(p.id)}
               className={optionButtonClasses}
             >
               <span className="flex min-w-0 flex-col">
@@ -262,6 +247,7 @@ export function TermPickerAuthed({
           variant="ghost"
           size="sm"
           onClick={backToPlans}
+          disabled={saving}
           className="self-start -ml-1"
         >
           ← Plans
@@ -276,14 +262,11 @@ export function TermPickerAuthed({
               ? "That plan is no longer available."
               : describeActionError(loadError)
           }
-          onRetry={
-            selectedPlanId ? () => void openPlan(selectedPlanId) : undefined
-          }
+          onRetry={selectedPlanId ? load.reload : undefined}
         />
       ) : serverPlan ? (
         blocked ? (
-          // Reached only when a single (auto-advanced) plan is program-blocked;
-          // multi-plan users can't select a blocked plan above.
+          // Only reachable via single-plan auto-advance; blocked plans aren't selectable above.
           <ProgramBlockedBody />
         ) : (
           <TermOptionList

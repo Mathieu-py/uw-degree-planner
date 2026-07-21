@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Dropzone } from "@/components/ui/Dropzone";
 import { Icon } from "@/components/ui/Icon";
 import { Modal, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { countNoun, pluralize } from "@/lib/format";
@@ -14,8 +15,12 @@ import {
   type ParsedCourse,
   parseTranscript,
 } from "@/lib/transcript/parse";
-import { extractTextFromPdf } from "@/lib/transcript/pdfText";
 import type { TranscriptParseResult } from "@/lib/transcript/types";
+import { useTranscriptUpload } from "@/lib/transcript/useTranscriptUpload";
+
+// Empty parse until a file lands, so the categorize/tally derivations stay
+// non-null before upload.
+const EMPTY_PARSE = parseTranscript("");
 
 interface Props {
   /**
@@ -38,34 +43,22 @@ export function TranscriptImportModal({
   catalogCodes,
 }: Props) {
   const { isClosing, handleClose } = useModalExit(onClose);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState("");
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractError, setExtractError] = useState<string | null>(null);
+  const {
+    fileName,
+    parseResult: uploaded,
+    busy: isExtracting,
+    error: extractError,
+    onFile,
+  } = useTranscriptUpload();
   const [included, setIncluded] = useState<Set<string>>(new Set());
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFileName(file.name);
-    setExtractError(null);
-    setText("");
+  // A fresh pick/replace drops the opt-in bucket so it can't carry across files.
+  function handleFile(file: File | undefined) {
     setIncluded(new Set());
-    setIsExtracting(true);
-    try {
-      const extracted = await extractTextFromPdf(file);
-      setText(extracted);
-    } catch (err) {
-      setExtractError(
-        err instanceof Error ? err.message : "Failed to read PDF.",
-      );
-    } finally {
-      setIsExtracting(false);
-    }
+    onFile(file);
   }
 
-  const parseResult = useMemo(() => parseTranscript(text), [text]);
+  const parseResult = uploaded ?? EMPTY_PARSE;
   const categorized = useMemo<Categorized>(
     () => categorize(parseResult, catalogCodes),
     [parseResult, catalogCodes],
@@ -113,7 +106,7 @@ export function TranscriptImportModal({
     handleClose();
   }
 
-  const hasInput = text.trim().length > 0;
+  const hasInput = uploaded !== null;
   const hasResults = parseResult.courses.length > 0;
 
   return (
@@ -128,42 +121,14 @@ export function TranscriptImportModal({
       </ModalHeader>
 
       <div className="px-4 py-4 flex flex-col gap-4 overflow-y-auto">
-        {/* The native file input is the actual control; once a file is chosen
-            it's hidden and the file row's "Replace" re-triggers it. */}
-        <input
-          ref={fileInputRef}
-          id="transcript-pdf-input"
-          type="file"
-          accept="application/pdf,.pdf"
-          onChange={handleFileChange}
-          onClick={(e) => {
-            // Clear so re-selecting the same PDF still fires onChange.
-            (e.target as HTMLInputElement).value = "";
-          }}
-          disabled={isExtracting}
-          className="sr-only"
-        />
-
         {!fileName ? (
           <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-line-2 bg-bg-2 px-4 py-8 text-center transition-colors hover:border-accent-bg hover:bg-accent-soft"
-            >
-              <span className="text-accent">
-                <Icon name="upload" size="md" aria-hidden="true" />
-              </span>
-              <span className="text-sm font-semibold text-ink">
-                Choose your Quest transcript (PDF)
-              </span>
-              <span className="u-small inline-flex items-center gap-1.5">
-                <span className="text-met">
-                  <Icon name="shield" size="xs" aria-hidden="true" />
-                </span>
-                Parsed in your browser · never uploaded
-              </span>
-            </button>
+            <Dropzone
+              onFile={handleFile}
+              busy={isExtracting}
+              label="Choose your Quest transcript (PDF)"
+              className="px-4 py-8"
+            />
             <p className="u-small">
               Sign into Quest → Student Center → Other Academic… → Transcript:
               View Unofficial → save as PDF, then upload it here.
@@ -173,7 +138,7 @@ export function TranscriptImportModal({
           <FileRow
             fileName={fileName}
             busy={isExtracting}
-            onReplace={() => fileInputRef.current?.click()}
+            onFile={handleFile}
           />
         )}
 
@@ -246,12 +211,16 @@ export function TranscriptImportModal({
 function FileRow({
   fileName,
   busy,
-  onReplace,
+  onFile,
+  accept = "application/pdf,.pdf",
 }: {
   fileName: string;
   busy: boolean;
-  onReplace: () => void;
+  onFile: (file: File | undefined) => void;
+  accept?: string;
 }) {
+  // Replace re-triggers this input: one click, and cancelling keeps the current file.
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex items-center gap-2.5 px-3 py-2.5 border border-line rounded-[10px] bg-bg-2">
       <span className="text-accent shrink-0">
@@ -274,10 +243,24 @@ function FileRow({
           )}
         </span>
       </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="sr-only"
+        disabled={busy}
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(e) => onFile(e.target.files?.[0])}
+        // Clear so re-selecting the same PDF still fires onChange.
+        onClick={(e) => {
+          (e.target as HTMLInputElement).value = "";
+        }}
+      />
       <Button
         variant="outline"
         size="sm"
-        onClick={onReplace}
+        onClick={() => inputRef.current?.click()}
         disabled={busy}
         className="shrink-0"
       >

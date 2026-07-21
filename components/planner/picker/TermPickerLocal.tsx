@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import type { Course } from "@/lib/courses/types";
-import { applyAddToPlan } from "@/lib/plan/commitAddCourse";
+import { runAddToPlanState } from "@/lib/plan/commitAddCourse";
 import { loadPlan, savePlan } from "@/lib/plan/storage";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import { ProgramBlockedBody } from "./CourseTermModalShell";
@@ -26,6 +26,7 @@ export function TermPickerLocal({
 }) {
   const [plan, setPlan] = useState<LocalPlan | null>(() => loadPlan());
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { options, alreadyIn, blocked } = useTermOptions(
     course,
@@ -35,22 +36,27 @@ export function TermPickerLocal({
 
   async function addTo(slot: PlanSlot, label: string) {
     if (saving || !plan) return;
-    // Saving flips before the await so a double-click can't slip past the guard;
-    // the core also re-runs the placed/block gates the buttons enforce (no bypass).
-    setSaving(true);
-    const applied = await applyAddToPlan(plan, slot, course);
-    if (applied.status !== "added") {
-      setSaving(false);
-      return;
-    }
-    // Only reflect the add and report success if the write stuck (localStorage
-    // can be full/unavailable). savePlan re-stamps updatedAt itself.
-    if (!savePlan(applied.plan)) {
-      setSaving(false);
-      return;
-    }
-    setPlan(applied.plan);
-    onAdded(label);
+    setSaveError(null);
+    // savePlan re-stamps updatedAt; a failed write (localStorage full/disabled)
+    // surfaces a banner and isn't reflected.
+    await runAddToPlanState({
+      plan,
+      slot,
+      course,
+      label,
+      setSaving,
+      persist: (p) =>
+        savePlan(p)
+          ? { ok: true }
+          : {
+              ok: false,
+              error:
+                "Couldn't save to this browser — storage may be full or disabled.",
+            },
+      onSaved: setPlan,
+      onAdded,
+      onError: setSaveError,
+    });
   }
 
   if (!plan) {
@@ -77,12 +83,19 @@ export function TermPickerLocal({
   if (blocked) return <ProgramBlockedBody />;
 
   return (
-    <TermOptionList
-      options={options}
-      alreadyIn={alreadyIn}
-      justAdded={justAdded}
-      busy={saving}
-      onPick={addTo}
-    />
+    <>
+      <TermOptionList
+        options={options}
+        alreadyIn={alreadyIn}
+        justAdded={justAdded}
+        busy={saving}
+        onPick={addTo}
+      />
+      {saveError ? (
+        <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
+          {saveError}
+        </p>
+      ) : null}
+    </>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import { FIELD_CLASSES } from "@/components/ui/Input";
 import { useDropdown } from "@/components/ui/useDropdown";
+import { describeActionError } from "@/lib/format";
 import { useEscape } from "@/lib/hooks/useEscape";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
@@ -97,9 +98,8 @@ function PlanToolbarAuthed({
   extraItems?: MenuItem[];
 }) {
   const router = useRouter();
-  const { plans, rename, remove, duplicate, share } = usePlanList({
-    isAuthed: true,
-  });
+  const { plans, rename, remove, duplicate, share, error, loadError, refetch } =
+    usePlanList(true);
 
   const [editing, setEditing] = useState(false);
   const [editingName, setEditingName] = useState("");
@@ -218,6 +218,27 @@ function PlanToolbarAuthed({
     dismissInline();
     // Plan creation lives in the /plan/new stepper.
     router.push("/plan/new");
+  }
+
+  // A list-load failure with no cached plans surfaces an inline retry rather
+  // than silently hiding the toolbar.
+  if (loadError && plans === null) {
+    return (
+      <div
+        role="alert"
+        className="flex w-full items-center justify-between gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger"
+      >
+        <span>{describeActionError(loadError)}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void refetch()}
+          className="shrink-0"
+        >
+          Try again
+        </Button>
+      </div>
+    );
   }
 
   // Loading + empty: the planner redirects "no plans yet" to /plan/new and
@@ -494,6 +515,17 @@ function PlanToolbarAuthed({
           {trailing}
         </div>
       </div>
+      {/* A failed rename/delete/duplicate/share reverts optimistically — this
+          banner is the only signal on the planner route. Cleared on next success
+          by the shared usePlanList store, so no dismiss wiring. */}
+      {error ? (
+        <div
+          role="alert"
+          className="w-full rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger"
+        >
+          {describeActionError(error)}
+        </div>
+      ) : null}
     </>
   );
 }

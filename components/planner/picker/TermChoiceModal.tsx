@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { CourseTermModalShell } from "@/components/catalog/CourseTermModalShell";
-import { TermOptionList } from "@/components/catalog/TermOptionList";
-import { useTermOptions } from "@/components/catalog/termOptions";
 import type { Course } from "@/lib/courses/types";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
+import { CourseTermModalShell } from "./CourseTermModalShell";
+import { TermOptionList } from "./TermOptionList";
+import { useTermOptions } from "./termOptions";
 
 /**
  * Planner term picker for a single, already-chosen course (the audit drill-in
@@ -58,6 +58,7 @@ export function TermChoiceModal({
         options={options}
         alreadyIn={alreadyIn}
         justAdded={addedTo !== null}
+        busy={addedTo !== null}
         onPick={handlePick}
       />
     </CourseTermModalShell>

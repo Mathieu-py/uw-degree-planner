@@ -10,14 +10,15 @@ export const metadata = {
   title: "Plan your degree",
 };
 
+// Shared so app/plan/loading.tsx — which sits above this layout and can't
+// inherit it — renders the skeleton in the identical container (no drift).
+export const PLANNER_CONTAINER_CLASS =
+  "mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 lg:pb-0 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden";
+
 export default function PlannerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 sm:px-8 lg:px-12 py-4 lg:pb-0 flex flex-col gap-3 lg:h-[calc(100dvh-7rem)] lg:overflow-hidden">
-      {children}
-    </div>
-  );
+  return <div className={PLANNER_CONTAINER_CLASS}>{children}</div>;
 }

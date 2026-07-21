@@ -17,7 +17,7 @@ vi.mock("../AddToTermButton", () => ({
     />
   ),
 }));
-vi.mock("@/components/catalog/TermPicker", () => ({
+vi.mock("@/components/planner/picker/TermPicker", () => ({
   TermPicker: () => <div data-testid="term-picker" />,
 }));
 

@@ -103,6 +103,7 @@ function mockPlanList(
     plans,
     loading: false,
     error: null,
+    loadError: null,
     refetch: vi.fn(),
     create: vi.fn(),
     rename: vi.fn(),
@@ -178,6 +179,62 @@ describe("TermPicker — signed in", () => {
     expect(loadServerPlanMock).toHaveBeenCalledWith("p2");
   });
 
+  it("ignores a stale plan-load: A→list→B keeps B and saves the add to B", async () => {
+    mockPlanList([
+      mkSummary({ id: "plan-A", name: "Plan A" }),
+      mkSummary({ id: "plan-B", name: "Plan B" }),
+    ]);
+    let resolveA!: (v: unknown) => void;
+    loadServerPlanMock
+      .mockImplementationOnce(() => new Promise((res) => (resolveA = res)))
+      .mockResolvedValueOnce({
+        ok: true,
+        data: makeServerPlan(
+          [slot({ id: "b1", position: "1B", termId: WINTER_2025 })],
+          { id: "plan-B" },
+        ),
+      });
+    render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
+
+    // Select plan A — its load is held open.
+    fireEvent.click(await screen.findByRole("button", { name: /Plan A/ }));
+    expect(await screen.findByText("Loading plan…")).toBeTruthy();
+
+    // Return to the list, then select plan B — B resolves.
+    fireEvent.click(screen.getByRole("button", { name: /Plans/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Plan B/ }));
+    expect(
+      await screen.findByRole("button", { name: /Winter 2025/ }),
+    ).toBeTruthy();
+
+    // Plan A's load resolves last (Fall 2025) — it must be ignored.
+    await act(async () => {
+      resolveA({
+        ok: true,
+        data: makeServerPlan(
+          [slot({ id: "a1", position: "1A", termId: FALL_2025 })],
+          { id: "plan-A" },
+        ),
+      });
+      await Promise.resolve();
+    });
+
+    // B is still displayed; the stale A load did not overwrite it.
+    expect(screen.getByRole("button", { name: /Winter 2025/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Fall 2025/ })).toBeNull();
+
+    // The save targets B, using B's snapshot.
+    fireEvent.click(screen.getByRole("button", { name: /Winter 2025/ }));
+    await waitFor(() => expect(savePlanStateMock).toHaveBeenCalled());
+    const [planId, snapshot] = savePlanStateMock.mock.calls[0] as [
+      string,
+      PlanSnapshot,
+    ];
+    expect(planId).toBe("plan-B");
+    const winter = snapshot.slots.find((s) => s.termId === WINTER_2025);
+    expect(winter?.courses.map((c) => c.code)).toContain("cs246");
+  });
+
   it("greys out plans that already contain the course", async () => {
     mockPlanList([
       mkSummary({ id: "p1", name: "Has it" }),
@@ -208,9 +265,8 @@ describe("TermPicker — signed in", () => {
   });
 
   it("disables only the plan whose program is barred (program check at the plan step)", async () => {
-    // "Not open to Faculty of Math students" blocks a CS plan (math faculty) but
-    // not a SYDE plan (engineering) — the check is per-plan, at this first step,
-    // not per-term inside a chosen plan.
+    // A math-faculty restriction blocks the CS plan but not the SYDE plan —
+    // the check is per-plan at this step, not per-term.
     mockPlanList([
       mkSummary({
         id: "syde",
@@ -244,10 +300,8 @@ describe("TermPicker — signed in", () => {
   });
 
   it("keeps a barred plan selectable when its loaded program references the course", async () => {
-    // Both programs are math-faculty and primed (fetch is dead in JSDOM; the
-    // union must load for suppression to apply) — only the one referencing
-    // the course stays selectable. Ids must not collide with the previous
-    // test, which needs its programs unloaded.
+    // Both math-faculty programs are primed (JSDOM has no fetch; suppression
+    // needs loaded detail); ids must not collide with the unloaded-program test.
     programDetail.prime({
       "data-science-bcs": {
         kind: "flexible",
@@ -327,7 +381,7 @@ describe("TermPicker — signed in", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
-  it("flags an already-placed course and never saves a duplicate", async () => {
+  it("flags an already-placed course and disables every term", async () => {
     mockPlanList([mkSummary()]);
     loadServerPlanMock.mockResolvedValue({
       ok: true,
@@ -346,12 +400,8 @@ describe("TermPicker — signed in", () => {
     expect(await screen.findByText(/Already placed in Fall 2025/)).toBeTruthy();
     const winter = screen.getByRole("button", { name: /Winter 2025/ });
     expect(winter).toHaveProperty("disabled", true);
-    // Fire anyway to prove the writer-level guard refuses. The act wrap flushes
-    // the async gate sequence so the negative assertion isn't vacuous.
-    await act(async () => {
-      fireEvent.click(winter);
-    });
-    expect(savePlanStateMock).not.toHaveBeenCalled();
+    // The writer-level guard (defense in depth) is covered directly in
+    // lib/plan/test/commitAddCourse.test.ts.
   });
 
   it("surfaces a load failure with a retry", async () => {

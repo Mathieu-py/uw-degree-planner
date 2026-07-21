@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { loadServerPlan, savePlanState } from "../server/actions";
+import { savePlanState } from "../server/actions";
 import { toSnapshot } from "../server/serialize";
 import type { PlanSnapshot } from "../server/types";
 import { clearPlan, loadPlan, savePlan } from "../storage";
 import type { LocalPlan } from "../types";
-import { serverPlanToLocal } from "./serverPlanToLocal";
-import type { PlanSource, SaveStatus } from "./types";
+import type { SaveStatus } from "./types";
 
 const SAVE_DEBOUNCE_MS = 1500;
 const SAVED_DECAY_MS = 3000;
@@ -16,15 +15,17 @@ export interface UsePlanSyncArgs {
   isAuthed: boolean;
   /** From the `/plan/[planId]` route param. Null = no plan selected. */
   planId: string | null;
+  /**
+   * Signed-in plan from the server component; null signed-out (localStorage is
+   * used instead) or when the row is missing. Keyed remount per planId, no race.
+   */
+  initialPlan: LocalPlan | null;
 }
 
 export interface UsePlanSyncResult {
   plan: LocalPlan | null;
-  source: PlanSource | null;
   hydrated: boolean;
-  reloading: boolean;
   saveStatus: SaveStatus;
-  loadError: string | null;
   /**
    * Update the in-memory plan and persist it. Signed-out: synchronous
    * localStorage write. Signed-in with a planId: debounced server save (1500ms
@@ -35,28 +36,45 @@ export interface UsePlanSyncResult {
   /** Drop the localStorage plan. No-op on the server path. */
   clearLocalPlan: () => void;
   /**
-   * Drain any queued save immediately, resolving once the in-flight save (if
-   * any) settles. Used by the plan switcher before changing `?planId` and as
-   * cleanup on unmount / planId change. The drained save targets the planId
-   * baked into the queued snapshot — never the prop — so flushing during a
+   * Drain any queued save, resolving once the in-flight save settles. Runs as
+   * cleanup on unmount / plan switch (a switch is a keyed remount). The drained
+   * save targets the planId baked into the snapshot — never the prop — so a
    * switch writes to the correct plan.
    */
   flushSave: () => Promise<void>;
 }
 
+/**
+ * Owns the editable plan and its persistence. The plan is *seeded*, not fetched:
+ * signed-in from the server-provided `initialPlan`, signed-out from localStorage
+ * (client-only, synchronous). No async load lives here, so there is no
+ * out-of-order load race — the only async work is the debounced save.
+ */
 export function usePlanSync({
   isAuthed,
   planId,
+  initialPlan,
 }: UsePlanSyncArgs): UsePlanSyncResult {
-  const [plan, setPlanState] = useState<LocalPlan | null>(null);
-  const [source, setSource] = useState<PlanSource | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  // Signed-in shows the server plan on the first render (no skeleton). Signed-out
+  // starts empty and hydrates from localStorage in the effect below.
+  const [plan, setPlanState] = useState<LocalPlan | null>(
+    isAuthed ? initialPlan : null,
+  );
+  const [hydrated, setHydrated] = useState(isAuthed);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({ kind: "idle" });
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // All save orchestration runs through refs — mutations during async work
-  // would otherwise trigger renders that reset the in-flight state.
-  const loadTokenRef = useRef(0);
+  // Latest server plan in a ref so the seed effect can re-read it on an auth flip
+  // without initialPlan's per-render identity retriggering it and clobbering edits.
+  const initialPlanRef = useRef(initialPlan);
+  initialPlanRef.current = initialPlan;
+
+  // Monotonic epoch per plan identity, bumped by the seed effect. `drain` checks
+  // it so a save settling after the identity moved (sign-out) can't write status
+  // for the wrong plan; the save still targets the planId baked into its job.
+  const planEpochRef = useRef(0);
+
+  // Save orchestration runs through refs — mutations during async work would
+  // otherwise trigger renders that reset the in-flight state.
   const queueRef = useRef<{ planId: string; snapshot: PlanSnapshot } | null>(
     null,
   );
@@ -80,14 +98,10 @@ export function usePlanSync({
     );
   }, []);
 
-  // The single drain pump. Cancels the timer, awaits any in-flight save, then
-  // loops the queue, re-checking each pass so an edit made during a save (which
-  // wrote queueRef) is picked up without another debounce.
-  //
-  // Token-protected status: each pass captures loadTokenRef. If it moves mid-
-  // save (planId/isAuthed changed), the save still finishes (correct planId is
-  // baked into the snapshot) but we skip setSaveStatus — the badge now belongs
-  // to a different plan and the effect already reset it.
+  // The single drain pump: cancel the timer, await any in-flight save, then loop
+  // the queue, re-checking each pass so an edit made mid-save is picked up without
+  // another debounce. Epoch-guarded: if the epoch moves mid-save (auth changed),
+  // the save still finishes but we skip setSaveStatus — the badge is another plan's.
   const drain = useCallback(async () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -98,7 +112,7 @@ export function usePlanSync({
     while (queueRef.current) {
       const job = queueRef.current;
       queueRef.current = null;
-      const token = loadTokenRef.current;
+      const epoch = planEpochRef.current;
       setSaveStatus({ kind: "saving" });
 
       const promise = savePlanState(job.planId, job.snapshot);
@@ -110,9 +124,17 @@ export function usePlanSync({
       );
       try {
         const result = await promise;
-        if (loadTokenRef.current !== token) continue;
-        if (result.ok) setSaveStatus({ kind: "saved", at: Date.now() });
-        else setSaveStatus({ kind: "error", message: result.error });
+        if (planEpochRef.current !== epoch) continue;
+        if (result.ok) {
+          setSaveStatus({ kind: "saved", at: Date.now() });
+        } else {
+          setSaveStatus({ kind: "error", message: result.error });
+          // Keep the failed snapshot pending so the retry button (flushSave)
+          // can re-send it; a newer edit overwrites it first. Stop draining —
+          // a retry or edit re-enters the loop, so no tight failing retry.
+          if (!queueRef.current) queueRef.current = job;
+          return;
+        }
       } finally {
         inFlightRef.current = null;
       }
@@ -126,52 +148,23 @@ export function usePlanSync({
     await drain();
   }, [drain, retryLocalSave]);
 
+  // Seed on identity change. Signed-out reads localStorage; signed-in re-seeds from
+  // the latest server plan (no-op on mount, a real reset on a sign-in flip). Bumps
+  // the epoch, resets the badge, drains the pending save on the way out. planId is
+  // NOT a dep: the shell is keyed by planId, so a switch remounts instead.
   useEffect(() => {
-    const token = ++loadTokenRef.current;
-    setHydrated(false);
-
-    if (!isAuthed) {
-      const loaded = loadPlan();
-      if (loadTokenRef.current !== token) return;
-      setPlanState(loaded);
-      setSource("local");
-      setSaveStatus({ kind: "idle" });
-      setLoadError(null);
-      setHydrated(true);
-      return;
-    }
-
-    if (planId === null) {
-      setPlanState(null);
-      setSource(null);
-      setSaveStatus({ kind: "idle" });
-      setLoadError(null);
-      setHydrated(true);
-      return;
-    }
-
-    setSource({ kind: "server", planId });
+    planEpochRef.current++;
     setSaveStatus({ kind: "idle" });
-    setLoadError(null);
-    void (async () => {
-      const result = await loadServerPlan(planId);
-      if (loadTokenRef.current !== token) return;
-      if (result.ok) {
-        setPlanState(result.data ? serverPlanToLocal(result.data) : null);
-      } else {
-        setPlanState(null);
-        setLoadError(result.error);
-      }
-      setHydrated(true);
-    })();
-
-    // Cleanup (planId change / unmount): drain so the pending save (still
-    // targeting the old planId via its snapshot) lands. Can't await from
-    // cleanup, so it's best-effort if the user navigates away mid-call.
+    if (!isAuthed) {
+      setPlanState(loadPlan());
+    } else {
+      setPlanState(initialPlanRef.current);
+    }
+    setHydrated(true);
     return () => {
       void drain();
     };
-  }, [isAuthed, planId, drain]);
+  }, [isAuthed, drain]);
 
   // Auto-decay 'saved' → 'idle' so the badge doesn't read "Saved" forever.
   useEffect(() => {
@@ -227,15 +220,10 @@ export function usePlanSync({
     setPlanState(null);
   }, []);
 
-  const reloading = !hydrated && plan !== null;
-
   return {
     plan,
-    source,
     hydrated,
-    reloading,
     saveStatus,
-    loadError,
     setPlan,
     clearLocalPlan,
     flushSave,

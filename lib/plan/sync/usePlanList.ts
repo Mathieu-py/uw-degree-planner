@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   createPlan,
   deletePlan,
@@ -18,7 +18,10 @@ export interface UsePlanListResult {
   /** Null while loading. Empty array means "authed, fetched, zero plans". */
   plans: PlanSummary[] | null;
   loading: boolean;
+  /** This consumer's last failed mutation — local, so it never leaks across routes. */
   error: string | null;
+  /** The shared list-load failure — global, retried via `refetch`. */
+  loadError: string | null;
   refetch: () => Promise<void>;
   /**
    * Pessimistic create: waits for the server insert before prepending to the
@@ -42,17 +45,16 @@ export interface UsePlanListResult {
 }
 
 /**
- * Module-level store backing usePlanList. State lives here, not in the hook, so
- * every caller shares one copy — a create() in PlannerShell propagates to
- * PlanToolbar's instance via useSyncExternalStore.
+ * Module-level store: the shared plan list + load state, so every consumer sees
+ * one copy. Action errors stay out — they're per-consumer, held in the hook.
  */
 interface StoreState {
   plans: PlanSummary[] | null;
   loading: boolean;
-  error: string | null;
+  loadError: string | null;
 }
 
-let state: StoreState = { plans: null, loading: false, error: null };
+let state: StoreState = { plans: null, loading: false, loadError: null };
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -82,7 +84,10 @@ let currentIsAuthed: boolean | null = null;
 
 async function refetchInternal(isAuthed: boolean): Promise<void> {
   if (!isAuthed) {
-    setState({ plans: null, error: null, loading: false });
+    // Bump the token so a listPlans still in flight from the authed session
+    // can't repopulate the store after logout — its late result fails the check.
+    fetchToken++;
+    setState({ plans: null, loadError: null, loading: false });
     return;
   }
   const token = ++fetchToken;
@@ -90,26 +95,26 @@ async function refetchInternal(isAuthed: boolean): Promise<void> {
   const result = await listPlans();
   if (fetchToken !== token) return;
   if (result.ok) {
-    setState({ plans: result.data, error: null, loading: false });
+    setState({ plans: result.data, loadError: null, loading: false });
   } else {
-    setState({ plans: [], error: result.error, loading: false });
+    // Preserve plans (null on first load, or the previous list) so a transient
+    // failure isn't read as "zero plans" — consumers surface loadError instead.
+    setState({ loadError: result.error, loading: false });
   }
 }
 
 /** Test-only: reset all in-memory state and listeners to defaults. */
 export function __resetPlanListStoreForTests(): void {
-  state = { plans: null, loading: false, error: null };
+  state = { plans: null, loading: false, loadError: null };
   listeners.clear();
   fetchToken = 0;
   currentIsAuthed = null;
 }
 
-export function usePlanList({
-  isAuthed,
-}: {
-  isAuthed: boolean;
-}): UsePlanListResult {
+export function usePlanList(isAuthed: boolean): UsePlanListResult {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // Per-consumer, not shared: an error belongs to whoever triggered the action.
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Only the consumer whose isAuthed transitioned drives the fetch — every
@@ -126,7 +131,7 @@ export function usePlanList({
       const normalizedName = name.trim();
       const result = await createPlan({ name: normalizedName, seed });
       if (!result.ok) {
-        setState({ error: result.error });
+        setError(result.error);
         return null;
       }
       const optimistic: PlanSummary = {
@@ -141,8 +146,8 @@ export function usePlanList({
       };
       setState({
         plans: state.plans ? [optimistic, ...state.plans] : [optimistic],
-        error: null,
       });
+      setError(null);
       return result.data.id;
     },
     [],
@@ -152,7 +157,7 @@ export function usePlanList({
     async (id: string, name: string): Promise<boolean> => {
       const trimmed = name.trim();
       if (!trimmed) {
-        setState({ error: "name_required" });
+        setError("name_required");
         return false;
       }
 
@@ -175,14 +180,12 @@ export function usePlanList({
             plans: state.plans.map((p) =>
               p.id === id ? { ...p, name: restoreName } : p,
             ),
-            error: result.error,
           });
-        } else {
-          setState({ error: result.error });
         }
+        setError(result.error);
         return false;
       }
-      setState({ error: null });
+      setError(null);
       return true;
     },
     [],
@@ -197,12 +200,13 @@ export function usePlanList({
 
     const result = await duplicatePlan(id, name);
     if (!result.ok) {
-      setState({ error: result.error });
+      setError(result.error);
       return null;
     }
 
     if (!source) {
       await refetchInternal(currentIsAuthed ?? true);
+      setError(null);
       return result.data.id;
     }
 
@@ -218,8 +222,8 @@ export function usePlanList({
     };
     setState({
       plans: state.plans ? [optimistic, ...state.plans] : [optimistic],
-      error: null,
     });
+    setError(null);
     return result.data.id;
   }, []);
 
@@ -246,11 +250,9 @@ export function usePlanList({
             plans: state.plans.map((p) =>
               p.id === id ? { ...p, shareToken: restore } : p,
             ),
-            error: result.error,
           });
-        } else {
-          setState({ error: result.error });
         }
+        setError(result.error);
         return undefined;
       }
 
@@ -260,11 +262,9 @@ export function usePlanList({
           plans: state.plans.map((p) =>
             p.id === id ? { ...p, shareToken: newToken } : p,
           ),
-          error: null,
         });
-      } else {
-        setState({ error: null });
       }
+      setError(null);
       return newToken;
     },
     [],
@@ -287,20 +287,20 @@ export function usePlanList({
       if (state.plans && removed) {
         const next = [...state.plans];
         next.splice(removed.index, 0, removed.row);
-        setState({ plans: next, error: result.error });
-      } else {
-        setState({ error: result.error });
+        setState({ plans: next });
       }
+      setError(result.error);
       return false;
     }
-    setState({ error: null });
+    setError(null);
     return true;
   }, []);
 
   return {
     plans: snapshot.plans,
     loading: snapshot.loading,
-    error: snapshot.error,
+    error,
+    loadError: snapshot.loadError,
     refetch,
     create,
     rename,

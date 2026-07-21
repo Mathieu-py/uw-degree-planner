@@ -1,13 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useDeferredValue,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { AuditPanel } from "@/components/planner/audit/AuditPanel";
 import { DemoModeBanner } from "@/components/planner/DemoModeBanner";
 import { HandoffModal } from "@/components/planner/modals/HandoffModal";
@@ -31,23 +25,31 @@ import type { Course } from "@/lib/courses/types";
 import { describeActionError } from "@/lib/format";
 import { buildCourseOrigin } from "@/lib/plan/courseOrigin";
 import { completedSetFromPlan, isAcademicSlot } from "@/lib/plan/derive";
-import { eligibleSlotIdsForCourse } from "@/lib/plan/eligibleTerms";
-import { removeCourseFromSlot } from "@/lib/plan/mutateSlots";
 import { useAnonHandoff } from "@/lib/plan/sync/useAnonHandoff";
 import { usePlanList } from "@/lib/plan/sync/usePlanList";
 import { usePlanSync } from "@/lib/plan/sync/usePlanSync";
+import type { LocalPlan } from "@/lib/plan/types";
 import { usePlanValidation } from "@/lib/plan/usePlanValidation";
 import { joinProgramNames, type ProgramOption } from "@/lib/programs";
 import { usePlanProgramContext } from "@/lib/programs/usePlanPrograms";
-import { termInfo } from "@/lib/terms";
+import { termLabel } from "@/lib/terms";
 import { ProgramHeader } from "./ProgramHeader";
+import { useDragEligibility } from "./useDragEligibility";
 import { usePlanEditors } from "./usePlanEditors";
-import { usePlannerModals } from "./usePlannerModals";
+import { type PickerContext, usePlannerModals } from "./usePlannerModals";
 import { usePlannerRedirect } from "./usePlannerRedirect";
 
 interface Props {
   /** Active plan id from the `/plan/[planId]` route param; null at bare `/plan`. */
   planId: string | null;
+  /** Server-loaded plan for the signed-in path; null when signed-out or missing. */
+  initialPlan: LocalPlan | null;
+  /**
+   * Error from the server-side plan load, so a transient failure reads as
+   * retryable rather than "deleted". Null when the load succeeded or the row was
+   * genuinely absent (that's the not-found case).
+   */
+  initialLoadError: string | null;
   programOptions: ProgramOption[];
   specializationsByProgram: Record<
     string,
@@ -80,6 +82,8 @@ interface InnerProps extends Props {
 
 function PlannerShellInner({
   planId,
+  initialPlan,
+  initialLoadError,
   programOptions,
   specializationsByProgram,
   catalog,
@@ -87,18 +91,9 @@ function PlannerShellInner({
 }: InnerProps) {
   const router = useRouter();
 
-  const {
-    plan,
-    source,
-    hydrated,
-    reloading,
-    saveStatus,
-    loadError,
-    setPlan,
-    clearLocalPlan,
-    flushSave,
-  } = usePlanSync({ isAuthed, planId });
-  const { plans, create } = usePlanList({ isAuthed });
+  const { plan, hydrated, saveStatus, setPlan, clearLocalPlan, flushSave } =
+    usePlanSync({ isAuthed, planId, initialPlan });
+  const { plans, create, loadError: listLoadError } = usePlanList(isAuthed);
   const activePlanName =
     isAuthed && planId
       ? (plans?.find((p) => p.id === planId)?.name ?? "Untitled plan")
@@ -175,123 +170,22 @@ function PlannerShellInner({
   const deferredPlan = useDeferredValue(plan);
   const deferredIssues = useDeferredValue(issues);
 
-  // Code of the dragged audit chip, so the timeline can tint its eligible terms.
-  const [draggingAddCode, setDraggingAddCode] = useState<string | null>(null);
-  // The placed course being dragged between terms (code + its current slot), so
-  // the same eligibility highlight runs on a move, not just an add.
-  const [movingCourse, setMovingCourse] = useState<{
-    code: string;
-    fromSlotId: string;
-  } | null>(null);
-  // A successful drop can unmount the source chip before `dragend` fires,
-  // leaving the flag stale. A drop yields a new `plan` ref, so clear it on any
-  // plan change.
-  const planRef = useRef(plan);
-  if (planRef.current !== plan) {
-    planRef.current = plan;
-    if (draggingAddCode !== null) setDraggingAddCode(null);
-    if (movingCourse !== null) setMovingCourse(null);
-  }
-  const handleAddDragStart = useCallback(
-    (code: string) => setDraggingAddCode(code),
-    [],
-  );
-  const handleAddDragEnd = useCallback(() => setDraggingAddCode(null), []);
-  const handleMoveDrag = useCallback(
-    (moving: { code: string; fromSlotId: string } | null) =>
-      setMovingCourse(moving),
-    [],
-  );
   // Program identities (small index) + the codes each program references
-  // (on-demand detail), unioned across a double degree. Referenced codes
-  // keep a stale restriction from greying out a required course. Both feed the
-  // drag highlight and the slot picker.
+  // (on-demand detail), unioned across a double degree. Referenced codes keep a
+  // stale restriction from greying out a required course. Feed the drag
+  // highlight and the slot picker.
   const { programs, programReferenced } = usePlanProgramContext(plan);
-  // Eligible terms for the dragged course, from the synchronous `plan` (the drop
-  // surface), not `deferredPlan`. Null when idle so the timeline skips the work.
-  // Drives the green/muted tinting for both an audit add and a between-term move;
-  // a move is judged against the plan WITHOUT the in-flight course (else it reads
-  // as "already placed" everywhere and its own slot satisfies its prereqs).
-  const eligibleSlotIds = useMemo(() => {
-    if (!plan) return null;
-    if (draggingAddCode) {
-      return eligibleSlotIdsForCourse(
-        plan,
-        draggingAddCode,
-        catalogByCode,
-        programs,
-        programReferenced,
-      );
-    }
-    if (movingCourse) {
-      const without = removeCourseFromSlot(
-        plan,
-        movingCourse.fromSlotId,
-        movingCourse.code,
-      );
-      return eligibleSlotIdsForCourse(
-        without,
-        movingCourse.code,
-        catalogByCode,
-        programs,
-        programReferenced,
-      );
-    }
-    return null;
-  }, [
-    draggingAddCode,
-    movingCourse,
+  const { eligibleSlotIds, auditDrag, handleMoveDrag } = useDragEligibility({
     plan,
     catalogByCode,
     programs,
     programReferenced,
-  ]);
-  const auditDrag = useMemo(
-    () => ({
-      draggingCode: draggingAddCode,
-      onStart: handleAddDragStart,
-      onEnd: handleAddDragEnd,
-    }),
-    [draggingAddCode, handleAddDragStart, handleAddDragEnd],
-  );
+  });
 
-  const pickerMeta = useMemo(() => {
-    if (!plan || !picker) return null;
-    const slot = plan.slots.find((s) => s.id === picker.slotId);
-    if (!slot) return null;
-    const completedBefore =
-      slot.termId !== null
-        ? completedSetFromPlan(plan, slot.termId)
-        : completedSetFromPlan(plan);
-    const placedCodes = new Set(
-      plan.slots.flatMap((s) => s.courses.map((c) => c.code)),
-    );
-    const termLabel =
-      slot.termId !== null
-        ? (termInfo(slot.termId)?.label ?? `Term ${slot.termId}`)
-        : "Pre-arrival";
-    // The slot's position is the student's level in this term ("1A".."4B"),
-    // letting the picker resolve level-gated prereqs. Pre/co-op have no level.
-    const level = isAcademicSlot(slot) ? slot.position : undefined;
-    // Codes already in the target slot, so coreqs can resolve same-term.
-    const sameTerm = new Set(slot.courses.map((c) => c.code));
-    // from=picker context for each row's Details link → one-click "Add to {term}".
-    // Pre slots have no termId, so term is omitted and the detail page falls back.
-    const detailsQuery = buildCourseOrigin({
-      from: "picker",
-      planId: planId ?? undefined,
-      term: slot.termId ?? undefined,
-    });
-    return {
-      slot,
-      completedBefore,
-      placedCodes,
-      termLabel,
-      level,
-      sameTerm,
-      detailsQuery,
-    };
-  }, [plan, picker, planId]);
+  const pickerMeta = useMemo(
+    () => buildPickerMeta(plan, picker, planId),
+    [plan, picker, planId],
+  );
 
   const termChoiceCourse = termChoiceCode
     ? (catalogByCode.get(termChoiceCode) ?? null)
@@ -303,76 +197,56 @@ function PlannerShellInner({
     <HandoffModal localPlan={conflict.localPlan} onResolve={resolveConflict} />
   ) : null;
 
+  // Pre-hydration: no plan yet (signed-out, before the localStorage read), so
+  // suppress the fallback toolbar too.
   if (!hydrated && !plan) {
     return (
-      <PlannerLayout
+      <PlannerLoadState
+        kind="initial"
         isAuthed={isAuthed}
         planId={planId}
-        toolbar={null}
-        overlays={handoffElement}
-      >
-        <PlannerSkeleton />
-      </PlannerLayout>
+        handoffElement={handoffElement}
+      />
     );
   }
 
-  const isLocalSource = source === "local";
-  // Signed-in with a planId that loaded but produced no plan. Two outcomes:
-  //   - loadError === null → ok with no row: genuinely missing → not-found note.
-  //   - loadError !== null → network/auth/DB failure → retryable error banner.
-  const onServerPath =
-    isAuthed && planId !== null && plan === null && typeof source !== "string";
-  const planNotFound = onServerPath && loadError === null;
-  const planLoadFailed = onServerPath && loadError !== null;
-
-  if (planLoadFailed) {
+  // Signed-in with a planId but no plan (initialPlan came back null). A load
+  // error is transient and retryable; a clean null is a genuinely missing row.
+  // Both keep the toolbar so the user can switch to another plan.
+  if (isAuthed && planId !== null && plan === null) {
     return (
-      <PlannerLayout
+      <PlannerLoadState
+        kind={initialLoadError ? "error" : "notFound"}
         isAuthed={isAuthed}
         planId={planId}
-        overlays={handoffElement}
-      >
-        <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
-          <p className="font-medium">We couldn't load this plan.</p>
-          <p className="mt-1 text-xs opacity-80">
-            {describeActionError(loadError)}
-          </p>
-          <p className="mt-2 text-xs opacity-80">
-            Reload the page or pick a different plan from the toolbar.
-          </p>
-        </div>
-      </PlannerLayout>
+        loadError={initialLoadError}
+        handoffElement={handoffElement}
+      />
     );
   }
-
-  if (planNotFound) {
-    return (
-      <PlannerLayout
-        isAuthed={isAuthed}
-        planId={planId}
-        overlays={handoffElement}
-      >
-        <div className="rounded-[10px] border border-partial bg-partial-soft px-4 py-6 text-sm text-ink">
-          <p>
-            We couldn't find a plan with that id. Pick a different plan from the
-            toolbar, or create a new one.
-          </p>
-        </div>
-      </PlannerLayout>
-    );
-  }
-
-  // No plan: the redirect effect above is navigating (to /plan/new or the most
-  // recent plan). Render a skeleton so the planner never flashes empty.
+  // The redirect effect above is navigating (to /plan/new or the most recent
+  // plan); skeleton so the planner never flashes empty.
   if (!plan) {
+    // At bare /plan a list-load failure can't resolve a redirect target, so show
+    // the error rather than a skeleton that would never resolve.
+    if (planId === null && listLoadError) {
+      return (
+        <PlannerLoadState
+          kind="error"
+          isAuthed={isAuthed}
+          planId={planId}
+          loadError={listLoadError}
+          handoffElement={handoffElement}
+        />
+      );
+    }
     return (
-      <PlannerLayout
+      <PlannerLoadState
+        kind="redirecting"
         isAuthed={isAuthed}
         planId={planId}
-        overlays={handoffElement}
-      >
-        <PlannerSkeleton />
-      </PlannerLayout>
+        handoffElement={handoffElement}
+      />
     );
   }
 
@@ -401,7 +275,7 @@ function PlannerShellInner({
         <>
           {picker && pickerMeta ? (
             <SlotPicker
-              targetTermLabel={pickerMeta.termLabel}
+              targetTermLabel={pickerMeta.targetTermLabel}
               catalog={catalog}
               placedCodes={pickerMeta.placedCodes}
               completedBefore={pickerMeta.completedBefore}
@@ -480,10 +354,7 @@ function PlannerShellInner({
         </>
       }
     >
-      <div
-        aria-busy={reloading}
-        className={`flex flex-col gap-3 lg:flex-1 lg:min-h-0 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
-      >
+      <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
         {/* Header, plan switcher, and banner span the full width above the
             timeline + audit row. */}
         <div className="flex items-center justify-between gap-3">
@@ -530,29 +401,27 @@ function PlannerShellInner({
             >
               {activePlanName}
             </span>
-            {isLocalSource ? (
-              <div className="ml-auto flex items-center gap-2">
-                <ActionMenu
-                  label="Edit plan"
-                  icon={<Icon name="edit" size="sm" />}
-                  items={[
-                    {
-                      key: "settings",
-                      label: "Plan settings",
-                      icon: <Icon name="settings" size="md" />,
-                      onSelect: () => setSettingsOpen(true),
-                    },
-                    {
-                      key: "reset",
-                      label: "Reset plan",
-                      icon: <Icon name="reset" size="md" />,
-                      destructive: true,
-                      onSelect: handleReset,
-                    },
-                  ]}
-                />
-              </div>
-            ) : null}
+            <div className="ml-auto flex items-center gap-2">
+              <ActionMenu
+                label="Edit plan"
+                icon={<Icon name="edit" size="sm" />}
+                items={[
+                  {
+                    key: "settings",
+                    label: "Plan settings",
+                    icon: <Icon name="settings" size="md" />,
+                    onSelect: () => setSettingsOpen(true),
+                  },
+                  {
+                    key: "reset",
+                    label: "Reset plan",
+                    icon: <Icon name="reset" size="md" />,
+                    destructive: true,
+                    onSelect: handleReset,
+                  },
+                ]}
+              />
+            </div>
           </div>
         )}
         {importBanner ? (
@@ -651,4 +520,106 @@ function PlannerLayout({
       {overlays}
     </>
   );
+}
+
+type LoadStateKind = "initial" | "error" | "notFound" | "redirecting";
+
+/**
+ * The planner's non-loaded states — loading skeleton, load error, missing plan
+ * — each wrapping PlannerLayout so the handoff modal still shows. `initial` has
+ * no plan yet, so it drops the fallback toolbar; the rest keep it so the user
+ * can switch plans to recover.
+ */
+function PlannerLoadState({
+  kind,
+  isAuthed,
+  planId,
+  loadError,
+  handoffElement,
+}: {
+  kind: LoadStateKind;
+  isAuthed: boolean;
+  planId: string | null;
+  /** Only the list-load-failure ("error") state carries a message. */
+  loadError?: string | null;
+  handoffElement: React.ReactNode;
+}) {
+  const body =
+    kind === "error" ? (
+      <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
+        <p className="font-medium">We couldn't load this plan.</p>
+        {loadError ? (
+          <p className="mt-1 text-xs opacity-80">
+            {describeActionError(loadError)}
+          </p>
+        ) : null}
+        <p className="mt-2 text-xs opacity-80">
+          Reload the page or pick a different plan from the toolbar.
+        </p>
+      </div>
+    ) : kind === "notFound" ? (
+      <div className="rounded-[10px] border border-partial bg-partial-soft px-4 py-6 text-sm text-ink">
+        <p>
+          We couldn't load that plan — it may have been deleted. Pick a
+          different plan from the toolbar, or create a new one.
+        </p>
+      </div>
+    ) : (
+      <PlannerSkeleton />
+    );
+  return (
+    <PlannerLayout
+      isAuthed={isAuthed}
+      planId={planId}
+      toolbar={kind === "initial" ? null : undefined}
+      overlays={handoffElement}
+    >
+      {body}
+    </PlannerLayout>
+  );
+}
+
+/**
+ * Target-slot inputs for the SlotPicker overlay, derived from the clicked slot.
+ * `targetTermLabel` uses the shared lib/terms helper, not a local shadow.
+ */
+function buildPickerMeta(
+  plan: LocalPlan | null,
+  picker: PickerContext | null,
+  planId: string | null,
+) {
+  if (!plan || !picker) return null;
+  const slot = plan.slots.find((s) => s.id === picker.slotId);
+  if (!slot) return null;
+  const completedBefore =
+    slot.termId !== null
+      ? completedSetFromPlan(plan, slot.termId)
+      : // Pre-arrival is the earliest slot — nothing precedes it, so no prereqs
+        // count as met (all-completed would falsely satisfy them).
+        new Set<string>();
+  const placedCodes = new Set(
+    plan.slots.flatMap((s) => s.courses.map((c) => c.code)),
+  );
+  const targetTermLabel =
+    slot.termId !== null ? termLabel(slot.termId) : "Pre-arrival";
+  // Slot position = the student's level this term ("1A".."4B") for level-gated
+  // prereqs. Pre/co-op slots have no level.
+  const level = isAcademicSlot(slot) ? slot.position : undefined;
+  // Codes already in the target slot, so coreqs resolve same-term.
+  const sameTerm = new Set(slot.courses.map((c) => c.code));
+  // from=picker context for each row's Details link → one-click "Add to {term}".
+  const detailsQuery = buildCourseOrigin({
+    from: "picker",
+    planId: planId ?? undefined,
+    term: slot.termId ?? undefined,
+  });
+  return {
+    slot,
+    completedBefore,
+    placedCodes,
+    targetTermLabel,
+    level,
+    sameTerm,
+    detailsQuery,
+  };
 }

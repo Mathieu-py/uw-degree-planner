@@ -111,8 +111,9 @@ describe("WelcomeFlow dropzone", () => {
 
     fireEvent.drop(label, { dataTransfer: { files: [file] } });
 
+    // The extractor's specific message is surfaced verbatim, matching the picker.
     await waitFor(() =>
-      expect(screen.getByText(/couldn't read that pdf/i)).toBeTruthy(),
+      expect(screen.getByText(/not a pdf file/i)).toBeTruthy(),
     );
   });
 });
