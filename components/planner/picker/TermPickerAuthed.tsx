@@ -247,6 +247,7 @@ export function TermPickerAuthed({
           variant="ghost"
           size="sm"
           onClick={backToPlans}
+          disabled={saving}
           className="self-start -ml-1"
         >
           ← Plans
