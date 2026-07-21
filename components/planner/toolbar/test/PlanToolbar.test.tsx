@@ -101,9 +101,7 @@ describe("PlanToolbar — visibility", () => {
   });
 
   it("falls back to the first plan when ?planId is stale", () => {
-    // Plans exist but ?planId points at a stale id — rather than hiding the
-    // bar (which would strand the user), fall back to the first plan so the
-    // selector stays reachable and they can switch.
+    // Hiding the bar would strand the user; fall back so the selector stays reachable.
     const { container } = mount({
       plans: [mkSummary({ id: "a", name: "Plan A" })],
       currentPlanId: "missing",
@@ -277,9 +275,7 @@ describe("PlanToolbar — duplicate", () => {
 
 describe("PlanToolbar — create", () => {
   it("routes to /plan/new so the create stepper collects metadata", () => {
-    // Previously create() ran with no seed, producing an empty server plan
-    // with no slots. Now "New plan" routes to the /plan/new stepper where the
-    // user picks program/term (or imports a transcript) first.
+    // Seedless create() produced an empty plan; "New plan" now routes to /plan/new instead.
     const createMock = vi.fn();
     mount({
       plans: [mkSummary({ id: "a", name: "Plan A" })],
@@ -319,5 +315,29 @@ describe("PlanToolbar — share", () => {
     fireEvent.click(screen.getByRole("button", { name: /share/i }));
     expect(shareMock).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+});
+
+describe("PlanToolbar — list-load failure recovery", () => {
+  it("shows an inline retry when the plan list fails, and refetches on click", () => {
+    const refetch = vi.fn();
+    usePlanListMock.mockReturnValue({
+      plans: null,
+      loading: false,
+      error: null,
+      loadError: "not_authenticated",
+      refetch,
+      create: vi.fn(),
+      rename: vi.fn(),
+      remove: vi.fn(),
+      duplicate: vi.fn(),
+      share: vi.fn(),
+    });
+    render(<PlanToolbar isAuthed planId={null} />);
+
+    // describeActionError("not_authenticated") → "Your session expired…"
+    expect(screen.getByText(/session expired/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalledOnce();
   });
 });

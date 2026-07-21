@@ -1,5 +1,8 @@
 import { PlannerShell } from "@/components/planner/shell/PlannerShell";
 import { loadTerm } from "@/lib/courses/data";
+import { loadServerPlan } from "@/lib/plan/server/actions";
+import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
+import type { LocalPlan } from "@/lib/plan/types";
 import { getProgramOptions, PROGRAMS } from "@/lib/programs/registry";
 import { PINNED_TERM } from "@/lib/terms";
 
@@ -36,13 +39,30 @@ export async function PlannerPageContent({
     ]),
   );
 
-  // Catalog for the slot picker — a single pinned term for now (expands to a
-  // map once a term picker lands). Descriptions live in a sibling file.
-  const catalog = await loadTerm(PINNED_TERM);
+  // Catalog for the slot picker (single pinned term for now). Load the active
+  // plan alongside it so the Supabase round trip overlaps the catalog parse;
+  // bare `/plan` has no server plan and the client falls back to localStorage.
+  const [catalog, planResult] = await Promise.all([
+    loadTerm(PINNED_TERM),
+    planId !== null ? loadServerPlan(planId) : Promise.resolve(null),
+  ]);
+  const initialPlan: LocalPlan | null =
+    planResult?.ok && planResult.data
+      ? serverPlanToLocal(planResult.data)
+      : null;
+  // A failed load (vs. a clean not-found) so the shell offers a retry instead of
+  // telling the user their plan was deleted.
+  const initialLoadError =
+    planResult && !planResult.ok ? planResult.error : null;
 
+  // Key by planId so a plan switch remounts the shell with a fresh seed instead
+  // of needing a derive-from-prop sync.
   return (
     <PlannerShell
+      key={planId ?? "local"}
       planId={planId}
+      initialPlan={initialPlan}
+      initialLoadError={initialLoadError}
       programOptions={programOptions}
       specializationsByProgram={specializationsByProgram}
       catalog={catalog}

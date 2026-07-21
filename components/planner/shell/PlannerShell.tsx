@@ -42,6 +42,14 @@ import { usePlannerRedirect } from "./usePlannerRedirect";
 interface Props {
   /** Active plan id from the `/plan/[planId]` route param; null at bare `/plan`. */
   planId: string | null;
+  /** Server-loaded plan for the signed-in path; null when signed-out or missing. */
+  initialPlan: LocalPlan | null;
+  /**
+   * Error from the server-side plan load, so a transient failure reads as
+   * retryable rather than "deleted". Null when the load succeeded or the row was
+   * genuinely absent (that's the not-found case).
+   */
+  initialLoadError: string | null;
   programOptions: ProgramOption[];
   specializationsByProgram: Record<
     string,
@@ -74,6 +82,8 @@ interface InnerProps extends Props {
 
 function PlannerShellInner({
   planId,
+  initialPlan,
+  initialLoadError,
   programOptions,
   specializationsByProgram,
   catalog,
@@ -81,17 +91,8 @@ function PlannerShellInner({
 }: InnerProps) {
   const router = useRouter();
 
-  const {
-    plan,
-    source,
-    hydrated,
-    reloading,
-    saveStatus,
-    loadError,
-    setPlan,
-    clearLocalPlan,
-    flushSave,
-  } = usePlanSync({ isAuthed, planId });
+  const { plan, hydrated, saveStatus, setPlan, clearLocalPlan, flushSave } =
+    usePlanSync({ isAuthed, planId, initialPlan });
   const { plans, create, loadError: listLoadError } = usePlanList(isAuthed);
   const activePlanName =
     isAuthed && planId
@@ -196,46 +197,29 @@ function PlannerShellInner({
     <HandoffModal localPlan={conflict.localPlan} onResolve={resolveConflict} />
   ) : null;
 
-  // Pre-hydration: no plan yet, so suppress the fallback toolbar too.
+  // Pre-hydration: no plan yet (signed-out, before the localStorage read), so
+  // suppress the fallback toolbar too.
   if (!hydrated && !plan) {
     return (
       <PlannerLoadState
         kind="initial"
         isAuthed={isAuthed}
         planId={planId}
-        loadError={loadError}
         handoffElement={handoffElement}
       />
     );
   }
 
-  const isLocalSource = source === "local";
-  // Signed-in with a planId that loaded but produced no plan. Two outcomes:
-  //   - loadError === null → ok with no row: genuinely missing → not-found note.
-  //   - loadError !== null → network/auth/DB failure → retryable error banner.
-  const onServerPath =
-    isAuthed && planId !== null && plan === null && typeof source !== "string";
-  const planNotFound = onServerPath && loadError === null;
-  const planLoadFailed = onServerPath && loadError !== null;
-
-  if (planLoadFailed) {
+  // Signed-in with a planId but no plan (initialPlan came back null). A load
+  // error is transient and retryable; a clean null is a genuinely missing row.
+  // Both keep the toolbar so the user can switch to another plan.
+  if (isAuthed && planId !== null && plan === null) {
     return (
       <PlannerLoadState
-        kind="error"
+        kind={initialLoadError ? "error" : "notFound"}
         isAuthed={isAuthed}
         planId={planId}
-        loadError={loadError}
-        handoffElement={handoffElement}
-      />
-    );
-  }
-  if (planNotFound) {
-    return (
-      <PlannerLoadState
-        kind="notFound"
-        isAuthed={isAuthed}
-        planId={planId}
-        loadError={loadError}
+        loadError={initialLoadError}
         handoffElement={handoffElement}
       />
     );
@@ -261,7 +245,6 @@ function PlannerShellInner({
         kind="redirecting"
         isAuthed={isAuthed}
         planId={planId}
-        loadError={loadError}
         handoffElement={handoffElement}
       />
     );
@@ -371,10 +354,7 @@ function PlannerShellInner({
         </>
       }
     >
-      <div
-        aria-busy={reloading}
-        className={`flex flex-col gap-3 lg:flex-1 lg:min-h-0 transition-opacity duration-200 ${reloading ? "opacity-60" : ""}`}
-      >
+      <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
         {/* Header, plan switcher, and banner span the full width above the
             timeline + audit row. */}
         <div className="flex items-center justify-between gap-3">
@@ -421,29 +401,27 @@ function PlannerShellInner({
             >
               {activePlanName}
             </span>
-            {isLocalSource ? (
-              <div className="ml-auto flex items-center gap-2">
-                <ActionMenu
-                  label="Edit plan"
-                  icon={<Icon name="edit" size="sm" />}
-                  items={[
-                    {
-                      key: "settings",
-                      label: "Plan settings",
-                      icon: <Icon name="settings" size="md" />,
-                      onSelect: () => setSettingsOpen(true),
-                    },
-                    {
-                      key: "reset",
-                      label: "Reset plan",
-                      icon: <Icon name="reset" size="md" />,
-                      destructive: true,
-                      onSelect: handleReset,
-                    },
-                  ]}
-                />
-              </div>
-            ) : null}
+            <div className="ml-auto flex items-center gap-2">
+              <ActionMenu
+                label="Edit plan"
+                icon={<Icon name="edit" size="sm" />}
+                items={[
+                  {
+                    key: "settings",
+                    label: "Plan settings",
+                    icon: <Icon name="settings" size="md" />,
+                    onSelect: () => setSettingsOpen(true),
+                  },
+                  {
+                    key: "reset",
+                    label: "Reset plan",
+                    icon: <Icon name="reset" size="md" />,
+                    destructive: true,
+                    onSelect: handleReset,
+                  },
+                ]}
+              />
+            </div>
           </div>
         )}
         {importBanner ? (
@@ -562,7 +540,8 @@ function PlannerLoadState({
   kind: LoadStateKind;
   isAuthed: boolean;
   planId: string | null;
-  loadError: string | null;
+  /** Only the list-load-failure ("error") state carries a message. */
+  loadError?: string | null;
   handoffElement: React.ReactNode;
 }) {
   const body =
@@ -581,8 +560,8 @@ function PlannerLoadState({
     ) : kind === "notFound" ? (
       <div className="rounded-[10px] border border-partial bg-partial-soft px-4 py-6 text-sm text-ink">
         <p>
-          We couldn't find a plan with that id. Pick a different plan from the
-          toolbar, or create a new one.
+          We couldn't load that plan — it may have been deleted. Pick a
+          different plan from the toolbar, or create a new one.
         </p>
       </div>
     ) : (

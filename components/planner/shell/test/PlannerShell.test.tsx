@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramOption } from "@/lib/programs";
 
@@ -11,51 +11,27 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({}),
 }));
 
-const { usePlanSyncMock } = vi.hoisted(() => {
-  const setPlan = vi.fn();
-  return {
-    usePlanSyncMock: vi.fn(() => ({
-      plan: null,
-      source: "local" as const,
-      hydrated: true,
-      reloading: false,
-      saveStatus: { kind: "idle" as const },
-      setPlan,
-      clearLocalPlan: vi.fn(),
-      flushSave: vi.fn(),
-    })),
-  };
-});
+const { usePlanSyncMock, usePlanListMock, useAuthStateMock } = vi.hoisted(
+  () => ({
+    usePlanSyncMock: vi.fn(),
+    usePlanListMock: vi.fn(),
+    useAuthStateMock: vi.fn(),
+  }),
+);
 vi.mock("@/lib/plan/sync/usePlanSync", () => ({
   usePlanSync: usePlanSyncMock,
-}));
-
-const { usePlanListMock } = vi.hoisted(() => ({
-  usePlanListMock: vi.fn(() => ({
-    plans: null,
-    loading: false,
-    error: null,
-    refetch: vi.fn(),
-    create: vi.fn(),
-    rename: vi.fn(),
-    remove: vi.fn(),
-  })),
 }));
 vi.mock("@/lib/plan/sync/usePlanList", () => ({
   usePlanList: usePlanListMock,
 }));
-
 vi.mock("@/lib/plan/sync/useAnonHandoff", () => ({
   useAnonHandoff: () => ({ conflict: null, resolveConflict: vi.fn() }),
 }));
-
-// Stub the shared auth store so the test doesn't depend on initAuth's real
-// behavior (which relies on NEXT_PUBLIC_SUPABASE_URL being unset to flip
-// ready=true synchronously). Returning ready: true / isAuthed: false up front
-// also lets us drop the awaited findByRole pre-amble below.
+// Configurable per test; defaults (signed-out, nothing loaded) set in beforeEach.
+// SUPABASE_CONFIGURED:false keeps initAuth's real behavior out of the picture.
 vi.mock("@/lib/auth/store", () => ({
   SUPABASE_CONFIGURED: false,
-  useAuthState: () => ({ user: null, ready: true, isAuthed: false }),
+  useAuthState: useAuthStateMock,
 }));
 
 import { PlannerShell } from "../PlannerShell";
@@ -66,6 +42,31 @@ const PROGRAM_OPTIONS: ProgramOption[] = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useAuthStateMock.mockReturnValue({
+    user: null,
+    ready: true,
+    isAuthed: false,
+  });
+  usePlanSyncMock.mockReturnValue({
+    plan: null,
+    hydrated: true,
+    saveStatus: { kind: "idle" },
+    setPlan: vi.fn(),
+    clearLocalPlan: vi.fn(),
+    flushSave: vi.fn(),
+  });
+  usePlanListMock.mockReturnValue({
+    plans: null,
+    loading: false,
+    error: null,
+    loadError: null,
+    refetch: vi.fn(),
+    create: vi.fn(),
+    rename: vi.fn(),
+    remove: vi.fn(),
+    duplicate: vi.fn(),
+    share: vi.fn(),
+  });
 });
 
 afterEach(() => {
@@ -74,12 +75,12 @@ afterEach(() => {
 
 describe("PlannerShell — demo first-run routing", () => {
   it("redirects a signed-out user with no local plan to /plan/new", async () => {
-    // The inline EmptyState is gone: plan creation lives at /plan/new. A
-    // signed-out visitor with no local plan (hydrated, plan === null) and no
-    // ?planId should be redirected there.
+    // Plan creation lives at /plan/new; hydrated null plan + no ?planId redirects there.
     render(
       <PlannerShell
         planId={null}
+        initialPlan={null}
+        initialLoadError={null}
         programOptions={PROGRAM_OPTIONS}
         specializationsByProgram={{}}
         catalog={[]}
@@ -97,6 +98,8 @@ describe("PlannerShell — demo first-run routing", () => {
     render(
       <PlannerShell
         planId="some-foreign-id"
+        initialPlan={null}
+        initialLoadError={null}
         programOptions={PROGRAM_OPTIONS}
         specializationsByProgram={{}}
         catalog={[]}
@@ -106,5 +109,114 @@ describe("PlannerShell — demo first-run routing", () => {
     await waitFor(() => {
       expect(routerReplaceMock).toHaveBeenCalledWith("/plan");
     });
+  });
+});
+
+describe("PlannerShell — load-failure recovery", () => {
+  const AUTHED = { user: { id: "u1" }, ready: true, isAuthed: true };
+
+  it("shows a retryable error (not a redirect) when the plan list fails at /plan", async () => {
+    useAuthStateMock.mockReturnValue(AUTHED);
+    usePlanListMock.mockReturnValue({
+      plans: null,
+      loading: false,
+      error: null,
+      loadError: "not_authenticated",
+      refetch: vi.fn(),
+      create: vi.fn(),
+      rename: vi.fn(),
+      remove: vi.fn(),
+      duplicate: vi.fn(),
+      share: vi.fn(),
+    });
+    render(
+      <PlannerShell
+        planId={null}
+        initialPlan={null}
+        initialLoadError={null}
+        programOptions={PROGRAM_OPTIONS}
+        specializationsByProgram={{}}
+        catalog={[]}
+      />,
+    );
+
+    expect(await screen.findByText(/couldn't load this plan/i)).toBeTruthy();
+    // A load failure must not be mistaken for "zero plans" → no create redirect.
+    expect(routerReplaceMock).not.toHaveBeenCalledWith("/plan/new");
+  });
+
+  it("shows a not-found message when a specific plan is genuinely missing (no load error)", async () => {
+    useAuthStateMock.mockReturnValue(AUTHED);
+    // Server load produced no plan → the hook returns a null plan for this id.
+    usePlanSyncMock.mockReturnValue({
+      plan: null,
+      hydrated: true,
+      saveStatus: { kind: "idle" },
+      setPlan: vi.fn(),
+      clearLocalPlan: vi.fn(),
+      flushSave: vi.fn(),
+    });
+    usePlanListMock.mockReturnValue({
+      plans: [],
+      loading: false,
+      error: null,
+      loadError: null,
+      refetch: vi.fn(),
+      create: vi.fn(),
+      rename: vi.fn(),
+      remove: vi.fn(),
+      duplicate: vi.fn(),
+      share: vi.fn(),
+    });
+    render(
+      <PlannerShell
+        planId="p1"
+        initialPlan={null}
+        initialLoadError={null}
+        programOptions={PROGRAM_OPTIONS}
+        specializationsByProgram={{}}
+        catalog={[]}
+      />,
+    );
+
+    expect(await screen.findByText(/couldn't load that plan/i)).toBeTruthy();
+  });
+
+  it("shows a retryable error (not 'deleted') when the specific plan load failed", async () => {
+    useAuthStateMock.mockReturnValue(AUTHED);
+    usePlanSyncMock.mockReturnValue({
+      plan: null,
+      hydrated: true,
+      saveStatus: { kind: "idle" },
+      setPlan: vi.fn(),
+      clearLocalPlan: vi.fn(),
+      flushSave: vi.fn(),
+    });
+    usePlanListMock.mockReturnValue({
+      plans: [],
+      loading: false,
+      error: null,
+      loadError: null,
+      refetch: vi.fn(),
+      create: vi.fn(),
+      rename: vi.fn(),
+      remove: vi.fn(),
+      duplicate: vi.fn(),
+      share: vi.fn(),
+    });
+    render(
+      <PlannerShell
+        planId="p1"
+        initialPlan={null}
+        initialLoadError="db_unavailable"
+        programOptions={PROGRAM_OPTIONS}
+        specializationsByProgram={{}}
+        catalog={[]}
+      />,
+    );
+
+    // A transient failure must read as retryable, not as a deletion.
+    expect(await screen.findByText(/couldn't load this plan/i)).toBeTruthy();
+    expect(screen.queryByText(/may have been deleted/i)).toBeNull();
   });
 });

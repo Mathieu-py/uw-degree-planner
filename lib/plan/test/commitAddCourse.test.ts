@@ -5,9 +5,8 @@ import type { LocalPlan, PlanSlot } from "@/lib/plan/types";
 import type { ActionResult } from "@/lib/server/actions";
 import { makeTermId } from "@/lib/terms";
 
-// Storage + server actions are the only side-effecting deps; mock them so the
-// slot-resolution / add / persist logic runs for real. The real server actions
-// pull in `server-only`, which throws under the test runner.
+// Mock the only side-effecting deps so the add logic runs for real; the real
+// server actions pull in `server-only`, which throws under the test runner.
 const { loadServerPlanMock, savePlanStateMock, loadPlanMock, savePlanMock } =
   vi.hoisted(() => ({
     loadServerPlanMock:
@@ -34,11 +33,11 @@ import {
   type ApplyAddResult,
   applyAddToPlan,
   commitAddCourse,
+  runAddToPlanState,
 } from "../commitAddCourse";
 
-// The block gate verifies a blocked read against program detail (absent /api
-// route here). Prime ONLY SYDE: the blocked test needs a resolvable verdict,
-// while the unresolved test relies on another program staying unloadable.
+// Prime ONLY SYDE: the blocked test needs a resolvable verdict; the unresolved
+// test relies on another program staying unloadable.
 programDetail.prime({
   "systems-design-engineering": PROGRAMS["systems-design-engineering"],
 });
@@ -410,5 +409,112 @@ describe("applyAddToPlan — direct slot target (picker path)", () => {
       makeCourse("anth101", { prereqs: "Anthropology students only" }),
     );
     expect(res).toEqual({ status: "unresolved" });
+  });
+});
+
+describe("runAddToPlanState — save wrapper", () => {
+  function spies() {
+    return {
+      setSaving: vi.fn(),
+      onSaved: vi.fn(),
+      onAdded: vi.fn(),
+      onError: vi.fn(),
+    };
+  }
+
+  it("does not persist or report success when the add is refused (already placed)", async () => {
+    const plan = localPlan([
+      slot({
+        id: "a",
+        position: "1A",
+        termId: FALL,
+        courses: [{ code: "cs246" }],
+      }),
+      slot({ id: "b", position: "1B", termId: WINTER }),
+    ]);
+    const persist = vi.fn();
+    const s = spies();
+
+    await runAddToPlanState({
+      plan,
+      slot: plan.slots[1],
+      course: makeCourse("cs246"),
+      label: "1B",
+      persist,
+      ...s,
+    });
+
+    expect(persist).not.toHaveBeenCalled();
+    expect(s.onSaved).not.toHaveBeenCalled();
+    expect(s.onAdded).not.toHaveBeenCalled();
+    expect(s.onError).not.toHaveBeenCalled();
+    expect(s.setSaving.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("persists, reflects the new plan, and reports on a successful add", async () => {
+    const plan = localPlan([slot({ id: "a", position: "1A", termId: FALL })]);
+    const persist = vi.fn().mockResolvedValue({ ok: true });
+    const s = spies();
+
+    await runAddToPlanState({
+      plan,
+      slot: plan.slots[0],
+      course: makeCourse("cs246"),
+      label: "1A",
+      persist,
+      ...s,
+    });
+
+    expect(persist).toHaveBeenCalledOnce();
+    expect(s.onAdded).toHaveBeenCalledExactlyOnceWith("1A");
+    // onSaved receives the applied plan carrying the new course.
+    const savedPlan = s.onSaved.mock.calls[0][0] as LocalPlan;
+    expect(savedPlan.slots[0].courses.map((c) => c.code)).toContain("cs246");
+    expect(s.setSaving.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("reports the persist error and leaves saved state untouched on ok:false", async () => {
+    const plan = localPlan([slot({ id: "a", position: "1A", termId: FALL })]);
+    const persist = vi
+      .fn()
+      .mockResolvedValue({ ok: false, error: "snapshot_too_large" });
+    const s = spies();
+
+    await runAddToPlanState({
+      plan,
+      slot: plan.slots[0],
+      course: makeCourse("cs246"),
+      label: "1A",
+      persist,
+      ...s,
+    });
+
+    expect(persist).toHaveBeenCalledOnce();
+    expect(s.onError).toHaveBeenCalledExactlyOnceWith("snapshot_too_large");
+    expect(s.onSaved).not.toHaveBeenCalled();
+    expect(s.onAdded).not.toHaveBeenCalled();
+    expect(s.setSaving.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("treats a thrown persist as a failed save: onError, no saved state, saving cleared, no rejection", async () => {
+    const plan = localPlan([slot({ id: "a", position: "1A", termId: FALL })]);
+    const persist = vi.fn().mockRejectedValue(new Error("Network down"));
+    const s = spies();
+
+    await expect(
+      runAddToPlanState({
+        plan,
+        slot: plan.slots[0],
+        course: makeCourse("cs246"),
+        label: "1A",
+        persist,
+        ...s,
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(s.onError).toHaveBeenCalledExactlyOnceWith("Network down");
+    expect(s.onSaved).not.toHaveBeenCalled();
+    expect(s.onAdded).not.toHaveBeenCalled();
+    expect(s.setSaving.mock.calls).toEqual([[true], [false]]);
   });
 });

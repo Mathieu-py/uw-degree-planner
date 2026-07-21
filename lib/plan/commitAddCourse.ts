@@ -11,29 +11,23 @@ import { programIdentities } from "@/lib/programs/meta";
 import { type TermId, termLabel } from "@/lib/terms";
 
 /**
- * One-click "add course to a known term" — the detail page's `from=picker` path,
- * where plan + target term are already chosen so there's no term step.
- *
- * The no-preloaded-plan variant of the term pickers: it load→modify→saves rather
- * than editing a plan already in state. The pickers consume the same
- * {@link applyAddToPlan} core, so no add path drifts.
+ * One-click "add course to a known term" — the detail page's `from=picker`
+ * path, where plan + target term are already chosen. Shares the
+ * {@link applyAddToPlan} core with the pickers so no add path drifts.
  */
 export type CommitAddResult =
   | { status: "added"; termLabel: string }
   | { status: "already-placed"; label: string }
   | { status: "blocked" } // closed to the plan's program/faculty
-  // Term no longer maps to a slot, no plan loaded, or the block check couldn't
-  // be resolved (program detail unavailable) — the caller falls back to the
-  // full picker rather than asserting a verdict.
+  // No slot/plan, or block verdict unknown — caller falls back to the full picker.
   | { status: "unresolved" }
   | { status: "error"; error: string };
 
 /**
- * The program/faculty gate, cache-first: referenced codes only ever SUPPRESS a
- * block, so an unrestricted course needs no detail fetch. A blocked read may be
- * a stale restriction the program's own rules override — load and re-check.
- * If detail can't load the verdict is unknown, not blocked: a network failure
- * must not present as an academic rule.
+ * Program/faculty gate, cache-first: referenced codes only SUPPRESS a block, so
+ * an unrestricted course needs no detail fetch; a blocked read is re-checked
+ * after loading detail. If detail can't load the verdict is unknown, not
+ * blocked — a network failure must not present as an academic rule.
  */
 async function blockGate(
   course: Course,
@@ -114,11 +108,9 @@ export async function applyAddToPlan<T extends AddablePlan>(
 type AddPersistResult = { ok: boolean; error?: string };
 
 /**
- * The picker-side save wrapper shared by TermPickerAuthed/Local: flip busy, apply
- * the add, bail on anything but a real "added", persist via the caller's writer,
- * then reflect the new plan and report success. The `saving` and plan-presence
- * guards stay with the caller (they read its state); this owns the busy flag
- * around the write so a rejected write can't leave the picker stuck disabled.
+ * Picker-side save wrapper shared by TermPickerAuthed/Local: apply the add,
+ * persist via the caller's writer, then reflect the new plan. Owns the busy
+ * flag around the write so a rejected write can't leave the picker stuck.
  */
 export async function runAddToPlanState<T extends AddablePlan>({
   plan,
@@ -141,8 +133,7 @@ export async function runAddToPlanState<T extends AddablePlan>({
   onAdded: (label: string) => void;
   onError?: (error: string) => void;
 }): Promise<void> {
-  // Saving flips before the await so a double-click can't slip past the caller's
-  // guard; the core re-runs the placed/block gates too (no bypass).
+  // Flip before the await so a double-click can't slip past the caller's guard.
   setSaving(true);
   try {
     const applied = await applyAddToPlan(plan, slot, course);
@@ -155,6 +146,9 @@ export async function runAddToPlanState<T extends AddablePlan>({
     }
     onSaved(applied.plan);
     onAdded(label);
+  } catch (err) {
+    // A rejected save (or add) is a failed save — surface it, don't leak the rejection.
+    onError?.(err instanceof Error ? err.message : "Something went wrong.");
   } finally {
     setSaving(false);
   }
@@ -172,8 +166,7 @@ export async function commitAddCourse({
   course: Course;
 }): Promise<CommitAddResult> {
   if (isAuthed) {
-    // Signed-in plans always carry their id in the picker link; without one we
-    // can't resolve a server plan — fall back to the full picker.
+    // Signed-in links always carry a plan id; without one, fall back to the picker.
     if (!planId) return { status: "unresolved" };
     const res = await loadServerPlan(planId);
     if (!res.ok) return { status: "error", error: res.error };
