@@ -3,27 +3,18 @@ import type { User } from "@supabase/supabase-js";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Set env BEFORE importing the store so SUPABASE_CONFIGURED is true at
-// module-load time. The store reads NEXT_PUBLIC_* once via process.env and
-// caches the result as a const.
-const {
-  createSupabaseBrowserClientMock,
+// The harness sets the Supabase env, so ../store (imported below, after it)
+// computes SUPABASE_CONFIGURED=true at module load.
+import {
   getSessionMock,
-  onAuthStateChangeMock,
   maybeSingleMock,
-} = vi.hoisted(() => {
-  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-  return {
-    createSupabaseBrowserClientMock: vi.fn(),
-    getSessionMock: vi.fn(),
-    onAuthStateChangeMock: vi.fn(),
-    maybeSingleMock: vi.fn(),
-  };
-});
+  onAuthStateChangeMock,
+  stubSupabaseClient,
+} from "./harness";
 
-vi.mock("@/lib/supabase/client", () => ({
-  createSupabaseBrowserClient: createSupabaseBrowserClientMock,
+vi.mock("@/lib/supabase/client", async () => ({
+  createSupabaseBrowserClient: (await import("./harness"))
+    .createSupabaseBrowserClientMock,
 }));
 
 import {
@@ -55,20 +46,7 @@ beforeEach(() => {
   __resetAuthStoreForTests();
   authChangeCallback = null;
 
-  // `from("profiles").select("username").eq("id", id).maybeSingle()` chain used
-  // by the store's profile sync. Each step returns the next link.
-  const queryChain = {
-    select: () => queryChain,
-    eq: () => queryChain,
-    maybeSingle: maybeSingleMock,
-  };
-  createSupabaseBrowserClientMock.mockReturnValue({
-    auth: {
-      getSession: getSessionMock,
-      onAuthStateChange: onAuthStateChangeMock,
-    },
-    from: () => queryChain,
-  });
+  stubSupabaseClient();
   getSessionMock.mockReset();
   getSessionMock.mockResolvedValue({ data: { session: null } });
   maybeSingleMock.mockReset();

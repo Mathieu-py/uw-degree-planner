@@ -20,6 +20,8 @@ vi.mock("@/components/planner/shell/PlannerShell", () => ({
   PlannerShell: () => null,
 }));
 
+import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
+import { AuthGate } from "@/lib/auth/store";
 import { PlannerPageContent } from "../PlannerPageContent";
 
 const SERVER_PLAN: ServerPlan = {
@@ -41,14 +43,19 @@ beforeEach(() => {
 });
 
 describe("PlannerPageContent — server-side plan load", () => {
-  it("loads the plan and threads it as initialPlan", async () => {
+  it("loads the plan and threads it as initialPlan behind the auth gate", async () => {
     loadServerPlanMock.mockResolvedValue({ ok: true, data: SERVER_PLAN });
 
     const el = await PlannerPageContent({ planId: "p1" });
 
+    // The anon-flash guard lives here now.
+    expect(el.type).toBe(AuthGate);
+    expect(el.props.fallback.type).toBe(PlannerSkeleton);
+
+    const shell = el.props.children;
     expect(loadServerPlanMock).toHaveBeenCalledWith("p1");
-    expect(el.props.planId).toBe("p1");
-    expect(el.props.initialPlan).toEqual(serverPlanToLocal(SERVER_PLAN));
+    expect(shell.props.planId).toBe("p1");
+    expect(shell.props.initialPlan).toEqual(serverPlanToLocal(SERVER_PLAN));
   });
 
   it("passes a null initialPlan and no error when the plan is missing (ok, no row)", async () => {
@@ -56,9 +63,10 @@ describe("PlannerPageContent — server-side plan load", () => {
 
     const el = await PlannerPageContent({ planId: "missing" });
 
-    expect(el.props.initialPlan).toBeNull();
+    const shell = el.props.children;
+    expect(shell.props.initialPlan).toBeNull();
     // A clean not-found, not a failure — the shell shows "missing", not a retry.
-    expect(el.props.initialLoadError).toBeNull();
+    expect(shell.props.initialLoadError).toBeNull();
   });
 
   it("surfaces the load error (distinct from a clean not-found) when the load fails", async () => {
@@ -66,15 +74,17 @@ describe("PlannerPageContent — server-side plan load", () => {
 
     const el = await PlannerPageContent({ planId: "p1" });
 
-    expect(el.props.initialPlan).toBeNull();
-    expect(el.props.initialLoadError).toBe("boom");
+    const shell = el.props.children;
+    expect(shell.props.initialPlan).toBeNull();
+    expect(shell.props.initialLoadError).toBe("boom");
   });
 
   it("skips the server load for bare /plan (null planId)", async () => {
     const el = await PlannerPageContent({ planId: null });
 
+    const shell = el.props.children;
     expect(loadServerPlanMock).not.toHaveBeenCalled();
-    expect(el.props.initialPlan).toBeNull();
-    expect(el.props.planId).toBeNull();
+    expect(shell.props.initialPlan).toBeNull();
+    expect(shell.props.planId).toBeNull();
   });
 });

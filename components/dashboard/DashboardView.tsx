@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DashboardSkeleton } from "@/components/states/PageSkeleton";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
 import { Segmented } from "@/components/ui/Segmented";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuthState } from "@/lib/auth/store";
 import { countNoun, describeActionError } from "@/lib/format";
 import { streamLabel } from "@/lib/plan/format";
@@ -29,29 +29,19 @@ function formatUpdated(iso: string): string {
   });
 }
 
+/** Mounted behind the page's AuthGate, so `isAuthed` is resolved here. */
 export function DashboardView({
   programNames,
 }: {
   programNames: Record<string, string>;
 }) {
-  const { isAuthed, ready } = useAuthState();
+  const { isAuthed } = useAuthState();
   const { plans, remove, duplicate, error, loadError, refetch } =
     usePlanList(isAuthed);
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("grid");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
-
-  if (!ready) {
-    return (
-      <div className="section">
-        <div className="container-lg flex flex-col gap-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-      </div>
-    );
-  }
 
   if (!isAuthed) {
     return (
@@ -106,7 +96,13 @@ export function DashboardView({
     );
   }
 
-  const list = plans ?? [];
+  // First list fetch still in flight — null isn't "zero plans" yet, and the
+  // stat strip / empty grid would read as exactly that.
+  if (plans === null) {
+    return <DashboardSkeleton />;
+  }
+
+  const list = plans;
   const sharedCount = list.filter((p) => p.shareToken).length;
   const programCount = new Set(list.flatMap((p) => p.programIds)).size;
   const lastUpdated =

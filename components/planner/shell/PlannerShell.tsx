@@ -64,31 +64,19 @@ interface Props {
  * keyed by the `/plan/[planId]` route param. The mutation surface is identical
  * across both — usePlanSync routes the writes.
  *
- * Mounting the inner shell is gated on `ready` from the auth store: without it,
- * a returning user briefly renders the anon branch (and stale local plan)
- * before `getUser()` flips `isAuthed` — a flicker on every load.
+ * Mounted behind the page's AuthGate, so `isAuthed` is resolved here — an
+ * ungated mount would flash the anon branch (and stale local plan) for
+ * returning users.
  */
-export function PlannerShell(props: Props) {
-  const { isAuthed, ready } = useAuthState();
-  if (!ready) {
-    return <PlannerSkeleton />;
-  }
-  return <PlannerShellInner {...props} isAuthed={isAuthed} />;
-}
-
-interface InnerProps extends Props {
-  isAuthed: boolean;
-}
-
-function PlannerShellInner({
+export function PlannerShell({
   planId,
   initialPlan,
   initialLoadError,
   programOptions,
   specializationsByProgram,
   catalog,
-  isAuthed,
-}: InnerProps) {
+}: Props) {
+  const { isAuthed } = useAuthState();
   const router = useRouter();
 
   const { plan, hydrated, saveStatus, setPlan, clearLocalPlan, flushSave } =
@@ -477,7 +465,7 @@ function PlannerShellInner({
 }
 
 /**
- * Three-column shell wrapping every branch of PlannerShellInner. At lg+ the
+ * Three-column shell wrapping every branch of PlannerShell. At lg+ the
  * PlanToolbar is a 240px left column, children fill the rest, and the Audit
  * column is the rightmost inspector inside children; below lg the sidebar
  * collapses to a top dropdown. Anon users get no sidebar (PlanToolbar returns

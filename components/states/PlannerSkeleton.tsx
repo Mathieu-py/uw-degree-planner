@@ -4,8 +4,9 @@ import { Skeleton } from "@/components/ui/Skeleton";
  * Loading placeholder shaped like the loaded planner: a full-width header row,
  * a wrapping grid of term cards (label + a few slot bars each), and the sticky
  * audit panel on the side. Rendered by the planner route's `app/plan/loading.tsx`
- * (which supplies the page container) and by PlannerShell's pre-plan branches, so
- * one continuous skeleton persists from route load until the plan renders.
+ * (which supplies the page container), by PlannerPageContent's AuthGate fallback,
+ * and by PlannerShell's pre-plan branches, so one continuous skeleton persists
+ * from route load until the plan renders.
  */
 export function PlannerSkeleton() {
   return (

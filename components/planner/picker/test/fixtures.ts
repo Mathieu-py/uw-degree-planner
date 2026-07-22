@@ -1,5 +1,20 @@
+import type { ReactNode } from "react";
 import type { Course } from "@/lib/courses/types";
 import type { PlanSlot } from "@/lib/plan/types";
+
+/**
+ * Render-time mirror of AuthGate for suites that mock the auth store; reads the
+ * mocked hook on each render (no subscription — set auth state before render).
+ */
+export function fakeAuthGate(authState: () => { ready: boolean }) {
+  return ({
+    fallback = null,
+    children,
+  }: {
+    fallback?: ReactNode;
+    children?: ReactNode;
+  }) => (authState().ready ? children : fallback);
+}
 
 /**
  * A minimal valid `Course`; override any field via `over`. Note: clicking an
