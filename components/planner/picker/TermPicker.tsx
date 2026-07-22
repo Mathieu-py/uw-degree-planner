@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useAuthState } from "@/lib/auth/store";
+import { AuthGate, useAuthState } from "@/lib/auth/store";
 import type { Course } from "@/lib/courses/types";
 import { useModalExit } from "@/lib/hooks/useModalExit";
 import { CourseTermModalShell, StatusBody } from "./CourseTermModalShell";
@@ -35,10 +35,13 @@ export function TermPicker({
   const [step, setStep] = useState<TermPickerStep>("plans");
   const [addedTo, setAddedTo] = useState<string | null>(null);
 
-  // The plan-selection step is the only one that asks "which plan?"; every
-  // other state (loading, signed-out, term step) asks "which term?".
-  const heading =
-    isAuthed && step === "plans" ? "Add to which plan?" : "Add to which term?";
+  // Until auth resolves we can't know which question applies, so the header
+  // stays neutral; after that only the plan-selection step asks "which plan?".
+  const heading = !ready
+    ? "Add course"
+    : isAuthed && step === "plans"
+      ? "Add to which plan?"
+      : "Add to which term?";
 
   // A successful add dismisses the picker: record the label (footer flashes
   // "Added ✓" during exit), play the close animation, then `onAdded` or close.
@@ -63,23 +66,23 @@ export function TermPicker({
       onClose={handleClose}
       addedTo={addedTo}
     >
-      {!ready ? (
-        <StatusBody>Loading…</StatusBody>
-      ) : isAuthed ? (
-        <TermPickerAuthed
-          course={course}
-          step={step}
-          setStep={setStep}
-          onAdded={handleAdded}
-          justAdded={addedTo !== null}
-        />
-      ) : (
-        <TermPickerLocal
-          course={course}
-          onAdded={handleAdded}
-          justAdded={addedTo !== null}
-        />
-      )}
+      <AuthGate fallback={<StatusBody>Loading…</StatusBody>}>
+        {isAuthed ? (
+          <TermPickerAuthed
+            course={course}
+            step={step}
+            setStep={setStep}
+            onAdded={handleAdded}
+            justAdded={addedTo !== null}
+          />
+        ) : (
+          <TermPickerLocal
+            course={course}
+            onAdded={handleAdded}
+            justAdded={addedTo !== null}
+          />
+        )}
+      </AuthGate>
     </CourseTermModalShell>
   );
 }

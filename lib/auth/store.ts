@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { useEffect, useSyncExternalStore } from "react";
+import { type ReactNode, useEffect, useSyncExternalStore } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
@@ -195,6 +195,30 @@ export function useAuthState(): UseAuthStateResult {
     ready,
     isAuthed: user !== null,
   };
+}
+
+/**
+ * Mounts children only after auth resolves (fallback until then, including
+ * SSR/hydration), so no data hook under the gate ever reads an unresolved
+ * `isAuthed`. Boots the store itself, so a gate-only page still resolves.
+ */
+export function AuthGate({
+  fallback = null,
+  children,
+}: {
+  fallback?: ReactNode;
+  children: ReactNode;
+}): ReactNode {
+  useEffect(() => {
+    initAuth();
+  }, []);
+  // Subscribe to `ready` alone — user/username notifies don't concern the gate.
+  const ready = useSyncExternalStore(
+    subscribe,
+    getReadySnapshot,
+    getReadyServerSnapshot,
+  );
+  return ready ? children : fallback;
 }
 
 /** Test-only: reset the store to defaults and clear the init guard. */

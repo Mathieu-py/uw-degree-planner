@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDropdown } from "@/components/ui/useDropdown";
-import { SUPABASE_CONFIGURED, useAuthState } from "@/lib/auth/store";
+import { AuthGate, SUPABASE_CONFIGURED, useAuthState } from "@/lib/auth/store";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // No in-app help surface yet — point Help & feedback at the tracker.
@@ -25,11 +25,15 @@ const MENU_ITEM_CLASS =
  */
 export function UserMenu() {
   if (!SUPABASE_CONFIGURED) return null;
-  return <UserMenuInner />;
+  return (
+    <AuthGate fallback={<Skeleton className="size-10 rounded-full" />}>
+      <UserMenuInner />
+    </AuthGate>
+  );
 }
 
 function UserMenuInner() {
-  const { user, displayName, ready } = useAuthState();
+  const { user, displayName } = useAuthState();
   const { open, toggle, close, containerRef, id } = useDropdown();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,10 +52,6 @@ function UserMenuInner() {
       // Always release the button — a thrown error must not strand it disabled.
       setBusy(false);
     }
-  }
-
-  if (!ready) {
-    return <Skeleton className="size-10 rounded-full" />;
   }
 
   if (!user) {

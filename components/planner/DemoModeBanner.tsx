@@ -13,8 +13,9 @@ const DISMISS_KEY = "uwfinder.demoBanner.dismissed";
  * save. Rendered by PlannerLayout only when `!isAuthed`. Dismissible per session.
  */
 export function DemoModeBanner() {
-  // Lazy initializer reads sessionStorage browser-side only. PlannerShell gates
-  // its render on `ready`, so this never mounts during SSR/hydration — no flash.
+  // Lazy initializer reads sessionStorage browser-side only. The planner page's
+  // AuthGate holds this subtree until auth resolves, so this never mounts during
+  // SSR/hydration — no flash.
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.sessionStorage.getItem(DISMISS_KEY) === "1";

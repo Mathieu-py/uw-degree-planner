@@ -1,4 +1,6 @@
 import { PlannerShell } from "@/components/planner/shell/PlannerShell";
+import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
+import { AuthGate } from "@/lib/auth/store";
 import { loadTerm } from "@/lib/courses/data";
 import { loadServerPlan } from "@/lib/plan/server/actions";
 import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
@@ -56,16 +58,20 @@ export async function PlannerPageContent({
     planResult && !planResult.ok ? planResult.error : null;
 
   // Key by planId so a plan switch remounts the shell with a fresh seed instead
-  // of needing a derive-from-prop sync.
+  // of needing a derive-from-prop sync. The gate's fallback matches the route
+  // loading.tsx skeleton, so one continuous skeleton runs from route load
+  // through auth resolution.
   return (
-    <PlannerShell
-      key={planId ?? "local"}
-      planId={planId}
-      initialPlan={initialPlan}
-      initialLoadError={initialLoadError}
-      programOptions={programOptions}
-      specializationsByProgram={specializationsByProgram}
-      catalog={catalog}
-    />
+    <AuthGate fallback={<PlannerSkeleton />}>
+      <PlannerShell
+        key={planId ?? "local"}
+        planId={planId}
+        initialPlan={initialPlan}
+        initialLoadError={initialLoadError}
+        programOptions={programOptions}
+        specializationsByProgram={specializationsByProgram}
+        catalog={catalog}
+      />
+    </AuthGate>
   );
 }

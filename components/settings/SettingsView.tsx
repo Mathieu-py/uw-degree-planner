@@ -8,26 +8,15 @@ import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Input } from "@/components/ui/Input";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { deleteAccount, updateProfile } from "@/lib/account/server/actions";
 import { publishUsername, useAuthState } from "@/lib/auth/store";
 import { describeActionError } from "@/lib/format";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+/** Mounted behind the page's AuthGate, so `isAuthed` is resolved here. */
 export function SettingsView() {
-  const { user, username, displayName, ready, isAuthed } = useAuthState();
+  const { user, username, displayName, isAuthed } = useAuthState();
   const router = useRouter();
-
-  if (!ready) {
-    return (
-      <div className="section">
-        <div className="container-sm flex flex-col gap-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    );
-  }
 
   if (!isAuthed) {
     return (

@@ -32,7 +32,10 @@ const {
   plansContainingCourseMock: vi.fn(),
 }));
 
-vi.mock("@/lib/auth/store", () => ({ useAuthState: authStateMock }));
+vi.mock("@/lib/auth/store", async () => ({
+  useAuthState: authStateMock,
+  AuthGate: (await import("./fixtures")).fakeAuthGate(authStateMock),
+}));
 vi.mock("@/lib/plan/sync/usePlanList", () => ({
   usePlanList: usePlanListMock,
 }));
@@ -127,6 +130,16 @@ afterEach(() => {
 });
 
 describe("TermPicker — signed in", () => {
+  it("shows a loading state, not the plan list, until auth resolves", () => {
+    authStateMock.mockReturnValue({ ...SIGNED_IN, ready: false });
+    mockPlanList([mkSummary()]);
+    render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
+
+    expect(screen.getByText(/loading…/i)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /My plan/ })).toBeNull();
+    expect(loadServerPlanMock).not.toHaveBeenCalled();
+  });
+
   it("shows a create-a-plan empty state when the user has no plans", () => {
     mockPlanList([]);
     render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);

@@ -29,7 +29,10 @@ vi.mock("@/lib/plan/storage", () => ({
 // These tests exercise the signed-out (local plan) branch. Pin auth to
 // "ready, signed out" so the wrapper renders the local body. The signed-in
 // branch is covered in TermPickerServer.test.tsx.
-vi.mock("@/lib/auth/store", () => ({ useAuthState: authStateMock }));
+vi.mock("@/lib/auth/store", async () => ({
+  useAuthState: authStateMock,
+  AuthGate: (await import("./fixtures")).fakeAuthGate(authStateMock),
+}));
 
 // TermPicker statically imports the plan server actions (for the signed-in
 // branch). The real module pulls in `server-only`, which throws under jsdom,
