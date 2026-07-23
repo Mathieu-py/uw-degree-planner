@@ -48,7 +48,6 @@ export const TermColumn = memo(function TermColumn({
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
   const filled = slot.courses.length;
-  const allDone = filled > 0 && slot.courses.every((c) => !!c.grade);
 
   // Bind slotId here so SlotBody gets stable zero/one-arg callbacks (and its
   // memo holds) while the parent's handlers stay slotId-keyed.
@@ -117,10 +116,7 @@ export const TermColumn = memo(function TermColumn({
               <Icon name="warning" size="sm" aria-hidden="true" />
             </span>
           ) : null}
-          <span
-            className="u-mono u-small"
-            style={{ color: allDone ? "var(--met)" : "var(--ink-3)" }}
-          >
+          <span className="u-mono u-small" style={{ color: "var(--ink-3)" }}>
             {filled}
           </span>
         </div>

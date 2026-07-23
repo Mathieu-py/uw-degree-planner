@@ -21,18 +21,16 @@ interface Props {
   planOriginQuery?: string;
 }
 
-type SlotStatus = "done" | "plan" | "warn";
+type SlotStatus = "plan" | "warn";
 
-// A graded course is completed, so it reads "done" regardless of any stale
-// prereq flag; else an outstanding issue makes it "warn", otherwise "plan".
+// A graded course is already taken, so a stale prereq flag stays quiet; an
+// outstanding issue on an ungraded course makes it "warn", otherwise "plan".
 function courseStatus(course: SlotCourse, hasIssue: boolean): SlotStatus {
-  if (course.grade) return "done";
-  if (hasIssue) return "warn";
-  return "plan";
+  return !course.grade && hasIssue ? "warn" : "plan";
 }
 
 /**
- * One term's placed courses as status-colored slots (done/plan/warn) plus a
+ * One term's placed courses as status-colored slots (plan/warn) plus a
  * dashed "+ add course". Each slot shows its status glyph and reveals view (↗) +
  * remove (×) on hover; warn slots list their validation messages inline.
  */
@@ -92,14 +90,7 @@ export const SlotBody = memo(function SlotBody({
             <div className="flex items-center justify-between gap-1.5">
               <span className="u-mono pw-code truncate min-w-0">{code}</span>
               <span className="pw-slot-actions">
-                {status === "done" ? (
-                  <span
-                    className="pw-ic pw-stat"
-                    style={{ color: "var(--met)" }}
-                  >
-                    <Icon name="check" size="xs" aria-hidden="true" />
-                  </span>
-                ) : status === "warn" ? (
+                {status === "warn" ? (
                   <span
                     className="pw-ic pw-stat"
                     style={{ color: "var(--partial)" }}
