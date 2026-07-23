@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Alert } from "@/components/ui/Alert";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import type { Course } from "@/lib/courses/types";
 import { runAddToPlanState } from "@/lib/plan/commitAddCourse";
@@ -91,11 +92,7 @@ export function TermPickerLocal({
         busy={saving}
         onPick={addTo}
       />
-      {saveError ? (
-        <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
-          {saveError}
-        </p>
-      ) : null}
+      {saveError ? <Alert>{saveError}</Alert> : null}
     </>
   );
 }

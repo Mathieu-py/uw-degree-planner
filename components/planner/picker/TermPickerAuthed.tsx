@@ -9,6 +9,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Icon } from "@/components/ui/Icon";
@@ -171,9 +172,9 @@ export function TermPickerAuthed({
 
   // ---- Plan-selection step ----
   if (step === "plans") {
-    if (plans === null || loading)
-      return <StatusBody>Loading your plans…</StatusBody>;
-    if (listError) {
+    // Error before the null guard: a failed first load leaves plans null, so
+    // checking null first would show "Loading" forever instead of the retry.
+    if (listError && plans === null) {
       return (
         <ErrorBody
           message="Couldn't load your plans."
@@ -181,6 +182,8 @@ export function TermPickerAuthed({
         />
       );
     }
+    if (plans === null || loading)
+      return <StatusBody>Loading your plans…</StatusBody>;
     if (plans.length === 0) {
       return (
         <div className="flex flex-col gap-3 py-4 text-center">
@@ -278,11 +281,7 @@ export function TermPickerAuthed({
           />
         )
       ) : null}
-      {saveError ? (
-        <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
-          {describeActionError(saveError)}
-        </p>
-      ) : null}
+      {saveError ? <Alert>{describeActionError(saveError)}</Alert> : null}
     </>
   );
 }

@@ -17,6 +17,7 @@ import {
 import { SaveStatusBadge } from "@/components/planner/toolbar/SaveStatusBadge";
 import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { ActionMenu } from "@/components/ui/ActionMenu";
+import { Alert } from "@/components/ui/Alert";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -81,7 +82,12 @@ export function PlannerShell({
 
   const { plan, hydrated, saveStatus, setPlan, clearLocalPlan, flushSave } =
     usePlanSync({ isAuthed, planId, initialPlan });
-  const { plans, create, loadError: listLoadError } = usePlanList(isAuthed);
+  const {
+    plans,
+    create,
+    loadError: listLoadError,
+    refetch: refetchPlanList,
+  } = usePlanList(isAuthed);
   const activePlanName =
     isAuthed && planId
       ? (plans?.find((p) => p.id === planId)?.name ?? "Untitled plan")
@@ -220,10 +226,11 @@ export function PlannerShell({
     if (planId === null && listLoadError) {
       return (
         <PlannerLoadState
-          kind="error"
+          kind="listError"
           isAuthed={isAuthed}
           planId={planId}
           loadError={listLoadError}
+          onRetryList={() => void refetchPlanList()}
           handoffElement={handoffElement}
         />
       );
@@ -510,48 +517,52 @@ function PlannerLayout({
   );
 }
 
-type LoadStateKind = "initial" | "error" | "notFound" | "redirecting";
+type LoadStateKind =
+  | "initial"
+  | "listError"
+  | "error"
+  | "notFound"
+  | "redirecting";
 
 /**
  * The planner's non-loaded states — loading skeleton, load error, missing plan
- * — each wrapping PlannerLayout so the handoff modal still shows. `initial` has
- * no plan yet, so it drops the fallback toolbar; the rest keep it so the user
- * can switch plans to recover.
+ * — each wrapping PlannerLayout so the handoff modal still shows. `initial` and
+ * `listError` drop the fallback toolbar (no plan list to switch within — for
+ * `listError` it would only duplicate this error); the rest keep it so the
+ * user can switch plans to recover.
  */
 function PlannerLoadState({
   kind,
   isAuthed,
   planId,
   loadError,
+  onRetryList,
   handoffElement,
 }: {
   kind: LoadStateKind;
   isAuthed: boolean;
   planId: string | null;
-  /** Only the list-load-failure ("error") state carries a message. */
+  /** Failure detail for the "listError" / "error" states. */
   loadError?: string | null;
+  /** Retry for the list-failure ("listError") state. */
+  onRetryList?: () => void;
   handoffElement: React.ReactNode;
 }) {
   const body =
-    kind === "error" ? (
-      <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger">
-        <p className="font-medium">We couldn't load this plan.</p>
-        {loadError ? (
-          <p className="mt-1 text-xs opacity-80">
-            {describeActionError(loadError)}
-          </p>
-        ) : null}
-        <p className="mt-2 text-xs opacity-80">
-          Reload the page or pick a different plan from the toolbar.
-        </p>
-      </div>
+    kind === "listError" ? (
+      <Alert size="lg" title="We couldn't load your plans." onRetry={onRetryList}>
+        {loadError ? <p>{describeActionError(loadError)}</p> : null}
+      </Alert>
+    ) : kind === "error" ? (
+      <Alert size="lg" title="We couldn't load this plan.">
+        {loadError ? <p>{describeActionError(loadError)}</p> : null}
+        <p>Reload the page or pick a different plan from the toolbar.</p>
+      </Alert>
     ) : kind === "notFound" ? (
-      <div className="rounded-[10px] border border-partial bg-partial-soft px-4 py-6 text-sm text-ink">
-        <p>
-          We couldn't load that plan — it may have been deleted. Pick a
-          different plan from the toolbar, or create a new one.
-        </p>
-      </div>
+      <Alert size="lg" variant="partial">
+        We couldn't load that plan — it may have been deleted. Pick a different
+        plan from the toolbar, or create a new one.
+      </Alert>
     ) : (
       <PlannerSkeleton />
     );
@@ -559,7 +570,7 @@ function PlannerLoadState({
     <PlannerLayout
       isAuthed={isAuthed}
       planId={planId}
-      toolbar={kind === "initial" ? null : undefined}
+      toolbar={kind === "initial" || kind === "listError" ? null : undefined}
       overlays={handoffElement}
     >
       {body}

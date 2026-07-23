@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
@@ -91,7 +92,7 @@ export function ProgramBlockedBody() {
   );
 }
 
-/** Centered error message with an optional retry button. */
+/** Error bar with an optional inline retry button. */
 export function ErrorBody({
   message,
   onRetry,
@@ -100,20 +101,10 @@ export function ErrorBody({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 py-4 text-center">
-      <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
+    <div className="py-2">
+      <Alert size="md" onRetry={onRetry}>
         {message}
-      </p>
-      {onRetry ? (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRetry}
-          className="self-center"
-        >
-          Try again
-        </Button>
-      ) : null}
+      </Alert>
     </div>
   );
 }

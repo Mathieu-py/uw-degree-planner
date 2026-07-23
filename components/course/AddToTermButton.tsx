@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TermPicker } from "@/components/planner/picker/TermPicker";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { useAuthState } from "@/lib/auth/store";
@@ -67,9 +68,7 @@ export function AddToTermButton({
         {saving ? "Adding…" : `Add to ${label}`}
       </Button>
       {status === "error" ? (
-        <p className="rounded-[8px] bg-danger-soft text-danger text-xs px-3 py-2">
-          Couldn't add to your plan. Try again.
-        </p>
+        <Alert>Couldn't add to your plan. Try again.</Alert>
       ) : null}
       {status === "fallback" ? (
         <TermPicker
