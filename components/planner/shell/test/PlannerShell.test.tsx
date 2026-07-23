@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramOption } from "@/lib/programs";
 
@@ -117,12 +123,13 @@ describe("PlannerShell — load-failure recovery", () => {
 
   it("shows a retryable error (not a redirect) when the plan list fails at /plan", async () => {
     useAuthStateMock.mockReturnValue(AUTHED);
+    const refetch = vi.fn();
     usePlanListMock.mockReturnValue({
       plans: null,
       loading: false,
       error: null,
       loadError: "not_authenticated",
-      refetch: vi.fn(),
+      refetch,
       create: vi.fn(),
       rename: vi.fn(),
       remove: vi.fn(),
@@ -140,9 +147,14 @@ describe("PlannerShell — load-failure recovery", () => {
       />,
     );
 
-    expect(await screen.findByText(/couldn't load this plan/i)).toBeTruthy();
+    expect(await screen.findByText(/couldn't load your plans/i)).toBeTruthy();
     // A load failure must not be mistaken for "zero plans" → no create redirect.
     expect(routerReplaceMock).not.toHaveBeenCalledWith("/plan/new");
+    // Exactly one error surface: the fallback toolbar (which would render a
+    // duplicate error bar for the same failure) must be suppressed.
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalledOnce();
   });
 
   it("shows a not-found message when a specific plan is genuinely missing (no load error)", async () => {

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useCallback, useState } from "react";
 import { ShareModal } from "@/components/planner/modals/ShareModal";
 import { ActionMenu, type MenuItem } from "@/components/ui/ActionMenu";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import {
   DropdownChevron,
@@ -224,20 +225,9 @@ function PlanToolbarAuthed({
   // than silently hiding the toolbar.
   if (loadError && plans === null) {
     return (
-      <div
-        role="alert"
-        className="flex w-full items-center justify-between gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger"
-      >
-        <span>{describeActionError(loadError)}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void refetch()}
-          className="shrink-0"
-        >
-          Try again
-        </Button>
-      </div>
+      <Alert size="md" onRetry={() => void refetch()} className="w-full">
+        {describeActionError(loadError)}
+      </Alert>
     );
   }
 
@@ -519,12 +509,9 @@ function PlanToolbarAuthed({
           banner is the only signal on the planner route. Cleared on next success
           by the shared usePlanList store, so no dismiss wiring. */}
       {error ? (
-        <div
-          role="alert"
-          className="w-full rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger"
-        >
+        <Alert size="md" className="w-full">
           {describeActionError(error)}
-        </div>
+        </Alert>
       ) : null}
     </>
   );

@@ -429,6 +429,17 @@ describe("TermPicker — signed in", () => {
     expect(screen.getByRole("button", { name: /try again/i })).toBeTruthy();
   });
 
+  it("surfaces a plan-list load failure with a retry, not an endless spinner", async () => {
+    const refetch = vi.fn();
+    mockPlanList(null, { loadError: "not_authenticated", refetch });
+    render(<TermPicker course={makeCourse()} onClose={vi.fn()} />);
+
+    expect(await screen.findByText(/couldn't load your plans/i)).toBeTruthy();
+    expect(screen.queryByText(/loading your plans/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
   it("treats a missing plan as no longer available", async () => {
     mockPlanList([mkSummary()]);
     loadServerPlanMock.mockResolvedValue({ ok: true, data: null });

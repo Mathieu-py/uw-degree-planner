@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DashboardSkeleton } from "@/components/states/PageSkeleton";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
@@ -77,20 +78,14 @@ export function DashboardView({
       <div className="section">
         <div className="container-lg flex flex-col items-start gap-4">
           <Eyebrow>My plans</Eyebrow>
-          <div
-            role="alert"
-            className="flex w-full flex-col items-start gap-3 rounded-[10px] border border-danger bg-danger-soft px-4 py-6 text-sm text-danger"
+          <Alert
+            size="lg"
+            title="We couldn't load your plans."
+            onRetry={() => void refetch()}
+            className="w-full"
           >
-            <div className="flex flex-col gap-1">
-              <p className="font-medium">We couldn't load your plans.</p>
-              <p className="text-xs opacity-80">
-                {describeActionError(loadError)}
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => void refetch()}>
-              Try again
-            </Button>
-          </div>
+            <p>{describeActionError(loadError)}</p>
+          </Alert>
         </div>
       </div>
     );
@@ -172,9 +167,9 @@ export function DashboardView({
         {/* A failed list mutation (delete/duplicate) reverts optimistically —
             this banner is the only signal. The store clears it on next success. */}
         {error ? (
-          <div className="rounded-[10px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
+          <Alert size="md" className="w-full">
             {describeActionError(error)}
-          </div>
+          </Alert>
         ) : null}
 
         {/* View toggle */}
