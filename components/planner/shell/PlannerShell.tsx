@@ -550,7 +550,11 @@ function PlannerLoadState({
 }) {
   const body =
     kind === "listError" ? (
-      <Alert size="lg" title="We couldn't load your plans." onRetry={onRetryList}>
+      <Alert
+        size="lg"
+        title="We couldn't load your plans."
+        onRetry={onRetryList}
+      >
         {loadError ? <p>{describeActionError(loadError)}</p> : null}
       </Alert>
     ) : kind === "error" ? (

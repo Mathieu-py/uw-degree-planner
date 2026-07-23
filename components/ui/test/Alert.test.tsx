@@ -26,9 +26,9 @@ describe("Alert", () => {
     );
     const headline = screen.getByText("We couldn't load your plans.");
     expect(headline.className).toContain("font-medium");
-    expect(screen.getByText("Session expired").parentElement?.className).toContain(
-      "opacity-80",
-    );
+    expect(
+      screen.getByText("Session expired").parentElement?.className,
+    ).toContain("opacity-80");
   });
 
   it("renders a Try again button that fires onRetry", () => {
