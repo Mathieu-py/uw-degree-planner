@@ -4,11 +4,11 @@ vi.mock("@/lib/programs/registry", () => ({
   programNameMap: () => ({ se: "Software Engineering" }),
 }));
 // Stub the client view — we only inspect the wrapping the page renders.
-vi.mock("@/components/dashboard/DashboardView", () => ({
+vi.mock("@/components/DashboardView", () => ({
   DashboardView: () => null,
 }));
 
-import { DashboardView } from "@/components/dashboard/DashboardView";
+import { DashboardView } from "@/components/DashboardView";
 import { DashboardSkeleton } from "@/components/states/PageSkeleton";
 import { AuthGate } from "@/lib/auth/store";
 import PlansPage from "../page";

@@ -7,7 +7,7 @@ import { computeDegreeProgress } from "../progress";
 
 /**
  * Stress tests driven by the real program catalog (data/programs.json) and real
- * course codes (data/courses.1261.json). These guard the audit's behavior on
+ * course codes (data/courses.1269.json). These guard the audit's behavior on
  * the actual UW requirement shapes, not just toy fixtures.
  */
 

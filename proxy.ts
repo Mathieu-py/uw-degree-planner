@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { logWarn } from "@/lib/log";
 import { updateSupabaseSession } from "@/lib/supabase/session";
 
 /**
@@ -15,7 +16,7 @@ export async function proxy(request: NextRequest) {
   try {
     return await updateSupabaseSession(request);
   } catch (err) {
-    console.warn("proxy: session refresh failed; continuing without it", err);
+    logWarn("proxy: session refresh failed; continuing without it", err);
     return NextResponse.next({ request });
   }
 }

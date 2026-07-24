@@ -5,8 +5,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/courses/data", () => ({ loadTerm: vi.fn(async () => []) }));
 
 import { loadTerm } from "@/lib/courses/data";
+import { MAX_PROGRAM_IDS } from "@/lib/plan/server/validate";
 import type { VariantSelection } from "@/lib/plan/variantPlacement";
-import { placeVariantSelections } from "../actions";
+import { fetchVariantGroups, placeVariantSelections } from "../actions";
 
 const VALID_START = 1239; // Fall 2023 — a member of KNOWN_TERMS.
 
@@ -44,5 +45,16 @@ describe("placeVariantSelections hardening (#84)", () => {
     ).resolves.toEqual([]);
     // Short-circuited before the catalog read — work bounded.
     expect(loadTerm).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchVariantGroups hardening", () => {
+  it("returns [] when programIds exceeds MAX_PROGRAM_IDS", async () => {
+    const ids = Array.from({ length: MAX_PROGRAM_IDS + 1 }, (_, i) => `p${i}`);
+    await expect(fetchVariantGroups(ids)).resolves.toEqual([]);
+  });
+
+  it("skips unknown program ids", async () => {
+    await expect(fetchVariantGroups(["not-a-program"])).resolves.toEqual([]);
   });
 });

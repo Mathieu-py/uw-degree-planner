@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ServerPlan } from "@/lib/plan/server/types";
-import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
+import { serverPlanToLocal } from "@/lib/plan/sync/serverPlan";
 
 const { loadServerPlanMock, loadTermMock } = vi.hoisted(() => ({
   loadServerPlanMock: vi.fn(),

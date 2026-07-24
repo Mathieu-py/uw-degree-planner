@@ -2,20 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ThemePreviewPicker } from "@/components/theme/ThemePreviewPicker";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Input } from "@/components/ui/Input";
-import { deleteAccount, updateProfile } from "@/lib/account/server/actions";
-import { publishUsername, useAuthState } from "@/lib/auth/store";
-import { describeActionError } from "@/lib/format";
+import { deleteAccount } from "@/lib/auth/actions";
+import { useAuthState } from "@/lib/auth/store";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /** Mounted behind the page's AuthGate, so `isAuthed` is resolved here. */
 export function SettingsView() {
-  const { user, username, displayName, isAuthed } = useAuthState();
+  const { user, isAuthed } = useAuthState();
   const router = useRouter();
 
   if (!isAuthed) {
@@ -25,8 +24,8 @@ export function SettingsView() {
           <Eyebrow>Settings</Eyebrow>
           <h1 className="u-h1">Sign in to manage your account</h1>
           <p className="u-body max-w-md">
-            Account settings — your username, appearance, and account removal —
-            live behind sign-in. In demo mode there's no account to manage.
+            Account settings — appearance and account removal — live behind
+            sign-in. In demo mode there's no account to manage.
           </p>
           <Link href="/login?next=/settings" className={buttonClasses()}>
             Sign in
@@ -36,7 +35,8 @@ export function SettingsView() {
     );
   }
 
-  const initials = (displayName ?? "?").slice(0, 2).toUpperCase();
+  const email = user?.email ?? null;
+  const initials = (email ?? "?").slice(0, 2).toUpperCase();
 
   return (
     <div className="section">
@@ -54,18 +54,15 @@ export function SettingsView() {
               </span>
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="font-semibold truncate">
-                  {displayName ?? "Signed in"}
+                  {email ?? "Signed in"}
                 </span>
-                <span className="u-small truncate">{user?.email}</span>
               </div>
             </div>
-
-            <UsernameRow initialUsername={username ?? ""} />
 
             <Row label="Email" hint="Used for sign-in and account recovery.">
               <Input
                 type="email"
-                value={user?.email ?? ""}
+                value={email ?? ""}
                 readOnly
                 disabled
                 className="max-w-[360px] opacity-70"
@@ -112,75 +109,6 @@ function Row({
       </div>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
-  );
-}
-
-function UsernameRow({ initialUsername }: { initialUsername: string }) {
-  const [value, setValue] = useState(initialUsername);
-  const [baseline, setBaseline] = useState(initialUsername);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  const dirty = value.trim() !== baseline.trim();
-
-  // The store's username arrives async (the profiles fetch can land after
-  // mount) — adopt it unless the user has started editing.
-  useEffect(() => {
-    if (!dirty && initialUsername !== baseline) {
-      setValue(initialUsername);
-      setBaseline(initialUsername);
-    }
-  }, [dirty, initialUsername, baseline]);
-
-  async function save() {
-    if (busy || !dirty) return;
-    setBusy(true);
-    setError(null);
-    setSaved(false);
-    try {
-      const result = await updateProfile({ username: value });
-      if (result.ok) {
-        setValue(result.data.username);
-        setBaseline(result.data.username);
-        publishUsername(result.data.username);
-        setSaved(true);
-      } else {
-        setError(describeActionError(result.error));
-      }
-    } catch {
-      // Server-action transport failures reject instead of returning {ok:false}.
-      setError(describeActionError("unknown"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Row label="Username" hint="Shown on your shared plan links.">
-      <div className="flex flex-col gap-1.5 max-w-[360px]">
-        <div className="flex gap-2.5">
-          <Input
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-              setSaved(false);
-              setError(null);
-            }}
-            aria-label="Username"
-            aria-invalid={error != null}
-          />
-          <Button variant="outline" onClick={save} disabled={busy || !dirty}>
-            {busy ? "Saving…" : "Save"}
-          </Button>
-        </div>
-        {error ? (
-          <p className="text-[13px] text-danger">{error}</p>
-        ) : saved ? (
-          <p className="text-[13px] text-met">Saved.</p>
-        ) : null}
-      </div>
-    </Row>
   );
 }
 

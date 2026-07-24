@@ -20,6 +20,7 @@ export function SiteFooter() {
       <div className="foot-links">
         <FooterAuthLinks />
         <Link href="/catalog">Course catalog</Link>
+        <Link href="/legal">Legal &amp; privacy</Link>
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           GitHub
         </a>

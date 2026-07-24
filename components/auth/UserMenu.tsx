@@ -17,8 +17,8 @@ const MENU_ITEM_CLASS =
 /**
  * Header account control ("identity card" design — see the account-dropdown
  * handoff). Signed in: an initials avatar opening a menu that leads with an
- * avatar + username/email identity card, then Account settings, Help &
- * feedback, and Sign out. Signed out: a link to /login. The auth state is read from the
+ * avatar + email identity card, then Account settings, Help & feedback, and
+ * Sign out. Signed out: a link to /login. The auth state is read from the
  * shared store ([lib/auth/store.ts](../../lib/auth/store.ts)) so this and
  * PlannerShell observe the same subscription — no duplicate getUser() round
  * trip at mount.
@@ -33,7 +33,7 @@ export function UserMenu() {
 }
 
 function UserMenuInner() {
-  const { user, displayName } = useAuthState();
+  const { user } = useAuthState();
   const { open, toggle, close, containerRef, id } = useDropdown();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,16 +65,11 @@ function UserMenuInner() {
     );
   }
 
-  // Username-first identity (email when unset); the OAuth full name is
-  // deliberately not shown.
-  const cardName = displayName ?? "Signed in";
-  // Word initials for multi-word names ("Jane Doe" → JD); single-word or
-  // email display names fall back to their first two characters.
-  const words = cardName.trim().split(/\s+/);
-  const initials = (
-    words.length > 1 ? `${words[0][0]}${words[1][0]}` : cardName.slice(0, 2)
-  ).toUpperCase();
+  // Email-only identity; the OAuth full name is deliberately not shown.
   const email = user.email ?? null;
+  const cardName = email ?? "Signed in";
+  // First two characters of the email's local part ("goose27@…" → GO).
+  const initials = cardName.slice(0, 2).toUpperCase();
 
   return (
     <div ref={containerRef} className="relative">
@@ -122,9 +117,6 @@ function UserMenuInner() {
               <p className="truncate text-[13.5px] font-semibold text-ink">
                 {cardName}
               </p>
-              {email && email !== cardName ? (
-                <p className="truncate font-mono text-xs text-ink-2">{email}</p>
-              ) : null}
             </div>
           </div>
           <div className="mx-1 my-1.5 h-px bg-line" />

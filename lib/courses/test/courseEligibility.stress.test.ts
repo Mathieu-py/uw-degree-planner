@@ -11,7 +11,7 @@ import type { BaseCourse, Course } from "../types";
 
 /**
  * Stress tests for course eligibility, anchored to verbatim antireq/restriction
- * prose from the catalog snapshot (data/courses.1261.json) and the UW
+ * prose from the catalog snapshot (data/courses.1269.json) and the UW
  * Undergraduate Calendar Glossary:
  *
  *   "Antirequisite — courses with significant overlap. Degree credit cannot be

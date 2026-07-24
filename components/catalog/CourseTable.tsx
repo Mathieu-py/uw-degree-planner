@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/Button";
 import type { CourseEligibilityVerdict } from "@/lib/courses/courseEligibility";
 import type { SortDir, SortKey } from "@/lib/courses/courseSort";
 import { seatsAvailable } from "@/lib/courses/filters";
-import { getRatingColor } from "@/lib/courses/ratingColor";
 import type { EligibilityRow } from "@/lib/courses/rowEligibility";
 import type { Course } from "@/lib/courses/types";
-import { formatCourseCode, formatPercent } from "@/lib/format";
+import { formatCourseCode, formatPercent, getRatingColor } from "@/lib/format";
 import { buildCourseOrigin } from "@/lib/plan/courseOrigin";
 
 export type CourseTableMode = "catalog" | "picker";

@@ -11,26 +11,14 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
 
-const usernameSchema = z
-  .string()
-  .min(3, "Username must be at least 3 characters")
-  .max(20, "Username must be at most 20 characters")
-  .regex(
-    /^[a-zA-Z0-9_]+$/,
-    "Username can only contain letters, numbers, and underscores",
-  );
-
-// Sign-in accepts an email or username, so the first field is just a non-empty
-// identifier (resolved at submit time), reusing the `email` state/error key.
 const signInSchema = z.object({
-  email: z.string().min(1, "Enter your email or username"),
+  email: z.email("Enter a valid email"),
   password: z.string().min(1, "Enter your password"),
 });
 
 const signUpSchema = z
   .object({
-    email: z.string().email("Enter a valid email"),
-    username: usernameSchema,
+    email: z.email("Enter a valid email"),
     // Mirrors `minimum_password_length` in supabase/config.toml.
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirm: z.string(),
@@ -41,7 +29,7 @@ const signUpSchema = z
   });
 
 type FieldErrors = Partial<
-  Record<"email" | "username" | "password" | "confirm" | "form", string>
+  Record<"email" | "password" | "confirm" | "form", string>
 >;
 
 /**
@@ -62,7 +50,6 @@ export function LoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -88,25 +75,8 @@ export function LoginForm() {
       }
       setBusy(true);
 
-      // signInWithPassword only takes an email; if the identifier isn't one,
-      // resolve the username to an email via the RPC. Generic error keeps
-      // username/email failures indistinguishable.
-      let loginEmail = parsed.data.email.trim();
-      if (!loginEmail.includes("@")) {
-        const { data: resolved, error: rpcError } = await supabase.rpc(
-          "email_for_username",
-          { uname: loginEmail },
-        );
-        if (rpcError || !resolved) {
-          setBusy(false);
-          setErrors({ form: "Invalid email/username or password" });
-          return;
-        }
-        loginEmail = resolved as string;
-      }
-
       const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: parsed.data.email.trim(),
         password: parsed.data.password,
       });
       if (error) {
@@ -118,34 +88,16 @@ export function LoginForm() {
       return;
     }
 
-    const parsed = signUpSchema.safeParse({
-      email,
-      username,
-      password,
-      confirm,
-    });
+    const parsed = signUpSchema.safeParse({ email, password, confirm });
     if (!parsed.success) {
       setErrors(zodErrors(parsed.error));
       return;
     }
     setBusy(true);
 
-    // The DB enforces username uniqueness, but a collision there surfaces as a
-    // generic "Database error saving new user". Pre-check via the lookup RPC for
-    // a clean inline message; the constraint still backstops the race.
-    const { data: takenEmail } = await supabase.rpc("email_for_username", {
-      uname: parsed.data.username,
-    });
-    if (takenEmail) {
-      setBusy(false);
-      setErrors({ username: "An account with that username already exists" });
-      return;
-    }
-
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
-      options: { data: { username: parsed.data.username } },
     });
     if (error) {
       setBusy(false);
@@ -196,39 +148,16 @@ export function LoginForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-        <Field
-          htmlFor="login-email"
-          label={isSignUp ? "Email" : "Email or username"}
-          error={errors.email}
-        >
+        <Field htmlFor="login-email" label="Email" error={errors.email}>
           <Input
             id="login-email"
-            type={isSignUp ? "email" : "text"}
-            autoComplete={isSignUp ? "email" : "username"}
-            placeholder={
-              isSignUp ? "you@uwaterloo.ca" : "you@uwaterloo.ca or goose27"
-            }
+            type="email"
+            autoComplete="email"
+            placeholder="you@uwaterloo.ca"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
-
-        {isSignUp && (
-          <Field
-            htmlFor="login-username"
-            label="Username"
-            error={errors.username}
-          >
-            <Input
-              id="login-username"
-              type="text"
-              autoComplete="username"
-              placeholder="goose27"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </Field>
-        )}
 
         <Field
           htmlFor="login-password"
@@ -331,19 +260,8 @@ function zodErrors(error: z.ZodError): FieldErrors {
   return out;
 }
 
-/**
- * Map a Supabase signUp error message onto the right field. A duplicate username
- * surfaces (per GoTrue version) as the raw Postgres error or a generic "Database
- * error saving new user"; a duplicate email is distinct. Match both.
- */
+/** Map a Supabase signUp error message onto the right field. */
 function signUpError(message: string): FieldErrors {
-  if (
-    /duplicate key|unique constraint|profiles_username|database error/i.test(
-      message,
-    )
-  ) {
-    return { username: "An account with that username already exists" };
-  }
   if (/already registered|already been registered/i.test(message)) {
     return { email: "An account with this email already exists" };
   }

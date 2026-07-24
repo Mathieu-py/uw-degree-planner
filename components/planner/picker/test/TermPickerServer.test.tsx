@@ -59,8 +59,6 @@ const WINTER_2025 = makeTermId(2025, "Winter"); // → "Winter 2025"
 
 const SIGNED_IN = {
   user: { id: "u1" },
-  username: "tester",
-  displayName: "tester",
   ready: true,
   isAuthed: true,
 };

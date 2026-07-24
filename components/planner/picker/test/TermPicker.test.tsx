@@ -54,8 +54,6 @@ vi.mock("@/lib/hooks/useModalExit", () => ({
 
 const SIGNED_OUT = {
   user: null,
-  username: null,
-  displayName: null,
   ready: true,
   isAuthed: false,
 };

@@ -2,7 +2,7 @@
 
 import { ErrorScreen } from "@/components/states/ErrorScreen";
 
-export default function PlannerErrorBoundary({
+export default function RootErrorBoundary({
   error,
   unstable_retry,
 }: {
@@ -14,9 +14,9 @@ export default function PlannerErrorBoundary({
       kind="500"
       eyebrow="Error 500 · Something went wrong"
       title="That's on us, not you."
-      body="We hit an unexpected error loading this page. Your plan is saved — try again in a moment, and if it keeps happening, let us know on GitHub."
+      body="We hit an unexpected error loading this page. Try again in a moment — if it keeps happening, let us know on GitHub."
       primary={{ label: "Try again", onClick: () => unstable_retry() }}
-      secondary={{ label: "Back to the planner", href: "/plan" }}
+      secondary={{ label: "Back home", href: "/" }}
       reference={error.digest ?? null}
     />
   );

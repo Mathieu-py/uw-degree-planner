@@ -1,7 +1,19 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { loadTerm } from "@/lib/courses/data";
+import { logError } from "@/lib/log";
 import { reseedSlotIds } from "@/lib/plan/mutateSlots";
+import {
+  resolveVariantPlacements,
+  type VariantPlacement,
+  type VariantPlacementInput,
+} from "@/lib/plan/variantPlacement";
+import { PROGRAMS } from "@/lib/programs/registry";
+import {
+  enumerateVariantGroups,
+  type VariantGroup,
+} from "@/lib/requirements/variantGroups";
 import {
   type ActionResult,
   mapDbError,
@@ -9,6 +21,7 @@ import {
   withUser,
 } from "@/lib/server/actions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { KNOWN_TERMS, PINNED_TERM } from "@/lib/terms";
 import {
   assembleServerPlan,
   mapSharedPlanJson,
@@ -19,7 +32,7 @@ import {
   toSnapshot,
 } from "./serialize";
 import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
-import { snapshotError } from "./validate";
+import { MAX_PLAN_NAME_LEN, MAX_PROGRAM_IDS, snapshotError } from "./validate";
 
 const PLAN_COLUMNS =
   "id, name, program_ids, specialization_ids, system_of_study, start_term_id, program_scrape_version, share_token, updated_at";
@@ -99,6 +112,9 @@ export async function createPlan(
   return withUser(async ({ client, userId }) => {
     const name = input.name.trim();
     if (!name) return { ok: false, error: "name_required" };
+    if (name.length > MAX_PLAN_NAME_LEN) {
+      return { ok: false, error: "name_too_long" };
+    }
 
     const { data, error } = await client
       .from("plans")
@@ -144,7 +160,10 @@ export async function duplicatePlan(
   if (!loaded.data) return { ok: false, error: "not_found" };
 
   const source = loaded.data;
-  const name = (nameOverride ?? `${source.name} (copy)`).trim();
+  // Clamp instead of erroring so duplicating a max-length name can't fail.
+  const name = (nameOverride ?? `${source.name} (copy)`)
+    .trim()
+    .slice(0, MAX_PLAN_NAME_LEN);
   // Fresh slot ids or the seed PK-conflicts with the source (see reseedSlotIds).
   return createPlan({ name, seed: reseedSlotIds(toSnapshot(source)) });
 }
@@ -245,6 +264,9 @@ export async function renamePlan(
   return withUser(async ({ client }) => {
     const trimmed = name.trim();
     if (!trimmed) return { ok: false, error: "name_required" };
+    if (trimmed.length > MAX_PLAN_NAME_LEN) {
+      return { ok: false, error: "name_too_long" };
+    }
 
     // `.select('id')` returns the updated rows so requireAffectedRow can tell
     // success from "RLS hid the row".
@@ -348,4 +370,47 @@ export async function deletePlan(planId: string): Promise<ActionResult<void>> {
     if (missing) return missing;
     return { ok: true, data: undefined };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Onboarding variant picker
+// ---------------------------------------------------------------------------
+//
+// Thin wrappers for the manual-onboarding picker. The rule trees (PROGRAMS) and
+// catalog (loadTerm) are server-only — kept out of the /plan/new client bundle —
+// so the onboarding client reaches them through these instead of importing them.
+
+/** Pickable variant groups for the selected program(s); flattened, double-degree-safe. */
+export async function fetchVariantGroups(
+  programIds: string[],
+): Promise<VariantGroup[]> {
+  // Public endpoint: degrade to empty like placeVariantSelections below.
+  if (programIds.length > MAX_PROGRAM_IDS) return [];
+  const out: VariantGroup[] = [];
+  for (const id of programIds) {
+    const program = PROGRAMS[id];
+    if (program) out.push(...enumerateVariantGroups(program, id));
+  }
+  return out;
+}
+
+// Bound the work one request can trigger; a real onboarding picks a few dozen.
+const MAX_VARIANT_SELECTIONS = 200;
+
+/** Timeline positions for the student's picks, prereq-aware (catalog server-side). */
+export async function placeVariantSelections(
+  input: VariantPlacementInput,
+): Promise<VariantPlacement[]> {
+  // Public endpoint: validate at the boundary and degrade to no placements
+  // (never 500) — the picker is optional.
+  if (!KNOWN_TERMS.some((t) => t.id === input.startTermId)) return [];
+  if (input.selections.length > MAX_VARIANT_SELECTIONS) return [];
+
+  try {
+    const catalog = await loadTerm(PINNED_TERM);
+    return resolveVariantPlacements(input, catalog);
+  } catch (err) {
+    logError("placeVariantSelections failed:", err);
+    return [];
+  }
 }

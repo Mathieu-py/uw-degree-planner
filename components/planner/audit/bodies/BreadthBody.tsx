@@ -1,8 +1,6 @@
 import type { Section } from "@/lib/audit/view/types";
 import { fmtUnits, joinWithOverflow, pluralize, unitsMet } from "@/lib/format";
-import { MetChip } from "../cards/Chip";
-import { CountedCard } from "../cards/CountedCard";
-import { FindRow } from "../cards/FindRow";
+import { CountedCard, FindRow, MetChip } from "../cards";
 import type { DrillFn } from "../types";
 
 /**

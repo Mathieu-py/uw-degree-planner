@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { logError } from "@/lib/log";
+import { addCourseToSlot } from "@/lib/plan/mutateSlots";
 import {
   fetchVariantGroups,
   placeVariantSelections,
-} from "@/lib/onboarding/server/actions";
-import { addCourseToSlot } from "@/lib/plan/mutateSlots";
+} from "@/lib/plan/server/actions";
 import type { LocalPlan, Stream } from "@/lib/plan/types";
 import type {
   VariantPlacement,

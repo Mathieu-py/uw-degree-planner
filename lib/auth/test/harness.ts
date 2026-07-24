@@ -9,24 +9,13 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 export const createSupabaseBrowserClientMock = vi.fn();
 export const getSessionMock = vi.fn();
 export const onAuthStateChangeMock = vi.fn();
-export const maybeSingleMock = vi.fn();
 
-/**
- * Point the client mock at a fresh Supabase stub: the auth surface plus the
- * `from("profiles").select().eq().maybeSingle()` chain the store's profile
- * sync walks (each step returns the next link).
- */
+/** Point the client mock at a fresh Supabase auth stub. */
 export function stubSupabaseClient(): void {
-  const queryChain = {
-    select: () => queryChain,
-    eq: () => queryChain,
-    maybeSingle: maybeSingleMock,
-  };
   createSupabaseBrowserClientMock.mockReturnValue({
     auth: {
       getSession: getSessionMock,
       onAuthStateChange: onAuthStateChangeMock,
     },
-    from: () => queryChain,
   });
 }

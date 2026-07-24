@@ -1,11 +1,10 @@
 name: Refresh program requirements
 
-# Re-scrapes undergraduate degree requirements from UW's calendar pages and opens
-# a PR with any diff in data/programs.json. Unlike the UWFlow ratings/seats
-# snapshot (which drifts daily), program requirements track the undergraduate
-# calendar and change roughly once a year, so a monthly refresh is plenty to
-# catch catalog updates and the occasional mid-year correction without spamming
-# no-op PRs. The scraped programs are whatever scripts/scrape-programs.ts targets.
+# Yearly (of the three data cadences: programs yearly, courses per-term, seating
+# weekly). Program requirements track the undergraduate calendar, which is
+# republished about once a year, so a single scheduled run catches the new
+# calendar; workflow_dispatch covers the occasional mid-year correction.
+# The scraped programs are whatever scripts/scrape-programs.ts targets.
 #
 # Commits any diff directly to main using the built-in GITHUB_TOKEN (no PR).
 # NOTE: if main has branch protection requiring PRs/reviews, the push will be
@@ -13,8 +12,9 @@ name: Refresh program requirements
 
 on:
   schedule:
-    # 07:00 UTC ≈ 03:00 ET on the 1st of each month — off-peak, monthly cadence.
-    - cron: "0 7 1 * *"
+    # 07:00 UTC on Jun 1 — after the new academic-year calendar is typically
+    # published, before fall-term planning ramps up. Adjust if UW shifts.
+    - cron: "0 7 1 6 *"
   workflow_dispatch:
 
 jobs:

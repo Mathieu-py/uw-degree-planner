@@ -24,6 +24,7 @@ import {
   setPlanShare,
 } from "../actions";
 import type { PlanSnapshot } from "../types";
+import { MAX_PLAN_NAME_LEN } from "../validate";
 
 // Awaitable PostgREST-shaped chain. Each builder method returns the chain
 // (so `select().eq().order()` keeps chaining). Terminal access happens via
@@ -198,6 +199,14 @@ describe("createPlan", () => {
     });
   });
 
+  it("rejects names over MAX_PLAN_NAME_LEN before hitting the DB", async () => {
+    const { client } = installClient();
+    expect(
+      await createPlan({ name: "x".repeat(MAX_PLAN_NAME_LEN + 1) }),
+    ).toEqual({ ok: false, error: "name_too_long" });
+    expect(client.from).not.toHaveBeenCalled();
+  });
+
   it("inserts and returns the new id", async () => {
     installClient({
       tables: {
@@ -247,6 +256,14 @@ describe("renamePlan", () => {
     expect(await renamePlan("p1", "   ")).toEqual({
       ok: false,
       error: "name_required",
+    });
+  });
+
+  it("rejects names over MAX_PLAN_NAME_LEN", async () => {
+    installClient();
+    expect(await renamePlan("p1", "x".repeat(MAX_PLAN_NAME_LEN + 1))).toEqual({
+      ok: false,
+      error: "name_too_long",
     });
   });
 
@@ -601,6 +618,24 @@ describe("duplicatePlan", () => {
     );
     expect(insertCalls).toContainEqual([
       expect.objectContaining({ name: "Renamed" }),
+    ]);
+  });
+
+  it("clamps the default copy name so a max-length source still duplicates", async () => {
+    const longName = "s".repeat(MAX_PLAN_NAME_LEN - 2);
+    const { client } = installSourcePlanThenInsert({ sourceName: longName });
+    await duplicatePlan("src");
+    // biome-ignore lint/suspicious/noExplicitAny: each chain is the fluent any-typed builder from makeChain
+    const chains: any[] = client.from.mock.results.map(
+      (r: { value: unknown }) => r.value,
+    );
+    const insertCalls = chains.flatMap(
+      (chain) => chain.insert?.mock?.calls ?? [],
+    );
+    expect(insertCalls).toContainEqual([
+      expect.objectContaining({
+        name: `${longName} (copy)`.slice(0, MAX_PLAN_NAME_LEN),
+      }),
     ]);
   });
 });

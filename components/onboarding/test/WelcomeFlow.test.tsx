@@ -38,7 +38,7 @@ vi.mock("@/lib/plan/transcriptApply", () => ({
 vi.mock("@/lib/plan/derive", () => ({ completedCoursesFromPlan: () => [] }));
 // The variant-picker server actions pull in server-only catalog code; stub them
 // so the client component tree loads under jsdom (real Next keeps them RPC-only).
-vi.mock("@/lib/onboarding/server/actions", () => ({
+vi.mock("@/lib/plan/server/actions", () => ({
   fetchVariantGroups: vi.fn(async () => []),
   placeVariantSelections: vi.fn(async () => []),
 }));
@@ -46,7 +46,7 @@ vi.mock("@/lib/onboarding/server/actions", () => ({
 import {
   fetchVariantGroups,
   placeVariantSelections,
-} from "@/lib/onboarding/server/actions";
+} from "@/lib/plan/server/actions";
 import type { VariantGroup } from "@/lib/requirements/variantGroups";
 import { parseTranscript } from "@/lib/transcript/parse";
 import { extractTextFromPdf } from "@/lib/transcript/pdfText";

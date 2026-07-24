@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PrereqNode } from "@/lib/prereqs/parse";
-import coursesData from "../../../data/courses.1261.json";
+import coursesData from "../../../data/courses.1269.json";
 import { equivalenceForCatalog } from "../equivalence";
 
 /**

@@ -3,7 +3,10 @@
  * sources by lowercased code: UWFlow (spine: code/name/description/prose/ratings),
  * Kuali (units, cross-listings, requisite ASTs), UW Open Data (seating).
  *
- * Usage: `pnpm tsx scripts/build-catalog.ts [term...]` (default PINNED_TERM).
+ * Usage: `pnpm tsx scripts/build-catalog.ts [--seats-only] [term...]`
+ * (default PINNED_TERM). `--seats-only` skips UWFlow/Kuali and just re-fetches
+ * Open Data seating into the existing snapshot — seat counts drift weekly, the
+ * rest only changes on the order of a term.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -96,6 +99,46 @@ async function writeSnapshot(
 }
 
 /**
+ * Rewrite only the `sections` of an existing snapshot with fresh seating.
+ * Spreading each course preserves key order, so the diff stays seating-only.
+ * Descriptions carry no seating and are left untouched.
+ */
+async function patchSeating(
+  termId: number,
+  seating: Record<string, CourseSection[]>,
+) {
+  const coursesPath = path.resolve(
+    process.cwd(),
+    "data",
+    `courses.${termId}.json`,
+  );
+  let file: CoursesFile;
+  try {
+    file = validateCoursesFile(
+      JSON.parse(await readFile(coursesPath, "utf-8")),
+    );
+  } catch (err) {
+    throw new Error(
+      `No usable snapshot for term ${termId} (${err instanceof Error ? err.message : err}) — run a full fetch first: pnpm fetch-courses ${termId}`,
+    );
+  }
+  const updated: CoursesFile = {
+    ...file,
+    fetchedAt: new Date().toISOString(),
+    courses: file.courses.map((c) => ({
+      ...c,
+      sections: seating[c.code] ?? [],
+    })),
+  };
+  validateCoursesFile(updated);
+  await writeFile(coursesPath, JSON.stringify(updated, null, 2), "utf-8");
+  const withSeating = updated.courses.filter(
+    (c) => c.sections.length > 0,
+  ).length;
+  return { coursesPath, courseCount: updated.courses.length, withSeating };
+}
+
+/**
  * Last-known seating from the committed snapshot, for a partial refresh when
  * Open Data is unavailable (no `UW_OPENDATA_KEY`) — holds `sections` steady
  * rather than wiping them. Absent/unreadable snapshot → empty seating.
@@ -122,7 +165,9 @@ async function loadExistingSeating(
 }
 
 async function main() {
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+  const seatsOnly = rawArgs.includes("--seats-only");
+  const args = rawArgs.filter((a) => a !== "--seats-only");
   // Whole-string numeric only — parseInt would silently accept "1261foo".
   for (const a of args.filter((a) => !/^\d+$/.test(a))) {
     console.error(`Skipping non-numeric term arg: ${a}`);
@@ -131,6 +176,25 @@ async function main() {
   if (args.length > 0 && validArgs.length === 0)
     throw new Error("No valid numeric term arguments provided.");
   const terms = args.length > 0 ? validArgs.map(Number) : [PINNED_TERM];
+
+  if (seatsOnly) {
+    // Without the key there is nothing this mode could refresh.
+    if (!hasOpenDataKey())
+      throw new Error("--seats-only requires UW_OPENDATA_KEY.");
+    for (const term of terms) {
+      process.stdout.write(`Term ${term}: seating from Open Data... `);
+      const seating = await fetchSeating(term);
+      const { coursesPath, courseCount, withSeating } = await patchSeating(
+        term,
+        seating,
+      );
+      console.log(
+        `${courseCount} courses (${withSeating} with seating) → ${path.relative(process.cwd(), coursesPath)}`,
+      );
+    }
+    return;
+  }
+
   process.stdout.write("Fetching course data from Kuali... ");
   const kuali = await fetchKualiData();
   const withUnitsTotal = Object.values(kuali).filter(

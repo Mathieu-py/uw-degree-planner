@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { toSnapshot } from "../../server/serialize";
 import type { ServerPlan } from "../../server/types";
 import { PLAN_SCHEMA_VERSION } from "../../types";
-import { serverPlanToLocal } from "../serverPlanToLocal";
+import { serverPlanToLocal } from "../serverPlan";
 
 const SERVER_PLAN: ServerPlan = {
   id: "plan-1",

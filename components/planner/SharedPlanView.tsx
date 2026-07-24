@@ -13,7 +13,7 @@ import { logError } from "@/lib/log";
 import { planSubtitle } from "@/lib/plan/format";
 import { reseedSlotIds } from "@/lib/plan/mutateSlots";
 import type { ServerPlan } from "@/lib/plan/server/types";
-import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
+import { serverPlanToLocal } from "@/lib/plan/sync/serverPlan";
 import { saveNewPlan, usePlanList } from "@/lib/plan/sync/usePlanList";
 import type { LocalPlan } from "@/lib/plan/types";
 import { usePlanValidation } from "@/lib/plan/usePlanValidation";

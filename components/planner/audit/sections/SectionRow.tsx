@@ -4,12 +4,16 @@ import type { Course } from "@/lib/courses/types";
 import { fmtUnits, pluralize, unitsMet } from "@/lib/format";
 import { BreadthBody } from "../bodies/BreadthBody";
 import { OptionChip } from "../bodies/OptionChip";
-import { MetChip, WarnChip } from "../cards/Chip";
-import { CountedCard, OpenCard } from "../cards/CountedCard";
-import { FindRow } from "../cards/FindRow";
-import { GlyphLead } from "../cards/RingLead";
-import { StatusCard } from "../cards/StatusCard";
-import { StatusPill } from "../cards/StatusPill";
+import {
+  CountedCard,
+  FindRow,
+  GlyphLead,
+  MetChip,
+  OpenCard,
+  StatusCard,
+  StatusPill,
+  WarnChip,
+} from "../cards";
 import type { DragWiring, DrillFn } from "../types";
 
 /**

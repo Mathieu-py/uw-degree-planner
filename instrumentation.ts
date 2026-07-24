@@ -1,0 +1,12 @@
+import * as Sentry from "@sentry/nextjs";
+
+export function register() {
+  // DSN unset (local/CI) → the SDK stays uninitialized and captures no-op.
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    tracesSampleRate: 0,
+  });
+}
+
+// Server render/action/route errors, correlated to error.tsx digests.
+export const onRequestError = Sentry.captureRequestError;
