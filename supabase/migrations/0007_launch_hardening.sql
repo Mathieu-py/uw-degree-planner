@@ -10,10 +10,14 @@ drop trigger if exists on_auth_user_created on auth.users;
 drop function if exists public.handle_new_user();
 drop table if exists public.profiles;
 
--- Mirror MAX_PLAN_NAME_LEN (lib/plan/server/validate.ts); clamp any oversized
--- rows first so the constraint validates.
-update public.plans set name = left(name, 120) where char_length(name) > 120;
--- NOT VALID skips the existing-row scan under an ACCESS EXCLUSIVE lock at ADD
--- time; VALIDATE then checks them holding only a SHARE UPDATE EXCLUSIVE lock.
-alter table public.plans add constraint plans_name_len check (char_length(name) <= 120) not valid;
-alter table public.plans validate constraint plans_name_len;
+-- Mirror MAX_PLAN_NAME_LEN (lib/plan/server/validate.ts). No length was enforced
+-- before this, so refuse to silently truncate persisted plan names: fail loudly
+-- if any row is over-length so it's resolved deliberately (rather than the ADD
+-- below rejecting it with a cryptic constraint-violation error).
+do $$
+begin
+  if exists (select 1 from public.plans where char_length(name) > 120) then
+    raise exception 'plans.name over 120 chars — resolve manually before adding plans_name_len (refusing to truncate)';
+  end if;
+end $$;
+alter table public.plans add constraint plans_name_len check (char_length(name) <= 120);
