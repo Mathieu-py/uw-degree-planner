@@ -82,7 +82,7 @@ Import the repo with the default Next.js preset — the `data/` snapshots are co
 - `NEXT_PUBLIC_SITE_URL` — the canonical production origin (used by metadata, robots, sitemap)
 - `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_AUTH_TOKEN` — optional error reporting; everything no-ops without them
 
-The seating and courses refresh workflows need `UW_OPENDATA_KEY` as a GitHub Actions secret (not a Vercel var).
+`UW_OPENDATA_KEY` is a GitHub Actions secret (not a Vercel var). It is **required** by the seating refresh workflow (a seats-only run has nothing to fetch without it) and **optional** for full course refreshes, which reuse seating from the committed snapshot when it is unset.
 
 On the hosted Supabase project (dashboard, not code): set the Site URL and add `https://<domain>/auth/callback` to Redirect URLs; keep "Confirm email" **off** (sign-up assumes an immediate session); configure the Google provider's production credentials; and push migrations with `pnpm exec supabase db push`.
 

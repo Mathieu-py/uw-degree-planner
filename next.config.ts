@@ -5,6 +5,17 @@ const isDev = process.env.NODE_ENV === "development";
 // Build-time env: NEXT_PUBLIC_* is always set at build (inlined into the
 // client bundle), so the CSP can bake in the Supabase origin.
 const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+// Sentry's browser SDK POSTs events to the DSN's ingest origin; without it in
+// connect-src the CSP blocks all client-side error reporting. Empty when unset.
+const sentryOrigin = (() => {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return "";
+  try {
+    return new URL(dsn).origin;
+  } catch {
+    return "";
+  }
+})();
 
 // Static CSP per the Next CSP guide's no-nonce variant — a nonce would force
 // every route dynamic. 'unsafe-inline' covers the pre-paint theme script and
@@ -15,8 +26,11 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data:",
   "font-src 'self'", // next/font self-hosts
-  // Browser Supabase client talks to auth + PostgREST directly; HMR needs ws.
-  `connect-src 'self' ${supabaseOrigin}${isDev ? " ws: wss:" : ""}`.trim(),
+  // Browser Supabase client talks to auth + PostgREST directly; Sentry POSTs to
+  // its ingest origin; HMR needs ws. Absent origins collapse to a single space.
+  `connect-src 'self' ${supabaseOrigin} ${sentryOrigin}${isDev ? " ws: wss:" : ""}`
+    .replace(/ +/g, " ")
+    .trim(),
   "worker-src 'self' blob:", // pdf.js transcript worker
   "object-src 'none'",
   "base-uri 'self'",

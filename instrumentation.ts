@@ -5,6 +5,9 @@ export function register() {
   Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
     tracesSampleRate: 0,
+    // Pin the SDK default: no IP/cookies/user attached — backs the legal page's
+    // "reported ... without personal data" claim.
+    sendDefaultPii: false,
   });
 }
 

@@ -13,4 +13,7 @@ drop table if exists public.profiles;
 -- Mirror MAX_PLAN_NAME_LEN (lib/plan/server/validate.ts); clamp any oversized
 -- rows first so the constraint validates.
 update public.plans set name = left(name, 120) where char_length(name) > 120;
-alter table public.plans add constraint plans_name_len check (char_length(name) <= 120);
+-- NOT VALID skips the existing-row scan under an ACCESS EXCLUSIVE lock at ADD
+-- time; VALIDATE then checks them holding only a SHARE UPDATE EXCLUSIVE lock.
+alter table public.plans add constraint plans_name_len check (char_length(name) <= 120) not valid;
+alter table public.plans validate constraint plans_name_len;

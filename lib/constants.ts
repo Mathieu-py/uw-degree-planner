@@ -1,9 +1,17 @@
 // Source repository for the project, linked from the footer and error screens.
 export const REPO_URL = "https://github.com/Mathieu-py/uw-degree-planner";
 
-// Canonical origin for metadata/robots/sitemap; set NEXT_PUBLIC_SITE_URL in prod.
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+// Canonical origin for metadata/robots/sitemap. Required in production so a
+// misconfigured deploy fails the build instead of silently emitting localhost
+// URLs; dev/test fall back to localhost. Trailing slashes stripped so
+// `${SITE_URL}/path` (robots.ts, sitemap.ts) never doubles up.
+const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+if (!rawSiteUrl && process.env.NODE_ENV === "production")
+  throw new Error("NEXT_PUBLIC_SITE_URL must be set in production.");
+export const SITE_URL = (rawSiteUrl ?? "http://localhost:3000").replace(
+  /\/+$/,
+  "",
+);
 
 // Display form (no scheme) for places that show the repo as text, not a link.
 export const REPO_DISPLAY = REPO_URL.replace(/^https?:\/\//, "");

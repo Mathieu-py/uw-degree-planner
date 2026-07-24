@@ -184,6 +184,14 @@ async function main() {
     for (const term of terms) {
       process.stdout.write(`Term ${term}: seating from Open Data... `);
       const seating = await fetchSeating(term);
+      // An empty map means Open Data returned nothing usable (outage, or an
+      // empty-but-valid 200). Overwriting now would wipe every course's seating
+      // and the weekly job would commit it — refuse instead of degrading the snapshot.
+      if (Object.keys(seating).length === 0) {
+        throw new Error(
+          `Term ${term}: Open Data returned no seating — refusing to overwrite the committed snapshot. Retry later.`,
+        );
+      }
       const { coursesPath, courseCount, withSeating } = await patchSeating(
         term,
         seating,

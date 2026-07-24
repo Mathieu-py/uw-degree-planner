@@ -2,6 +2,7 @@
 
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { THEME_INIT_SCRIPT } from "@/lib/constants";
+import { hanken, jetbrainsMono } from "./fonts";
 import "./globals.css";
 
 // Catches errors thrown by the root layout itself, so it renders its own
@@ -14,7 +15,11 @@ export default function GlobalError({
   unstable_retry: () => void;
 }) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${hanken.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: trusted static
             anti-FOUC snippet; must run before paint. */}

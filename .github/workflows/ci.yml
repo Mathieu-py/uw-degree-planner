@@ -50,6 +50,8 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      # Required at build time in production (lib/constants.ts); placeholder only.
+      NEXT_PUBLIC_SITE_URL: https://example.com
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
