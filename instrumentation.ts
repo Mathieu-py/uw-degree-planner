@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { sanitizeSentryEvent } from "@/lib/log";
 
 export function register() {
   // DSN unset (local/CI) → the SDK stays uninitialized and captures no-op.
@@ -8,6 +9,8 @@ export function register() {
     // Pin the SDK default: no IP/cookies/user attached — backs the legal page's
     // "reported ... without personal data" claim.
     sendDefaultPii: false,
+    // Second layer: scrub request data/PII that captureRequestError attaches.
+    beforeSend: sanitizeSentryEvent,
   });
 }
 

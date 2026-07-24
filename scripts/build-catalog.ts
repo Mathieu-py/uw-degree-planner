@@ -99,37 +99,57 @@ async function writeSnapshot(
 }
 
 /**
- * Rewrite only the `sections` of an existing snapshot with fresh seating.
- * Spreading each course preserves key order, so the diff stays seating-only.
- * Descriptions carry no seating and are left untouched.
+ * Replace only each course's `sections` with fresh seating, preserving key
+ * order so the diff stays seating-only. Pure — the timestamp is injected.
  */
-async function patchSeating(
-  termId: number,
+export function applySeating(
+  file: CoursesFile,
   seating: Record<string, CourseSection[]>,
-) {
-  const coursesPath = path.resolve(
-    process.cwd(),
-    "data",
-    `courses.${termId}.json`,
-  );
-  let file: CoursesFile;
-  try {
-    file = validateCoursesFile(
-      JSON.parse(await readFile(coursesPath, "utf-8")),
-    );
-  } catch (err) {
-    throw new Error(
-      `No usable snapshot for term ${termId} (${err instanceof Error ? err.message : err}) — run a full fetch first: pnpm fetch-courses ${termId}`,
-    );
-  }
-  const updated: CoursesFile = {
+  fetchedAt: string,
+): CoursesFile {
+  return {
     ...file,
-    fetchedAt: new Date().toISOString(),
+    fetchedAt,
     courses: file.courses.map((c) => ({
       ...c,
       sections: seating[c.code] ?? [],
     })),
   };
+}
+
+/** Read + validate the committed snapshot at `coursesPath`, with an actionable
+ *  error when it's missing or malformed (seats-only can't rebuild from nothing). */
+async function loadCoursesSnapshot(coursesPath: string): Promise<CoursesFile> {
+  try {
+    return validateCoursesFile(
+      JSON.parse(await readFile(coursesPath, "utf-8")),
+    );
+  } catch (err) {
+    throw new Error(
+      `No usable snapshot at ${coursesPath} (${err instanceof Error ? err.message : err}) — run a full fetch first: pnpm fetch-courses`,
+    );
+  }
+}
+
+/**
+ * Seats-only write for one term: refuse an empty upstream map (overwriting now
+ * would wipe every course's seating and the weekly job would commit it), else
+ * patch just `sections` into the committed snapshot. Descriptions carry no
+ * seating and are left untouched.
+ */
+export async function refreshSeating(
+  termId: number,
+  seating: Record<string, CourseSection[]>,
+  dataDir: string = path.resolve(process.cwd(), "data"),
+) {
+  if (Object.keys(seating).length === 0) {
+    throw new Error(
+      `Term ${termId}: Open Data returned no seating — refusing to overwrite the committed snapshot. Retry later.`,
+    );
+  }
+  const coursesPath = path.join(dataDir, `courses.${termId}.json`);
+  const file = await loadCoursesSnapshot(coursesPath);
+  const updated = applySeating(file, seating, new Date().toISOString());
   validateCoursesFile(updated);
   await writeFile(coursesPath, JSON.stringify(updated, null, 2), "utf-8");
   const withSeating = updated.courses.filter(
@@ -184,15 +204,8 @@ async function main() {
     for (const term of terms) {
       process.stdout.write(`Term ${term}: seating from Open Data... `);
       const seating = await fetchSeating(term);
-      // An empty map means Open Data returned nothing usable (outage, or an
-      // empty-but-valid 200). Overwriting now would wipe every course's seating
-      // and the weekly job would commit it — refuse instead of degrading the snapshot.
-      if (Object.keys(seating).length === 0) {
-        throw new Error(
-          `Term ${term}: Open Data returned no seating — refusing to overwrite the committed snapshot. Retry later.`,
-        );
-      }
-      const { coursesPath, courseCount, withSeating } = await patchSeating(
+      // refreshSeating refuses an empty map (would wipe all seating).
+      const { coursesPath, courseCount, withSeating } = await refreshSeating(
         term,
         seating,
       );
@@ -274,7 +287,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Run only as a script, not when imported by tests.
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]).endsWith("build-catalog.ts")
+) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

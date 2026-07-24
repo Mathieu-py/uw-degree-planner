@@ -21,6 +21,7 @@
     "scrape-programs": "tsx scripts/scrape-programs.ts",
     "build-program-index": "tsx scripts/build-program-index.ts",
     "check-subjects": "tsx scripts/diagnostic/check-subjects.ts",
+    "guard-snapshot": "tsx scripts/guard-snapshot.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"

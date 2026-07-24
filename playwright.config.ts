@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// E2E_PROD runs the suite against a real `next build && next start` so the
+// production-only CSP/HSTS behavior is exercised (dev headers differ). The
+// build is slower, hence the longer webServer timeout.
+const prod = process.env.E2E_PROD === "1";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -17,9 +22,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
+    command: prod ? "pnpm build && pnpm start" : "pnpm dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: prod ? 240_000 : 120_000,
   },
 });

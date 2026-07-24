@@ -410,7 +410,10 @@ export async function placeVariantSelections(
     const catalog = await loadTerm(PINNED_TERM);
     return resolveVariantPlacements(input, catalog);
   } catch (err) {
-    logError("placeVariantSelections failed:", err);
+    logError("placeVariantSelections failed:", err, {
+      op: "variant.place",
+      category: "server",
+    });
     return [];
   }
 }

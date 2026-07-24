@@ -84,7 +84,10 @@ export function SharedPlanView({
       if (route) router.push(route);
       else setBusy(false);
     } catch (err) {
-      logError("Failed to duplicate plan", err);
+      logError("Failed to duplicate plan", err, {
+        op: "plan.duplicate",
+        category: "client",
+      });
       setBusy(false);
     }
   }

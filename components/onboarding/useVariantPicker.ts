@@ -49,7 +49,10 @@ export function useVariantPicker({
         if (active) setGroups(next);
       })
       .catch((err) => {
-        logError("fetchVariantGroups failed:", err);
+        logError("fetchVariantGroups failed:", err, {
+          op: "variant.fetchGroups",
+          category: "client",
+        });
         if (active) setGroups([]);
       });
     return () => {
@@ -89,7 +92,10 @@ export function useVariantPicker({
       stream,
       selections: flat,
     }).catch((err) => {
-      logError("placeVariantSelections failed:", err);
+      logError("placeVariantSelections failed:", err, {
+        op: "variant.place",
+        category: "client",
+      });
       return [];
     });
     if (placements.length === 0) return plan;

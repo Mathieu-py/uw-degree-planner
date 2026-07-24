@@ -36,7 +36,11 @@ export function useTranscriptUpload(
         setParseResult(result);
         onParsed?.(result);
       } catch (err) {
-        logError("Transcript PDF extraction failed:", err);
+        // No filename/transcript content in telemetry — only the operation.
+        logError("Transcript PDF extraction failed:", err, {
+          op: "transcript.extract",
+          category: "client",
+        });
         // extractTextFromPdf throws actionable messages — surface them verbatim.
         setError(
           err instanceof Error
