@@ -1,7 +1,7 @@
 {
   "termId": 1261,
-  "fetchedAt": "2026-07-19T09:14:22.554Z",
-  "courseCount": 10719,
+  "fetchedAt": "2026-07-26T09:21:35.282Z",
+  "courseCount": 10735,
   "courses": [
     {
       "id": 9965,
@@ -355,6 +355,81 @@
       "code": "acc627",
       "name": "Business Process Enablement and Project Management",
       "prereqs": null,
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10827,
+      "code": "acc631",
+      "name": "Assurance and Trust",
+      "prereqs": "Accounting Graduate Students Only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10820,
+      "code": "acc632",
+      "name": "Corporate Reporting",
+      "prereqs": "Accounting Graduate Students Only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10825,
+      "code": "acc633",
+      "name": "Taxation",
+      "prereqs": "Accounting Graduate Students Only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10832,
+      "code": "acc634",
+      "name": "Management Decision-Making and Value Creation",
+      "prereqs": "Accounting Graduate Students Only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10828,
+      "code": "acc635",
+      "name": "Professional Leadership and Integration",
+      "prereqs": "Accounting Graduate Students Only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -1087,8 +1162,8 @@
       "rating": {
         "easy": 0.8823529411764706,
         "useful": 0.8308823529411765,
-        "liked": 0.8181818181818182,
-        "filled_count": 44
+        "liked": 0.8222222222222222,
+        "filled_count": 45
       },
       "sections": [
         {
@@ -2005,13 +2080,7 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [
-        {
-          "id": 5756,
-          "enrollment_total": 31,
-          "enrollment_capacity": 48
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -4930,8 +4999,8 @@
       "rating": {
         "easy": 0.6601796407185628,
         "useful": 0.8123145400593472,
-        "liked": 0.5306122448979592,
-        "filled_count": 490
+        "liked": 0.532520325203252,
+        "filled_count": 492
       },
       "sections": [
         {
@@ -4956,10 +5025,10 @@
       "coreqs": null,
       "antireqs": "AFM182, AFM123/ARBUS102, BUS247W, MSCI262",
       "rating": {
-        "easy": 0.6789473684210526,
-        "useful": 0.7318652849740933,
-        "liked": 0.585820895522388,
-        "filled_count": 268
+        "easy": 0.680628272251309,
+        "useful": 0.729381443298969,
+        "liked": 0.5836431226765799,
+        "filled_count": 269
       },
       "sections": [
         {
@@ -5006,10 +5075,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.41203703703703703,
-        "useful": 0.19444444444444445,
-        "liked": 0.16923076923076924,
-        "filled_count": 130
+        "easy": 0.40454545454545454,
+        "useful": 0.19090909090909092,
+        "liked": 0.15789473684210525,
+        "filled_count": 133
       },
       "sections": [
         {
@@ -5074,8 +5143,8 @@
       "rating": {
         "easy": 0.5,
         "useful": 0.6647727272727273,
-        "liked": 0.5981308411214953,
-        "filled_count": 107
+        "liked": 0.5855855855855856,
+        "filled_count": 111
       },
       "sections": [
         {
@@ -5110,8 +5179,8 @@
       "rating": {
         "easy": 0.5340909090909091,
         "useful": 0.6704545454545454,
-        "liked": 0.5657894736842105,
-        "filled_count": 76
+        "liked": 0.575,
+        "filled_count": 80
       },
       "sections": [
         {
@@ -5184,8 +5253,8 @@
       "rating": {
         "easy": 0.384020618556701,
         "useful": 0.9242424242424242,
-        "liked": 0.7239263803680982,
-        "filled_count": 163
+        "liked": 0.7125748502994012,
+        "filled_count": 167
       },
       "sections": [
         {
@@ -5346,8 +5415,8 @@
       "rating": {
         "easy": 0.915,
         "useful": 0.48,
-        "liked": 0.8636363636363636,
-        "filled_count": 132
+        "liked": 0.8646616541353384,
+        "filled_count": 133
       },
       "sections": [],
       "units": 0.5,
@@ -5370,8 +5439,8 @@
       "rating": {
         "easy": 0.6607142857142857,
         "useful": 0.875,
-        "liked": 0.8235294117647058,
-        "filled_count": 68
+        "liked": 0.8194444444444444,
+        "filled_count": 72
       },
       "sections": [
         {
@@ -5425,7 +5494,7 @@
       "rating": {
         "easy": 0.56640625,
         "useful": 0.89453125,
-        "liked": 0.8450704225352113,
+        "liked": 0.8380281690140845,
         "filled_count": 142
       },
       "sections": [
@@ -5594,8 +5663,8 @@
       "rating": {
         "easy": 0.4666666666666667,
         "useful": 0.6666666666666666,
-        "liked": 0.6944444444444444,
-        "filled_count": 36
+        "liked": 0.6756756756756757,
+        "filled_count": 37
       },
       "sections": [],
       "units": 0.25,
@@ -5763,8 +5832,8 @@
       "rating": {
         "easy": 0.5294117647058824,
         "useful": 0.5,
-        "liked": 0.37735849056603776,
-        "filled_count": 53
+        "liked": 0.37037037037037035,
+        "filled_count": 54
       },
       "sections": [],
       "units": 0.25,
@@ -6096,8 +6165,8 @@
       "rating": {
         "easy": 0.25943396226415094,
         "useful": 0.9166666666666666,
-        "liked": 0.5679012345679012,
-        "filled_count": 81
+        "liked": 0.5609756097560976,
+        "filled_count": 82
       },
       "sections": [],
       "units": 0.5,
@@ -6165,8 +6234,8 @@
       "rating": {
         "easy": 0.358695652173913,
         "useful": 0.8641304347826086,
-        "liked": 0.7142857142857143,
-        "filled_count": 70
+        "liked": 0.704225352112676,
+        "filled_count": 71
       },
       "sections": [],
       "units": 0.5,
@@ -6537,8 +6606,8 @@
       "rating": {
         "easy": 0.38461538461538464,
         "useful": 0.6538461538461539,
-        "liked": 0.75,
-        "filled_count": 24
+        "liked": 0.76,
+        "filled_count": 25
       },
       "sections": [
         {
@@ -6973,7 +7042,7 @@
         "easy": null,
         "useful": null,
         "liked": 1,
-        "filled_count": 1
+        "filled_count": 2
       },
       "sections": [
         {
@@ -7288,8 +7357,8 @@
       "rating": {
         "easy": 0.4166666666666667,
         "useful": 0.9166666666666666,
-        "liked": 0.6190476190476191,
-        "filled_count": 42
+        "liked": 0.627906976744186,
+        "filled_count": 43
       },
       "sections": [],
       "units": 0.5,
@@ -8696,10 +8765,10 @@
       "coreqs": null,
       "antireqs": "AFM351",
       "rating": {
-        "easy": 0.46,
-        "useful": 0.71875,
-        "liked": 0.34285714285714286,
-        "filled_count": 35
+        "easy": 0.4423076923076923,
+        "useful": 0.7,
+        "liked": 0.3333333333333333,
+        "filled_count": 36
       },
       "sections": [],
       "units": 0.5,
@@ -9792,10 +9861,10 @@
       "coreqs": null,
       "antireqs": "AMATH251, AMATH350, MATH218, MATH228",
       "rating": {
-        "easy": 0.7076612903225806,
-        "useful": 0.7930327868852459,
-        "liked": 0.6553398058252428,
-        "filled_count": 206
+        "easy": 0.71,
+        "useful": 0.790650406504065,
+        "liked": 0.6521739130434783,
+        "filled_count": 207
       },
       "sections": [
         {
@@ -10123,8 +10192,8 @@
       "rating": {
         "easy": 0.6,
         "useful": 0.7833333333333333,
-        "liked": 0.9230769230769231,
-        "filled_count": 26
+        "liked": 0.9259259259259259,
+        "filled_count": 27
       },
       "sections": [],
       "units": 0.5,
@@ -11446,10 +11515,10 @@
       "coreqs": "One of AMATH242, CS335, CS370 or CS371",
       "antireqs": null,
       "rating": {
-        "easy": 0.5,
+        "easy": 0.625,
         "useful": 1,
-        "liked": 0,
-        "filled_count": 1
+        "liked": 0.5,
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -15767,10 +15836,10 @@
       "coreqs": null,
       "antireqs": "MGMT220/ECON220, ARBUS200 taken prior to fall 2013, ENBUS203",
       "rating": {
-        "easy": 0.7591743119266054,
-        "useful": 0.3581081081081081,
-        "liked": 0.38345864661654133,
-        "filled_count": 133
+        "easy": 0.7590909090909091,
+        "useful": 0.359375,
+        "liked": 0.3880597014925373,
+        "filled_count": 134
       },
       "sections": [
         {
@@ -19335,10 +19404,10 @@
       "coreqs": null,
       "antireqs": "ECON221, ENVS278, GBDA205, HLTH204, ISS250A/B, HLTH250R, KIN222, HLTH232, LS280, PSCI214/PSCI314, PSYCH292, REC371, SDS250R, SRF230, STAT202, STAT206, STAT211, STAT221, STAT231, STAT241, SWREN250A/B, STAT250R",
       "rating": {
-        "easy": 0.5480769230769231,
-        "useful": 0.5185185185185185,
-        "liked": 0.3783783783783784,
-        "filled_count": 37
+        "easy": 0.537037037037037,
+        "useful": 0.5,
+        "liked": 0.3684210526315789,
+        "filled_count": 38
       },
       "sections": [],
       "units": 0.5,
@@ -19511,7 +19580,7 @@
       "sections": [
         {
           "id": 3194,
-          "enrollment_total": 20,
+          "enrollment_total": 16,
           "enrollment_capacity": 50
         }
       ],
@@ -19686,8 +19755,8 @@
       "rating": {
         "easy": 0.8157894736842105,
         "useful": 0.8947368421052632,
-        "liked": 0.9,
-        "filled_count": 40
+        "liked": 0.9024390243902439,
+        "filled_count": 41
       },
       "sections": [
         {
@@ -19708,8 +19777,8 @@
       "rating": {
         "easy": 0.8333333333333334,
         "useful": 1,
-        "liked": 0.875,
-        "filled_count": 8
+        "liked": 0.8888888888888888,
+        "filled_count": 9
       },
       "sections": [],
       "units": 0.5,
@@ -20849,7 +20918,7 @@
         "easy": 1,
         "useful": 1,
         "liked": 1,
-        "filled_count": 3
+        "filled_count": 4
       },
       "sections": [
         {
@@ -21472,8 +21541,8 @@
       "rating": {
         "easy": 0.5689655172413793,
         "useful": 0.23563218390804597,
-        "liked": 0.2804232804232804,
-        "filled_count": 189
+        "liked": 0.2879581151832461,
+        "filled_count": 191
       },
       "sections": [
         {
@@ -21538,8 +21607,8 @@
       "rating": {
         "easy": 0.93,
         "useful": 0.7,
-        "liked": 0.8823529411764706,
-        "filled_count": 51
+        "liked": 0.8653846153846154,
+        "filled_count": 52
       },
       "sections": [
         {
@@ -21681,8 +21750,8 @@
       "rating": {
         "easy": 0.9274193548387096,
         "useful": 0.75,
-        "liked": 0.8928571428571429,
-        "filled_count": 56
+        "liked": 0.8771929824561403,
+        "filled_count": 57
       },
       "sections": [
         {
@@ -22032,7 +22101,7 @@
       "id": 570,
       "code": "bet600",
       "name": "Applied Business Leadership Skills for Entrepreneurs",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22047,7 +22116,7 @@
       "id": 571,
       "code": "bet601",
       "name": "Strategically Managing the Entrepreneurial Organization",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22062,7 +22131,7 @@
       "id": 572,
       "code": "bet602",
       "name": "Marketing Strategies for New Technology-based Ventures",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22077,7 +22146,7 @@
       "id": 573,
       "code": "bet603",
       "name": "Entrepreneurial Finance for the Technology-based Enterprise",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22092,7 +22161,37 @@
       "id": 574,
       "code": "bet604",
       "name": "New Technology-based Venture Creation",
-      "prereqs": null,
+      "prereqs": "MBET students only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10822,
+      "code": "bet604a",
+      "name": "New Technology-based Venture Creation: Part 1",
+      "prereqs": "MBET students only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10824,
+      "code": "bet604b",
+      "name": "New Technology-based Venture Creation: Part 2",
+      "prereqs": "MBET604A/BET604A",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22107,7 +22206,7 @@
       "id": 575,
       "code": "bet605",
       "name": "Essential Accounting for Entrepreneurs",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22137,7 +22236,7 @@
       "id": 577,
       "code": "bet607",
       "name": "Managing Technological Innovation",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22152,7 +22251,7 @@
       "id": 578,
       "code": "bet608",
       "name": "Business Model Validation",
-      "prereqs": null,
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22167,7 +22266,22 @@
       "id": 7714,
       "code": "bet612",
       "name": "Entrepreneurial Organizations",
-      "prereqs": null,
+      "prereqs": "MBET students only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10830,
+      "code": "bet613",
+      "name": "Corporate Finance for the Technology-based Organization",
+      "prereqs": "BET605",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22182,7 +22296,52 @@
       "id": 7734,
       "code": "bet615",
       "name": "Corporate Innovation and Consulting",
-      "prereqs": null,
+      "prereqs": "MBET students only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10826,
+      "code": "bet615a",
+      "name": "Corporate Innovation and Consulting: Part 1",
+      "prereqs": "MBET students only.",
+      "coreqs": "BE645, BE650, BET617.",
+      "antireqs": "BET615.",
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10831,
+      "code": "bet615b",
+      "name": "Corporate Innovation and Consulting: Part 2",
+      "prereqs": "MBET615A/BET615A.",
+      "coreqs": null,
+      "antireqs": "BET615.",
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10833,
+      "code": "bet617",
+      "name": "Product Management for Digital and Tech-enabled Organizations",
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22197,7 +22356,22 @@
       "id": 579,
       "code": "bet620",
       "name": "Social Entrepreneurship",
-      "prereqs": null,
+      "prereqs": "MBET students only",
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10819,
+      "code": "bet640",
+      "name": "Emerging Technologies",
+      "prereqs": "MBET students only",
       "coreqs": null,
       "antireqs": null,
       "rating": {
@@ -22314,8 +22488,8 @@
       "rating": {
         "easy": 0.4738095238095238,
         "useful": 0.6153846153846154,
-        "liked": 0.8027210884353742,
-        "filled_count": 147
+        "liked": 0.8053691275167785,
+        "filled_count": 149
       },
       "sections": [],
       "units": 0.5
@@ -22388,10 +22562,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5143253234750462,
-        "useful": 0.8232044198895028,
-        "liked": 0.5479951397326853,
-        "filled_count": 823
+        "easy": 0.5151933701657458,
+        "useful": 0.8229357798165138,
+        "liked": 0.5507246376811594,
+        "filled_count": 828
       },
       "sections": [
         {
@@ -22418,8 +22592,8 @@
       "rating": {
         "easy": 0.6030927835051546,
         "useful": 0.6643835616438356,
-        "liked": 0.5450901803607214,
-        "filled_count": 499
+        "liked": 0.5454545454545454,
+        "filled_count": 506
       },
       "sections": [
         {
@@ -22638,8 +22812,8 @@
       "rating": {
         "easy": 0.5364583333333334,
         "useful": 0.7712765957446809,
-        "liked": 0.8909090909090909,
-        "filled_count": 55
+        "liked": 0.8947368421052632,
+        "filled_count": 57
       },
       "sections": [
         {
@@ -22682,8 +22856,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.8,
-        "liked": 1,
-        "filled_count": 6
+        "liked": 0.8571428571428571,
+        "filled_count": 7
       },
       "sections": [
         {
@@ -22794,10 +22968,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5970873786407767,
-        "useful": 0.8423566878980892,
-        "liked": 0.7257731958762886,
-        "filled_count": 485
+        "easy": 0.5967741935483871,
+        "useful": 0.8420634920634921,
+        "liked": 0.725050916496945,
+        "filled_count": 491
       },
       "sections": [
         {
@@ -22824,8 +22998,8 @@
       "rating": {
         "easy": 0.5457446808510639,
         "useful": 0.8252118644067796,
-        "liked": 0.8072625698324022,
-        "filled_count": 358
+        "liked": 0.8088642659279779,
+        "filled_count": 361
       },
       "sections": [
         {
@@ -22847,8 +23021,8 @@
       "rating": {
         "easy": 0.5374149659863946,
         "useful": 0.797945205479452,
-        "liked": 0.5963302752293578,
-        "filled_count": 218
+        "liked": 0.5954545454545455,
+        "filled_count": 220
       },
       "sections": [],
       "units": 0.25,
@@ -22877,8 +23051,8 @@
       "rating": {
         "easy": 0.6684782608695652,
         "useful": 0.6483516483516484,
-        "liked": 0.5177304964539007,
-        "filled_count": 141
+        "liked": 0.5310344827586206,
+        "filled_count": 145
       },
       "sections": [
         {
@@ -22942,8 +23116,8 @@
       "rating": {
         "easy": 0.375,
         "useful": 0.4375,
-        "liked": 0.3,
-        "filled_count": 10
+        "liked": 0.36363636363636365,
+        "filled_count": 11
       },
       "sections": [],
       "units": 0.5,
@@ -23002,8 +23176,8 @@
       "rating": {
         "easy": 0.3629032258064516,
         "useful": 0.934931506849315,
-        "liked": 0.8494623655913979,
-        "filled_count": 372
+        "liked": 0.8488063660477454,
+        "filled_count": 377
       },
       "sections": [
         {
@@ -23142,8 +23316,8 @@
       "rating": {
         "easy": 0.657608695652174,
         "useful": 0.7670454545454546,
-        "liked": 0.7049180327868853,
-        "filled_count": 61
+        "liked": 0.7142857142857143,
+        "filled_count": 63
       },
       "sections": [
         {
@@ -23193,8 +23367,8 @@
       "rating": {
         "easy": 0.18333333333333332,
         "useful": 0.7644230769230769,
-        "liked": 0.44594594594594594,
-        "filled_count": 148
+        "liked": 0.4370860927152318,
+        "filled_count": 151
       },
       "sections": [],
       "units": 0.5,
@@ -23767,8 +23941,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.7678571428571429,
-        "liked": 0.8823529411764706,
-        "filled_count": 17
+        "liked": 0.8888888888888888,
+        "filled_count": 18
       },
       "sections": [
         {
@@ -23972,8 +24146,8 @@
       "rating": {
         "easy": 0.7083333333333334,
         "useful": 0.5263157894736842,
-        "liked": 0.7391304347826086,
-        "filled_count": 23
+        "liked": 0.7083333333333334,
+        "filled_count": 24
       },
       "sections": [
         {
@@ -24099,8 +24273,8 @@
       "rating": {
         "easy": 0.7785714285714286,
         "useful": 0.8472222222222222,
-        "liked": 0.8333333333333334,
-        "filled_count": 48
+        "liked": 0.82,
+        "filled_count": 50
       },
       "sections": [],
       "units": 0.5,
@@ -24196,8 +24370,8 @@
       "rating": {
         "easy": 0.7277227722772277,
         "useful": 0.77,
-        "liked": 0.8235294117647058,
-        "filled_count": 136
+        "liked": 0.8188405797101449,
+        "filled_count": 138
       },
       "sections": [
         {
@@ -24295,8 +24469,8 @@
       "rating": {
         "easy": 0.6944444444444444,
         "useful": 0.9054054054054054,
-        "liked": 0.6862745098039216,
-        "filled_count": 51
+        "liked": 0.6923076923076923,
+        "filled_count": 52
       },
       "sections": [
         {
@@ -24523,8 +24697,8 @@
       "rating": {
         "easy": 0.43201754385964913,
         "useful": 0.9369565217391305,
-        "liked": 0.8285714285714286,
-        "filled_count": 175
+        "liked": 0.8248587570621468,
+        "filled_count": 177
       },
       "sections": [
         {
@@ -24555,8 +24729,8 @@
       "rating": {
         "easy": 0.7928571428571428,
         "useful": 0.6357142857142857,
-        "liked": 0.5892857142857143,
-        "filled_count": 56
+        "liked": 0.5964912280701754,
+        "filled_count": 57
       },
       "sections": [
         {
@@ -25000,8 +25174,8 @@
       "rating": {
         "easy": 0.6,
         "useful": 0.85,
-        "liked": 0.9230769230769231,
-        "filled_count": 13
+        "liked": 0.8571428571428571,
+        "filled_count": 14
       },
       "sections": [
         {
@@ -25145,13 +25319,7 @@
         "liked": 0.75,
         "filled_count": 8
       },
-      "sections": [
-        {
-          "id": 6872,
-          "enrollment_total": 52,
-          "enrollment_capacity": 90
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -25596,8 +25764,8 @@
       "rating": {
         "easy": 0.6944444444444444,
         "useful": 0.5972222222222222,
-        "liked": 0.6666666666666666,
-        "filled_count": 24
+        "liked": 0.68,
+        "filled_count": 25
       },
       "sections": [
         {
@@ -28967,8 +29135,8 @@
       "rating": {
         "easy": 1,
         "useful": 0.25,
-        "liked": 0.75,
-        "filled_count": 8
+        "liked": 0.6666666666666666,
+        "filled_count": 9
       },
       "sections": [
         {
@@ -29035,8 +29203,8 @@
       "rating": {
         "easy": 0.532608695652174,
         "useful": 0.9347826086956522,
-        "liked": 0.8108108108108109,
-        "filled_count": 37
+        "liked": 0.8157894736842105,
+        "filled_count": 38
       },
       "sections": [
         {
@@ -29195,8 +29363,8 @@
       "rating": {
         "easy": 0.9117647058823529,
         "useful": 0.8235294117647058,
-        "liked": 0.8484848484848485,
-        "filled_count": 33
+        "liked": 0.8529411764705882,
+        "filled_count": 34
       },
       "sections": [
         {
@@ -29310,8 +29478,8 @@
       "rating": {
         "easy": 0.9583333333333334,
         "useful": 0.25,
-        "liked": 0.5217391304347826,
-        "filled_count": 23
+        "liked": 0.5,
+        "filled_count": 24
       },
       "sections": [
         {
@@ -29686,7 +29854,7 @@
         "easy": 0.71875,
         "useful": 0.875,
         "liked": 1,
-        "filled_count": 17
+        "filled_count": 18
       },
       "sections": [],
       "units": 0.25,
@@ -29855,8 +30023,8 @@
       "rating": {
         "easy": 0.25,
         "useful": 0.7083333333333334,
-        "liked": 0.5294117647058824,
-        "filled_count": 17
+        "liked": 0.5555555555555556,
+        "filled_count": 18
       },
       "sections": [],
       "units": 0.5,
@@ -30241,8 +30409,8 @@
       "rating": {
         "easy": 0.875,
         "useful": 0.5416666666666666,
-        "liked": 0.6666666666666666,
-        "filled_count": 15
+        "liked": 0.6875,
+        "filled_count": 16
       },
       "sections": [
         {
@@ -31915,6 +32083,51 @@
       ]
     },
     {
+      "id": 10834,
+      "code": "bme721",
+      "name": "Sports Engineering",
+      "prereqs": null,
+      "coreqs": null,
+      "antireqs": "BME550",
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10829,
+      "code": "bme722",
+      "name": "Biomechanics of Human Movement",
+      "prereqs": null,
+      "coreqs": null,
+      "antireqs": "BME551",
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
+      "id": 10823,
+      "code": "bme723",
+      "name": "Mechanics of Biomedical and Biological Materials",
+      "prereqs": null,
+      "coreqs": null,
+      "antireqs": "BME553 and BME588 Topic 1",
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
       "id": 9326,
       "code": "bme730",
       "name": "Selected Topics in Biomedical Signals and Devices",
@@ -31981,8 +32194,8 @@
       "rating": {
         "easy": 0.45045045045045046,
         "useful": 0.5427927927927928,
-        "liked": 0.28,
-        "filled_count": 175
+        "liked": 0.2840909090909091,
+        "filled_count": 176
       },
       "sections": [
         {
@@ -32016,8 +32229,8 @@
       "rating": {
         "easy": 0.4342105263157895,
         "useful": 0.4166666666666667,
-        "liked": 0.26,
-        "filled_count": 100
+        "liked": 0.25742574257425743,
+        "filled_count": 101
       },
       "sections": [
         {
@@ -32924,18 +33137,7 @@
         "liked": 1,
         "filled_count": 1
       },
-      "sections": [
-        {
-          "id": 6596,
-          "enrollment_total": 6,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6147,
-          "enrollment_total": 4,
-          "enrollment_capacity": 1000
-        }
-      ]
+      "sections": []
     },
     {
       "id": 7589,
@@ -36898,8 +37100,8 @@
       "rating": {
         "easy": 0.6695710455764075,
         "useful": 0.2580321285140562,
-        "liked": 0.32809773123909247,
-        "filled_count": 1146
+        "liked": 0.32724107919930373,
+        "filled_count": 1149
       },
       "sections": [
         {
@@ -37648,8 +37850,8 @@
       "rating": {
         "easy": 0.234375,
         "useful": 0.890625,
-        "liked": 0.6363636363636364,
-        "filled_count": 22
+        "liked": 0.6521739130434783,
+        "filled_count": 23
       },
       "sections": [
         {
@@ -37771,8 +37973,8 @@
       "rating": {
         "easy": 0.6153846153846154,
         "useful": 0.7307692307692307,
-        "liked": 0.7647058823529411,
-        "filled_count": 17
+        "liked": 0.7777777777777778,
+        "filled_count": 18
       },
       "sections": [
         {
@@ -37822,8 +38024,8 @@
       "rating": {
         "easy": 0.7272727272727273,
         "useful": 0.8181818181818181,
-        "liked": 0.6470588235294118,
-        "filled_count": 17
+        "liked": 0.6111111111111112,
+        "filled_count": 18
       },
       "sections": [],
       "units": 0.5,
@@ -39335,6 +39537,21 @@
       "sections": []
     },
     {
+      "id": 10821,
+      "code": "che626",
+      "name": "Applications of Machine Learning",
+      "prereqs": null,
+      "coreqs": null,
+      "antireqs": null,
+      "rating": {
+        "easy": null,
+        "useful": null,
+        "liked": null,
+        "filled_count": 0
+      },
+      "sections": []
+    },
+    {
       "id": 880,
       "code": "che630",
       "name": "Chemical Reactor Analysis",
@@ -39849,10 +40066,10 @@
       "coreqs": null,
       "antireqs": "CHEM121",
       "rating": {
-        "easy": 0.6696096654275093,
-        "useful": 0.8018518518518518,
-        "liked": 0.7097862767154106,
-        "filled_count": 889
+        "easy": 0.6702226345083488,
+        "useful": 0.8022181146025879,
+        "liked": 0.7114093959731543,
+        "filled_count": 894
       },
       "sections": [
         {
@@ -39874,10 +40091,10 @@
       "coreqs": "CHEM120.",
       "antireqs": "CHEM121L",
       "rating": {
-        "easy": 0.7211286089238845,
-        "useful": 0.7890625,
-        "liked": 0.7696879643387816,
-        "filled_count": 673
+        "easy": 0.7198952879581152,
+        "useful": 0.7896103896103897,
+        "liked": 0.7684365781710915,
+        "filled_count": 678
       },
       "sections": [],
       "units": 0.25,
@@ -39912,10 +40129,10 @@
       "coreqs": null,
       "antireqs": "CHEM120",
       "rating": {
-        "easy": 0.8026315789473685,
-        "useful": 0.9605263157894737,
-        "liked": 0.9811320754716981,
-        "filled_count": 53
+        "easy": 0.8125,
+        "useful": 0.9625,
+        "liked": 0.9814814814814815,
+        "filled_count": 54
       },
       "sections": [],
       "units": 0.5,
@@ -39946,8 +40163,8 @@
       "rating": {
         "easy": 0.6538461538461539,
         "useful": 0.9423076923076923,
-        "liked": 0.9791666666666666,
-        "filled_count": 48
+        "liked": 0.9795918367346939,
+        "filled_count": 49
       },
       "sections": [],
       "units": 0.25,
@@ -39982,10 +40199,10 @@
       "coreqs": null,
       "antireqs": "CHEM125",
       "rating": {
-        "easy": 0.5553935860058309,
-        "useful": 0.8079710144927537,
-        "liked": 0.5669014084507042,
-        "filled_count": 568
+        "easy": 0.5566860465116279,
+        "useful": 0.8085260115606937,
+        "liked": 0.568695652173913,
+        "filled_count": 575
       },
       "sections": [
         {
@@ -40030,10 +40247,10 @@
       "coreqs": "CHEM123.",
       "antireqs": "CHEM125L",
       "rating": {
-        "easy": 0.6706827309236948,
-        "useful": 0.7580971659919028,
-        "liked": 0.639269406392694,
-        "filled_count": 438
+        "easy": 0.671,
+        "useful": 0.7590725806451613,
+        "liked": 0.6418918918918919,
+        "filled_count": 444
       },
       "sections": [
         {
@@ -40110,8 +40327,8 @@
       "rating": {
         "easy": 0.675,
         "useful": 0.9,
-        "liked": 0.9473684210526315,
-        "filled_count": 38
+        "liked": 0.9487179487179487,
+        "filled_count": 39
       },
       "sections": [
         {
@@ -40139,8 +40356,8 @@
       "rating": {
         "easy": 0.6785714285714286,
         "useful": 0.9285714285714286,
-        "liked": 0.9166666666666666,
-        "filled_count": 36
+        "liked": 0.918918918918919,
+        "filled_count": 37
       },
       "sections": [
         {
@@ -40190,10 +40407,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5555555555555556,
-        "useful": 0.7921348314606742,
-        "liked": 0.38636363636363635,
-        "filled_count": 132
+        "easy": 0.5494505494505495,
+        "useful": 0.7833333333333333,
+        "liked": 0.37777777777777777,
+        "filled_count": 135
       },
       "sections": [
         {
@@ -40635,8 +40852,8 @@
       "rating": {
         "easy": 0.4722222222222222,
         "useful": 0.5277777777777778,
-        "liked": 0.46153846153846156,
-        "filled_count": 13
+        "liked": 0.42857142857142855,
+        "filled_count": 14
       },
       "sections": [
         {
@@ -40671,8 +40888,8 @@
       "rating": {
         "easy": 0.5416666666666666,
         "useful": 0.9583333333333334,
-        "liked": 0.9090909090909091,
-        "filled_count": 33
+        "liked": 0.9117647058823529,
+        "filled_count": 34
       },
       "sections": [
         {
@@ -40809,8 +41026,8 @@
       "rating": {
         "easy": 0.6666666666666666,
         "useful": 0.8333333333333334,
-        "liked": 0.5714285714285714,
-        "filled_count": 7
+        "liked": 0.5,
+        "filled_count": 8
       },
       "sections": [
         {
@@ -40890,8 +41107,8 @@
       "rating": {
         "easy": 0.31932773109243695,
         "useful": 0.7542372881355932,
-        "liked": 0.509090909090909,
-        "filled_count": 165
+        "liked": 0.5178571428571429,
+        "filled_count": 168
       },
       "sections": [
         {
@@ -40938,8 +41155,8 @@
       "rating": {
         "easy": 0.5708955223880597,
         "useful": 0.7611940298507462,
-        "liked": 0.6346153846153846,
-        "filled_count": 104
+        "liked": 0.6415094339622641,
+        "filled_count": 106
       },
       "sections": [
         {
@@ -41439,8 +41656,8 @@
       "rating": {
         "easy": 0.22946859903381642,
         "useful": 0.8054187192118226,
-        "liked": 0.5282392026578073,
-        "filled_count": 301
+        "liked": 0.5264900662251656,
+        "filled_count": 302
       },
       "sections": [
         {
@@ -41479,8 +41696,8 @@
       "rating": {
         "easy": 0.7208029197080292,
         "useful": 0.8514492753623188,
-        "liked": 0.7407407407407407,
-        "filled_count": 216
+        "liked": 0.7419354838709677,
+        "filled_count": 217
       },
       "sections": [],
       "units": 0.25,
@@ -42098,13 +42315,7 @@
         "liked": 0.8571428571428571,
         "filled_count": 7
       },
-      "sections": [
-        {
-          "id": 6964,
-          "enrollment_total": 48,
-          "enrollment_capacity": 50
-        }
-      ]
+      "sections": []
     },
     {
       "id": 956,
@@ -44826,7 +45037,7 @@
       "rating": {
         "easy": 0.4930555555555555,
         "useful": 0.763888888888889,
-        "liked": 0.6410256410256411,
+        "liked": 0.6282051282051282,
         "filled_count": 78
       },
       "sections": [],
@@ -47574,7 +47785,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8778,
+          "enrollment_total": 5,
+          "enrollment_capacity": 10
+        }
+      ]
     },
     {
       "id": 1119,
@@ -48578,8 +48795,8 @@
       "rating": {
         "easy": 0.9254385964912281,
         "useful": 0.27238805970149255,
-        "liked": 0.8817891373801917,
-        "filled_count": 626
+        "liked": 0.879746835443038,
+        "filled_count": 632
       },
       "sections": [
         {
@@ -50858,22 +51075,12 @@
       "coreqs": null,
       "antireqs": "CO227, CO255",
       "rating": {
-        "easy": 0.42653508771929827,
-        "useful": 0.7211538461538461,
-        "liked": 0.6071428571428571,
-        "filled_count": 364
+        "easy": 0.4268558951965066,
+        "useful": 0.7223404255319149,
+        "liked": 0.6097560975609756,
+        "filled_count": 369
       },
       "sections": [
-        {
-          "id": 9079,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 6269,
-          "enrollment_total": 114,
-          "enrollment_capacity": 200
-        },
         {
           "id": 5808,
           "enrollment_total": 77,
@@ -50883,6 +51090,16 @@
           "id": 5809,
           "enrollment_total": 78,
           "enrollment_capacity": 120
+        },
+        {
+          "id": 6269,
+          "enrollment_total": 114,
+          "enrollment_capacity": 200
+        },
+        {
+          "id": 9079,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -51053,8 +51270,8 @@
       "rating": {
         "easy": 0.375,
         "useful": 0.734375,
-        "liked": 0.8095238095238095,
-        "filled_count": 21
+        "liked": 0.7727272727272727,
+        "filled_count": 22
       },
       "sections": [],
       "units": 0.5,
@@ -51083,8 +51300,8 @@
       "rating": {
         "easy": 0.67,
         "useful": 0.5869565217391304,
-        "liked": 0.7428571428571429,
-        "filled_count": 35
+        "liked": 0.75,
+        "filled_count": 36
       },
       "sections": [
         {
@@ -51138,8 +51355,8 @@
       "rating": {
         "easy": 0.3,
         "useful": 0.7375,
-        "liked": 0.9,
-        "filled_count": 60
+        "liked": 0.8852459016393442,
+        "filled_count": 61
       },
       "sections": [],
       "units": 0.5,
@@ -51454,6 +51671,11 @@
           "id": 5897,
           "enrollment_total": 131,
           "enrollment_capacity": 140
+        },
+        {
+          "id": 9114,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -52111,8 +52333,8 @@
       "rating": {
         "easy": 0.3392857142857143,
         "useful": 0.6964285714285714,
-        "liked": 0.75,
-        "filled_count": 16
+        "liked": 0.7647058823529411,
+        "filled_count": 17
       },
       "sections": [],
       "units": 0.5,
@@ -52167,10 +52389,16 @@
       "rating": {
         "easy": 0.4310344827586207,
         "useful": 0.7844827586206896,
-        "liked": 0.9285714285714286,
-        "filled_count": 42
+        "liked": 0.9302325581395349,
+        "filled_count": 43
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9115,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -52654,8 +52882,8 @@
       "rating": {
         "easy": 0.5994318181818181,
         "useful": 0.8707865168539326,
-        "liked": 0.8372093023255814,
-        "filled_count": 129
+        "liked": 0.8307692307692308,
+        "filled_count": 130
       },
       "sections": [
         {
@@ -53553,8 +53781,8 @@
       "rating": {
         "easy": 0.5625,
         "useful": 0.6597222222222222,
-        "liked": 0.5060240963855421,
-        "filled_count": 83
+        "liked": 0.5119047619047619,
+        "filled_count": 84
       },
       "sections": [
         {
@@ -53762,7 +53990,18 @@
         "liked": 0.5,
         "filled_count": 4
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9111,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 5966,
+          "enrollment_total": 45,
+          "enrollment_capacity": 96
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "afm276",
@@ -54106,8 +54345,8 @@
       "rating": {
         "easy": 0.65,
         "useful": 0.4,
-        "liked": 0.32608695652173914,
-        "filled_count": 46
+        "liked": 0.3469387755102041,
+        "filled_count": 49
       },
       "sections": [
         {
@@ -54289,8 +54528,8 @@
       "rating": {
         "easy": 0.5588235294117647,
         "useful": 0.411764705882353,
-        "liked": 0.5094339622641509,
-        "filled_count": 53
+        "liked": 0.5,
+        "filled_count": 54
       },
       "sections": [
         {
@@ -54326,8 +54565,8 @@
       "rating": {
         "easy": 0.7604166666666666,
         "useful": 0.3333333333333333,
-        "liked": 0.39655172413793105,
-        "filled_count": 58
+        "liked": 0.4032258064516129,
+        "filled_count": 62
       },
       "sections": [
         {
@@ -54600,8 +54839,8 @@
       "rating": {
         "easy": 0.7295918367346939,
         "useful": 0.6887755102040817,
-        "liked": 0.8125,
-        "filled_count": 208
+        "liked": 0.8151658767772512,
+        "filled_count": 211
       },
       "sections": [
         {
@@ -54697,7 +54936,28 @@
         "liked": 0.5217391304347826,
         "filled_count": 23
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3961,
+          "enrollment_total": 26,
+          "enrollment_capacity": 26
+        },
+        {
+          "id": 3960,
+          "enrollment_total": 23,
+          "enrollment_capacity": 26
+        },
+        {
+          "id": 3959,
+          "enrollment_total": 25,
+          "enrollment_capacity": 26
+        },
+        {
+          "id": 3929,
+          "enrollment_total": 26,
+          "enrollment_capacity": 26
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -56134,8 +56394,8 @@
       "rating": {
         "easy": 0.79296875,
         "useful": 0.87109375,
-        "liked": 0.8915401301518439,
-        "filled_count": 461
+        "liked": 0.8903225806451613,
+        "filled_count": 465
       },
       "sections": [],
       "units": 0.5,
@@ -56232,8 +56492,8 @@
       "rating": {
         "easy": 0.8266129032258065,
         "useful": 0.9354838709677419,
-        "liked": 0.9675090252707581,
-        "filled_count": 277
+        "liked": 0.96415770609319,
+        "filled_count": 279
       },
       "sections": [],
       "units": 0.5,
@@ -56264,8 +56524,8 @@
       "rating": {
         "easy": 0.8445945945945946,
         "useful": 0.9256756756756757,
-        "liked": 0.9461077844311377,
-        "filled_count": 167
+        "liked": 0.9349112426035503,
+        "filled_count": 169
       },
       "sections": [],
       "units": 0.5,
@@ -56296,8 +56556,8 @@
       "rating": {
         "easy": 0.7788461538461539,
         "useful": 0.8425925925925926,
-        "liked": 0.8854166666666666,
-        "filled_count": 96
+        "liked": 0.8865979381443299,
+        "filled_count": 97
       },
       "sections": [],
       "units": 0.5,
@@ -56313,8 +56573,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.75,
-        "liked": 0.9137931034482759,
-        "filled_count": 58
+        "liked": 0.9152542372881356,
+        "filled_count": 59
       },
       "sections": [],
       "units": 0.5,
@@ -56599,10 +56859,10 @@
       "coreqs": null,
       "antireqs": "All second,third or fourth year CS courses or equivalents",
       "rating": {
-        "easy": 0.8461538461538461,
-        "useful": 0.6805555555555556,
-        "liked": 0.7024390243902439,
-        "filled_count": 205
+        "easy": 0.8472222222222222,
+        "useful": 0.6827586206896552,
+        "liked": 0.7038834951456311,
+        "filled_count": 206
       },
       "sections": [
         {
@@ -56731,10 +56991,10 @@
       "coreqs": null,
       "antireqs": "CS116, CS135, CS136, CS137, CS138, CS145, CS146, BME121, CHE120, CIVE121, ECE150, GENE121/MTE121, ME101, MSE121, NE111, PHYS236, SYDE121",
       "rating": {
-        "easy": 0.4310344827586207,
-        "useful": 0.6637931034482758,
-        "liked": 0.5760869565217391,
-        "filled_count": 92
+        "easy": 0.4166666666666667,
+        "useful": 0.6583333333333333,
+        "liked": 0.5698924731182796,
+        "filled_count": 93
       },
       "sections": [
         {
@@ -56772,10 +57032,10 @@
       "coreqs": null,
       "antireqs": "BME121, CS135, CS137, CS138, CS145, CHE121, CIVE121, ECE150, GENE121/MTE121, ME101, NE111, MSE121, PHYS139, SYDE121",
       "rating": {
-        "easy": 0.11981132075471698,
-        "useful": 0.2220386974988202,
-        "liked": 0.26559092891408637,
-        "filled_count": 2293
+        "easy": 0.11999057048562,
+        "useful": 0.22205188679245283,
+        "liked": 0.26599912929908576,
+        "filled_count": 2297
       },
       "sections": [
         {
@@ -56809,10 +57069,10 @@
       "coreqs": null,
       "antireqs": "CS114, CS136, CS137, CS138, CS146, PHYS236, PHYS239, MSE240, NE111",
       "rating": {
-        "easy": 0.7479508196721312,
-        "useful": 0.8851626016260162,
-        "liked": 0.795,
-        "filled_count": 400
+        "easy": 0.7479591836734694,
+        "useful": 0.8856275303643725,
+        "liked": 0.7965260545905707,
+        "filled_count": 403
       },
       "sections": [
         {
@@ -56947,8 +57207,8 @@
       "rating": {
         "easy": 0.6694364161849711,
         "useful": 0.8414285714285714,
-        "liked": 0.8643171806167401,
-        "filled_count": 1135
+        "liked": 0.8644366197183099,
+        "filled_count": 1136
       },
       "sections": [
         {
@@ -56984,8 +57244,8 @@
       "rating": {
         "easy": 0.5690978886756238,
         "useful": 0.9194915254237288,
-        "liked": 0.8009153318077803,
-        "filled_count": 874
+        "liked": 0.7990867579908676,
+        "filled_count": 876
       },
       "sections": [
         {
@@ -57082,8 +57342,8 @@
       "rating": {
         "easy": 0.7415254237288136,
         "useful": 0.885593220338983,
-        "liked": 0.734006734006734,
-        "filled_count": 297
+        "liked": 0.7290969899665551,
+        "filled_count": 299
       },
       "sections": [
         {
@@ -57240,8 +57500,8 @@
       "rating": {
         "easy": 0.8533163265306123,
         "useful": 0.9318181818181819,
-        "liked": 0.8922558922558923,
-        "filled_count": 297
+        "liked": 0.8929765886287625,
+        "filled_count": 299
       },
       "sections": [
         {
@@ -57265,10 +57525,10 @@
       "coreqs": null,
       "antireqs": "CS115, CS135, CS137, CS138",
       "rating": {
-        "easy": 0.592511013215859,
-        "useful": 0.6975982532751092,
-        "liked": 0.7993827160493827,
-        "filled_count": 324
+        "easy": 0.5932017543859649,
+        "useful": 0.6967391304347826,
+        "liked": 0.8006134969325154,
+        "filled_count": 326
       },
       "sections": [],
       "units": 0.5,
@@ -57289,8 +57549,8 @@
       "rating": {
         "easy": 0.4364406779661017,
         "useful": 0.8940677966101696,
-        "liked": 0.9123711340206185,
-        "filled_count": 194
+        "liked": 0.9128205128205128,
+        "filled_count": 195
       },
       "sections": [
         {
@@ -57587,10 +57847,10 @@
       "coreqs": null,
       "antireqs": "BME122, CS240/CS240E, ECE250, MSE240, MTE140, SYDE223",
       "rating": {
-        "easy": 0.6833333333333333,
-        "useful": 0.695054945054945,
-        "liked": 0.5899280575539568,
-        "filled_count": 139
+        "easy": 0.6785714285714286,
+        "useful": 0.6875,
+        "liked": 0.5857142857142857,
+        "filled_count": 140
       },
       "sections": [],
       "units": 0.5,
@@ -58021,13 +58281,7 @@
         "liked": 0.29562982005141386,
         "filled_count": 778
       },
-      "sections": [
-        {
-          "id": 5902,
-          "enrollment_total": 95,
-          "enrollment_capacity": 110
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "cs245e",
@@ -58253,8 +58507,8 @@
       "rating": {
         "easy": 0.6347222222222222,
         "useful": 0.5439560439560439,
-        "liked": 0.4439461883408072,
-        "filled_count": 223
+        "liked": 0.4419642857142857,
+        "filled_count": 224
       },
       "sections": [],
       "units": 0.5,
@@ -58802,13 +59056,13 @@
       "rating": {
         "easy": 0.5179180887372014,
         "useful": 0.9738175675675675,
-        "liked": 0.8699080157687253,
-        "filled_count": 761
+        "liked": 0.8700787401574803,
+        "filled_count": 762
       },
       "sections": [
         {
           "id": 9014,
-          "enrollment_total": 2,
+          "enrollment_total": 4,
           "enrollment_capacity": 1
         },
         {
@@ -59026,11 +59280,6 @@
       },
       "sections": [
         {
-          "id": 9083,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 5800,
           "enrollment_total": 31,
           "enrollment_capacity": 90
@@ -59039,6 +59288,11 @@
           "id": 6161,
           "enrollment_total": 21,
           "enrollment_capacity": 90
+        },
+        {
+          "id": 9083,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -59074,8 +59328,8 @@
       "rating": {
         "easy": 0.7407786885245902,
         "useful": 0.7004132231404959,
-        "liked": 0.7708978328173375,
-        "filled_count": 323
+        "liked": 0.7716049382716049,
+        "filled_count": 324
       },
       "sections": [
         {
@@ -59152,7 +59406,7 @@
       "sections": [
         {
           "id": 9015,
-          "enrollment_total": 4,
+          "enrollment_total": 5,
           "enrollment_capacity": 1
         },
         {
@@ -59399,11 +59653,6 @@
       },
       "sections": [
         {
-          "id": 9084,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 8746,
           "enrollment_total": 80,
           "enrollment_capacity": 80
@@ -59417,6 +59666,11 @@
           "id": 5792,
           "enrollment_total": 79,
           "enrollment_capacity": 80
+        },
+        {
+          "id": 9084,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -59523,8 +59777,8 @@
       "rating": {
         "easy": 0.6666666666666666,
         "useful": 0.6928571428571428,
-        "liked": 0.6333333333333333,
-        "filled_count": 60
+        "liked": 0.639344262295082,
+        "filled_count": 61
       },
       "sections": [
         {
@@ -60080,8 +60334,8 @@
       "rating": {
         "easy": 0.7708333333333334,
         "useful": 0.981958762886598,
-        "liked": 0.3431372549019608,
-        "filled_count": 102
+        "liked": 0.33980582524271846,
+        "filled_count": 103
       },
       "sections": [
         {
@@ -60533,10 +60787,10 @@
       "coreqs": null,
       "antireqs": "CS489, Topic 26",
       "rating": {
-        "easy": 0.42857142857142855,
-        "useful": 0.6428571428571429,
-        "liked": 0.6,
-        "filled_count": 10
+        "easy": 0.46875,
+        "useful": 0.5625,
+        "liked": 0.5454545454545454,
+        "filled_count": 11
       },
       "sections": [
         {
@@ -61138,6 +61392,11 @@
           "id": 6490,
           "enrollment_total": 66,
           "enrollment_capacity": 70
+        },
+        {
+          "id": 9116,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61204,11 +61463,6 @@
       },
       "sections": [
         {
-          "id": 9016,
-          "enrollment_total": 3,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 6206,
           "enrollment_total": 45,
           "enrollment_capacity": 70
@@ -61217,6 +61471,11 @@
           "id": 6207,
           "enrollment_total": 24,
           "enrollment_capacity": 70
+        },
+        {
+          "id": 9016,
+          "enrollment_total": 4,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61460,11 +61719,6 @@
       },
       "sections": [
         {
-          "id": 9018,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 6102,
           "enrollment_total": 54,
           "enrollment_capacity": 67
@@ -61473,6 +61727,11 @@
           "id": 5804,
           "enrollment_total": 37,
           "enrollment_capacity": 57
+        },
+        {
+          "id": 9018,
+          "enrollment_total": 3,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61578,14 +61837,14 @@
       },
       "sections": [
         {
-          "id": 9033,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 5806,
           "enrollment_total": 35,
           "enrollment_capacity": 70
+        },
+        {
+          "id": 9033,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61739,11 +61998,6 @@
       },
       "sections": [
         {
-          "id": 9085,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 8740,
           "enrollment_total": 54,
           "enrollment_capacity": 60
@@ -61757,6 +62011,11 @@
           "id": 5807,
           "enrollment_total": 56,
           "enrollment_capacity": 60
+        },
+        {
+          "id": 9085,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -61902,11 +62161,6 @@
       },
       "sections": [
         {
-          "id": 9090,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 9031,
           "enrollment_total": 1,
           "enrollment_capacity": 1
@@ -61918,6 +62172,11 @@
         },
         {
           "id": 8835,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9090,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         }
@@ -67477,10 +67736,10 @@
       "coreqs": null,
       "antireqs": "CIVE153, ENVE153, GEOE153",
       "rating": {
-        "easy": 0.7544117647058823,
-        "useful": 0.3121301775147929,
-        "liked": 0.48627450980392156,
-        "filled_count": 255
+        "easy": 0.7558479532163743,
+        "useful": 0.31176470588235294,
+        "liked": 0.48638132295719844,
+        "filled_count": 257
       },
       "sections": [
         {
@@ -68022,8 +68281,8 @@
       "rating": {
         "easy": 0.7702702702702703,
         "useful": 0.4797297297297297,
-        "liked": 0.6538461538461539,
-        "filled_count": 52
+        "liked": 0.660377358490566,
+        "filled_count": 53
       },
       "sections": [
         {
@@ -71325,8 +71584,8 @@
       "rating": {
         "easy": 0.18044747081712062,
         "useful": 0.5265748031496063,
-        "liked": 0.43157894736842106,
-        "filled_count": 760
+        "liked": 0.4323258869908016,
+        "filled_count": 761
       },
       "sections": [],
       "units": 0.5,
@@ -71355,8 +71614,8 @@
       "rating": {
         "easy": 0.15126582278481013,
         "useful": 0.4547738693467337,
-        "liked": 0.44464609800362975,
-        "filled_count": 551
+        "liked": 0.4438405797101449,
+        "filled_count": 552
       },
       "sections": [
         {
@@ -71399,8 +71658,8 @@
       "rating": {
         "easy": 0.4880952380952381,
         "useful": 0.5524193548387096,
-        "liked": 0.6209150326797386,
-        "filled_count": 153
+        "liked": 0.6168831168831169,
+        "filled_count": 154
       },
       "sections": [
         {
@@ -71452,10 +71711,10 @@
       "coreqs": null,
       "antireqs": "CHEM120",
       "rating": {
-        "easy": 0.6293103448275862,
-        "useful": 0.1853448275862069,
-        "liked": 0.39090909090909093,
-        "filled_count": 110
+        "easy": 0.6186440677966102,
+        "useful": 0.18220338983050846,
+        "liked": 0.38738738738738737,
+        "filled_count": 111
       },
       "sections": [
         {
@@ -71497,8 +71756,8 @@
       "rating": {
         "easy": 0.5214477211796247,
         "useful": 0.8333333333333334,
-        "liked": 0.7860869565217391,
-        "filled_count": 575
+        "liked": 0.7854671280276817,
+        "filled_count": 578
       },
       "sections": [
         {
@@ -71553,8 +71812,8 @@
       "rating": {
         "easy": 0.6002444987775061,
         "useful": 0.7946210268948656,
-        "liked": 0.7467105263157895,
-        "filled_count": 608
+        "liked": 0.7442622950819672,
+        "filled_count": 610
       },
       "sections": [
         {
@@ -71603,8 +71862,8 @@
       "rating": {
         "easy": 0.6589147286821706,
         "useful": 0.8647859922178989,
-        "liked": 0.7395348837209302,
-        "filled_count": 430
+        "liked": 0.740139211136891,
+        "filled_count": 431
       },
       "sections": [],
       "units": 0.5,
@@ -71653,8 +71912,8 @@
       "rating": {
         "easy": 0.9143835616438356,
         "useful": 0.2743055555555555,
-        "liked": 0.55,
-        "filled_count": 220
+        "liked": 0.5475113122171946,
+        "filled_count": 221
       },
       "sections": [],
       "units": 0.25,
@@ -71685,8 +71944,8 @@
       "rating": {
         "easy": 0.7916666666666666,
         "useful": 0.19940476190476192,
-        "liked": 0.17094017094017094,
-        "filled_count": 234
+        "liked": 0.16877637130801687,
+        "filled_count": 237
       },
       "sections": [
         {
@@ -71726,8 +71985,8 @@
       "rating": {
         "easy": 0.3875,
         "useful": 0.25,
-        "liked": 0.22448979591836735,
-        "filled_count": 196
+        "liked": 0.2233502538071066,
+        "filled_count": 197
       },
       "sections": [],
       "units": 0.25,
@@ -71801,8 +72060,8 @@
       "rating": {
         "easy": 0.9444444444444444,
         "useful": 0.35,
-        "liked": 0.5263157894736842,
-        "filled_count": 19
+        "liked": 0.5,
+        "filled_count": 20
       },
       "sections": [
         {
@@ -71931,8 +72190,8 @@
       "rating": {
         "easy": 0.4152542372881356,
         "useful": 0.3686440677966102,
-        "liked": 0.4094488188976378,
-        "filled_count": 127
+        "liked": 0.40625,
+        "filled_count": 128
       },
       "sections": [
         {
@@ -72471,7 +72730,7 @@
       "rating": {
         "easy": 0.21314102564102563,
         "useful": 0.8189102564102564,
-        "liked": 0.5585585585585585,
+        "liked": 0.5540540540540541,
         "filled_count": 222
       },
       "sections": [
@@ -72576,8 +72835,8 @@
       "rating": {
         "easy": 0.5355113636363636,
         "useful": 0.9361111111111111,
-        "liked": 0.8104838709677419,
-        "filled_count": 248
+        "liked": 0.8072289156626506,
+        "filled_count": 249
       },
       "sections": [
         {
@@ -72872,8 +73131,8 @@
       "rating": {
         "easy": 0.5,
         "useful": 0.5,
-        "liked": 0.5555555555555556,
-        "filled_count": 9
+        "liked": 0.5,
+        "filled_count": 10
       },
       "sections": [
         {
@@ -73152,8 +73411,8 @@
       "rating": {
         "easy": 0.26373626373626374,
         "useful": 0.7417582417582418,
-        "liked": 0.553030303030303,
-        "filled_count": 132
+        "liked": 0.5488721804511278,
+        "filled_count": 133
       },
       "sections": [
         {
@@ -73220,7 +73479,7 @@
       "sections": [
         {
           "id": 9104,
-          "enrollment_total": 0,
+          "enrollment_total": 1,
           "enrollment_capacity": 1
         }
       ],
@@ -73304,8 +73563,8 @@
       "rating": {
         "easy": 0.3641304347826087,
         "useful": 0.7768817204301075,
-        "liked": 0.6984126984126984,
-        "filled_count": 126
+        "liked": 0.7007874015748031,
+        "filled_count": 127
       },
       "sections": [
         {
@@ -73490,8 +73749,8 @@
       "rating": {
         "easy": 0.2608695652173913,
         "useful": 0.8695652173913043,
-        "liked": 0.82,
-        "filled_count": 50
+        "liked": 0.8235294117647058,
+        "filled_count": 51
       },
       "sections": [
         {
@@ -73731,7 +73990,13 @@
         "liked": 0.7842105263157895,
         "filled_count": 190
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9122,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -73951,8 +74216,8 @@
       "rating": {
         "easy": 0.2872340425531915,
         "useful": 0.7734375,
-        "liked": 0.5909090909090909,
-        "filled_count": 132
+        "liked": 0.5939849624060151,
+        "filled_count": 133
       },
       "sections": [
         {
@@ -79294,8 +79559,8 @@
       "rating": {
         "easy": 0.6975252062328139,
         "useful": 0.6258079409048938,
-        "liked": 0.4695121951219512,
-        "filled_count": 1640
+        "liked": 0.46869300911854106,
+        "filled_count": 1645
       },
       "sections": [
         {
@@ -79346,8 +79611,8 @@
       "rating": {
         "easy": 0.699288256227758,
         "useful": 0.5828828828828829,
-        "liked": 0.4744958481613286,
-        "filled_count": 843
+        "liked": 0.47511848341232227,
+        "filled_count": 844
       },
       "sections": [
         {
@@ -79457,8 +79722,8 @@
       "rating": {
         "easy": 0.7158119658119658,
         "useful": 0.591304347826087,
-        "liked": 0.6198830409356725,
-        "filled_count": 171
+        "liked": 0.622093023255814,
+        "filled_count": 172
       },
       "sections": [
         {
@@ -79545,8 +79810,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.7804878048780488,
-        "liked": 0.6956521739130435,
-        "filled_count": 69
+        "liked": 0.6857142857142857,
+        "filled_count": 70
       },
       "sections": [
         {
@@ -79961,6 +80226,11 @@
         "filled_count": 37
       },
       "sections": [
+        {
+          "id": 9112,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
         {
           "id": 8300,
           "enrollment_total": 65,
@@ -82264,8 +82534,8 @@
       "rating": {
         "easy": 0.5852272727272727,
         "useful": 0.7954545454545454,
-        "liked": 0.6811594202898551,
-        "filled_count": 69
+        "liked": 0.6714285714285714,
+        "filled_count": 70
       },
       "sections": [
         {
@@ -83607,14 +83877,14 @@
       },
       "sections": [
         {
-          "id": 9068,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 8067,
           "enrollment_total": 18,
           "enrollment_capacity": 20
+        },
+        {
+          "id": 9068,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -86039,7 +86309,7 @@
       "rating": {
         "easy": 0.8333333333333334,
         "useful": 0.9166666666666666,
-        "liked": 0.8,
+        "liked": 0.6,
         "filled_count": 5
       },
       "sections": [],
@@ -86056,7 +86326,7 @@
       "rating": {
         "easy": 0.75,
         "useful": 1,
-        "liked": 1,
+        "liked": 0.5,
         "filled_count": 2
       },
       "sections": [
@@ -87731,10 +88001,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7423954372623575,
-        "useful": 0.4028846153846154,
-        "liked": 0.41601049868766404,
-        "filled_count": 762
+        "easy": 0.7414772727272727,
+        "useful": 0.4018199233716475,
+        "liked": 0.4143790849673203,
+        "filled_count": 765
       },
       "sections": [
         {
@@ -87796,8 +88066,8 @@
       "rating": {
         "easy": 0.8253968253968254,
         "useful": 0.3551587301587302,
-        "liked": 0.3670212765957447,
-        "filled_count": 188
+        "liked": 0.3612565445026178,
+        "filled_count": 191
       },
       "sections": [
         {
@@ -88006,10 +88276,10 @@
       "coreqs": null,
       "antireqs": "SCCOM100",
       "rating": {
-        "easy": 0.7298387096774194,
-        "useful": 0.5846774193548387,
-        "liked": 0.6914285714285714,
-        "filled_count": 175
+        "easy": 0.7261904761904762,
+        "useful": 0.5833333333333334,
+        "liked": 0.6910112359550562,
+        "filled_count": 178
       },
       "sections": [],
       "units": 0.5,
@@ -88346,8 +88616,8 @@
       "rating": {
         "easy": 0.5625,
         "useful": 0.40625,
-        "liked": 0.8,
-        "filled_count": 10
+        "liked": 0.7272727272727273,
+        "filled_count": 11
       },
       "sections": [
         {
@@ -88581,8 +88851,8 @@
       "rating": {
         "easy": 0.6843971631205674,
         "useful": 0.2899305555555555,
-        "liked": 0.20652173913043478,
-        "filled_count": 184
+        "liked": 0.20540540540540542,
+        "filled_count": 185
       },
       "sections": [
         {
@@ -89669,28 +89939,7 @@
         "liked": 0.7816091954022989,
         "filled_count": 87
       },
-      "sections": [
-        {
-          "id": 9074,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 4332,
-          "enrollment_total": 39,
-          "enrollment_capacity": 40
-        },
-        {
-          "id": 4081,
-          "enrollment_total": 39,
-          "enrollment_capacity": 40
-        },
-        {
-          "id": 4192,
-          "enrollment_total": 34,
-          "enrollment_capacity": 35
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -90434,10 +90683,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7647058823529411,
-        "useful": 0.78125,
-        "liked": 0.9629629629629629,
-        "filled_count": 27
+        "easy": 0.763888888888889,
+        "useful": 0.7941176470588235,
+        "liked": 0.9642857142857143,
+        "filled_count": 28
       },
       "sections": [
         {
@@ -91761,6 +92010,11 @@
         "filled_count": 0
       },
       "sections": [
+        {
+          "id": 9107,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
         {
           "id": 8809,
           "enrollment_total": 3,
@@ -93222,7 +93476,7 @@
         "easy": null,
         "useful": null,
         "liked": 1,
-        "filled_count": 1
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -93321,8 +93575,8 @@
       "rating": {
         "easy": 0.5,
         "useful": 0.8461538461538461,
-        "liked": 0.8,
-        "filled_count": 20
+        "liked": 0.8095238095238095,
+        "filled_count": 21
       },
       "sections": [],
       "units": 0.5,
@@ -93974,6 +94228,11 @@
         "filled_count": 8
       },
       "sections": [
+        {
+          "id": 9121,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
         {
           "id": 5001,
           "enrollment_total": 4,
@@ -94833,8 +95092,8 @@
       "rating": {
         "easy": 0.8244680851063829,
         "useful": 0.5212765957446809,
-        "liked": 0.417910447761194,
-        "filled_count": 67
+        "liked": 0.4264705882352941,
+        "filled_count": 68
       },
       "sections": [
         {
@@ -94878,8 +95137,8 @@
       "rating": {
         "easy": 0.8071748878923767,
         "useful": 0.722972972972973,
-        "liked": 0.749185667752443,
-        "filled_count": 307
+        "liked": 0.7467532467532467,
+        "filled_count": 308
       },
       "sections": [
         {
@@ -94918,8 +95177,8 @@
       "rating": {
         "easy": 0.5288461538461539,
         "useful": 0.6819620253164557,
-        "liked": 0.6962616822429907,
-        "filled_count": 214
+        "liked": 0.6930232558139535,
+        "filled_count": 215
       },
       "sections": [
         {
@@ -94956,8 +95215,8 @@
       "rating": {
         "easy": 0.42346938775510207,
         "useful": 0.94,
-        "liked": 0.7352941176470589,
-        "filled_count": 68
+        "liked": 0.7246376811594203,
+        "filled_count": 69
       },
       "sections": [],
       "units": 0.5,
@@ -94975,10 +95234,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.6363636363636364,
-        "useful": 0.4318181818181818,
-        "liked": 0.4074074074074074,
-        "filled_count": 27
+        "easy": 0.6666666666666666,
+        "useful": 0.4166666666666667,
+        "liked": 0.4482758620689655,
+        "filled_count": 29
       },
       "sections": [
         {
@@ -96388,10 +96647,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7142857142857143,
-        "useful": 0.9375,
-        "liked": 0.9166666666666666,
-        "filled_count": 12
+        "easy": 0.71875,
+        "useful": 0.9444444444444444,
+        "liked": 0.8461538461538461,
+        "filled_count": 13
       },
       "sections": [],
       "units": 1,
@@ -103163,8 +103422,8 @@
       "rating": {
         "easy": 0.8527397260273972,
         "useful": 0.7447552447552448,
-        "liked": 0.8097560975609757,
-        "filled_count": 205
+        "liked": 0.8106796116504854,
+        "filled_count": 206
       },
       "sections": [
         {
@@ -103305,8 +103564,8 @@
       "rating": {
         "easy": 0.6972222222222222,
         "useful": 0.7833333333333333,
-        "liked": 0.811965811965812,
-        "filled_count": 117
+        "liked": 0.8135593220338984,
+        "filled_count": 118
       },
       "sections": [
         {
@@ -105695,8 +105954,8 @@
       "rating": {
         "easy": 0.7321428571428571,
         "useful": 0.8080357142857143,
-        "liked": 0.825,
-        "filled_count": 80
+        "liked": 0.8271604938271605,
+        "filled_count": 81
       },
       "sections": [
         {
@@ -107087,10 +107346,10 @@
       "coreqs": null,
       "antireqs": "GEOG270",
       "rating": {
-        "easy": null,
-        "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "easy": 0.25,
+        "useful": 0.5,
+        "liked": 0,
+        "filled_count": 1
       },
       "sections": [],
       "units": 0.5,
@@ -107274,10 +107533,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": null,
-        "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "easy": 0.5,
+        "useful": 1,
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": [],
       "units": 0.5,
@@ -107875,8 +108134,8 @@
       "rating": {
         "easy": 0.8690476190476191,
         "useful": 0.23214285714285715,
-        "liked": 0.18446601941747573,
-        "filled_count": 206
+        "liked": 0.18095238095238095,
+        "filled_count": 210
       },
       "sections": [],
       "units": 0,
@@ -107914,8 +108173,8 @@
       "rating": {
         "easy": 1,
         "useful": 0,
-        "liked": 0.07692307692307693,
-        "filled_count": 39
+        "liked": 0.075,
+        "filled_count": 40
       },
       "sections": [
         {
@@ -108690,6 +108949,11 @@
           "id": 9045,
           "enrollment_total": 1,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 9125,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -108725,6 +108989,16 @@
         {
           "id": 9047,
           "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9126,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9127,
+          "enrollment_total": 0,
           "enrollment_capacity": 1
         }
       ],
@@ -108789,6 +109063,16 @@
       },
       "sections": [
         {
+          "id": 9128,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9129,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 9048,
           "enrollment_total": 1,
           "enrollment_capacity": 0
@@ -108828,7 +109112,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9130,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -108935,7 +109225,7 @@
       "sections": [
         {
           "id": 4548,
-          "enrollment_total": 73,
+          "enrollment_total": 72,
           "enrollment_capacity": 100
         }
       ],
@@ -110343,8 +110633,8 @@
       "rating": {
         "easy": 0.902127659574468,
         "useful": 0.5654506437768241,
-        "liked": 0.7836990595611285,
-        "filled_count": 319
+        "liked": 0.784375,
+        "filled_count": 320
       },
       "sections": [
         {
@@ -110442,8 +110732,8 @@
       "rating": {
         "easy": 0.6544943820224719,
         "useful": 0.7247191011235955,
-        "liked": 0.75,
-        "filled_count": 168
+        "liked": 0.7514792899408284,
+        "filled_count": 169
       },
       "sections": []
     },
@@ -110457,8 +110747,8 @@
       "rating": {
         "easy": 0.79,
         "useful": 0.81,
-        "liked": 0.8048780487804879,
-        "filled_count": 41
+        "liked": 0.8095238095238095,
+        "filled_count": 42
       },
       "sections": []
     },
@@ -110598,8 +110888,8 @@
       "rating": {
         "easy": 0.7453703703703703,
         "useful": 0.5,
-        "liked": 0.7,
-        "filled_count": 90
+        "liked": 0.6923076923076923,
+        "filled_count": 91
       },
       "sections": [
         {
@@ -110639,8 +110929,8 @@
       "rating": {
         "easy": 0.6818181818181819,
         "useful": 0.8203125,
-        "liked": 0.6595744680851063,
-        "filled_count": 47
+        "liked": 0.6666666666666666,
+        "filled_count": 48
       },
       "sections": [
         {
@@ -111531,8 +111821,8 @@
       "rating": {
         "easy": 0.4166666666666667,
         "useful": 0.4761904761904762,
-        "liked": 0.21739130434782608,
-        "filled_count": 23
+        "liked": 0.25,
+        "filled_count": 24
       },
       "sections": [],
       "units": 0.5,
@@ -111631,10 +111921,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.375,
-        "useful": 0.9166666666666666,
-        "liked": 0.4444444444444444,
-        "filled_count": 9
+        "easy": 0.35714285714285715,
+        "useful": 0.8928571428571429,
+        "liked": 0.5,
+        "filled_count": 10
       },
       "sections": []
     },
@@ -113558,7 +113848,13 @@
         "liked": 0.8,
         "filled_count": 5
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5644,
+          "enrollment_total": 68,
+          "enrollment_capacity": 75
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "geog474"
@@ -114908,11 +115204,6 @@
       },
       "sections": [
         {
-          "id": 9006,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 8977,
           "enrollment_total": 1,
           "enrollment_capacity": 1
@@ -114924,6 +115215,11 @@
         },
         {
           "id": 5576,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9006,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         }
@@ -117799,8 +118095,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "liked": 0,
+        "filled_count": 1
       },
       "sections": [
         {
@@ -117922,7 +118218,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 2821,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -120137,8 +120439,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.75,
-        "liked": 0.75,
-        "filled_count": 4
+        "liked": 0.6,
+        "filled_count": 5
       },
       "sections": [
         {
@@ -120975,8 +121277,8 @@
       "rating": {
         "easy": 0.7884615384615384,
         "useful": 0.5961538461538461,
-        "liked": 0.75,
-        "filled_count": 20
+        "liked": 0.7619047619047619,
+        "filled_count": 21
       },
       "sections": [
         {
@@ -120997,8 +121299,8 @@
       "rating": {
         "easy": 0.7931034482758621,
         "useful": 0.5344827586206896,
-        "liked": 0.7142857142857143,
-        "filled_count": 56
+        "liked": 0.7017543859649122,
+        "filled_count": 57
       },
       "sections": [
         {
@@ -121022,8 +121324,8 @@
       "rating": {
         "easy": 0.6693548387096774,
         "useful": 0.3225806451612903,
-        "liked": 0.358695652173913,
-        "filled_count": 92
+        "liked": 0.35789473684210527,
+        "filled_count": 95
       },
       "sections": [],
       "units": 0.5,
@@ -121106,7 +121408,7 @@
       "sections": [
         {
           "id": 3019,
-          "enrollment_total": 6,
+          "enrollment_total": 5,
           "enrollment_capacity": 20
         }
       ],
@@ -121638,8 +121940,8 @@
       "rating": {
         "easy": 0.9305555555555556,
         "useful": 0.5142857142857142,
-        "liked": 0.9215686274509803,
-        "filled_count": 51
+        "liked": 0.9245283018867925,
+        "filled_count": 53
       },
       "sections": [
         {
@@ -121768,7 +122070,13 @@
         "liked": 0.35294117647058826,
         "filled_count": 34
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3421,
+          "enrollment_total": 119,
+          "enrollment_capacity": 120
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -122143,7 +122451,7 @@
         "easy": 0.875,
         "useful": 0.5,
         "liked": 1,
-        "filled_count": 4
+        "filled_count": 5
       },
       "sections": [],
       "units": 0.5,
@@ -122260,8 +122568,8 @@
       "rating": {
         "easy": 0.7916666666666666,
         "useful": 0.3333333333333333,
-        "liked": 0.7272727272727273,
-        "filled_count": 11
+        "liked": 0.75,
+        "filled_count": 12
       },
       "sections": [
         {
@@ -122860,7 +123168,7 @@
         "easy": 1,
         "useful": 0.6666666666666666,
         "liked": 1,
-        "filled_count": 4
+        "filled_count": 5
       },
       "sections": [],
       "units": 0.5,
@@ -123061,10 +123369,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.7,
+        "easy": 0.625,
         "useful": 0.5,
-        "liked": 0.8571428571428571,
-        "filled_count": 7
+        "liked": 0.875,
+        "filled_count": 8
       },
       "sections": [],
       "units": 0.5,
@@ -123324,13 +123632,7 @@
         "liked": 1,
         "filled_count": 2
       },
-      "sections": [
-        {
-          "id": 8294,
-          "enrollment_total": 35,
-          "enrollment_capacity": 36
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -123391,10 +123693,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.5,
-        "useful": 0.6,
-        "liked": 0.8,
-        "filled_count": 5
+        "easy": 0.55,
+        "useful": 0.5416666666666666,
+        "liked": 0.8333333333333334,
+        "filled_count": 6
       },
       "sections": [],
       "units": 0.5,
@@ -126466,8 +126768,8 @@
       "rating": {
         "easy": 0.8712121212121212,
         "useful": 0.7878787878787878,
-        "liked": 0.8731707317073171,
-        "filled_count": 205
+        "liked": 0.875,
+        "filled_count": 208
       },
       "sections": [],
       "units": 0.5,
@@ -126498,8 +126800,8 @@
       "rating": {
         "easy": 0.8295454545454546,
         "useful": 0.6856060606060606,
-        "liked": 0.7899159663865546,
-        "filled_count": 119
+        "liked": 0.7933884297520661,
+        "filled_count": 121
       },
       "sections": [
         {
@@ -126544,8 +126846,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.3333333333333333,
-        "liked": 0.4,
-        "filled_count": 5
+        "liked": 0.5,
+        "filled_count": 6
       },
       "sections": [
         {
@@ -126640,8 +126942,8 @@
       "rating": {
         "easy": 0.6929824561403509,
         "useful": 0.6853448275862069,
-        "liked": 0.6907216494845361,
-        "filled_count": 97
+        "liked": 0.6938775510204082,
+        "filled_count": 98
       },
       "sections": [],
       "units": 0.5,
@@ -126777,7 +127079,7 @@
       "rating": {
         "easy": 0.5833333333333334,
         "useful": 0.4305555555555555,
-        "liked": 0.25,
+        "liked": 0.28125,
         "filled_count": 32
       },
       "sections": [],
@@ -126985,8 +127287,8 @@
       "rating": {
         "easy": 0.6217948717948718,
         "useful": 0.5769230769230769,
-        "liked": 0.49230769230769234,
-        "filled_count": 65
+        "liked": 0.48484848484848486,
+        "filled_count": 66
       },
       "sections": [
         {
@@ -127102,8 +127404,8 @@
       "rating": {
         "easy": 0.7767857142857143,
         "useful": 0.5758928571428571,
-        "liked": 0.6547619047619048,
-        "filled_count": 84
+        "liked": 0.6588235294117647,
+        "filled_count": 85
       },
       "sections": [],
       "units": 0.5,
@@ -127917,7 +128219,13 @@
         "liked": 0.9,
         "filled_count": 10
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3010,
+          "enrollment_total": 114,
+          "enrollment_capacity": 114
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "hlth460"
@@ -131569,7 +131877,28 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8903,
+          "enrollment_total": 2,
+          "enrollment_capacity": 2
+        },
+        {
+          "id": 8948,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9000,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 3042,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        }
+      ]
     },
     {
       "id": 8977,
@@ -137773,8 +138102,8 @@
       "rating": {
         "easy": 0.875,
         "useful": 0.5,
-        "liked": 0.7857142857142857,
-        "filled_count": 14
+        "liked": 0.8,
+        "filled_count": 15
       },
       "sections": [
         {
@@ -137852,8 +138181,8 @@
       "rating": {
         "easy": 0.7916666666666666,
         "useful": 0.7916666666666666,
-        "liked": 0.75,
-        "filled_count": 8
+        "liked": 0.7777777777777778,
+        "filled_count": 9
       },
       "sections": [],
       "units": 0.5,
@@ -138126,8 +138455,8 @@
       "rating": {
         "easy": 0.7477876106194691,
         "useful": 0.8871681415929203,
-        "liked": 0.9101796407185628,
-        "filled_count": 167
+        "liked": 0.9107142857142857,
+        "filled_count": 168
       },
       "sections": [
         {
@@ -139173,10 +139502,10 @@
       "coreqs": "KIN100L",
       "antireqs": null,
       "rating": {
-        "easy": 0.40804597701149425,
-        "useful": 0.9659090909090909,
-        "liked": 0.9302325581395349,
-        "filled_count": 129
+        "easy": 0.4034090909090909,
+        "useful": 0.9662921348314607,
+        "liked": 0.9236641221374046,
+        "filled_count": 131
       },
       "sections": [
         {
@@ -139202,8 +139531,8 @@
       "rating": {
         "easy": 0.4227941176470588,
         "useful": 0.9927536231884058,
-        "liked": 0.9666666666666667,
-        "filled_count": 120
+        "liked": 0.9669421487603306,
+        "filled_count": 121
       },
       "sections": [
         {
@@ -139561,8 +139890,8 @@
       "rating": {
         "easy": 0.5108695652173914,
         "useful": 0.6086956521739131,
-        "liked": 0.3898305084745763,
-        "filled_count": 59
+        "liked": 0.38333333333333336,
+        "filled_count": 60
       },
       "sections": [
         {
@@ -140597,7 +140926,7 @@
       "sections": [
         {
           "id": 9103,
-          "enrollment_total": 0,
+          "enrollment_total": 1,
           "enrollment_capacity": 1
         }
       ],
@@ -141428,7 +141757,7 @@
       "sections": [
         {
           "id": 9102,
-          "enrollment_total": 0,
+          "enrollment_total": 1,
           "enrollment_capacity": 1
         }
       ]
@@ -141530,8 +141859,8 @@
       "rating": {
         "easy": 0.3157894736842105,
         "useful": 0.9210526315789473,
-        "liked": 0.8260869565217391,
-        "filled_count": 23
+        "liked": 0.7916666666666666,
+        "filled_count": 24
       },
       "sections": [
         {
@@ -144252,8 +144581,8 @@
       "rating": {
         "easy": 0.6626984126984127,
         "useful": 0.8588709677419355,
-        "liked": 0.9479166666666666,
-        "filled_count": 96
+        "liked": 0.9484536082474226,
+        "filled_count": 97
       },
       "sections": [
         {
@@ -144279,10 +144608,16 @@
       "rating": {
         "easy": 0.8055555555555556,
         "useful": 0.8947368421052632,
-        "liked": 0.9333333333333333,
-        "filled_count": 30
+        "liked": 0.9354838709677419,
+        "filled_count": 31
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 6679,
+          "enrollment_total": 35,
+          "enrollment_capacity": 40
+        }
+      ],
       "units": 0.5,
       "prereqAst": {
         "kind": "course",
@@ -149032,8 +149367,8 @@
       "rating": {
         "easy": 0.45236336779911374,
         "useful": 0.8167404129793511,
-        "liked": 0.7232808616404308,
-        "filled_count": 1207
+        "liked": 0.7235973597359736,
+        "filled_count": 1212
       },
       "sections": [],
       "units": 0.5,
@@ -149077,8 +149412,8 @@
       "rating": {
         "easy": 0.8085399449035813,
         "useful": 0.9068493150684932,
-        "liked": 0.8738738738738738,
-        "filled_count": 666
+        "liked": 0.8746268656716418,
+        "filled_count": 670
       },
       "sections": [],
       "units": 0.5,
@@ -149113,8 +149448,8 @@
       "rating": {
         "easy": 0.6663551401869159,
         "useful": 0.9100553505535055,
-        "liked": 0.8411967779056386,
-        "filled_count": 869
+        "liked": 0.8404133180252583,
+        "filled_count": 871
       },
       "sections": [],
       "units": 0.5,
@@ -149149,8 +149484,8 @@
       "rating": {
         "easy": 0.5125968992248062,
         "useful": 0.8682692307692308,
-        "liked": 0.7887931034482759,
-        "filled_count": 464
+        "liked": 0.7896995708154506,
+        "filled_count": 466
       },
       "sections": [
         {
@@ -149231,8 +149566,8 @@
       "rating": {
         "easy": 0.6293532338308457,
         "useful": 0.8820638820638821,
-        "liked": 0.8496124031007752,
-        "filled_count": 645
+        "liked": 0.8503086419753086,
+        "filled_count": 648
       },
       "sections": [
         {
@@ -149370,8 +149705,8 @@
       "rating": {
         "easy": 0.5012285012285013,
         "useful": 0.7475247524752475,
-        "liked": 0.5344070278184481,
-        "filled_count": 683
+        "liked": 0.5348837209302325,
+        "filled_count": 688
       },
       "sections": [
         {
@@ -149428,8 +149763,8 @@
       "rating": {
         "easy": 0.5317307692307692,
         "useful": 0.6974708171206225,
-        "liked": 0.5778301886792453,
-        "filled_count": 424
+        "liked": 0.5751173708920188,
+        "filled_count": 426
       },
       "sections": [
         {
@@ -149532,8 +149867,8 @@
       "rating": {
         "easy": 0.4435831180017227,
         "useful": 0.8360375747224594,
-        "liked": 0.7895018746652384,
-        "filled_count": 1867
+        "liked": 0.78941742383752,
+        "filled_count": 1871
       },
       "sections": [
         {
@@ -149589,8 +149924,8 @@
       "rating": {
         "easy": 0.4496,
         "useful": 0.7817014446227929,
-        "liked": 0.6367112810707457,
-        "filled_count": 1046
+        "liked": 0.638095238095238,
+        "filled_count": 1050
       },
       "sections": [
         {
@@ -149699,8 +150034,8 @@
       "rating": {
         "easy": 0.5593792172739541,
         "useful": 0.8295302013422818,
-        "liked": 0.6854460093896714,
-        "filled_count": 1278
+        "liked": 0.6859375,
+        "filled_count": 1280
       },
       "sections": [
         {
@@ -149741,8 +150076,8 @@
       "rating": {
         "easy": 0.4643478260869565,
         "useful": 0.8336221837088388,
-        "liked": 0.6766220391349125,
-        "filled_count": 971
+        "liked": 0.6772867420349434,
+        "filled_count": 973
       },
       "sections": [
         {
@@ -149844,8 +150179,8 @@
       "rating": {
         "easy": 0.2710674157303371,
         "useful": 0.9289772727272727,
-        "liked": 0.9482071713147411,
-        "filled_count": 251
+        "liked": 0.9484126984126984,
+        "filled_count": 252
       },
       "sections": [],
       "units": 0.5,
@@ -149923,8 +150258,8 @@
       "rating": {
         "easy": 0.4423076923076923,
         "useful": 0.9187898089171974,
-        "liked": 0.9273504273504274,
-        "filled_count": 234
+        "liked": 0.9276595744680851,
+        "filled_count": 235
       },
       "sections": [],
       "units": 0.5,
@@ -150213,8 +150548,8 @@
       "rating": {
         "easy": 0.34130434782608693,
         "useful": 0.5387931034482758,
-        "liked": 0.5095541401273885,
-        "filled_count": 157
+        "liked": 0.5063291139240507,
+        "filled_count": 158
       },
       "sections": [
         {
@@ -150597,8 +150932,8 @@
       "rating": {
         "easy": 0.44384615384615383,
         "useful": 0.7924242424242425,
-        "liked": 0.687037037037037,
-        "filled_count": 540
+        "liked": 0.6856617647058824,
+        "filled_count": 544
       },
       "sections": [
         {
@@ -150706,10 +151041,10 @@
       "coreqs": null,
       "antireqs": "MATH207, MATH212/ECE206, MATH212N, MATH217, MATH227, MATH247",
       "rating": {
-        "easy": 0.5547091412742382,
-        "useful": 0.8571428571428571,
-        "liked": 0.8146911519198664,
-        "filled_count": 599
+        "easy": 0.5545580110497238,
+        "useful": 0.8575342465753425,
+        "liked": 0.8159203980099502,
+        "filled_count": 603
       },
       "sections": [
         {
@@ -150803,8 +151138,8 @@
       "rating": {
         "easy": 0.30324074074074076,
         "useful": 0.783457249070632,
-        "liked": 0.7737665463297232,
-        "filled_count": 831
+        "liked": 0.7740384615384616,
+        "filled_count": 832
       },
       "sections": [
         {
@@ -151493,7 +151828,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6273,
+          "enrollment_total": 85,
+          "enrollment_capacity": 100
+        }
+      ]
     },
     {
       "id": 7882,
@@ -151640,7 +151981,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6635,
+          "enrollment_total": 16,
+          "enrollment_capacity": 20
+        }
+      ]
     },
     {
       "id": 4390,
@@ -151658,7 +152005,7 @@
       "sections": [
         {
           "id": 6345,
-          "enrollment_total": 33,
+          "enrollment_total": 31,
           "enrollment_capacity": 20
         }
       ],
@@ -152638,6 +152985,11 @@
       },
       "sections": [
         {
+          "id": 9118,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 4528,
           "enrollment_total": 90,
           "enrollment_capacity": 103
@@ -152707,13 +153059,7 @@
         "liked": 0.8260869565217391,
         "filled_count": 46
       },
-      "sections": [
-        {
-          "id": 4530,
-          "enrollment_total": 93,
-          "enrollment_capacity": 100
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -152761,6 +153107,11 @@
           "id": 4465,
           "enrollment_total": 91,
           "enrollment_capacity": 103
+        },
+        {
+          "id": 9119,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -152805,13 +153156,7 @@
         "liked": 0.6347826086956522,
         "filled_count": 115
       },
-      "sections": [
-        {
-          "id": 4531,
-          "enrollment_total": 90,
-          "enrollment_capacity": 103
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [
         "cive280",
@@ -152916,6 +153261,11 @@
           "id": 4535,
           "enrollment_total": 97,
           "enrollment_capacity": 103
+        },
+        {
+          "id": 9117,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -157048,7 +157398,7 @@
       "sections": [
         {
           "id": 9034,
-          "enrollment_total": 7,
+          "enrollment_total": 8,
           "enrollment_capacity": 1
         }
       ]
@@ -157732,8 +158082,8 @@
       "rating": {
         "easy": 0.8193548387096774,
         "useful": 0.3198051948051948,
-        "liked": 0.5024875621890548,
-        "filled_count": 201
+        "liked": 0.5,
+        "filled_count": 202
       },
       "sections": []
     },
@@ -159515,7 +159865,7 @@
         "easy": 0.5,
         "useful": 1,
         "liked": 1,
-        "filled_count": 1
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -159594,10 +159944,10 @@
       "coreqs": null,
       "antireqs": "CS338, CS348",
       "rating": {
-        "easy": 0.75,
-        "useful": 0.5,
+        "easy": 0.6666666666666666,
+        "useful": 0.6666666666666666,
         "liked": 1,
-        "filled_count": 2
+        "filled_count": 3
       },
       "sections": [],
       "units": 0.5,
@@ -159684,10 +160034,10 @@
       "coreqs": null,
       "antireqs": "ECE307, STAT332",
       "rating": {
-        "easy": 0,
-        "useful": 0.75,
+        "easy": 0.08333333333333333,
+        "useful": 0.8333333333333334,
         "liked": 0,
-        "filled_count": 2
+        "filled_count": 3
       },
       "sections": [],
       "units": 0.5,
@@ -159732,8 +160082,8 @@
       "rating": {
         "easy": 0.6166666666666667,
         "useful": 0.4666666666666667,
-        "liked": 0.46875,
-        "filled_count": 32
+        "liked": 0.45454545454545453,
+        "filled_count": 33
       },
       "sections": [
         {
@@ -159780,9 +160130,9 @@
       "antireqs": "ECON101, ECON201",
       "rating": {
         "easy": 0.25,
-        "useful": 0.375,
-        "liked": 0.5,
-        "filled_count": 2
+        "useful": 0.5,
+        "liked": 0.6666666666666666,
+        "filled_count": 3
       },
       "sections": [],
       "units": 0.5,
@@ -163034,8 +163384,8 @@
       "rating": {
         "easy": 0.8316831683168316,
         "useful": 0.7975,
-        "liked": 0.88,
-        "filled_count": 200
+        "liked": 0.8768472906403941,
+        "filled_count": 203
       },
       "sections": [],
       "units": 0.75,
@@ -163100,8 +163450,8 @@
       "rating": {
         "easy": 0.35585585585585583,
         "useful": 0.5530973451327433,
-        "liked": 0.2752808988764045,
-        "filled_count": 178
+        "liked": 0.2722222222222222,
+        "filled_count": 180
       },
       "sections": [
         {
@@ -163140,10 +163490,10 @@
       "coreqs": null,
       "antireqs": "CIVE105, SYDE181",
       "rating": {
-        "easy": 0.6626506024096386,
-        "useful": 0.8571428571428571,
-        "liked": 0.75,
-        "filled_count": 148
+        "easy": 0.6547619047619048,
+        "useful": 0.8588235294117647,
+        "liked": 0.7549668874172185,
+        "filled_count": 151
       },
       "sections": [
         {
@@ -163179,10 +163529,10 @@
       "coreqs": null,
       "antireqs": "ECE140, GENE123",
       "rating": {
-        "easy": 0.26373626373626374,
-        "useful": 0.9166666666666666,
-        "liked": 0.7515527950310559,
-        "filled_count": 161
+        "easy": 0.266304347826087,
+        "useful": 0.9175531914893617,
+        "liked": 0.754601226993865,
+        "filled_count": 163
       },
       "sections": [
         {
@@ -163220,8 +163570,8 @@
       "rating": {
         "easy": 0.8166666666666667,
         "useful": 0.925,
-        "liked": 0.9175257731958762,
-        "filled_count": 97
+        "liked": 0.9207920792079208,
+        "filled_count": 101
       },
       "sections": [],
       "units": 0.5,
@@ -163256,8 +163606,8 @@
       "rating": {
         "easy": 0.8088235294117647,
         "useful": 0.9740566037735849,
-        "liked": 0.8636363636363636,
-        "filled_count": 176
+        "liked": 0.8595505617977528,
+        "filled_count": 178
       },
       "sections": [
         {
@@ -163417,8 +163767,8 @@
       "rating": {
         "easy": 0.7704918032786885,
         "useful": 0.7258064516129032,
-        "liked": 0.5742574257425742,
-        "filled_count": 101
+        "liked": 0.5784313725490197,
+        "filled_count": 102
       },
       "sections": [
         {
@@ -163476,8 +163826,8 @@
       "rating": {
         "easy": 0.49295774647887325,
         "useful": 0.9119718309859155,
-        "liked": 0.7117117117117117,
-        "filled_count": 111
+        "liked": 0.7142857142857143,
+        "filled_count": 112
       },
       "sections": [
         {
@@ -163516,10 +163866,10 @@
       "coreqs": null,
       "antireqs": "ME201",
       "rating": {
-        "easy": 0.4431818181818182,
-        "useful": 0.8352272727272727,
-        "liked": 0.6875,
-        "filled_count": 64
+        "easy": 0.4388888888888889,
+        "useful": 0.8333333333333334,
+        "liked": 0.696969696969697,
+        "filled_count": 66
       },
       "sections": [],
       "units": 0.5,
@@ -163552,10 +163902,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.4739583333333333,
-        "useful": 0.6197916666666666,
-        "liked": 0.5522388059701493,
-        "filled_count": 67
+        "easy": 0.47959183673469385,
+        "useful": 0.6122448979591837,
+        "liked": 0.5507246376811594,
+        "filled_count": 69
       },
       "sections": [],
       "units": 0.5,
@@ -163588,8 +163938,8 @@
       "rating": {
         "easy": 0.4912280701754386,
         "useful": 0.8526785714285714,
-        "liked": 0.7378640776699029,
-        "filled_count": 103
+        "liked": 0.7403846153846154,
+        "filled_count": 104
       },
       "sections": [
         {
@@ -163639,10 +163989,10 @@
       "coreqs": "SYDE252.",
       "antireqs": "SYDE292",
       "rating": {
-        "easy": 0.25,
-        "useful": 0.912280701754386,
-        "liked": 0.6438356164383562,
-        "filled_count": 73
+        "easy": 0.2584745762711865,
+        "useful": 0.9137931034482758,
+        "liked": 0.6533333333333333,
+        "filled_count": 75
       },
       "sections": [],
       "units": 0.5,
@@ -163688,10 +164038,10 @@
       "coreqs": null,
       "antireqs": "ECE254",
       "rating": {
-        "easy": 0.5784313725490196,
-        "useful": 0.945,
-        "liked": 0.7941176470588235,
-        "filled_count": 68
+        "easy": 0.5721153846153846,
+        "useful": 0.9313725490196079,
+        "liked": 0.7714285714285715,
+        "filled_count": 70
       },
       "sections": [],
       "units": 0.5,
@@ -163733,10 +164083,10 @@
       "coreqs": null,
       "antireqs": "BME252, SYDE252",
       "rating": {
-        "easy": 0.6875,
+        "easy": 0.6,
         "useful": 0.75,
-        "liked": 0.75,
-        "filled_count": 8
+        "liked": 0.7777777777777778,
+        "filled_count": 9
       },
       "sections": [],
       "units": 0.5,
@@ -163768,8 +164118,8 @@
       "rating": {
         "easy": 0.7801724137931034,
         "useful": 0.902542372881356,
-        "liked": 0.898989898989899,
-        "filled_count": 99
+        "liked": 0.9,
+        "filled_count": 100
       },
       "sections": [
         {
@@ -163913,10 +164263,10 @@
       "coreqs": null,
       "antireqs": "SYDE381",
       "rating": {
-        "easy": 0.638888888888889,
-        "useful": 0.4305555555555555,
-        "liked": 0.5945945945945946,
-        "filled_count": 37
+        "easy": 0.6052631578947368,
+        "useful": 0.4473684210526316,
+        "liked": 0.6153846153846154,
+        "filled_count": 39
       },
       "sections": [
         {
@@ -163966,8 +164316,8 @@
       "rating": {
         "easy": 0.484375,
         "useful": 0.9015151515151515,
-        "liked": 0.9245283018867925,
-        "filled_count": 53
+        "liked": 0.9259259259259259,
+        "filled_count": 54
       },
       "sections": [
         {
@@ -164006,10 +164356,10 @@
       "coreqs": null,
       "antireqs": "ME321",
       "rating": {
-        "easy": 0.625,
-        "useful": 0.375,
-        "liked": 0.5,
-        "filled_count": 22
+        "easy": 0.6428571428571429,
+        "useful": 0.39285714285714285,
+        "liked": 0.5416666666666666,
+        "filled_count": 24
       },
       "sections": [
         {
@@ -164072,10 +164422,15 @@
       "rating": {
         "easy": 0.4230769230769231,
         "useful": 0.3333333333333333,
-        "liked": 0.3387096774193548,
-        "filled_count": 62
+        "liked": 0.3492063492063492,
+        "filled_count": 63
       },
       "sections": [
+        {
+          "id": 9120,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
         {
           "id": 4614,
           "enrollment_total": 108,
@@ -164127,10 +164482,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.2720588235294118,
-        "useful": 0.7647058823529411,
-        "liked": 0.5370370370370371,
-        "filled_count": 54
+        "easy": 0.2642857142857143,
+        "useful": 0.7571428571428571,
+        "liked": 0.5178571428571429,
+        "filled_count": 56
       },
       "sections": [
         {
@@ -164176,10 +164531,10 @@
       "coreqs": null,
       "antireqs": "SYDE351",
       "rating": {
-        "easy": 0.6875,
-        "useful": 0.6875,
-        "liked": 0.75,
-        "filled_count": 8
+        "easy": 0.6,
+        "useful": 0.55,
+        "liked": 0.7,
+        "filled_count": 10
       },
       "sections": [
         {
@@ -164216,8 +164571,8 @@
       "rating": {
         "easy": 0.375,
         "useful": 0.375,
-        "liked": 0.5714285714285714,
-        "filled_count": 7
+        "liked": 0.625,
+        "filled_count": 8
       },
       "sections": [
         {
@@ -164263,19 +164618,19 @@
       "rating": {
         "easy": 0.1488095238095238,
         "useful": 0.9883720930232558,
-        "liked": 0.75,
-        "filled_count": 64
+        "liked": 0.7384615384615385,
+        "filled_count": 65
       },
       "sections": [
-        {
-          "id": 9029,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
         {
           "id": 4616,
           "enrollment_total": 102,
           "enrollment_capacity": 120
+        },
+        {
+          "id": 9029,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -164325,8 +164680,8 @@
       "rating": {
         "easy": 0.325,
         "useful": 0.585,
-        "liked": 0.5416666666666666,
-        "filled_count": 72
+        "liked": 0.547945205479452,
+        "filled_count": 73
       },
       "sections": [
         {
@@ -164805,13 +165160,7 @@
         "liked": 1,
         "filled_count": 4
       },
-      "sections": [
-        {
-          "id": 4938,
-          "enrollment_total": 60,
-          "enrollment_capacity": 60
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -165226,10 +165575,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.8931718061674009,
-        "useful": 0.4581497797356828,
-        "liked": 0.45443499392466585,
-        "filled_count": 823
+        "easy": 0.893640350877193,
+        "useful": 0.4594298245614035,
+        "liked": 0.4530120481927711,
+        "filled_count": 830
       },
       "sections": [],
       "units": 0,
@@ -165350,10 +165699,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.9527027027027027,
-        "useful": 0.756578947368421,
-        "liked": 0.9838709677419355,
-        "filled_count": 62
+        "easy": 0.9473684210526315,
+        "useful": 0.7628205128205128,
+        "liked": 0.9841269841269841,
+        "filled_count": 63
       },
       "sections": [
         {
@@ -165445,8 +165794,8 @@
       "rating": {
         "easy": 0.8715083798882681,
         "useful": 0.5991620111731844,
-        "liked": 0.9414225941422594,
-        "filled_count": 239
+        "liked": 0.941908713692946,
+        "filled_count": 241
       },
       "sections": [
         {
@@ -165790,10 +166139,10 @@
       "coreqs": "One of MUSIC116, MUSIC117, MUSIC216, MUSIC217, MUSIC316, MUSIC317, MUSIC416, MUSIC417",
       "antireqs": null,
       "rating": {
-        "easy": 0.8333333333333334,
+        "easy": 0.8214285714285714,
         "useful": 1,
         "liked": 1,
-        "filled_count": 8
+        "filled_count": 9
       },
       "sections": [
         {
@@ -166018,10 +166367,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.861111111111111,
-        "useful": 0.7222222222222222,
-        "liked": 0.875,
-        "filled_count": 16
+        "easy": 0.85,
+        "useful": 0.7,
+        "liked": 0.8235294117647058,
+        "filled_count": 17
       },
       "sections": [
         {
@@ -167942,8 +168291,8 @@
       "rating": {
         "easy": 0.9625,
         "useful": 0.391025641025641,
-        "liked": 0.7792207792207793,
-        "filled_count": 77
+        "liked": 0.7692307692307693,
+        "filled_count": 78
       },
       "sections": [],
       "units": 0.5,
@@ -168032,8 +168381,8 @@
       "rating": {
         "easy": 0.9342105263157895,
         "useful": 0.5394736842105263,
-        "liked": 0.7543859649122807,
-        "filled_count": 57
+        "liked": 0.7241379310344828,
+        "filled_count": 58
       },
       "sections": [],
       "units": 0.5,
@@ -168098,8 +168447,8 @@
       "rating": {
         "easy": 0.6413043478260869,
         "useful": 0.7934782608695652,
-        "liked": 0.6607142857142857,
-        "filled_count": 56
+        "liked": 0.6666666666666666,
+        "filled_count": 57
       },
       "sections": [],
       "units": 0.25,
@@ -168128,8 +168477,8 @@
       "rating": {
         "easy": 0.31547619047619047,
         "useful": 0.8571428571428571,
-        "liked": 0.5443037974683544,
-        "filled_count": 79
+        "liked": 0.5375,
+        "filled_count": 80
       },
       "sections": [],
       "units": 0.5,
@@ -168165,7 +168514,7 @@
       "rating": {
         "easy": 0.78125,
         "useful": 0.7803030303030303,
-        "liked": 0.7313432835820896,
+        "liked": 0.746268656716418,
         "filled_count": 67
       },
       "sections": [
@@ -168224,8 +168573,8 @@
       "rating": {
         "easy": 0.2441860465116279,
         "useful": 0.9593023255813954,
-        "liked": 0.7037037037037037,
-        "filled_count": 81
+        "liked": 0.7073170731707317,
+        "filled_count": 82
       },
       "sections": [],
       "units": 0.5,
@@ -168317,7 +168666,7 @@
       "rating": {
         "easy": 0.3333333333333333,
         "useful": 0.796875,
-        "liked": 0.5606060606060606,
+        "liked": 0.5757575757575758,
         "filled_count": 66
       },
       "sections": [
@@ -168590,8 +168939,8 @@
       "rating": {
         "easy": 0.5,
         "useful": 0.75,
-        "liked": 0.5,
-        "filled_count": 22
+        "liked": 0.4782608695652174,
+        "filled_count": 23
       },
       "sections": [],
       "units": 0.5,
@@ -168705,8 +169054,8 @@
       "rating": {
         "easy": 0.45,
         "useful": 0.703125,
-        "liked": 0.5833333333333334,
-        "filled_count": 24
+        "liked": 0.56,
+        "filled_count": 25
       },
       "sections": [],
       "units": 0.5,
@@ -168735,8 +169084,8 @@
       "rating": {
         "easy": 0.48214285714285715,
         "useful": 0.6071428571428571,
-        "liked": 0.44,
-        "filled_count": 25
+        "liked": 0.46153846153846156,
+        "filled_count": 26
       },
       "sections": [],
       "units": 0.5,
@@ -168765,8 +169114,8 @@
       "rating": {
         "easy": 0.7916666666666666,
         "useful": 0.9166666666666666,
-        "liked": 0.9285714285714286,
-        "filled_count": 14
+        "liked": 0.9333333333333333,
+        "filled_count": 15
       },
       "sections": [],
       "units": 0.25,
@@ -168844,8 +169193,8 @@
       "rating": {
         "easy": 0.4090909090909091,
         "useful": 0.8181818181818181,
-        "liked": 0.7083333333333334,
-        "filled_count": 24
+        "liked": 0.68,
+        "filled_count": 25
       },
       "sections": [],
       "units": 0.5,
@@ -168891,8 +169240,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0,
-        "liked": 0.3333333333333333,
-        "filled_count": 3
+        "liked": 0.5,
+        "filled_count": 4
       },
       "sections": [],
       "units": 0.5,
@@ -170065,38 +170414,7 @@
         "liked": 0,
         "filled_count": 2
       },
-      "sections": [
-        {
-          "id": 4866,
-          "enrollment_total": 10,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4867,
-          "enrollment_total": 9,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4868,
-          "enrollment_total": 9,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4869,
-          "enrollment_total": 3,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4870,
-          "enrollment_total": 7,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4871,
-          "enrollment_total": 5,
-          "enrollment_capacity": 10
-        }
-      ],
+      "sections": [],
       "units": 0.25,
       "antireqCodes": [],
       "prereqAst": {
@@ -171240,13 +171558,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 6896,
-          "enrollment_total": 91,
-          "enrollment_capacity": 91
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -172963,7 +173275,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7007,
+          "enrollment_total": 95,
+          "enrollment_capacity": 97
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -176102,8 +176420,8 @@
       "rating": {
         "easy": 0.8031007751937984,
         "useful": 0.18304953560371517,
-        "liked": 0.07920792079207921,
-        "filled_count": 1313
+        "liked": 0.07966616084977238,
+        "filled_count": 1318
       },
       "sections": [
         {
@@ -176129,8 +176447,8 @@
       "rating": {
         "easy": 0.8103448275862069,
         "useful": 0.3922413793103448,
-        "liked": 0.17365269461077845,
-        "filled_count": 167
+        "liked": 0.17261904761904762,
+        "filled_count": 168
       },
       "sections": [
         {
@@ -176173,10 +176491,10 @@
       "coreqs": null,
       "antireqs": "PD2",
       "rating": {
-        "easy": 0.4568965517241379,
-        "useful": 0.11925287356321838,
-        "liked": 0.045146726862302484,
-        "filled_count": 443
+        "easy": 0.45714285714285713,
+        "useful": 0.12,
+        "liked": 0.04484304932735426,
+        "filled_count": 446
       },
       "sections": [
         {
@@ -176237,10 +176555,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.9144736842105263,
-        "useful": 0.3092105263157895,
-        "liked": 0.6363636363636364,
-        "filled_count": 99
+        "easy": 0.9102564102564102,
+        "useful": 0.30128205128205127,
+        "liked": 0.6336633663366337,
+        "filled_count": 101
       },
       "sections": [],
       "units": 0.5,
@@ -176375,8 +176693,8 @@
       "rating": {
         "easy": 0.8954545454545455,
         "useful": 0.031818181818181815,
-        "liked": 0.032432432432432434,
-        "filled_count": 185
+        "liked": 0.031746031746031744,
+        "filled_count": 189
       },
       "sections": [
         {
@@ -176709,8 +177027,8 @@
       "rating": {
         "easy": 0.81,
         "useful": 0.41346153846153844,
-        "liked": 0.43137254901960786,
-        "filled_count": 51
+        "liked": 0.4339622641509434,
+        "filled_count": 53
       },
       "sections": [],
       "units": 0.5,
@@ -180875,8 +181193,8 @@
       "rating": {
         "easy": 0.73,
         "useful": 0.7095375722543352,
-        "liked": 0.6536964980544747,
-        "filled_count": 257
+        "liked": 0.6550387596899225,
+        "filled_count": 258
       },
       "sections": [
         {
@@ -180965,8 +181283,8 @@
       "rating": {
         "easy": 0.575,
         "useful": 0.55,
-        "liked": 0.5714285714285714,
-        "filled_count": 14
+        "liked": 0.5333333333333333,
+        "filled_count": 15
       },
       "sections": [
         {
@@ -181424,10 +181742,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.6041666666666666,
-        "useful": 0.4318181818181818,
-        "liked": 0.75,
-        "filled_count": 20
+        "easy": 0.6153846153846154,
+        "useful": 0.4791666666666667,
+        "liked": 0.7619047619047619,
+        "filled_count": 21
       },
       "sections": [
         {
@@ -182185,7 +182503,7 @@
       "sections": [
         {
           "id": 9099,
-          "enrollment_total": 0,
+          "enrollment_total": 1,
           "enrollment_capacity": 1
         }
       ]
@@ -185127,8 +185445,8 @@
       "rating": {
         "easy": 0.4298507462686567,
         "useful": 0.5585585585585585,
-        "liked": 0.3860294117647059,
-        "filled_count": 544
+        "liked": 0.38545454545454544,
+        "filled_count": 550
       },
       "sections": [
         {
@@ -185163,8 +185481,8 @@
       "rating": {
         "easy": 0.23128342245989306,
         "useful": 0.3024193548387097,
-        "liked": 0.2222222222222222,
-        "filled_count": 297
+        "liked": 0.22073578595317725,
+        "filled_count": 299
       },
       "sections": [],
       "units": 0.25,
@@ -185187,8 +185505,8 @@
       "rating": {
         "easy": 0.4785276073619632,
         "useful": 0.6381987577639752,
-        "liked": 0.5622489959839357,
-        "filled_count": 249
+        "liked": 0.56,
+        "filled_count": 250
       },
       "sections": [
         {
@@ -185231,8 +185549,8 @@
       "rating": {
         "easy": 0.26973684210526316,
         "useful": 0.20394736842105263,
-        "liked": 0.19337016574585636,
-        "filled_count": 181
+        "liked": 0.1978021978021978,
+        "filled_count": 182
       },
       "sections": [
         {
@@ -185347,10 +185665,10 @@
       "coreqs": "One of MATH104, MATH127, MATH137, MATH147.",
       "antireqs": "PHYS111, PHYS115, ECE105",
       "rating": {
-        "easy": 0.45265151515151514,
-        "useful": 0.7645348837209303,
-        "liked": 0.6378132118451025,
-        "filled_count": 439
+        "easy": 0.4528301886792453,
+        "useful": 0.7644787644787645,
+        "liked": 0.6386363636363637,
+        "filled_count": 440
       },
       "sections": [
         {
@@ -185413,8 +185731,8 @@
       "rating": {
         "easy": 0.4956140350877193,
         "useful": 0.3879310344827586,
-        "liked": 0.3203125,
-        "filled_count": 128
+        "liked": 0.32558139534883723,
+        "filled_count": 129
       },
       "sections": [],
       "units": 0.25,
@@ -185435,10 +185753,10 @@
       "coreqs": "One of MATH127, MATH137, MATH147.",
       "antireqs": "PHYS112, PHYS125",
       "rating": {
-        "easy": 0.4115384615384616,
-        "useful": 0.7272727272727273,
-        "liked": 0.5426008968609866,
-        "filled_count": 223
+        "easy": 0.4122137404580153,
+        "useful": 0.7293233082706767,
+        "liked": 0.5422222222222223,
+        "filled_count": 225
       },
       "sections": [
         {
@@ -185520,10 +185838,10 @@
       "coreqs": "PHYS122.",
       "antireqs": "PHYS112L or PHYS132L",
       "rating": {
-        "easy": 0.4435483870967742,
-        "useful": 0.45161290322580644,
-        "liked": 0.3953488372093023,
-        "filled_count": 86
+        "easy": 0.4296875,
+        "useful": 0.453125,
+        "liked": 0.38636363636363635,
+        "filled_count": 88
       },
       "sections": [
         {
@@ -185580,10 +185898,10 @@
       "coreqs": "One of PHYS112, PHYS122, PHYS125, ECE106",
       "antireqs": null,
       "rating": {
-        "easy": 0.2125,
-        "useful": 0.7623456790123456,
-        "liked": 0.7647058823529411,
-        "filled_count": 136
+        "easy": 0.2191358024691358,
+        "useful": 0.7652439024390244,
+        "liked": 0.7664233576642335,
+        "filled_count": 137
       },
       "sections": [
         {
@@ -185769,7 +186087,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 8970,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        }
+      ]
     },
     {
       "id": 5352,
@@ -185781,8 +186105,8 @@
       "rating": {
         "easy": 0.706140350877193,
         "useful": 0.8060344827586207,
-        "liked": 0.8725490196078431,
-        "filled_count": 102
+        "liked": 0.8737864077669902,
+        "filled_count": 103
       },
       "sections": [
         {
@@ -185853,8 +186177,8 @@
       "rating": {
         "easy": 0.5714285714285714,
         "useful": 0.5476190476190477,
-        "liked": 0.6938775510204082,
-        "filled_count": 49
+        "liked": 0.7,
+        "filled_count": 50
       },
       "sections": [
         {
@@ -186330,8 +186654,8 @@
       "rating": {
         "easy": 0.41233766233766234,
         "useful": 0.8125,
-        "liked": 0.7985074626865671,
-        "filled_count": 134
+        "liked": 0.8,
+        "filled_count": 135
       },
       "sections": [
         {
@@ -187405,8 +187729,8 @@
       "rating": {
         "easy": 0.31521739130434784,
         "useful": 0.7391304347826086,
-        "liked": 0.6756756756756757,
-        "filled_count": 37
+        "liked": 0.6842105263157895,
+        "filled_count": 38
       },
       "sections": [],
       "units": 0.5,
@@ -187901,8 +188225,8 @@
       "rating": {
         "easy": 0.3375,
         "useful": 0.9,
-        "liked": 0.75,
-        "filled_count": 32
+        "liked": 0.7272727272727273,
+        "filled_count": 33
       },
       "sections": [
         {
@@ -188806,7 +189130,7 @@
         "easy": 0.4375,
         "useful": 0.9375,
         "liked": 1,
-        "filled_count": 5
+        "filled_count": 6
       },
       "sections": [
         {
@@ -191549,13 +191873,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 8922,
-          "enrollment_total": 7,
-          "enrollment_capacity": 10
-        }
-      ]
+      "sections": []
     },
     {
       "id": 5511,
@@ -192011,7 +192329,7 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.65,
+        "easy": 0.8,
         "useful": 0.5,
         "liked": 0.16666666666666666,
         "filled_count": 6
@@ -192338,8 +192656,8 @@
       "rating": {
         "easy": 0.3467741935483871,
         "useful": 0.8225806451612904,
-        "liked": 0.4375,
-        "filled_count": 48
+        "liked": 0.42857142857142855,
+        "filled_count": 49
       },
       "sections": [],
       "units": 0.5,
@@ -195667,8 +195985,8 @@
       "rating": {
         "easy": 0.4772727272727273,
         "useful": 0.8636363636363636,
-        "liked": 0.8,
-        "filled_count": 15
+        "liked": 0.8125,
+        "filled_count": 16
       },
       "sections": [
         {
@@ -195774,8 +196092,8 @@
       "rating": {
         "easy": 0.5,
         "useful": 0.8181818181818181,
-        "liked": 0.9285714285714286,
-        "filled_count": 14
+        "liked": 0.9333333333333333,
+        "filled_count": 15
       },
       "sections": [
         {
@@ -195862,18 +196180,7 @@
         "liked": 0.782608695652174,
         "filled_count": 69
       },
-      "sections": [
-        {
-          "id": 5766,
-          "enrollment_total": 59,
-          "enrollment_capacity": 66
-        },
-        {
-          "id": 9095,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        }
-      ],
+      "sections": [],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -196045,8 +196352,8 @@
       "rating": {
         "easy": 0.4305555555555555,
         "useful": 0.9272727272727272,
-        "liked": 0.974025974025974,
-        "filled_count": 77
+        "liked": 0.9743589743589743,
+        "filled_count": 78
       },
       "sections": [
         {
@@ -196147,8 +196454,8 @@
       "rating": {
         "easy": 0.6477272727272727,
         "useful": 0.7840909090909091,
-        "liked": 0.8484848484848485,
-        "filled_count": 33
+        "liked": 0.8529411764705882,
+        "filled_count": 34
       },
       "sections": [
         {
@@ -196235,8 +196542,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.6458333333333334,
-        "liked": 0.8,
-        "filled_count": 15
+        "liked": 0.8125,
+        "filled_count": 16
       },
       "sections": [
         {
@@ -198018,13 +198325,7 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [
-        {
-          "id": 3787,
-          "enrollment_total": 45,
-          "enrollment_capacity": 60
-        }
-      ]
+      "sections": []
     },
     {
       "id": 7968,
@@ -198153,6 +198454,11 @@
         "filled_count": 79
       },
       "sections": [
+        {
+          "id": 9109,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
         {
           "id": 3337,
           "enrollment_total": 152,
@@ -198454,10 +198760,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.60625,
-        "useful": 0.27439024390243905,
-        "liked": 0.3448275862068966,
-        "filled_count": 58
+        "easy": 0.5975609756097561,
+        "useful": 0.2738095238095238,
+        "liked": 0.3389830508474576,
+        "filled_count": 59
       },
       "sections": [],
       "units": 0.5,
@@ -198754,7 +199060,13 @@
         "liked": 0.8125,
         "filled_count": 16
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9113,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -201343,8 +201655,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": [],
       "units": 0.5,
@@ -203184,10 +203496,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.6629383313180169,
-        "useful": 0.7267512077294686,
-        "liked": 0.7918939984411536,
-        "filled_count": 1283
+        "easy": 0.6627415458937198,
+        "useful": 0.7258745476477684,
+        "liked": 0.7911490683229814,
+        "filled_count": 1288
       },
       "sections": [],
       "units": 0.5,
@@ -203313,8 +203625,8 @@
       "rating": {
         "easy": 0.7137305699481865,
         "useful": 0.7063492063492064,
-        "liked": 0.7212543554006968,
-        "filled_count": 287
+        "liked": 0.7231833910034602,
+        "filled_count": 289
       },
       "sections": [
         {
@@ -203350,8 +203662,8 @@
       "rating": {
         "easy": 0.731203007518797,
         "useful": 0.8037037037037037,
-        "liked": 0.8284313725490197,
-        "filled_count": 204
+        "liked": 0.8292682926829268,
+        "filled_count": 205
       },
       "sections": [
         {
@@ -203844,8 +204156,8 @@
       "rating": {
         "easy": 0.7661290322580645,
         "useful": 0.8292682926829268,
-        "liked": 0.898989898989899,
-        "filled_count": 198
+        "liked": 0.8994974874371859,
+        "filled_count": 199
       },
       "sections": [
         {
@@ -204319,7 +204631,13 @@
         "liked": 0.4634146341463415,
         "filled_count": 82
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3161,
+          "enrollment_total": 209,
+          "enrollment_capacity": 210
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "arts280",
@@ -204595,10 +204913,10 @@
       "coreqs": null,
       "antireqs": null,
       "rating": {
-        "easy": 0.8676470588235294,
-        "useful": 0.6911764705882353,
-        "liked": 0.7307692307692307,
-        "filled_count": 26
+        "easy": 0.8194444444444444,
+        "useful": 0.6944444444444444,
+        "liked": 0.6785714285714286,
+        "filled_count": 28
       },
       "sections": [],
       "units": 0.5,
@@ -205372,7 +205690,7 @@
         "easy": 0.9375,
         "useful": 0.9375,
         "liked": 1,
-        "filled_count": 4
+        "filled_count": 5
       },
       "sections": [],
       "units": 0.5,
@@ -205587,8 +205905,8 @@
       "rating": {
         "easy": 0.85,
         "useful": 0.75,
-        "liked": 0.8421052631578947,
-        "filled_count": 19
+        "liked": 0.85,
+        "filled_count": 20
       },
       "sections": [],
       "units": 0.5,
@@ -210799,7 +211117,28 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3304,
+          "enrollment_total": 8,
+          "enrollment_capacity": 9
+        },
+        {
+          "id": 3305,
+          "enrollment_total": 3,
+          "enrollment_capacity": 9
+        },
+        {
+          "id": 3306,
+          "enrollment_total": 3,
+          "enrollment_capacity": 9
+        },
+        {
+          "id": 3307,
+          "enrollment_total": 2,
+          "enrollment_capacity": 9
+        }
+      ]
     },
     {
       "id": 6151,
@@ -213818,8 +214157,8 @@
       "rating": {
         "easy": 0.75,
         "useful": 0.75,
-        "liked": 0.5,
-        "filled_count": 4
+        "liked": 0.6,
+        "filled_count": 5
       },
       "sections": [
         {
@@ -223943,8 +224282,8 @@
       "rating": {
         "easy": 0.6983173076923077,
         "useful": 0.3191747572815534,
-        "liked": 0.6851851851851852,
-        "filled_count": 270
+        "liked": 0.6875,
+        "filled_count": 272
       },
       "sections": [
         {
@@ -224370,8 +224709,8 @@
       "rating": {
         "easy": 0.7701612903225806,
         "useful": 0.8225806451612904,
-        "liked": 0.7976190476190477,
-        "filled_count": 84
+        "liked": 0.8,
+        "filled_count": 85
       },
       "sections": [
         {
@@ -224768,8 +225107,8 @@
       "rating": {
         "easy": 0.875,
         "useful": 1,
-        "liked": 0.75,
-        "filled_count": 4
+        "liked": 0.8,
+        "filled_count": 5
       },
       "sections": [],
       "units": 0.5,
@@ -225930,8 +226269,8 @@
       "rating": {
         "easy": 0.971830985915493,
         "useful": 0.3819444444444445,
-        "liked": 0.6448598130841121,
-        "filled_count": 107
+        "liked": 0.6422018348623854,
+        "filled_count": 109
       },
       "sections": [
         {
@@ -226064,8 +226403,8 @@
       "rating": {
         "easy": 0.9354838709677419,
         "useful": 0.2265625,
-        "liked": 0.5135135135135135,
-        "filled_count": 37
+        "liked": 0.5263157894736842,
+        "filled_count": 38
       },
       "sections": [
         {
@@ -226112,10 +226451,21 @@
       "rating": {
         "easy": 0.2565217391304348,
         "useful": 0.9508547008547008,
-        "liked": 0.8807947019867549,
-        "filled_count": 151
+        "liked": 0.881578947368421,
+        "filled_count": 152
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 9123,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 7408,
+          "enrollment_total": 107,
+          "enrollment_capacity": 135
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "cs350",
@@ -226453,14 +226803,19 @@
       "rating": {
         "easy": 0.8530927835051546,
         "useful": 0.4505208333333333,
-        "liked": 0.352,
-        "filled_count": 125
+        "liked": 0.35714285714285715,
+        "filled_count": 126
       },
       "sections": [
         {
           "id": 7403,
           "enrollment_total": 113,
           "enrollment_capacity": 135
+        },
+        {
+          "id": 9124,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -226632,7 +226987,7 @@
         "easy": null,
         "useful": null,
         "liked": 1,
-        "filled_count": 8
+        "filled_count": 11
       },
       "sections": []
     },
@@ -226661,8 +227016,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": []
     },
@@ -226676,8 +227031,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": 0.8,
-        "filled_count": 5
+        "liked": 0.8571428571428571,
+        "filled_count": 7
       },
       "sections": []
     },
@@ -226721,7 +227076,7 @@
       "rating": {
         "easy": 0.8333333333333334,
         "useful": 0.5833333333333334,
-        "liked": 1,
+        "liked": 0.9166666666666666,
         "filled_count": 12
       },
       "sections": [],
@@ -226826,8 +227181,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "liked": 0,
+        "filled_count": 1
       },
       "sections": [],
       "units": 0.5,
@@ -226910,7 +227265,7 @@
         "easy": null,
         "useful": null,
         "liked": 1,
-        "filled_count": 1
+        "filled_count": 2
       },
       "sections": [],
       "units": 0.5,
@@ -227336,8 +227691,8 @@
       "rating": {
         "easy": null,
         "useful": null,
-        "liked": null,
-        "filled_count": 0
+        "liked": 1,
+        "filled_count": 1
       },
       "sections": [
         {
@@ -227424,8 +227779,8 @@
       "rating": {
         "easy": 0.5833333333333334,
         "useful": 0.8055555555555556,
-        "liked": 0.8,
-        "filled_count": 10
+        "liked": 0.8181818181818182,
+        "filled_count": 11
       },
       "sections": [
         {
@@ -236647,8 +237002,8 @@
       "rating": {
         "easy": 0.7371194379391101,
         "useful": 0.6589861751152074,
-        "liked": 0.7197452229299363,
-        "filled_count": 628
+        "liked": 0.7201907790143084,
+        "filled_count": 629
       },
       "sections": []
     },
@@ -239593,8 +239948,8 @@
       "rating": {
         "easy": 0.7554945054945055,
         "useful": 0.7349726775956285,
-        "liked": 0.6283524904214559,
-        "filled_count": 261
+        "liked": 0.6297709923664122,
+        "filled_count": 262
       },
       "sections": [
         {
@@ -239832,8 +240187,8 @@
       "rating": {
         "easy": 0.5739549839228296,
         "useful": 0.8063099041533546,
-        "liked": 0.5888223552894212,
-        "filled_count": 1002
+        "liked": 0.5880597014925373,
+        "filled_count": 1005
       },
       "sections": [
         {
@@ -239947,8 +240302,8 @@
       "rating": {
         "easy": 0.4924812030075188,
         "useful": 0.6271028037383177,
-        "liked": 0.39382716049382716,
-        "filled_count": 810
+        "liked": 0.3923739237392374,
+        "filled_count": 813
       },
       "sections": [
         {
@@ -240088,8 +240443,8 @@
       "rating": {
         "easy": 0.515625,
         "useful": 0.8072916666666666,
-        "liked": 0.7761194029850746,
-        "filled_count": 67
+        "liked": 0.7647058823529411,
+        "filled_count": 68
       },
       "sections": [],
       "units": 0.5,
@@ -240478,8 +240833,8 @@
       "rating": {
         "easy": 0.5841121495327103,
         "useful": 0.8440366972477065,
-        "liked": 0.7294117647058823,
-        "filled_count": 170
+        "liked": 0.7309941520467836,
+        "filled_count": 171
       },
       "sections": [
         {
@@ -240554,11 +240909,6 @@
       },
       "sections": [
         {
-          "id": 9077,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 6286,
           "enrollment_total": 38,
           "enrollment_capacity": 123
@@ -240567,6 +240917,11 @@
           "id": 6134,
           "enrollment_total": 79,
           "enrollment_capacity": 125
+        },
+        {
+          "id": 9077,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -240852,8 +241207,8 @@
       "rating": {
         "easy": 0.59,
         "useful": 0.76,
-        "liked": 0.6692307692307692,
-        "filled_count": 130
+        "liked": 0.6666666666666666,
+        "filled_count": 132
       },
       "sections": [
         {
@@ -244863,8 +245218,8 @@
       "rating": {
         "easy": 0.3125,
         "useful": 0.8839285714285714,
-        "liked": 0.8155339805825242,
-        "filled_count": 103
+        "liked": 0.8076923076923077,
+        "filled_count": 104
       },
       "sections": [
         {
@@ -244899,8 +245254,8 @@
       "rating": {
         "easy": 0.41037735849056606,
         "useful": 0.7681818181818182,
-        "liked": 0.46,
-        "filled_count": 100
+        "liked": 0.45544554455445546,
+        "filled_count": 101
       },
       "sections": [
         {
@@ -245141,8 +245496,8 @@
       "rating": {
         "easy": 0.29736842105263156,
         "useful": 0.7313829787234043,
-        "liked": 0.3933333333333333,
-        "filled_count": 150
+        "liked": 0.3973509933774834,
+        "filled_count": 151
       },
       "sections": [
         {
@@ -245494,8 +245849,8 @@
       "rating": {
         "easy": 0.275,
         "useful": 0.7626582278481012,
-        "liked": 0.5689655172413793,
-        "filled_count": 116
+        "liked": 0.5726495726495726,
+        "filled_count": 117
       },
       "sections": [],
       "units": 0.5,
@@ -246466,10 +246821,10 @@
       "coreqs": null,
       "antireqs": "BME361",
       "rating": {
-        "easy": 0.7222222222222222,
-        "useful": 0.7037037037037037,
-        "liked": 0.775,
-        "filled_count": 40
+        "easy": 0.7232142857142857,
+        "useful": 0.6785714285714286,
+        "liked": 0.7560975609756098,
+        "filled_count": 41
       },
       "sections": [],
       "units": 0.5,
@@ -253784,8 +254139,8 @@
       "rating": {
         "easy": 0.532608695652174,
         "useful": 0.052083333333333336,
-        "liked": 0.04918032786885246,
-        "filled_count": 61
+        "liked": 0.04838709677419355,
+        "filled_count": 62
       },
       "sections": [
         {
@@ -253887,8 +254242,8 @@
       "rating": {
         "easy": 0.3146067415730337,
         "useful": 0.14106145251396648,
-        "liked": 0.046762589928057555,
-        "filled_count": 278
+        "liked": 0.04659498207885305,
+        "filled_count": 279
       },
       "sections": [
         {
@@ -254057,8 +254412,8 @@
       "rating": {
         "easy": 0.30092592592592593,
         "useful": 0.0787037037037037,
-        "liked": 0.011299435028248588,
-        "filled_count": 177
+        "liked": 0.011235955056179775,
+        "filled_count": 178
       },
       "sections": [
         {
