@@ -29,10 +29,9 @@ export function logError(
   if (detail === undefined) console.error(message);
   else console.error(message, detail);
 
-  // Never send the raw detail: it may be a PostgrestError (schema internals) or
-  // carry user data. Group under the safe caller message unless detail is
-  // already a bare Error.
-  const error = detail instanceof Error ? detail : new Error(message);
+  // Never send the raw detail: even an Error can carry user data or schema
+  // internals (a PostgrestError). Always group under the safe caller message.
+  const error = new Error(message);
 
   const context: { tags?: Record<string, string> } = {};
   if (telemetry) {
@@ -53,6 +52,18 @@ export function logError(
 
 export function logWarn(message: string, ...detail: unknown[]): void {
   console.warn(message, ...detail);
+}
+
+/** Report a render-boundary crash to Sentry. Unlike {@link logError}, this
+ *  forwards the real Error (with stack) — `sanitizeSentryEvent` still scrubs
+ *  PII — because a boundary catch is the one place the raw exception is the
+ *  signal we need. No-op when the DSN is unset; a failed load never surfaces. */
+export function reportBoundaryError(error: Error): void {
+  void import("@sentry/nextjs")
+    .then((Sentry) => {
+      Sentry.captureException(error);
+    })
+    .catch(() => {});
 }
 
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;

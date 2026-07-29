@@ -68,7 +68,7 @@ export async function plansContainingCourse(
 ): Promise<ActionResult<string[]>> {
   return withUser(async ({ client }) => {
     const code = courseCode.trim().toLowerCase();
-    if (!code) return { ok: true, data: [] };
+    if (!code || code.length > 32) return { ok: true, data: [] };
 
     const { data, error } = await client
       .from("plan_courses")

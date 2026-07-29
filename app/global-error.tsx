@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { THEME_INIT_SCRIPT } from "@/lib/constants";
+import { reportBoundaryError } from "@/lib/log";
 import { hanken, jetbrainsMono } from "./fonts";
 import "./globals.css";
 
@@ -14,6 +16,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  useEffect(() => {
+    if (!error.digest) reportBoundaryError(error);
+  }, [error]);
+
   return (
     <html
       lang="en"

@@ -9,7 +9,14 @@ describe("robots", () => {
     const rules = r.rules as { allow: string; disallow: string[] };
     expect(rules.allow).toBe("/");
     expect(rules.disallow).toEqual(
-      expect.arrayContaining(["/p/", "/api/", "/settings", "/auth/"]),
+      expect.arrayContaining([
+        "/p/",
+        "/api/",
+        "/plan",
+        "/plans",
+        "/settings",
+        "/auth/",
+      ]),
     );
   });
 });

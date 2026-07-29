@@ -24,7 +24,8 @@ export default defineConfig({
   webServer: {
     command: prod ? "pnpm build && pnpm start" : "pnpm dev",
     url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    // Prod runs must hit the freshly built server, never a reused dev server.
+    reuseExistingServer: !process.env.CI && !prod,
     timeout: prod ? 240_000 : 120_000,
   },
 });

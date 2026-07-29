@@ -32,8 +32,11 @@ export interface UseAnonHandoffArgs {
 export interface UseAnonHandoffResult {
   /** Non-null when the user must choose how to resolve a multi-plan handoff. */
   conflict: { localPlan: LocalPlan } | null;
-  /** Caller invokes this from the HandoffModal's three buttons. */
-  resolveConflict: (choice: HandoffResolution) => Promise<void>;
+  /**
+   * Caller invokes this from the HandoffModal's three buttons. Resolves to
+   * false when an import fails, so the modal can stay open with a retry message.
+   */
+  resolveConflict: (choice: HandoffResolution) => Promise<boolean>;
 }
 
 /**
@@ -125,22 +128,22 @@ export function useAnonHandoff({
   }, [isAuthed, runHandoff]);
 
   const resolveConflict = useCallback(
-    async (choice: HandoffResolution): Promise<void> => {
+    async (choice: HandoffResolution): Promise<boolean> => {
       const current = conflict;
-      if (!current) return;
+      if (!current) return true;
 
       if (choice === "cancel") {
         setConflict(null);
         // Intentionally no sessionStorage flag: the prompt should return on
         // the next sign-in.
-        return;
+        return true;
       }
 
       if (choice === "discard") {
         clearPlan();
         markHandoffDone();
         setConflict(null);
-        return;
+        return true;
       }
 
       // choice === "import"
@@ -149,13 +152,14 @@ export function useAnonHandoff({
         toSnapshot(current.localPlan),
       );
       if (newId === null) {
-        // Leave conflict open so the user can retry.
-        return;
+        // Leave conflict open so the modal can show a retry message.
+        return false;
       }
       clearPlan();
       markHandoffDone();
       setConflict(null);
       onImportedRef.current(newId);
+      return true;
     },
     [conflict],
   );

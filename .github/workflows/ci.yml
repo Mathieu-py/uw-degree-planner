@@ -40,7 +40,8 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      # Cap workers: the default count over-parallelizes and flakes the suite.
+      - run: pnpm exec vitest run --maxWorkers=2
 
   build:
     runs-on: ubuntu-latest

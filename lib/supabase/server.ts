@@ -18,6 +18,8 @@ export async function createSupabaseServerClient() {
   const { url, anonKey } = supabasePublicEnv();
 
   return createServerClient(url, anonKey, {
+    // @supabase/ssr's cookie defaults omit Secure; require it over HTTPS in prod.
+    cookieOptions: { secure: process.env.NODE_ENV === "production" },
     cookies: {
       getAll() {
         return cookieStore.getAll();

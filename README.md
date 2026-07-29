@@ -34,7 +34,11 @@ pnpm scrape-programs   # refresh data/programs.json from the UW calendar
 
 - `/` — landing page
 - `/plan` — main planner (timeline, slot picker, audit panel, transcript import)
+- `/catalog` — filterable course catalog
 - `/course/[code]` — individual course detail
+- `/p/[shareToken]` — read-only shared plan (link-only, noindex)
+- `/settings` — account and plan management
+- `/legal` — disclaimer, privacy, and data sources
 
 ## How it works
 
@@ -48,7 +52,7 @@ The planner UI lives in [components/planner/](components/planner/), rooted at `P
 
 ## Data sources
 
-The `data/` snapshots refresh on three cadences, each with its own GitHub Actions workflow (all commit any diff straight to `main`):
+The `data/` snapshots refresh on three cadences, each with its own GitHub Actions workflow (each opens a guarded, auto-merging bot PR against `main` — never a direct push; `guard-snapshot` blocks the PR on anomalous diffs):
 
 | Data | Script | Workflow | Cadence | Why |
 | --- | --- | --- | --- | --- |

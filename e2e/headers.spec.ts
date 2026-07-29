@@ -34,7 +34,7 @@ for (const route of ["/", "/legal"]) {
       expect(csp).toContain("upgrade-insecure-requests");
       expect(csp).not.toContain("'unsafe-eval'");
       expect(headers["strict-transport-security"]).toBe(
-        "max-age=63072000; includeSubDomains",
+        "max-age=63072000; includeSubDomains; preload",
       );
     }
   });
@@ -49,7 +49,13 @@ test("CSP connect-src includes the Sentry origin when a DSN is set", async ({
   test.skip(!dsn, "no Sentry DSN configured");
   const response = await page.goto("/");
   const csp = response?.headers()["content-security-policy"] ?? "";
-  expect(csp).toContain("connect-src");
+  // Assert the origin lands in connect-src specifically, not merely somewhere
+  // in the policy (it must not pass via img-src/default-src).
+  const connectSrc = csp
+    .split(";")
+    .map((directive) => directive.trim())
+    .find((directive) => directive.startsWith("connect-src"));
+  expect(connectSrc).toBeDefined();
   // biome-ignore lint/style/noNonNullAssertion: guarded by test.skip above.
-  expect(csp).toContain(new URL(dsn!).origin);
+  expect(connectSrc).toContain(new URL(dsn!).origin);
 });

@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { ErrorScreen } from "@/components/states/ErrorScreen";
+import { reportBoundaryError } from "@/lib/log";
 
 export default function RootErrorBoundary({
   error,
@@ -9,6 +11,10 @@ export default function RootErrorBoundary({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  useEffect(() => {
+    if (!error.digest) reportBoundaryError(error);
+  }, [error]);
+
   return (
     <ErrorScreen
       kind="500"

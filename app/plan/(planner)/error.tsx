@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { ErrorScreen } from "@/components/states/ErrorScreen";
+import { reportBoundaryError } from "@/lib/log";
 
 // Scoped to the (planner) group so the "plan is saved" reassurance only shows
 // where it's true; /plan/new and other segments fall through to the root
@@ -12,6 +14,10 @@ export default function PlannerErrorBoundary({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  useEffect(() => {
+    if (!error.digest) reportBoundaryError(error);
+  }, [error]);
+
   return (
     <ErrorScreen
       kind="500"
