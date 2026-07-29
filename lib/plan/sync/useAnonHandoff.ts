@@ -147,12 +147,12 @@ export function useAnonHandoff({
       }
 
       // choice === "import"
-      const newId = await createRef.current(
-        IMPORTED_PLAN_NAME,
-        toSnapshot(current.localPlan),
-      );
+      const newId = await createRef
+        .current(IMPORTED_PLAN_NAME, toSnapshot(current.localPlan))
+        // A transport-level rejection normalizes to the null path: both leave
+        // the conflict open so the modal can show a retry message.
+        .catch(() => null);
       if (newId === null) {
-        // Leave conflict open so the modal can show a retry message.
         return false;
       }
       clearPlan();

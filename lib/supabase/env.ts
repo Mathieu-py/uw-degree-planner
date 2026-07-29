@@ -11,11 +11,18 @@ export function supabasePublicEnv(): { url: string; anonKey: string } {
       "Supabase env vars missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local (run `pnpm exec supabase status` for local-dev values).",
     );
   }
-  // Fail loudly on a malformed URL here, not later as a broken CSP + confusing
-  // fetch error (the value is baked into next.config's connect-src).
-  if (!URL.canParse(url)) {
+  // Inlined verbatim into next.config's connect-src, so it must be a bare
+  // http(s) origin — a path, query, fragment, credentials, or non-http scheme
+  // would silently corrupt the CSP. Never echo the raw value on failure (it
+  // lands in build logs and error screens).
+  const parsed = URL.canParse(url) ? new URL(url) : null;
+  if (
+    !parsed ||
+    (parsed.protocol !== "https:" && parsed.protocol !== "http:") ||
+    `${parsed.origin}/` !== parsed.href
+  ) {
     throw new Error(
-      `NEXT_PUBLIC_SUPABASE_URL is not a valid URL: ${JSON.stringify(url)}`,
+      "NEXT_PUBLIC_SUPABASE_URL must be a bare http(s) origin (no path, query, credentials, or fragment).",
     );
   }
   return { url, anonKey };
