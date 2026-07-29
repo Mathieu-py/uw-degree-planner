@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal, ModalHeader } from "@/components/ui/Modal";
@@ -12,7 +13,7 @@ import { termLabel } from "@/lib/terms";
 
 interface Props {
   localPlan: LocalPlan;
-  onResolve: (choice: HandoffResolution) => Promise<void>;
+  onResolve: (choice: HandoffResolution) => Promise<boolean>;
 }
 
 /**
@@ -27,22 +28,29 @@ interface Props {
  */
 export function HandoffModal({ localPlan, onResolve }: Props) {
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { isClosing, handleClose, animateOut, reset } = useModalExit(
     () => void onResolve("cancel"),
   );
 
   // Import/discard pair the async action with the exit animation via Promise.all
-  // (fade-out runs while createPlanWithSeed is in flight). On failure, reset()
-  // restores visibility so the user can retry.
+  // (fade-out runs while createPlanWithSeed is in flight). A failed import keeps
+  // the modal up with an inline message; success lets the parent unmount it.
   const pick = useCallback(
     async (choice: HandoffResolution) => {
       if (busy) return;
       setBusy(true);
+      setError(null);
+      let resolved = false;
       try {
-        await Promise.all([onResolve(choice), animateOut()]);
+        const [ok] = await Promise.all([onResolve(choice), animateOut()]);
+        resolved = ok;
       } finally {
         setBusy(false);
-        reset();
+        if (!resolved) {
+          setError("Couldn't import your plan. Please try again.");
+          reset();
+        }
       }
     },
     [busy, onResolve, animateOut, reset],
@@ -73,6 +81,11 @@ export function HandoffModal({ localPlan, onResolve }: Props) {
             <span className="u-small truncate">{summarize(localPlan)}</span>
           </div>
         </div>
+        {error ? (
+          <Alert size="sm" aria-live="assertive">
+            {error}
+          </Alert>
+        ) : null}
         <div className="flex flex-col gap-2 mt-0.5">
           <Button block disabled={disabled} onClick={() => pick("import")}>
             Import as another plan

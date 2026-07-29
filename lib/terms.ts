@@ -100,7 +100,7 @@ export const KNOWN_TERMS: TermInfo[] = (() => {
 })();
 
 /** Term the browse/course routes are pinned to until a term picker exists. */
-export const PINNED_TERM: TermId = 1261;
+export const PINNED_TERM: TermId = 1269;
 
 /**
  * Parse a transcript-parser label ("Fall 2023", "Winter 2024") back into a

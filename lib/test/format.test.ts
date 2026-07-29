@@ -57,15 +57,12 @@ describe("truncate", () => {
 });
 
 describe("describeActionError", () => {
-  it("maps plan and account codes to their copy", () => {
+  it("maps plan codes to their copy", () => {
     expect(describeActionError("not_found_or_unauthorized")).toBe(
       "That plan is no longer available.",
     );
-    expect(describeActionError("username_taken")).toBe(
-      "That username is already taken.",
-    );
   });
-  it("keeps bare not_found generic (domain-ambiguous: plans AND profiles)", () => {
+  it("keeps bare not_found generic", () => {
     expect(describeActionError("not_found")).toBe(
       "Something went wrong. Try again.",
     );

@@ -3,7 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Stub the server-only actions so the hook loads under jsdom and we control the reject.
-vi.mock("@/lib/onboarding/server/actions", () => ({
+vi.mock("@/lib/plan/server/actions", () => ({
   fetchVariantGroups: vi.fn(async () => []),
   placeVariantSelections: vi.fn(),
 }));
@@ -13,7 +13,7 @@ import { logError } from "@/lib/log";
 import {
   fetchVariantGroups,
   placeVariantSelections,
-} from "@/lib/onboarding/server/actions";
+} from "@/lib/plan/server/actions";
 import { type LocalPlan, PLAN_SCHEMA_VERSION } from "@/lib/plan/types";
 import { useVariantPicker } from "../useVariantPicker";
 

@@ -1,0 +1,69 @@
+name: Refresh seating
+
+# Weekly (of the three data cadences: programs yearly, courses per-term, seating
+# weekly). Seats-only — re-fetches Open Data section enrollment for the pinned
+# term and patches just `sections` into the committed snapshot. Seat counts
+# drift week to week; ratings/prose/requisites only change on the order of a
+# term and are handled by refresh-courses.yml.
+#
+# Opens an auto-merging bot PR (never pushes to main). The data-quality guard
+# runs first; if it fails, no PR is opened. For CI to run on the PR and
+# auto-merge to fire, set a REFRESH_PR_TOKEN secret (a PAT/App token) — a PR
+# opened with the built-in GITHUB_TOKEN does not trigger other workflows.
+
+on:
+  schedule:
+    # 07:00 UTC ≈ 03:00 ET on Sundays — off-peak for UW Open Data.
+    - cron: "0 7 * * 0"
+  workflow_dispatch:
+
+# All three snapshot-writing refreshes open PRs against main, so overlapping
+# runs would race the branch. Shared group serializes them repo-wide; don't
+# cancel an in-progress run.
+concurrency:
+  group: data-snapshot-writes
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # persist-credentials:false keeps any token out of .git/config; the PR
+      # action authenticates on its own.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Seats-only requires UW_OPENDATA_KEY (there's nothing else to refresh).
+      # Add it as a repo secret: Settings → Secrets and variables → Actions.
+      - run: pnpm refresh-seats
+        env:
+          UW_OPENDATA_KEY: ${{ secrets.UW_OPENDATA_KEY }}
+      # Gate: schema, file allowlist, course/seating drop thresholds. Fails the
+      # job (no PR) on an anomalous snapshot.
+      - run: pnpm guard-snapshot
+      - name: Open auto-merging PR for the seating snapshot
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.REFRESH_PR_TOKEN || github.token }}
+          add-paths: data/*.json
+          branch: bot/refresh-seating
+          delete-branch: true
+          commit-message: "chore(data): refresh seating snapshot"
+          title: "chore(data): refresh seating snapshot"
+          body: Automated weekly seating refresh. Data-quality guard passed; CI must be green to merge.
+          labels: data-refresh
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.REFRESH_PR_TOKEN || github.token }}
+        run: gh pr merge --squash --auto "${{ steps.cpr.outputs.pull-request-number }}"

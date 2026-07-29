@@ -5,7 +5,7 @@ import {
   OMITTED_SUBJECTS,
   SUBJECT_FACULTY,
   subjectsForFaculties,
-} from "../scrape/data/subjectFaculty";
+} from "../scrape/util/subjectFaculty";
 
 // The six real UW faculties a "Faculty of X" pool can name. Interdisciplinary /
 // affiliated owners (SE, PD, STV, BUS, …) are intentionally NOT faculties here.

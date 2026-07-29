@@ -49,7 +49,13 @@ interface DbErrorLike {
  *  (verbatim `error.message` would leak schema internals). The fallback —
  *  action-specific codes are matched before reaching here. */
 export function mapDbError(error: DbErrorLike, context: string): string {
-  logError(`[db] ${context}`, error);
+  // Raw error (message may leak schema internals) goes to the console only;
+  // Sentry gets the operation + SQLSTATE, nothing else.
+  logError(`[db] ${context}`, error, {
+    op: context,
+    category: "db",
+    code: error.code,
+  });
 
   switch (error.code) {
     case "23505": // unique_violation

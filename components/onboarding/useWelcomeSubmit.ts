@@ -108,7 +108,10 @@ export function useWelcomeSubmit({
         setBusy(false);
       }
     } catch (err) {
-      logError("Failed to build/save plan:", err);
+      logError("Failed to build/save plan:", err, {
+        op: "plan.buildSave",
+        category: "client",
+      });
       setBuildError("Couldn't build your plan. Please try again.");
       setBusy(false);
     }

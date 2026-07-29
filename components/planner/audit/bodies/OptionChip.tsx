@@ -2,7 +2,7 @@ import { Icon } from "@/components/ui/Icon";
 import type { Course } from "@/lib/courses/types";
 import { formatCourseCode } from "@/lib/format";
 import { courseDragProps } from "@/lib/plan/dnd";
-import { MetChip, WarnChip } from "../cards/Chip";
+import { MetChip, WarnChip } from "../cards";
 import type { DragWiring, DrillFn } from "../types";
 
 /**

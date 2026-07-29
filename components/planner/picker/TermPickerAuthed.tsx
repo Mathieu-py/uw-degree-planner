@@ -116,9 +116,15 @@ export function TermPickerAuthed({
   // One RLS-scoped read, keyed on the course, so it runs once per picker open.
   useEffect(() => {
     let live = true;
-    void plansContainingCourse(code).then((res: ActionResult<string[]>) => {
-      if (live) setContaining(res.ok ? new Set(res.data) : new Set());
-    });
+    void plansContainingCourse(code)
+      .then((res: ActionResult<string[]>) => {
+        if (live) setContaining(res.ok ? new Set(res.data) : new Set());
+      })
+      // A transport-level rejection would otherwise leave the step stuck on
+      // "Loading your plans…"; fall back to none, like an ok:false result.
+      .catch(() => {
+        if (live) setContaining(new Set());
+      });
     return () => {
       live = false;
     };

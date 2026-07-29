@@ -23,7 +23,7 @@ function courses(node: PrereqNode | null): string[] {
  * into an unparseable RAW blob.
  */
 describe("prereq parser — real UW prose (grade qualifiers before the code)", () => {
-  // Verbatim from the data snapshot (data/courses.1261.json), CS 136 prereqs.
+  // Verbatim from the data snapshot (data/courses.1269.json), CS 136 prereqs.
   // The grade thresholds aren't verifiable (the app tracks no grades), so —
   // matching the grade-AFTER-code convention — they're dropped and the
   // requirement reduces to "one of {CS115, CS116, CS135, CS145}".

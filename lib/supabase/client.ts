@@ -10,5 +10,8 @@ import { supabasePublicEnv } from "./env";
  */
 export function createSupabaseBrowserClient() {
   const { url, anonKey } = supabasePublicEnv();
-  return createBrowserClient(url, anonKey);
+  return createBrowserClient(url, anonKey, {
+    // Secure flag in prod — @supabase/ssr defaults omit it.
+    cookieOptions: { secure: process.env.NODE_ENV === "production" },
+  });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { SaveStatus } from "@/lib/plan/sync/types";
+import type { SaveStatus } from "@/lib/plan/sync/serverPlan";
 
 interface Props {
   status: SaveStatus;

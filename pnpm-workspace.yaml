@@ -1,3 +1,8 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Version-locked to the installed `next` release, so the release-age gate only
+# blocks re-resolution right after a Next bump.
+minimumReleaseAgeExclude:
+  - "@next/swc-*"

@@ -1,5 +1,5 @@
 /**
- * Advisory drift check for scripts/scrape/data/subjectFaculty.ts.
+ * Advisory drift check for scripts/scrape/util/subjectFaculty.ts.
  *
  * That subject → Faculty map is hand-transcribed from UW's "Course Subjects
  * Offered" table, so it silently goes stale when UW adds a subject: a
@@ -19,12 +19,12 @@
  * Run: pnpm check-subjects
  */
 import { appendFileSync } from "node:fs";
+import { loadCatalogCodes } from "../scrape/util/catalog";
+import { isDirectInvocation } from "../scrape/util/entry";
 import {
   OMITTED_SUBJECTS,
   SUBJECT_FACULTY,
-} from "../scrape/data/subjectFaculty";
-import { loadCatalogCodes } from "../scrape/util/catalog";
-import { isDirectInvocation } from "../scrape/util/entry";
+} from "../scrape/util/subjectFaculty";
 
 /** Subject prefixes present in `prefixes` but absent from `known`, sorted. */
 export function findUnclassified(

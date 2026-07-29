@@ -1,0 +1,74 @@
+name: Refresh courses
+
+# Per-term (of the three data cadences: programs yearly, courses per-term,
+# seating weekly). Full rebuild — UWFlow ratings/prose + Kuali units/requisites
+# + Open Data seating — for the pinned term. Ratings and requisites change on
+# the order of a term (UW's three terms are ~4 months each), so this runs every
+# four months. Bumping to a new term is a separate deliberate code change
+# (PINNED_TERM in lib/terms.ts); this refreshes whatever term is pinned.
+#
+# Opens an auto-merging bot PR (never pushes to main). The data-quality guard
+# runs first; if it fails, no PR is opened. For CI to run on the PR and
+# auto-merge to fire, set a REFRESH_PR_TOKEN secret (a PAT/App token) — a PR
+# opened with the built-in GITHUB_TOKEN does not trigger other workflows.
+
+on:
+  schedule:
+    # 07:00 UTC on the 1st of Jan / May / Sep — near each term boundary.
+    - cron: "0 7 1 1,5,9 *"
+  workflow_dispatch:
+
+# All three snapshot-writing refreshes open PRs against main, so overlapping
+# runs would race the branch. Shared group serializes them repo-wide; don't
+# cancel an in-progress run.
+concurrency:
+  group: data-snapshot-writes
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # persist-credentials:false keeps any token out of .git/config; the PR
+      # action authenticates on its own.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # UW_OPENDATA_KEY (repo secret) supplies seating; without it the rebuild
+      # degrades to keeping last-known seating rather than failing.
+      - run: pnpm fetch-courses
+        env:
+          UW_OPENDATA_KEY: ${{ secrets.UW_OPENDATA_KEY }}
+      # Advisory: flag catalog subjects the SUBJECT_FACULTY map doesn't classify
+      # (a new subject can arrive with a full rebuild). Exits 0 and writes to the
+      # job summary — a new subject must not fail the refresh.
+      - run: pnpm check-subjects
+      # Gate: schema, file allowlist, course/seating drop thresholds. Fails the
+      # job (no PR) on an anomalous snapshot.
+      - run: pnpm guard-snapshot
+      - name: Open auto-merging PR for the course snapshot
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.REFRESH_PR_TOKEN || github.token }}
+          add-paths: data/*.json
+          branch: bot/refresh-courses
+          delete-branch: true
+          commit-message: "chore(data): refresh course snapshot"
+          title: "chore(data): refresh course snapshot"
+          body: Automated per-term course refresh. Data-quality guard passed; CI must be green to merge.
+          labels: data-refresh
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.REFRESH_PR_TOKEN || github.token }}
+        run: gh pr merge --squash --auto "${{ steps.cpr.outputs.pull-request-number }}"

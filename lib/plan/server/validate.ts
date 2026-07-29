@@ -13,6 +13,8 @@ import type { PlanSnapshot } from "./types";
 // returns a stable app-level error instead of letting a bad value fall through
 // to a raw Postgres cast/constraint failure. All sit well above any real plan.
 export const MAX_PROGRAM_IDS = 8;
+/** Mirrored by the plans_name_len DB CHECK (migrations/0007). */
+export const MAX_PLAN_NAME_LEN = 120;
 const MAX_SPECIALIZATIONS = 16;
 /** Slugs/ids (program id, specialization key + value). */
 export const MAX_ID_LEN = 128;

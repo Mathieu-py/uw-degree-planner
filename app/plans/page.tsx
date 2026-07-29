@@ -1,4 +1,4 @@
-import { DashboardView } from "@/components/dashboard/DashboardView";
+import { DashboardView } from "@/components/DashboardView";
 import { DashboardSkeleton } from "@/components/states/PageSkeleton";
 import { AuthGate } from "@/lib/auth/store";
 import { programNameMap } from "@/lib/programs/registry";

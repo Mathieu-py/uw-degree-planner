@@ -3,6 +3,23 @@ export function formatPercent(value: number | null | undefined): string {
   return `${Math.round(value * 100)}%`;
 }
 
+// Percentage cutoffs for the rating-dot buckets: ≥70% reads as "good" (green),
+// ≥50% as "mixed" (amber), below as "poor" (red).
+const GOOD_PCT = 70;
+const MIXED_PCT = 50;
+
+// Shared bucketing for the small rating dots shown in the catalog and on the
+// course detail page. `value` is a 0–1 ratio (or null/undefined when missing).
+export function getRatingColor(
+  value: number | null | undefined,
+): "bg-missing" | "bg-met" | "bg-partial" | "bg-danger" {
+  if (value == null) return "bg-missing";
+  const pct = Math.round(value * 100);
+  if (pct >= GOOD_PCT) return "bg-met";
+  if (pct >= MIXED_PCT) return "bg-partial";
+  return "bg-danger";
+}
+
 export function formatCourseCode(code: string): string {
   const m = code.toUpperCase().match(/^([A-Z]+)(\d+[A-Z]*)$/);
   return m ? `${m[1]} ${m[2]}` : code.toUpperCase();
@@ -87,25 +104,19 @@ export function truncate(text: string | null | undefined, max = 140): string {
   return `${text.slice(0, max).trimEnd()}…`;
 }
 
-/** Humanize the error codes server actions return (plan + account). */
+/** Humanize the error codes server actions return. */
 export function describeActionError(code: string): string {
   switch (code) {
     case "not_authenticated":
       return "Your session expired — please sign in again.";
     case "snapshot_too_large":
       return "This plan is too large to save.";
-    // Plan-only code; bare "not_found" stays generic — updateProfile also
-    // returns it (missing profile row), where plan copy would be nonsense.
     case "not_found_or_unauthorized":
       return "That plan is no longer available.";
     case "name_required":
       return "Enter a name.";
-    case "username_required":
-      return "Enter a username.";
-    case "username_invalid":
-      return "3–20 characters, letters, numbers, and underscores only.";
-    case "username_taken":
-      return "That username is already taken.";
+    case "name_too_long":
+      return "Plan names are limited to 120 characters.";
     default:
       return "Something went wrong. Try again.";
   }

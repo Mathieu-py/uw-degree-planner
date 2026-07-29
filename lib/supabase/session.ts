@@ -28,6 +28,9 @@ export async function updateSupabaseSession(
   const { url, anonKey } = supabasePublicEnv();
 
   const supabase = createServerClient(url, anonKey, {
+    // Secure flag in prod — @supabase/ssr defaults omit it. This is the path
+    // that actually writes refreshed auth cookies to the browser.
+    cookieOptions: { secure: process.env.NODE_ENV === "production" },
     cookies: {
       getAll() {
         return request.cookies.getAll();

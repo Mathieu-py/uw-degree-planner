@@ -3,7 +3,10 @@
  * sources by lowercased code: UWFlow (spine: code/name/description/prose/ratings),
  * Kuali (units, cross-listings, requisite ASTs), UW Open Data (seating).
  *
- * Usage: `pnpm tsx scripts/build-catalog.ts [term...]` (default PINNED_TERM).
+ * Usage: `pnpm tsx scripts/build-catalog.ts [--seats-only] [term...]`
+ * (default PINNED_TERM). `--seats-only` skips UWFlow/Kuali and just re-fetches
+ * Open Data seating into the existing snapshot — seat counts drift weekly, the
+ * rest only changes on the order of a term.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -96,6 +99,66 @@ async function writeSnapshot(
 }
 
 /**
+ * Replace only each course's `sections` with fresh seating, preserving key
+ * order so the diff stays seating-only. Pure — the timestamp is injected.
+ */
+export function applySeating(
+  file: CoursesFile,
+  seating: Record<string, CourseSection[]>,
+  fetchedAt: string,
+): CoursesFile {
+  return {
+    ...file,
+    fetchedAt,
+    courses: file.courses.map((c) => ({
+      ...c,
+      sections: seating[c.code] ?? [],
+    })),
+  };
+}
+
+/** Read + validate the committed snapshot at `coursesPath`, with an actionable
+ *  error when it's missing or malformed (seats-only can't rebuild from nothing). */
+async function loadCoursesSnapshot(coursesPath: string): Promise<CoursesFile> {
+  try {
+    return validateCoursesFile(
+      JSON.parse(await readFile(coursesPath, "utf-8")),
+    );
+  } catch (err) {
+    throw new Error(
+      `No usable snapshot at ${coursesPath} (${err instanceof Error ? err.message : err}) — run a full fetch first: pnpm fetch-courses`,
+    );
+  }
+}
+
+/**
+ * Seats-only write for one term: refuse an empty upstream map (overwriting now
+ * would wipe every course's seating and the weekly job would commit it), else
+ * patch just `sections` into the committed snapshot. Descriptions carry no
+ * seating and are left untouched.
+ */
+export async function refreshSeating(
+  termId: number,
+  seating: Record<string, CourseSection[]>,
+  dataDir: string = path.resolve(process.cwd(), "data"),
+) {
+  if (Object.keys(seating).length === 0) {
+    throw new Error(
+      `Term ${termId}: Open Data returned no seating — refusing to overwrite the committed snapshot. Retry later.`,
+    );
+  }
+  const coursesPath = path.join(dataDir, `courses.${termId}.json`);
+  const file = await loadCoursesSnapshot(coursesPath);
+  const updated = applySeating(file, seating, new Date().toISOString());
+  validateCoursesFile(updated);
+  await writeFile(coursesPath, JSON.stringify(updated, null, 2), "utf-8");
+  const withSeating = updated.courses.filter(
+    (c) => c.sections.length > 0,
+  ).length;
+  return { coursesPath, courseCount: updated.courses.length, withSeating };
+}
+
+/**
  * Last-known seating from the committed snapshot, for a partial refresh when
  * Open Data is unavailable (no `UW_OPENDATA_KEY`) — holds `sections` steady
  * rather than wiping them. Absent/unreadable snapshot → empty seating.
@@ -122,7 +185,9 @@ async function loadExistingSeating(
 }
 
 async function main() {
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+  const seatsOnly = rawArgs.includes("--seats-only");
+  const args = rawArgs.filter((a) => a !== "--seats-only");
   // Whole-string numeric only — parseInt would silently accept "1261foo".
   for (const a of args.filter((a) => !/^\d+$/.test(a))) {
     console.error(`Skipping non-numeric term arg: ${a}`);
@@ -131,6 +196,26 @@ async function main() {
   if (args.length > 0 && validArgs.length === 0)
     throw new Error("No valid numeric term arguments provided.");
   const terms = args.length > 0 ? validArgs.map(Number) : [PINNED_TERM];
+
+  if (seatsOnly) {
+    // Without the key there is nothing this mode could refresh.
+    if (!hasOpenDataKey())
+      throw new Error("--seats-only requires UW_OPENDATA_KEY.");
+    for (const term of terms) {
+      process.stdout.write(`Term ${term}: seating from Open Data... `);
+      const seating = await fetchSeating(term);
+      // refreshSeating refuses an empty map (would wipe all seating).
+      const { coursesPath, courseCount, withSeating } = await refreshSeating(
+        term,
+        seating,
+      );
+      console.log(
+        `${courseCount} courses (${withSeating} with seating) → ${path.relative(process.cwd(), coursesPath)}`,
+      );
+    }
+    return;
+  }
+
   process.stdout.write("Fetching course data from Kuali... ");
   const kuali = await fetchKualiData();
   const withUnitsTotal = Object.values(kuali).filter(
@@ -202,7 +287,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Run only as a script, not when imported by tests.
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]).endsWith("build-catalog.ts")
+) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

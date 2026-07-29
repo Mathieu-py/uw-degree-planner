@@ -1,4 +1,4 @@
-import { SettingsView } from "@/components/settings/SettingsView";
+import { SettingsView } from "@/components/SettingsView";
 import { SettingsSkeleton } from "@/components/states/PageSkeleton";
 import { AuthGate } from "@/lib/auth/store";
 

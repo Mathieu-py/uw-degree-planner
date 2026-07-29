@@ -15,11 +15,10 @@ export const SUPABASE_CONFIGURED =
 
 interface AuthState {
   user: User | null;
-  username: string | null;
   ready: boolean;
 }
 
-let state: AuthState = { user: null, username: null, ready: false };
+let state: AuthState = { user: null, ready: false };
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -39,9 +38,6 @@ function subscribe(listener: () => void) {
 function getUserSnapshot(): User | null {
   return state.user;
 }
-function getUsernameSnapshot(): string | null {
-  return state.username;
-}
 function getReadySnapshot(): boolean {
   return state.ready;
 }
@@ -52,9 +48,6 @@ function getReadySnapshot(): boolean {
 // could flip `ready` before hydration and mismatch the server's skeleton. React
 // switches to the live getters after hydration.
 function getUserServerSnapshot(): User | null {
-  return null;
-}
-function getUsernameServerSnapshot(): string | null {
   return null;
 }
 function getReadyServerSnapshot(): boolean {
@@ -78,29 +71,6 @@ function initAuth(): void {
 
   const supabase = createSupabaseBrowserClient();
 
-  // Refresh username from the profiles row. Best-effort; only ever upgrades to
-  // a non-null DB value (a failed/empty fetch keeps the metadata seed). Guarded
-  // by id so a stale response for a previous user can't win.
-  function syncProfile(user: User | null): void {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        const dbUsername = data?.username ?? null;
-        if (
-          dbUsername &&
-          state.user?.id === user.id &&
-          state.username !== dbUsername
-        ) {
-          state = { ...state, username: dbUsername };
-          notify();
-        }
-      });
-  }
-
   // getSession() reads the persisted session from local storage (no network),
   // so `ready` flips almost immediately and the planner paints the right branch
   // on first render; getUser() would block on the auth server. UI-only — server
@@ -109,10 +79,8 @@ function initAuth(): void {
   supabase.auth
     .getSession()
     .then(({ data }) => {
-      const user = data.session?.user ?? null;
-      state = { ...state, user, username: usernameFromMetadata(user) };
+      state = { ...state, user: data.session?.user ?? null };
       notify();
-      syncProfile(user);
     })
     .catch(() => {})
     .finally(() => {
@@ -121,45 +89,13 @@ function initAuth(): void {
     });
 
   supabase.auth.onAuthStateChange((_event, session) => {
-    const nextUser = session?.user ?? null;
-    const userChanged = state.user?.id !== nextUser?.id;
-    state = {
-      ...state,
-      user: nextUser,
-      username: usernameFromMetadata(nextUser),
-    };
+    state = { ...state, user: session?.user ?? null };
     notify();
-    if (userChanged) syncProfile(nextUser);
   });
-}
-
-/**
- * Username from user_metadata (set at sign-up), available synchronously on the
- * user object — no profiles round-trip. Seeding from here stops the header
- * flashing the email before the DB fetch. Null for OAuth users.
- */
-function usernameFromMetadata(user: User | null): string | null {
-  const raw = user?.user_metadata?.username;
-  return typeof raw === "string" && raw.length > 0 ? raw : null;
-}
-
-/**
- * Push a just-saved username into the store. Server actions can't reach the
- * browser client's auth listener, so settings calls this after updateProfile
- * succeeds — otherwise the header would show the old name until a reload.
- */
-export function publishUsername(username: string): void {
-  if (!state.user || state.username === username) return;
-  state = { ...state, username };
-  notify();
 }
 
 export interface UseAuthStateResult {
   user: User | null;
-  /** Profile username, or null when unset / not yet fetched. */
-  username: string | null;
-  /** Username if set, else the user's email — what the header should show. */
-  displayName: string | null;
   ready: boolean;
   isAuthed: boolean;
 }
@@ -178,23 +114,12 @@ export function useAuthState(): UseAuthStateResult {
     getUserSnapshot,
     getUserServerSnapshot,
   );
-  const username = useSyncExternalStore(
-    subscribe,
-    getUsernameSnapshot,
-    getUsernameServerSnapshot,
-  );
   const ready = useSyncExternalStore(
     subscribe,
     getReadySnapshot,
     getReadyServerSnapshot,
   );
-  return {
-    user,
-    username,
-    displayName: username ?? user?.email ?? null,
-    ready,
-    isAuthed: user !== null,
-  };
+  return { user, ready, isAuthed: user !== null };
 }
 
 /**
@@ -212,7 +137,7 @@ export function AuthGate({
   useEffect(() => {
     initAuth();
   }, []);
-  // Subscribe to `ready` alone — user/username notifies don't concern the gate.
+  // Subscribe to `ready` alone — user notifies don't concern the gate.
   const ready = useSyncExternalStore(
     subscribe,
     getReadySnapshot,
@@ -223,7 +148,7 @@ export function AuthGate({
 
 /** Test-only: reset the store to defaults and clear the init guard. */
 export function __resetAuthStoreForTests(): void {
-  state = { user: null, username: null, ready: false };
+  state = { user: null, ready: false };
   listeners.clear();
   initialized = false;
 }

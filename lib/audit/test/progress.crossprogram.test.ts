@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import coursesData from "../../../data/courses.1261.json";
+import coursesData from "../../../data/courses.1269.json";
 import type { LocalPlan } from "../../plan/types";
 import { PROGRAMS } from "../../programs/registry";
 import { compileAudit } from "../compile";

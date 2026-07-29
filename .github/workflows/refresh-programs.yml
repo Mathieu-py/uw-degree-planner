@@ -1,44 +1,66 @@
 name: Refresh program requirements
 
-# Re-scrapes undergraduate degree requirements from UW's calendar pages and opens
-# a PR with any diff in data/programs.json. Unlike the UWFlow ratings/seats
-# snapshot (which drifts daily), program requirements track the undergraduate
-# calendar and change roughly once a year, so a monthly refresh is plenty to
-# catch catalog updates and the occasional mid-year correction without spamming
-# no-op PRs. The scraped programs are whatever scripts/scrape-programs.ts targets.
+# Yearly (of the three data cadences: programs yearly, courses per-term, seating
+# weekly). Program requirements track the undergraduate calendar, which is
+# republished about once a year, so a single scheduled run catches the new
+# calendar; workflow_dispatch covers the occasional mid-year correction.
+# The scraped programs are whatever scripts/scrape-programs.ts targets.
 #
-# Commits any diff directly to main using the built-in GITHUB_TOKEN (no PR).
-# NOTE: if main has branch protection requiring PRs/reviews, the push will be
-# rejected — either exempt github-actions or switch back to a PR step.
+# Opens an auto-merging bot PR (never pushes to main). The data-quality guard
+# runs first; if it fails, no PR is opened. For CI to run on the PR and
+# auto-merge to fire, set a REFRESH_PR_TOKEN secret (a PAT/App token) — a PR
+# opened with the built-in GITHUB_TOKEN does not trigger other workflows.
 
 on:
   schedule:
-    # 07:00 UTC ≈ 03:00 ET on the 1st of each month — off-peak, monthly cadence.
-    - cron: "0 7 1 * *"
+    # 07:00 UTC on Jun 1 — after the new academic-year calendar is typically
+    # published, before fall-term planning ramps up. Adjust if UW shifts.
+    - cron: "0 7 1 6 *"
   workflow_dispatch:
+
+# All three snapshot-writing refreshes open PRs against main, so overlapping
+# runs would race the branch. Shared group serializes them repo-wide; don't
+# cancel an in-progress run.
+concurrency:
+  group: data-snapshot-writes
+  cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      # persist-credentials:false keeps any token out of .git/config; the PR
+      # action authenticates on its own.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm scrape-programs
-      - name: Commit refreshed snapshot to main
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/programs.json
-          if git diff --staged --quiet; then
-            echo "No changes — program requirements snapshot is already up to date."
-          else
-            git commit -m "chore(data): refresh program requirements snapshot"
-            git push
-          fi
+      # Gate: schema, file allowlist, course/seating drop thresholds. Fails the
+      # job (no PR) on an anomalous snapshot.
+      - run: pnpm guard-snapshot
+      - name: Open auto-merging PR for the program snapshot
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.REFRESH_PR_TOKEN || github.token }}
+          add-paths: data/*.json
+          branch: bot/refresh-programs
+          delete-branch: true
+          commit-message: "chore(data): refresh program requirements snapshot"
+          title: "chore(data): refresh program requirements snapshot"
+          body: Automated yearly program-requirements refresh. Data-quality guard passed; CI must be green to merge.
+          labels: data-refresh
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.REFRESH_PR_TOKEN || github.token }}
+        run: gh pr merge --squash --auto "${{ steps.cpr.outputs.pull-request-number }}"

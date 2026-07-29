@@ -1,11 +1,14 @@
 import { creditedChipCodes, type ScoredNode } from "@/lib/audit/score";
 import type { Course } from "@/lib/courses/types";
 import { pluralize, progressPct } from "@/lib/format";
-import { MetChip, WarnChip } from "../cards/Chip";
-import { Recede } from "../cards/Recede";
-import { RingLead } from "../cards/RingLead";
-import { StatusCard } from "../cards/StatusCard";
-import { StatusPill } from "../cards/StatusPill";
+import {
+  MetChip,
+  Recede,
+  RingLead,
+  StatusCard,
+  StatusPill,
+  WarnChip,
+} from "../cards";
 import type { DragWiring, DrillFn } from "../types";
 import { OptionChip } from "./OptionChip";
 

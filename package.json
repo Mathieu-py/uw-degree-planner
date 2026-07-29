@@ -2,6 +2,7 @@
   "name": "uw-elective-finder",
   "version": "0.1.0",
   "description": "Browse and filter UWaterloo elective courses by usefulness, easiness, prerequisites, and available seats, using UWFlow ratings.",
+  "license": "MIT",
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -16,14 +17,17 @@
     "lint:fix": "biome check --write .",
     "knip": "knip",
     "fetch-courses": "tsx scripts/build-catalog.ts",
+    "refresh-seats": "tsx scripts/build-catalog.ts --seats-only",
     "scrape-programs": "tsx scripts/scrape-programs.ts",
     "build-program-index": "tsx scripts/build-program-index.ts",
     "check-subjects": "tsx scripts/diagnostic/check-subjects.ts",
+    "guard-snapshot": "tsx scripts/guard-snapshot.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.67.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "next": "16.2.11",

@@ -3,7 +3,7 @@ import { PlannerSkeleton } from "@/components/states/PlannerSkeleton";
 import { AuthGate } from "@/lib/auth/store";
 import { loadTerm } from "@/lib/courses/data";
 import { loadServerPlan } from "@/lib/plan/server/actions";
-import { serverPlanToLocal } from "@/lib/plan/sync/serverPlanToLocal";
+import { serverPlanToLocal } from "@/lib/plan/sync/serverPlan";
 import type { LocalPlan } from "@/lib/plan/types";
 import { getProgramOptions, PROGRAMS } from "@/lib/programs/registry";
 import { PINNED_TERM } from "@/lib/terms";

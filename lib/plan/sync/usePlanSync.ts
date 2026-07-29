@@ -6,7 +6,7 @@ import { toSnapshot } from "../server/serialize";
 import type { PlanSnapshot } from "../server/types";
 import { clearPlan, loadPlan, savePlan } from "../storage";
 import type { LocalPlan } from "../types";
-import type { SaveStatus } from "./types";
+import type { SaveStatus } from "./serverPlan";
 
 const SAVE_DEBOUNCE_MS = 1500;
 const SAVED_DECAY_MS = 3000;

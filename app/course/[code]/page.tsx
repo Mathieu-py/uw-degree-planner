@@ -4,8 +4,12 @@ import { AddInPlannerButton } from "@/components/course/AddInPlannerButton";
 import { Icon } from "@/components/ui/Icon";
 import { loadCourseByCode } from "@/lib/courses/data";
 import { seatsAvailable } from "@/lib/courses/filters";
-import { getRatingColor } from "@/lib/courses/ratingColor";
-import { countNoun, formatCourseCode, formatPercent } from "@/lib/format";
+import {
+  countNoun,
+  formatCourseCode,
+  formatPercent,
+  getRatingColor,
+} from "@/lib/format";
 import { parseCourseOrigin } from "@/lib/plan/courseOrigin";
 import { describePrereqParts } from "@/lib/prereqs/describe";
 import { PINNED_TERM as TERM, termLabel } from "@/lib/terms";

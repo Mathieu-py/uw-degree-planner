@@ -1,9 +1,7 @@
 import { creditedChipCodes, type ScoredNode } from "@/lib/audit/score";
 import type { Course } from "@/lib/courses/types";
 import { fmtUnits, formatLevelRange, joinWithOverflow } from "@/lib/format";
-import { MetChip, WarnChip } from "../cards/Chip";
-import { CountedCard } from "../cards/CountedCard";
-import { FindRow } from "../cards/FindRow";
+import { CountedCard, FindRow, MetChip, WarnChip } from "../cards";
 import type { DrillFn } from "../types";
 
 /** Level buckets within a pool's [min,max] range (bucketed values). [] = all. */

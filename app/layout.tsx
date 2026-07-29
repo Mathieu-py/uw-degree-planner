@@ -1,31 +1,12 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { SiteNav } from "@/components/chrome/SiteNav";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { SITE_URL, THEME_INIT_SCRIPT } from "@/lib/constants";
+import { hanken, jetbrainsMono } from "./fonts";
 import "./globals.css";
 
-// Runs synchronously during HTML parsing, before paint, so the saved theme
-// applies with no flash (defaults to dark). Inline, not next/script, since
-// framework scripts aren't guaranteed pre-paint. Mirrors applyTheme().
-const THEME_INIT_SCRIPT = `(function(){try{var v=localStorage.getItem("udp-theme");document.documentElement.setAttribute("data-mode",v==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-mode","dark");}})();`;
-
-// Hanken Grotesk = UI text; JetBrains Mono = course codes, term labels, counts.
-// Both variable fonts, so one self-hosted face covers the full weight range.
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
-  subsets: ["latin"],
-  weight: "variable",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: "variable",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   // `default` titles the home page; `template` suffixes each child segment's
   // own bare title (e.g. "Settings").
   title: {
@@ -34,6 +15,13 @@ export const metadata: Metadata = {
   },
   description:
     "Plan every term of your UWaterloo degree on one screen, with live requirement audit, prereq checks, and UWFlow ratings.",
+  openGraph: {
+    title: "UW Degree Planner",
+    description:
+      "Plan every term of your UWaterloo degree on one screen, with live requirement audit, prereq checks, and UWFlow ratings.",
+    siteName: "UW Degree Planner",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

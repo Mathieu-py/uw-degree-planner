@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // computes SUPABASE_CONFIGURED=true at module load.
 import {
   getSessionMock,
-  maybeSingleMock,
   onAuthStateChangeMock,
   stubSupabaseClient,
 } from "./harness";
@@ -17,24 +16,16 @@ vi.mock("@/lib/supabase/client", async () => ({
     .createSupabaseBrowserClientMock,
 }));
 
-import {
-  __resetAuthStoreForTests,
-  publishUsername,
-  useAuthState,
-} from "../store";
+import { __resetAuthStoreForTests, useAuthState } from "../store";
 
-function mkUser(
-  id = "u1",
-  email = "u1@example.com",
-  user_metadata: Record<string, unknown> = {},
-): User {
+function mkUser(id = "u1", email = "u1@example.com"): User {
   return {
     id,
     email,
     aud: "authenticated",
     created_at: "2026-01-01T00:00:00.000Z",
     app_metadata: {},
-    user_metadata,
+    user_metadata: {},
   } as User;
 }
 
@@ -49,8 +40,6 @@ beforeEach(() => {
   stubSupabaseClient();
   getSessionMock.mockReset();
   getSessionMock.mockResolvedValue({ data: { session: null } });
-  maybeSingleMock.mockReset();
-  maybeSingleMock.mockResolvedValue({ data: null });
   onAuthStateChangeMock.mockReset();
   onAuthStateChangeMock.mockImplementation((cb) => {
     authChangeCallback = cb;
@@ -70,8 +59,6 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
 
     expect(result.current).toEqual({
       user: null,
-      username: null,
-      displayName: null,
       ready: false,
       isAuthed: false,
     });
@@ -152,88 +139,5 @@ describe("useAuthState — auth store via useSyncExternalStore", () => {
 
     await waitFor(() => expect(result.current.ready).toBe(true));
     expect(result.current.user).toBeNull();
-  });
-
-  it("seeds username from user_metadata synchronously (no email flash)", async () => {
-    const user = mkUser("u1", "u1@example.com", { username: "speedy" });
-    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
-    // Profile fetch never resolves with a value — username must come from
-    // metadata, and displayName must never fall back to the email.
-    maybeSingleMock.mockResolvedValueOnce({ data: null });
-
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() => expect(result.current.username).toBe("speedy"));
-    expect(result.current.displayName).toBe("speedy");
-  });
-
-  it("fetches the profile username when a session exists and derives displayName", async () => {
-    const user = mkUser();
-    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
-    maybeSingleMock.mockResolvedValueOnce({ data: { username: "mathieu" } });
-
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() => expect(result.current.username).toBe("mathieu"));
-    expect(result.current.displayName).toBe("mathieu");
-  });
-
-  it("falls back to email for displayName when the profile has no username", async () => {
-    const user = mkUser("u1", "u1@example.com");
-    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
-    maybeSingleMock.mockResolvedValueOnce({ data: { username: null } });
-
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() => expect(result.current.ready).toBe(true));
-    expect(result.current.username).toBeNull();
-    expect(result.current.displayName).toBe("u1@example.com");
-  });
-
-  it("publishUsername broadcasts a just-saved username to every consumer", async () => {
-    const user = mkUser();
-    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
-    maybeSingleMock.mockResolvedValueOnce({ data: { username: "old_name" } });
-
-    const { result: r1 } = renderHook(() => useAuthState());
-    const { result: r2 } = renderHook(() => useAuthState());
-    await waitFor(() => expect(r1.current.username).toBe("old_name"));
-
-    act(() => {
-      publishUsername("new_name");
-    });
-
-    expect(r1.current.username).toBe("new_name");
-    expect(r1.current.displayName).toBe("new_name");
-    expect(r2.current.username).toBe("new_name");
-  });
-
-  it("publishUsername is a no-op when signed out", async () => {
-    const { result } = renderHook(() => useAuthState());
-    await waitFor(() => expect(result.current.ready).toBe(true));
-
-    act(() => {
-      publishUsername("ghost");
-    });
-
-    expect(result.current.username).toBeNull();
-    expect(result.current.displayName).toBeNull();
-  });
-
-  it("clears the username on sign-out", async () => {
-    const user = mkUser();
-    getSessionMock.mockResolvedValueOnce({ data: { session: { user } } });
-    maybeSingleMock.mockResolvedValueOnce({ data: { username: "mathieu" } });
-
-    const { result } = renderHook(() => useAuthState());
-    await waitFor(() => expect(result.current.username).toBe("mathieu"));
-
-    act(() => {
-      authChangeCallback?.("SIGNED_OUT", null);
-    });
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.username).toBeNull();
-    expect(result.current.displayName).toBeNull();
   });
 });

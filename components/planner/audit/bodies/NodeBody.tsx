@@ -1,7 +1,7 @@
 import { pickOptions, type ScoredNode } from "@/lib/audit/score";
 import { GENERIC_ALL } from "@/lib/audit/view/types";
 import { countNoun } from "@/lib/format";
-import { CountedCard } from "../cards/CountedCard";
+import { CountedCard } from "../cards";
 import type { OptionRenderProps } from "../types";
 import { ChooseOneRow } from "./ChooseOneRow";
 import { CompoundPickBody } from "./CompoundPick";

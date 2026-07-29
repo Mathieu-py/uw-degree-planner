@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { SharedPlanView } from "@/components/planner/viewer/SharedPlanView";
+import { SharedPlanView } from "@/components/planner/SharedPlanView";
 import { loadTerm } from "@/lib/courses/data";
 import { loadSharedPlan } from "@/lib/plan/server/actions";
 import type { Program } from "@/lib/programs";
