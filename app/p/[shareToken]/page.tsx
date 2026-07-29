@@ -38,8 +38,7 @@ export default async function SharedPlanPage({ params }: PageProps) {
     loadSharedPlanCached(shareToken),
     loadTerm(PINNED_TERM),
   ]);
-  if (!result.ok) throw new Error("Failed to load shared plan");
-  if (!result.data) notFound();
+  if (!result.ok || !result.data) notFound();
   const plan = result.data;
 
   // Same tiny digest as /plan, so the shared view loads fast for cold visitors.
