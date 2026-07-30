@@ -47,7 +47,6 @@ export const TermColumn = memo(function TermColumn({
 }: Props) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
   const { byCourse, slotLevel } = issuesByCourseInSlot(issues);
-  const filled = slot.courses.length;
 
   // Bind slotId here so SlotBody gets stable zero/one-arg callbacks (and its
   // memo holds) while the parent's handlers stay slotId-keyed.
@@ -116,15 +115,22 @@ export const TermColumn = memo(function TermColumn({
               <Icon name="warning" size="sm" aria-hidden="true" />
             </span>
           ) : null}
-          <span className="u-mono u-small" style={{ color: "var(--ink-3)" }}>
-            {filled}
-          </span>
+          {readOnly ? null : (
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="pw-add"
+              aria-label={`Add course to ${info?.label ?? slot.position}`}
+              title="Add course"
+            >
+              <Icon name="plusSign" size="md" aria-hidden="true" />
+            </button>
+          )}
         </div>
       </div>
       <SlotBody
         slot={slot}
         issuesByCourse={byCourse}
-        onAdd={handleAdd}
         onRemoveCourse={handleRemoveCourse}
         onMoveDrag={onMoveDrag}
         readOnly={readOnly}

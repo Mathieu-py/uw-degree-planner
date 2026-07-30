@@ -888,6 +888,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  border-radius: 10px; /* tighter than .card's 14px — one radius scale across the plan page */
 }
 /* Drag-over highlight while a course chip hovers an academic term. */
 .pw-term.is-drop {
@@ -915,19 +916,47 @@ body {
   justify-content: space-between;
   gap: 8px;
 }
+/* Term code as a soft-gold square, matching the audit's macro tile. */
 .pw-badge {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: var(--accent-ink);
-  background: var(--accent-bg);
-  padding: 2px 8px;
-  border-radius: 6px;
+  letter-spacing: -0.02em;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .pw-season {
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   font-weight: 600;
-  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-3);
+}
+/* Header add affordance: a 28px "+" square where the course count used to sit. */
+.pw-add {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink-3);
+  cursor: pointer;
+  flex: none;
+}
+.pw-add:hover {
+  border-color: var(--accent-bg);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 .pw-slots {
   display: flex;
@@ -937,7 +966,7 @@ body {
 
 /* slots */
 .pw-slot {
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 7px 9px;
   display: flex;
   flex-direction: column;
@@ -1024,57 +1053,38 @@ body {
 .pw-slot.pw-warn .pw-code {
   color: var(--partial);
 }
-.pw-empty {
-  border: 1px dashed var(--line-2);
-  background: transparent;
-  color: var(--ink-3);
+/* Empty academic term: one muted line, nothing else — the calmest card. */
+.pw-empty-hint {
   font-size: 11.5px;
-  font-weight: 500;
-  text-align: center;
-  cursor: pointer;
-  min-height: 34px;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-.pw-empty:hover {
-  border-color: var(--accent-bg);
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--ink-3);
+  padding: 1px;
 }
 
-/* co-op cards */
+/* Co-op / work term: a single hairline row (solid border + --bg from .card). */
 .pw-coop {
   padding: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--bg-2);
-  border-style: dashed;
+  align-items: center;
+  gap: 9px;
+  border-radius: 10px;
   align-self: start;
 }
-.pw-coop-ic {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-.pw-coop-pill {
+.pw-coop-label {
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: var(--bg-3);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--ink-2);
-  text-align: center;
 }
-.pw-coop-pill.is-seek {
-  background: var(--partial-soft);
-  color: var(--partial);
+.pw-coop-term {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-3);
 }
 
 /* audit panel */
@@ -1085,6 +1095,12 @@ body {
   flex-direction: column;
   max-height: calc(100vh - 96px);
   overflow: hidden;
+  border-radius: 10px; /* match the term/co-op cards */
+}
+/* Single-program audit card is a plain .card; match the 10px plan-page radius
+   without inheriting .pw-audit's sticky/max-height layout. */
+.pw-audit-card {
+  border-radius: 10px;
 }
 .pw-audit-top {
   padding: 16px 16px 14px;
@@ -1288,9 +1304,9 @@ body {
 }
 .av-macro-tile {
   flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: var(--accent-soft);
   color: var(--accent);
   display: inline-flex;
@@ -1342,7 +1358,7 @@ body {
    green — never a partial fill. Sibling of the summary, so hidden when
    collapsed (matches the reference). */
 .av-macro-rule {
-  height: 2px;
+  height: 1px;
   background: var(--line);
 }
 .av-macro-body {
@@ -1418,7 +1434,7 @@ body {
 .cd-card {
   border: 1px solid var(--line);
   border-left: 3px solid var(--missing);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--bg);
   margin-bottom: 9px;
   overflow: hidden;
@@ -1483,7 +1499,7 @@ details.cd-card[open] .cd-chev {
   font-weight: 700;
   letter-spacing: 0.03em;
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: 5px;
 }
 .cd-pill.progress {
   background: var(--partial-soft);
@@ -1530,13 +1546,13 @@ details.cd-card[open] .cd-chev {
   font-size: 11px;
   font-weight: 600;
   padding: 5px 9px;
-  border-radius: 7px;
-  border: 1px solid transparent;
-  background: var(--bg-2);
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: transparent;
   color: var(--ink-2);
 }
 .cd-chip.met {
-  background: var(--met-soft);
+  background: transparent;
   color: var(--met);
   border-color: var(--met-line);
 }
@@ -1740,7 +1756,7 @@ details.cd-card[open] .cd-chev {
 .sat-a {
   border: 1px solid var(--met-line);
   border-left: 3px solid var(--met);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--bg);
   margin-bottom: 9px;
 }
