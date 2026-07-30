@@ -41,6 +41,7 @@ export function useWelcomeSubmit({
   const { create } = usePlanList(isAuthed);
   const [busy, setBusy] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
+  const [name, setName] = useState("");
 
   const buildPlan = useCallback((): LocalPlan => {
     const mintId = () => crypto.randomUUID();
@@ -98,7 +99,7 @@ export function useWelcomeSubmit({
       const route = await saveNewPlan({
         isAuthed,
         plan: finalPlan,
-        name: NEW_PLAN_NAME,
+        name: name.trim() || NEW_PLAN_NAME,
         create,
       });
       if (route) {
@@ -115,7 +116,17 @@ export function useWelcomeSubmit({
       setBuildError("Couldn't build your plan. Please try again.");
       setBusy(false);
     }
-  }, [busy, applyVariants, draftPlan, isAuthed, create, router]);
+  }, [busy, applyVariants, draftPlan, isAuthed, create, router, name]);
 
-  return { draftPlan, placedCount, busy, buildError, submit };
+  return {
+    draftPlan,
+    placedCount,
+    busy,
+    buildError,
+    submit,
+    name,
+    setName,
+    // Anon plans have no name — only offer the field when it can persist.
+    nameable: isAuthed,
+  };
 }
