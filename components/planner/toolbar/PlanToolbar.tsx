@@ -20,7 +20,7 @@ import { DeleteConfirmBar, RenameBar } from "./PlanEditBars";
 
 /** Bordered toolbar-bar chrome, shared with PlannerShell's anon local-plan bar. */
 export const INLINE_BAR_CLASS =
-  "flex flex-wrap items-center gap-3 rounded-xl border border-line card-2 px-3 py-3 w-full min-w-0";
+  "flex flex-wrap items-center gap-3 rounded-[10px] border border-line bg-bg px-3 py-3 w-full min-w-0";
 
 interface Props {
   /** Anon users get no bar — they have a single local plan. */

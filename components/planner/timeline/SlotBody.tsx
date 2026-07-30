@@ -11,7 +11,6 @@ import type { ValidationIssue } from "@/lib/plan/validate";
 interface Props {
   slot: PlanSlot;
   issuesByCourse: ReadonlyMap<string, ValidationIssue[]>;
-  onAdd: () => void;
   onRemoveCourse: (code: string) => void;
   /** Reports a chip being dragged between terms (or null on end) for the highlight. */
   onMoveDrag?: (moving: { code: string; fromSlotId: string } | null) => void;
@@ -30,14 +29,14 @@ function courseStatus(course: SlotCourse, hasIssue: boolean): SlotStatus {
 }
 
 /**
- * One term's placed courses as status-colored slots (plan/warn) plus a
- * dashed "+ add course". Each slot shows its status glyph and reveals view (↗) +
- * remove (×) on hover; warn slots list their validation messages inline.
+ * One term's placed courses as status-colored slots (plan/warn); empty terms
+ * show a muted "No courses yet" line. Each slot shows its status glyph and
+ * reveals view (↗) + remove (×) on hover; warn slots list their messages inline.
+ * Adding is driven from TermColumn's header "+" square, not from here.
  */
 export const SlotBody = memo(function SlotBody({
   slot,
   issuesByCourse,
-  onAdd,
   onRemoveCourse,
   onMoveDrag,
   readOnly = false,
@@ -134,11 +133,9 @@ export const SlotBody = memo(function SlotBody({
           </div>
         );
       })}
-      {readOnly ? null : (
-        <button type="button" onClick={onAdd} className="pw-slot pw-empty">
-          + add course
-        </button>
-      )}
+      {slot.courses.length === 0 ? (
+        <div className="pw-empty-hint">No courses yet</div>
+      ) : null}
     </div>
   );
 });

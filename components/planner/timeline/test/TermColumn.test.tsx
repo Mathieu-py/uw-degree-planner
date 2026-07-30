@@ -140,7 +140,6 @@ describe("SlotBody drag source", () => {
       <SlotBody
         slot={ACADEMIC_SLOT}
         issuesByCourse={new Map()}
-        onAdd={() => {}}
         onRemoveCourse={() => {}}
       />,
     );
@@ -160,7 +159,6 @@ describe("SlotBody drag source", () => {
       <SlotBody
         slot={ACADEMIC_SLOT}
         issuesByCourse={new Map()}
-        onAdd={() => {}}
         onRemoveCourse={() => {}}
       />,
     );
@@ -177,7 +175,6 @@ describe("SlotBody drag source", () => {
   it("clears a stale drag dim when the course leaves and returns to the term", () => {
     const props = {
       issuesByCourse: new Map(),
-      onAdd: () => {},
       onRemoveCourse: () => {},
     };
     const { rerender } = render(<SlotBody slot={ACADEMIC_SLOT} {...props} />);

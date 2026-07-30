@@ -86,24 +86,19 @@ export function Timeline({
 }
 
 /**
- * Interleaved co-op work term — dashed card with a bolt mark, the calendar
- * season, and a placement pill. The plan model doesn't track a placement, so
- * this shows a neutral "Work term" pill.
+ * Interleaved co-op work term — a single hairline row: bolt mark, CO-OP label,
+ * and the calendar season pushed right. The plan model doesn't track a
+ * placement, so the season falls back to "Work term".
  */
 function CoopTerm({ slot }: { slot: PlanSlot }) {
   const info = slot.termId !== null ? termInfo(slot.termId) : null;
   return (
     <div className="card pw-coop">
-      <div className="flex items-center gap-2">
-        <span className="pw-coop-ic">
-          <Icon name="bolt" size="sm" aria-hidden="true" />
-        </span>
-        <div className="flex flex-col">
-          <span className="text-[12.5px] font-bold">Co-op</span>
-          <span className="u-small">{info?.label ?? "Work term"}</span>
-        </div>
-      </div>
-      <span className="pw-coop-pill">Work term</span>
+      <span className="inline-flex text-accent">
+        <Icon name="bolt" size="sm" aria-hidden="true" />
+      </span>
+      <span className="pw-coop-label">Co-op</span>
+      <span className="pw-coop-term">{info?.label ?? "Work term"}</span>
     </div>
   );
 }
@@ -117,7 +112,13 @@ function PreArrivalColumn({ slot }: { slot: PlanSlot }) {
     <div className="card pw-term">
       <div className="pw-thead">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="pw-badge" style={{ background: "var(--partial)" }}>
+          <span
+            className="pw-badge"
+            style={{
+              background: "var(--partial-soft)",
+              color: "var(--partial)",
+            }}
+          >
             Pre
           </span>
           <span className="pw-season truncate">Transfer credits</span>

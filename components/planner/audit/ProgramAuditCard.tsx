@@ -46,7 +46,7 @@ export const ProgramAuditCard = memo(function ProgramAuditCard({
   }
 
   return (
-    <div className="card overflow-hidden lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+    <div className="card pw-audit-card overflow-hidden lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
       <ProgramAuditBody
         data={data}
         programId={programId}
