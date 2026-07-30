@@ -59,7 +59,7 @@ On `/plan`, click **Upload transcript** and choose a Quest unofficial-transcript
 
 ## Project structure
 
-```
+```text
 app/          Next.js routes (App Router)
 components/   UI — planner/ is the main surface, rooted at PlannerShell.tsx
 lib/          Domain logic (see below)
@@ -143,7 +143,7 @@ On the hosted Supabase project: set the Site URL and add `https://<domain>/auth/
 <details>
 <summary>Advancing the pinned catalog term</summary>
 
-The catalog is pinned to one term (`PINNED_TERM` in [lib/terms.ts](lib/terms.ts)). Once a term: bump the constant, run `pnpm fetch-courses` (with `UW_OPENDATA_KEY` set), commit the new `data/courses.<term>.json` + `data/descriptions.<term>.json`, delete the old pair, and update the two tests that import the snapshot literally (`lib/audit/test/progress.crossprogram.test.ts`, `lib/courses/test/snapshot.invariants.test.ts`).
+The catalog is pinned to one term (`PINNED_TERM` in [lib/terms.ts](lib/terms.ts)). To advance it to the next term, update `PINNED_TERM` to that term, run `pnpm fetch-courses` (with `UW_OPENDATA_KEY` set), commit the new `data/courses.<term>.json` and `data/descriptions.<term>.json` snapshots, delete the old pair, and update the two tests that import the snapshot literally (`lib/audit/test/progress.crossprogram.test.ts`, `lib/courses/test/snapshot.invariants.test.ts`).
 </details>
 
 ## Notes
