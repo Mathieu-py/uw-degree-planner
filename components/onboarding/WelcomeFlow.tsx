@@ -10,9 +10,12 @@ import { Button } from "@/components/ui/Button";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
+import { Input } from "@/components/ui/Input";
 import { Picker } from "@/components/ui/Picker";
 import { SegmentedRadio } from "@/components/ui/SegmentedRadio";
+import { NEW_PLAN_NAME } from "@/lib/constants";
 import { countNoun, pluralize } from "@/lib/format";
+import { MAX_PLAN_NAME_LEN } from "@/lib/plan/server/validate";
 import { detectStream } from "@/lib/plan/transcriptApply";
 import { STREAM_OPTIONS, type Stream } from "@/lib/plan/types";
 import { useStreamSuggestion } from "@/lib/plan/useStreamSuggestion";
@@ -94,15 +97,22 @@ export function WelcomeFlow({
     suggestForPrograms(next, startTermId, parseResult !== null);
   }
 
-  const { draftPlan, placedCount, busy, buildError, submit } = useWelcomeSubmit(
-    {
-      parseResult,
-      programIds,
-      stream,
-      startTermId,
-      applyVariants: variants.applyTo,
-    },
-  );
+  const {
+    draftPlan,
+    placedCount,
+    busy,
+    buildError,
+    submit,
+    name,
+    setName,
+    nameable,
+  } = useWelcomeSubmit({
+    parseResult,
+    programIds,
+    stream,
+    startTermId,
+    applyVariants: variants.applyTo,
+  });
 
   const programName = joinProgramNames(
     programIds,
@@ -222,6 +232,21 @@ export function WelcomeFlow({
         {step === 1 ? (
           <div className="card p-6 flex flex-col gap-4">
             <h2 className="u-h3">Review</h2>
+            {/* Optional up-front name; blank falls back to NEW_PLAN_NAME on save.
+                Authed only — the anon local plan carries no name. */}
+            {nameable ? (
+              <Field label="Plan name">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={MAX_PLAN_NAME_LEN}
+                    placeholder={NEW_PLAN_NAME}
+                  />
+                )}
+              </Field>
+            ) : null}
             {parseResult ? (
               <>
                 <p className="u-body">

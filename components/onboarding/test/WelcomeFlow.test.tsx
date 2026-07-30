@@ -11,11 +11,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Isolate the component from the router, auth, plan sync, and the heavy
 // PDF/transcript pipeline so the drop wiring is what's under test.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+// Mutable so a test can flip to the authed branch — the name field is authed-only.
+const authState = vi.hoisted(() => ({ isAuthed: false }));
 vi.mock("@/lib/auth/store", () => ({
-  useAuthState: () => ({ isAuthed: false }),
+  useAuthState: () => ({ isAuthed: authState.isAuthed }),
+}));
+// Stub the save path so a test can assert the name threaded into it.
+const planList = vi.hoisted(() => ({
+  create: vi.fn(async () => "new-id"),
+  saveNewPlan: vi.fn(async () => "/plan/new-id"),
 }));
 vi.mock("@/lib/plan/sync/usePlanList", () => ({
-  usePlanList: () => ({ create: vi.fn() }),
+  usePlanList: () => ({ create: planList.create }),
+  saveNewPlan: planList.saveNewPlan,
 }));
 vi.mock("@/lib/transcript/pdfText", () => ({ extractTextFromPdf: vi.fn() }));
 vi.mock("@/lib/transcript/parse", () => ({
@@ -43,6 +51,7 @@ vi.mock("@/lib/plan/server/actions", () => ({
   placeVariantSelections: vi.fn(async () => []),
 }));
 
+import { NEW_PLAN_NAME } from "@/lib/constants";
 import {
   fetchVariantGroups,
   placeVariantSelections,
@@ -224,5 +233,68 @@ describe("WelcomeFlow default stream (#131)", () => {
     // parseResult guard holds: stream stays regular, not the SE default.
     expect(streamChecked(/^regular$/i)).toBe("true");
     expect(streamChecked(/stream 8 co-op/i)).toBe("false");
+  });
+});
+
+describe("WelcomeFlow plan name (#202)", () => {
+  beforeEach(() => {
+    authState.isAuthed = true;
+    planList.create.mockClear();
+    planList.saveNewPlan.mockClear();
+    vi.mocked(fetchVariantGroups).mockReset().mockResolvedValue([]);
+    vi.mocked(placeVariantSelections).mockReset().mockResolvedValue([]);
+  });
+  afterEach(() => {
+    authState.isAuthed = false;
+    cleanup();
+  });
+
+  // Manual path: pick a program (enables "Build my plan") and advance to Review,
+  // where the authed-only name field lives.
+  async function reachReview() {
+    render(<WelcomeFlow programOptions={PROGRAMS} />);
+    fireEvent.click(screen.getByRole("button", { name: /add a program/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: /software engineering/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^done$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await waitFor(() => screen.getByLabelText(/plan name/i));
+  }
+
+  it("threads a typed name into the save path, trimmed", async () => {
+    await reachReview();
+    fireEvent.change(screen.getByLabelText(/plan name/i), {
+      target: { value: "  My SYDE plan  " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /build my plan/i }));
+    await waitFor(() =>
+      expect(planList.saveNewPlan).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "My SYDE plan" }),
+      ),
+    );
+  });
+
+  it("defaults a blank name to NEW_PLAN_NAME", async () => {
+    await reachReview();
+    fireEvent.click(screen.getByRole("button", { name: /build my plan/i }));
+    await waitFor(() =>
+      expect(planList.saveNewPlan).toHaveBeenCalledWith(
+        expect.objectContaining({ name: NEW_PLAN_NAME }),
+      ),
+    );
+  });
+
+  it("hides the name field for anon users", async () => {
+    authState.isAuthed = false;
+    render(<WelcomeFlow programOptions={PROGRAMS} />);
+    fireEvent.click(screen.getByRole("button", { name: /add a program/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: /software engineering/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^done$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await waitFor(() => screen.getByRole("button", { name: /build my plan/i }));
+    expect(screen.queryByLabelText(/plan name/i)).toBeNull();
   });
 });
