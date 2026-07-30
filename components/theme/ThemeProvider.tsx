@@ -9,12 +9,12 @@ import {
   useState,
 } from "react";
 
-// Light / Dark only. Dark is the default for first-time visitors. Setting the
+// Light / Dark only. Light is the default for first-time visitors. Setting the
 // mode writes data-mode on <html>, which the token CSS keys off.
 export type Theme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "udp-theme";
-const DEFAULT_THEME: Theme = "dark";
+const DEFAULT_THEME: Theme = "light";
 
 interface ThemeContextValue {
   theme: Theme;

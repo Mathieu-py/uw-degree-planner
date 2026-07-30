@@ -20,7 +20,7 @@ export const REPO_DISPLAY = REPO_URL.replace(/^https?:\/\//, "");
 export const NEW_PLAN_NAME = "Untitled plan";
 
 // Runs synchronously during HTML parsing, before paint, so the saved theme
-// applies with no flash (defaults to dark). Inline, not next/script, since
+// applies with no flash (defaults to light). Inline, not next/script, since
 // framework scripts aren't guaranteed pre-paint. Mirrors applyTheme(). Shared
 // by the root layout and global-error (which renders its own <html>).
-export const THEME_INIT_SCRIPT = `(function(){try{var v=localStorage.getItem("udp-theme");document.documentElement.setAttribute("data-mode",v==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-mode","dark");}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var v=localStorage.getItem("udp-theme");document.documentElement.setAttribute("data-mode",v==="dark"?"dark":"light");}catch(e){document.documentElement.setAttribute("data-mode","light");}})();`;
