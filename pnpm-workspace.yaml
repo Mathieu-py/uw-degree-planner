@@ -1,11 +1,10 @@
+# pnpm 11 refuses to install until every dependency with a build (postinstall)
+# script is explicitly decided here — true runs the script, false skips it.
+# Leaving one unlisted fails `pnpm install` with ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
-  '@sentry/cli': set this to true or false
-  esbuild: set this to true or false
-  sharp: set this to true or false
-
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+  "@sentry/cli": true # fetches the sentry-cli binary used for source-map upload
+  esbuild: true # verifies/links its native binary
+  sharp: false # prebuilt binary ships via the @img/sharp-* optional deps
 
 # Version-locked to the installed `next` release, so the release-age gate only
 # blocks re-resolution right after a Next bump.
