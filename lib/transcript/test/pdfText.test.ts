@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock pdfjs-dist so extractTextFromPdf never loads the real ~500KB lib or a
 // worker. getDocumentMock is reassigned per test to shape numPages / pages.
 const { getDocumentMock } = vi.hoisted(() => ({ getDocumentMock: vi.fn() }));
-vi.mock("pdfjs-dist", () => ({
+vi.mock("pdfjs-dist/legacy/build/pdf.mjs", () => ({
   GlobalWorkerOptions: { workerSrc: "" },
   getDocument: getDocumentMock,
 }));
