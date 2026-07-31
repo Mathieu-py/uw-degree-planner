@@ -39,11 +39,13 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   }
 
   // Dynamic so the ~500 KB pdfjs payload stays out of the initial bundle.
-  const pdfjs = await import("pdfjs-dist");
+  // Legacy build: the modern one calls Promise.try/withResolvers unguarded,
+  // crashing WebKit older than ~18.2; legacy bundles core-js polyfills.
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   // Worker ships with the package; bundlers honoring `new URL(...,
   // import.meta.url)` copy it into the build output.
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
+    "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
     import.meta.url,
   ).toString();
 
