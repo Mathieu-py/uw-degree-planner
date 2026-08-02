@@ -22,10 +22,10 @@ interface Props {
 
 type SlotStatus = "plan" | "warn";
 
-// A graded course is already taken, so a stale prereq flag stays quiet; an
-// outstanding issue on an ungraded course makes it "warn", otherwise "plan".
+// A course with a recorded outcome is already taken (or underway), so a stale
+// prereq flag stays quiet; an issue on a planned course makes it "warn".
 function courseStatus(course: SlotCourse, hasIssue: boolean): SlotStatus {
-  return !course.grade && hasIssue ? "warn" : "plan";
+  return !course.outcome && hasIssue ? "warn" : "plan";
 }
 
 /**

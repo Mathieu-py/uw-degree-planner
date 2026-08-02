@@ -30,7 +30,7 @@ const PLAN: LocalPlan = {
       termId: 1239,
       position: "1A",
       isCoop: false,
-      courses: [{ code: "math115" }, { code: "se101", grade: "85" }],
+      courses: [{ code: "math115" }, { code: "se101", outcome: "credit" }],
     },
     {
       id: "1B",
@@ -57,7 +57,7 @@ function slot(plan: LocalPlan, id: string) {
 }
 
 describe("applyCourseDrop — move", () => {
-  it("moves a course between academic terms and preserves its grade", () => {
+  it("moves a course between academic terms and preserves its outcome", () => {
     const data: CourseDragData = {
       kind: "move",
       fromSlotId: "1A",
@@ -69,7 +69,7 @@ describe("applyCourseDrop — move", () => {
     expect(slot(next, "1A").courses.map((c) => c.code)).toEqual(["math115"]);
     expect(slot(next, "1B").courses).toContainEqual({
       code: "se101",
-      grade: "85",
+      outcome: "credit",
     });
   });
 

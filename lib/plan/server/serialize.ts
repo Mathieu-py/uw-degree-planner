@@ -1,4 +1,11 @@
-import type { PlanSlot, SlotCourse, SlotPosition, Stream } from "../types";
+import {
+  type CourseOutcome,
+  OUTCOME_VALUES,
+  type PlanSlot,
+  type SlotCourse,
+  type SlotPosition,
+  type Stream,
+} from "../types";
 import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 
 // Array-size caps before the unbounded `save_plan_state` RPC (migrations/0002),
@@ -75,8 +82,17 @@ export interface PlanCourseRow {
   id: string;
   slot_id: string;
   course_code: string;
-  grade: string | null;
+  /** Constrained to OUTCOME_VALUES by the DB CHECK; null = planned. */
+  outcome: string | null;
   ordinal: number;
+}
+
+/** Narrow a raw DB/jsonb value to a `CourseOutcome`, `undefined` otherwise. */
+function toOutcome(v: unknown): CourseOutcome | undefined {
+  return typeof v === "string" &&
+    (OUTCOME_VALUES as readonly string[]).includes(v)
+    ? (v as CourseOutcome)
+    : undefined;
 }
 
 /**
@@ -112,13 +128,10 @@ export function assembleServerPlan(
   );
   for (const c of sortedCourses) {
     const bucket = coursesBySlot.get(c.slot_id);
-    // Explicit null check: only DB nulls drop the field. An empty string is a
-    // valid grade and must round-trip — the save RPC's `nullif(..., '')` is the
-    // only place that normalizes empties to null; the read path stays faithful.
-    const entry: SlotCourse =
-      c.grade !== null
-        ? { code: c.course_code, grade: c.grade }
-        : { code: c.course_code };
+    const outcome = toOutcome(c.outcome);
+    const entry: SlotCourse = outcome
+      ? { code: c.course_code, outcome }
+      : { code: c.course_code };
     if (bucket) bucket.push(entry);
     else coursesBySlot.set(c.slot_id, [entry]);
   }
@@ -170,10 +183,8 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
     const courses: SlotCourse[] = rawCourses.map((rc) => {
       const c = rc as Record<string, unknown>;
       const code = String(c.code);
-      const grade = c.grade;
-      return grade === null || grade === undefined
-        ? { code }
-        : { code, grade: String(grade) };
+      const outcome = toOutcome(c.outcome);
+      return outcome ? { code, outcome } : { code };
     });
     return {
       id: String(s.id),

@@ -20,7 +20,7 @@ const SERVER_PLAN: ServerPlan = {
       termId: 1239,
       position: "1A",
       isCoop: false,
-      courses: [{ code: "cs115", grade: "87" }],
+      courses: [{ code: "cs115", outcome: "credit" }],
     },
   ],
 };

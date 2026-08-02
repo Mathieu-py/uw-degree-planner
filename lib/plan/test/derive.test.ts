@@ -21,7 +21,7 @@ const PLAN: LocalPlan = {
       termId: 1239,
       position: "1A",
       isCoop: false,
-      courses: [{ code: "math115" }, { code: "se101", grade: "85" }],
+      courses: [{ code: "math115" }, { code: "se101", outcome: "credit" }],
     },
     {
       id: "1B",

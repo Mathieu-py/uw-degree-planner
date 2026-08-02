@@ -34,8 +34,8 @@ function mkParse(
   };
 }
 
-describe("applyTranscriptToPlan — grade carry-through", () => {
-  it("carries a graded course's grade onto its SlotCourse; future enrollments stay grade-less", () => {
+describe("applyTranscriptToPlan — outcome derivation", () => {
+  it("derives each SlotCourse outcome from status; future enrollments stay outcome-less", () => {
     const parse = mkParse([
       {
         code: "cs115",
@@ -52,6 +52,13 @@ describe("applyTranscriptToPlan — grade carry-through", () => {
         rawGrade: "TR",
       },
       {
+        code: "stat231",
+        name: "stat231",
+        termLabel: "Winter 2024",
+        status: "inProgress",
+        rawGrade: "IP",
+      },
+      {
         code: "cs136",
         name: "cs136",
         termLabel: "Winter 2024",
@@ -66,10 +73,33 @@ describe("applyTranscriptToPlan — grade carry-through", () => {
     });
     const find = (code: string) =>
       plan.slots.flatMap((s) => s.courses).find((c) => c.code === code);
-    expect(find("cs115")?.grade).toBe("92");
-    expect(find("math137")?.grade).toBe("TR");
-    // Future enrollment: empty rawGrade → no grade field at all.
+    expect(find("cs115")?.outcome).toBe("credit");
+    expect(find("math137")?.outcome).toBe("transfer");
+    // IP-graded: genuinely underway, records an outcome.
+    expect(find("stat231")?.outcome).toBe("inProgress");
+    // Future enrollment: empty rawGrade → no outcome field at all (planned).
     expect(find("cs136")).toEqual({ code: "cs136" });
+  });
+
+  it("marks opted-in unrecognized courses noCredit so they never count toward the audit", () => {
+    const parse = mkParse([
+      {
+        code: "se101",
+        name: "se101",
+        termLabel: "Fall 2023",
+        status: "unrecognized",
+        rawGrade: "Systems",
+      },
+    ]);
+    const { plan } = applyTranscriptToPlan(parse, {
+      stream: "regular",
+      includedUnrecognized: new Set(["se101"]),
+      mintId: makeMint(),
+    });
+    const course = plan.slots
+      .flatMap((s) => s.courses)
+      .find((c) => c.code === "se101");
+    expect(course?.outcome).toBe("noCredit");
   });
 });
 

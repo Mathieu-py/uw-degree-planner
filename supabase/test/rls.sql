@@ -33,6 +33,7 @@ declare
   shared_result jsonb;
   visible_count integer;
   spec_after jsonb;
+  outcome_after text;
 begin
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
   values
@@ -153,8 +154,8 @@ begin
         'position', '1A',
         'isCoop', false,
         'courses', jsonb_build_array(
-          jsonb_build_object('code', 'cs115', 'grade', null),
-          jsonb_build_object('code', 'math115', 'grade', '87')
+          jsonb_build_object('code', 'cs115', 'outcome', null),
+          jsonb_build_object('code', 'math115', 'outcome', 'credit')
         )
       ),
       jsonb_build_object(
@@ -178,6 +179,22 @@ begin
   where s.plan_id = plan_a;
   if visible_count <> 2 then
     raise exception 'RPC fail: save_plan_state wrote % courses, expected 2', visible_count;
+  end if;
+
+  select c.outcome into outcome_after
+  from public.plan_courses c
+  join public.plan_slots s on s.id = c.slot_id
+  where s.plan_id = plan_a and c.course_code = 'math115';
+  if outcome_after is distinct from 'credit' then
+    raise exception 'RPC fail: outcome credit should persist, got %', outcome_after;
+  end if;
+
+  select c.outcome into outcome_after
+  from public.plan_courses c
+  join public.plan_slots s on s.id = c.slot_id
+  where s.plan_id = plan_a and c.course_code = 'cs115';
+  if outcome_after is not null then
+    raise exception 'RPC fail: null outcome should stay null, got %', outcome_after;
   end if;
 
   -- -------------------------------------------------------------------------

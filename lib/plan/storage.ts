@@ -3,6 +3,7 @@ import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/browserStorage";
 import { logWarn } from "@/lib/log";
 import {
   type LocalPlan,
+  OUTCOME_VALUES,
   PLAN_SCHEMA_VERSION,
   SLOT_POSITIONS,
   STREAM_VALUES,
@@ -16,7 +17,7 @@ export const PLAN_STORAGE_KEY = "uwfinder.plan.v1";
 /**
  * Sibling key where an unreadable / wrong-`schemaVersion` plan is parked before
  * the user starts fresh. Kept for debugging only — there is intentionally no
- * legacy migrator (old shapes are not upgraded).
+ * legacy migrator (old `schemaVersion`s are not upgraded).
  */
 export const PLAN_BROKEN_BACKUP_KEY = `${PLAN_STORAGE_KEY}.broken`;
 
@@ -24,9 +25,10 @@ const StreamSchema = z.enum(STREAM_VALUES);
 
 const SlotPositionSchema = z.enum(SLOT_POSITIONS);
 
+// Legacy free-form `grade` keys are stripped by zod — old plans load as planned.
 const SlotCourseSchema = z.object({
   code: z.string(),
-  grade: z.string().optional(),
+  outcome: z.enum(OUTCOME_VALUES).optional(),
 });
 
 const PlanSlotSchema = z.object({

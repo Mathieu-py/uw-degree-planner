@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { CourseOutcome } from "../../types";
 import { MAX_COURSES_PER_SLOT, MAX_SLOTS } from "../serialize";
 import type { PlanSnapshot } from "../types";
 import { MAX_ID_LEN, MAX_PROGRAM_IDS, snapshotError } from "../validate";
@@ -142,12 +143,27 @@ describe("snapshotError — structural validation", () => {
     expect(snapshotError(snapshot({ slots: [bad] }))).toBe("invalid_snapshot");
   });
 
-  it("rejects an over-length grade", () => {
+  it("rejects a non-enum outcome", () => {
     const bad = {
       ...slot(UUID_B),
-      courses: [{ code: "cs115", grade: "g".repeat(64) }],
+      // A raw grade smuggled past the compile-time type must still be rejected.
+      courses: [{ code: "cs115", outcome: "87" as CourseOutcome }],
     };
     expect(snapshotError(snapshot({ slots: [bad] }))).toBe("invalid_snapshot");
+  });
+
+  it("accepts every outcome value", () => {
+    const ok: PlanSnapshot["slots"][number] = {
+      ...slot(UUID_B),
+      courses: [
+        { code: "cs115", outcome: "credit" },
+        { code: "cs135", outcome: "noCredit" },
+        { code: "cs136", outcome: "inProgress" },
+        { code: "math135", outcome: "transfer" },
+        { code: "math137" },
+      ],
+    };
+    expect(snapshotError(snapshot({ slots: [ok] }))).toBeNull();
   });
 
   it("accepts a valid specialization map and null metadata", () => {
