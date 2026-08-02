@@ -39,7 +39,7 @@ const PLAN_COLUMNS =
 
 const SLOT_COLUMNS = "id, plan_id, term_id, position, is_coop, ordinal";
 
-const COURSE_COLUMNS = "id, slot_id, course_code, grade, ordinal";
+const COURSE_COLUMNS = "id, slot_id, course_code, outcome, ordinal";
 
 // ---------------------------------------------------------------------------
 // List

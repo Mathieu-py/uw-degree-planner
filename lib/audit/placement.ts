@@ -1,6 +1,15 @@
-import { earnsCredit } from "@/lib/plan/grades";
-import type { LocalPlan, SlotPosition } from "@/lib/plan/types";
+import type { CourseOutcome, LocalPlan, SlotPosition } from "@/lib/plan/types";
 import type { TermId } from "@/lib/terms";
+
+/**
+ * Does a placed course earn credit? Everything but a noCredit attempt counts —
+ * planned and in-progress included; the audit is a forward-looking plan.
+ */
+export function earnsCredit(
+  outcome: CourseOutcome | null | undefined,
+): boolean {
+  return outcome !== "noCredit";
+}
 
 /**
  * Where a placed course sits in a plan. `termId === null` is the synthetic
@@ -27,7 +36,7 @@ export function buildPlacementMap(plan: LocalPlan): PlacementMap {
   const map = new Map<string, Placement>();
   for (const slot of plan.slots) {
     for (const c of slot.courses) {
-      if (!earnsCredit(c.grade)) continue;
+      if (!earnsCredit(c.outcome)) continue;
       if (map.has(c.code)) continue;
       map.set(c.code, {
         code: c.code,

@@ -21,7 +21,7 @@ const VALID_PLAN: LocalPlan = {
       termId: 1239,
       position: "1A",
       isCoop: false,
-      courses: [{ code: "cs115" }, { code: "math115", grade: "87" }],
+      courses: [{ code: "cs115" }, { code: "math115", outcome: "credit" }],
     },
   ],
   updatedAt: "2026-05-23T12:00:00.000Z",
@@ -62,7 +62,7 @@ describe("savePlan + loadPlan", () => {
     if (!loaded) return;
     expect(loaded.programIds).toEqual(["h-software-engineering-beng"]);
     expect(loaded.slots).toHaveLength(1);
-    expect(loaded.slots[0].courses[1].grade).toBe("87");
+    expect(loaded.slots[0].courses[1].outcome).toBe("credit");
     // updatedAt was overwritten with a fresh timestamp.
     expect(loaded.updatedAt).not.toBe("2026-05-23T12:00:00.000Z");
   });
@@ -100,9 +100,9 @@ describe("savePlan + loadPlan", () => {
           termId: 1239,
           position: "1A",
           isCoop: false,
-          // Same code listed twice; the second instance carries a grade that
+          // Same code listed twice; the second instance carries an outcome that
           // should be discarded by the dedup (we keep the first occurrence).
-          courses: [{ code: "cs115" }, { code: "cs115", grade: "97" }],
+          courses: [{ code: "cs115" }, { code: "cs115", outcome: "credit" }],
         },
       ],
     };
@@ -132,6 +132,25 @@ describe("savePlan + loadPlan", () => {
     expect(loaded?.acknowledgedRequirements).toEqual({
       "h-software-engineering-beng": ["Complete a co-op work term."],
     });
+  });
+
+  it("still loads a pre-outcome plan, dropping its legacy grade keys", () => {
+    // Old plans stored free-form `grade` tokens. zod strips the unknown key,
+    // so the plan survives — its courses just degrade to planned.
+    const legacy = {
+      ...VALID_PLAN,
+      slots: [
+        {
+          id: "slot-1",
+          termId: 1239,
+          position: "1A",
+          isCoop: false,
+          courses: [{ code: "cs115", grade: "87" }],
+        },
+      ],
+    };
+    store.setItem(PLAN_STORAGE_KEY, JSON.stringify(legacy));
+    expect(loadPlan()?.slots[0].courses).toEqual([{ code: "cs115" }]);
   });
 
   it("returns false (does not throw) when localStorage.setItem rejects the write", () => {

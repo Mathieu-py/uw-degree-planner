@@ -18,7 +18,7 @@ const PLAN: LocalPlan = {
       termId: 1239,
       position: "1A",
       isCoop: false,
-      courses: [{ code: "math115" }, { code: "se101", grade: "85" }],
+      courses: [{ code: "math115" }, { code: "se101", outcome: "credit" }],
     },
     {
       id: "1B",
@@ -47,11 +47,14 @@ describe("addCourseToSlot", () => {
     ]);
   });
 
-  it("preserves a grade carried on the course", () => {
-    const next = addCourseToSlot(PLAN, "1B", { code: "se102", grade: "90" });
+  it("preserves an outcome carried on the course", () => {
+    const next = addCourseToSlot(PLAN, "1B", {
+      code: "se102",
+      outcome: "credit",
+    });
     expect(slot(next, "1B").courses).toContainEqual({
       code: "se102",
-      grade: "90",
+      outcome: "credit",
     });
   });
 

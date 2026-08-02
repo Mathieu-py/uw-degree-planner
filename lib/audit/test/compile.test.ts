@@ -7,7 +7,7 @@ import {
   splitPlacementByLegality,
   summarize,
 } from "../compile";
-import { buildPlacementMap } from "../placement";
+import { buildPlacementMap, earnsCredit } from "../placement";
 
 function makePlan(slots: LocalPlan["slots"]): LocalPlan {
   return {
@@ -35,6 +35,20 @@ function slot(
   };
 }
 
+describe("earnsCredit", () => {
+  it("denies credit only for a no-credit attempt", () => {
+    expect(earnsCredit("noCredit")).toBe(false);
+  });
+
+  it("credits earned, underway, transfer, and planned courses", () => {
+    expect(earnsCredit("credit")).toBe(true);
+    expect(earnsCredit("inProgress")).toBe(true);
+    expect(earnsCredit("transfer")).toBe(true);
+    expect(earnsCredit(undefined)).toBe(true);
+    expect(earnsCredit(null)).toBe(true);
+  });
+});
+
 describe("buildPlacementMap", () => {
   it("indexes every placed course back to its slot", () => {
     const plan = makePlan([slot("s1", 1239, ["cs115", "math115"])]);
@@ -52,10 +66,10 @@ describe("buildPlacementMap", () => {
         position: "1A",
         isCoop: false,
         courses: [
-          { code: "cs135", grade: "40" }, // failed → excluded
-          { code: "cs136", grade: "WD" }, // withdrawn → excluded
-          { code: "math115", grade: "75" }, // passed → kept
-          { code: "math116" }, // not yet graded (planned) → kept
+          { code: "cs135", outcome: "noCredit" }, // failed → excluded
+          { code: "cs136", outcome: "noCredit" }, // withdrawn → excluded
+          { code: "math115", outcome: "credit" }, // passed → kept
+          { code: "math116" }, // planned → kept
         ],
       },
       {
@@ -63,14 +77,14 @@ describe("buildPlacementMap", () => {
         termId: 1241,
         position: "1B",
         isCoop: false,
-        courses: [{ code: "cs135", grade: "70" }], // passed retake → kept
+        courses: [{ code: "cs135", outcome: "credit" }], // passed retake → kept
       },
     ]);
     const map = buildPlacementMap(plan);
     expect(map.get("cs135")?.slotId).toBe("s2"); // the passed attempt, not the fail
     expect(map.has("cs136")).toBe(false); // withdrawn, no retake
     expect(map.has("math115")).toBe(true);
-    expect(map.has("math116")).toBe(true); // planned (no grade) still counts
+    expect(map.has("math116")).toBe(true); // planned (no outcome) still counts
   });
 });
 

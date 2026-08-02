@@ -42,14 +42,15 @@ export default function LegalPage() {
               <h2 className="u-h3">Privacy</h2>
               <p className="u-body">
                 With an account, we store your email address and your plans
-                (plan names, course codes, terms, and any grades you enter) in
-                our database. Signed out, plans live only in your browser's
-                local storage and never leave your device. Transcript PDFs are
-                parsed entirely in your browser and are never uploaded. There
-                are no ads and no third-party analytics; runtime errors are
-                reported to an error-tracking service without personal data. You
-                can permanently delete your account and every plan at any time
-                from Settings.
+                (plan names, course codes, terms, and coarse course outcomes
+                such as credit earned or in progress — never your grades) in our
+                database. Signed out, plans live only in your browser's local
+                storage and never leave your device. Transcript PDFs are parsed
+                entirely in your browser and are never uploaded. There are no
+                ads and no third-party analytics; runtime errors are reported to
+                an error-tracking service without personal data. You can
+                permanently delete your account and every plan at any time from
+                Settings.
               </p>
             </section>
 

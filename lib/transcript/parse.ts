@@ -1,4 +1,3 @@
-import { PASS_THRESHOLD } from "@/lib/plan/grades";
 import { TERM_LETTERS, type TermLetter } from "@/lib/programs";
 import { programMeta, programMetaEntries } from "@/lib/programs/meta";
 import type {
@@ -27,6 +26,9 @@ const COURSE_ROW_RE = /^([A-Z]{2,8})\s*(\d{3,4}[A-Z]?)\b\s*(.+)$/;
 // signal, a future row's last token is a description word (e.g. "2" from
 // "Calculus 2") that classifyStatus would misread as a grade.
 const ATTEMPTED_EARNED_RE = /\b\d+\.\d+\s+\d+\.\d+\b/;
+
+// Waterloo's general pass floor — a numeric grade below this earns no credit.
+const PASS_THRESHOLD = 50;
 
 // Letter grades valid without the column pair — notably backdated transfer
 // credits (`MATH 137 Calculus 1 TR`) in regular term sections. Numeric grades

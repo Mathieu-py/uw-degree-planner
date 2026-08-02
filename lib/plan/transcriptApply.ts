@@ -12,11 +12,13 @@
 
 import { type TermId, termLabelToTermId } from "@/lib/terms";
 import type {
+  CourseStatus,
   ParsedCourse,
   TranscriptParseResult,
 } from "@/lib/transcript/types";
 import { sequenceTerms } from "./sequence";
 import {
+  type CourseOutcome,
   type LocalPlan,
   PLAN_SCHEMA_VERSION,
   type PlanSlot,
@@ -46,13 +48,23 @@ export interface TranscriptToPlanResult {
   unplacedTerms: string[];
 }
 
+const STATUS_TO_OUTCOME: Record<CourseStatus, CourseOutcome> = {
+  passed: "credit",
+  inProgress: "inProgress",
+  transfer: "transfer",
+  // Opted-in unrecognized rows stay visible but never count toward the audit.
+  unrecognized: "noCredit",
+  // Skipped rows are dropped before placement; mapped only for totality.
+  skipped: "noCredit",
+};
+
 /**
- * Build a `SlotCourse` from a parsed row, carrying the grade through. An empty
- * `rawGrade` (future enrollment) stays grade-less.
+ * Empty `rawGrade` (future enrollment) stays outcome-less so prereq warnings
+ * still fire; an IP-graded row is genuinely underway and records `inProgress`.
  */
 function toSlotCourse(c: ParsedCourse): SlotCourse {
   const code = c.code.toLowerCase();
-  return c.rawGrade ? { code, grade: c.rawGrade } : { code };
+  return c.rawGrade ? { code, outcome: STATUS_TO_OUTCOME[c.status] } : { code };
 }
 
 export function applyTranscriptToPlan(

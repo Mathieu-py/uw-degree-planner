@@ -73,11 +73,28 @@ export const SLOT_POSITIONS = [
   "pre",
 ] as const satisfies readonly SlotPosition[];
 
+/**
+ * Outcome literals as a runtime tuple — single source for the zod enums in
+ * `storage.ts` / `server/validate.ts`; same literals in JSON and the DB CHECK.
+ */
+export const OUTCOME_VALUES = [
+  "credit",
+  "noCredit",
+  "inProgress",
+  "transfer",
+] as const;
+
+/**
+ * What a placed course's attempt amounted to. Deliberately coarse so raw
+ * grades are never persisted — the audit only needs pass/fail-shaped data.
+ */
+export type CourseOutcome = (typeof OUTCOME_VALUES)[number];
+
 export interface SlotCourse {
   /** Lowercase course code, matches the catalog form (e.g. "cs246"). */
   code: string;
-  /** Optional grade. "87", "CR", "IP", "WD", etc. Free-form for now. */
-  grade?: string;
+  /** Outcome of a taken/underway course. Absent = planned, not yet attempted. */
+  outcome?: CourseOutcome;
 }
 
 export interface PlanSlot {

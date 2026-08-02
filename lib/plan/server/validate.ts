@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SLOT_POSITIONS, STREAM_VALUES } from "../types";
+import { OUTCOME_VALUES, SLOT_POSITIONS, STREAM_VALUES } from "../types";
 import {
   MAX_ACKED_PER_PROGRAM,
   MAX_ACKED_TEXT_LEN,
@@ -20,7 +20,6 @@ const MAX_SPECIALIZATIONS = 16;
 export const MAX_ID_LEN = 128;
 const MAX_SCRAPE_VERSION_LEN = 64;
 const MAX_COURSE_CODE_LEN = 32;
-const MAX_GRADE_LEN = 16;
 // Acknowledged-requirement caps live in ./serialize (single source of truth,
 // also applied by toSnapshot's clamp).
 
@@ -42,7 +41,7 @@ const BoundedId = z.string().min(1).max(MAX_ID_LEN);
 
 const SlotCourseSchema = z.object({
   code: z.string().min(1).max(MAX_COURSE_CODE_LEN),
-  grade: z.string().max(MAX_GRADE_LEN).optional(),
+  outcome: z.enum(OUTCOME_VALUES).optional(),
 });
 
 const PlanSlotSchema = z.object({

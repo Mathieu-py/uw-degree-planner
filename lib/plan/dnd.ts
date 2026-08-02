@@ -119,7 +119,7 @@ export function readCourseDrag(e: {
  * Apply a course drop onto `toSlotId`, returning the next plan — or the **same
  * plan reference** for any no-op (invalid target, self-drop, duplicate, missing
  * source) so callers can skip a save. Moves carry the whole {@link SlotCourse}
- * so a transcript grade follows the course.
+ * so a transcript outcome follows the course.
  */
 export function applyCourseDrop(
   plan: LocalPlan,

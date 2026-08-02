@@ -84,25 +84,25 @@ describe("assembleServerPlan", () => {
         id: "c2",
         slot_id: "s1",
         course_code: "math115",
-        grade: null,
+        outcome: null,
         ordinal: 1,
       },
       {
         id: "c1",
         slot_id: "s1",
         course_code: "cs115",
-        grade: "87",
+        outcome: "credit",
         ordinal: 0,
       },
     ];
     const result = assembleServerPlan(PLAN, slots, courses);
     expect(result.slots[0].courses).toEqual([
-      { code: "cs115", grade: "87" },
+      { code: "cs115", outcome: "credit" },
       { code: "math115" },
     ]);
   });
 
-  it("omits the grade field on SlotCourse when the DB grade is null", () => {
+  it("omits the outcome field on SlotCourse when the DB outcome is null", () => {
     const slots: PlanSlotRow[] = [
       {
         id: "s1",
@@ -118,19 +118,18 @@ describe("assembleServerPlan", () => {
         id: "c1",
         slot_id: "s1",
         course_code: "cs115",
-        grade: null,
+        outcome: null,
         ordinal: 0,
       },
     ];
     const result = assembleServerPlan(PLAN, slots, courses);
     expect(result.slots[0].courses[0]).toEqual({ code: "cs115" });
-    expect("grade" in result.slots[0].courses[0]).toBe(false);
+    expect("outcome" in result.slots[0].courses[0]).toBe(false);
   });
 
-  it("preserves an empty-string grade rather than dropping the field", () => {
-    // The save RPC normalizes '' to null via `nullif(..., '')`, so this case
-    // should never originate from our own writes — but the read path must not
-    // assume that. If a row somehow has grade='' the field should round-trip.
+  it("drops a non-enum outcome from the DB", () => {
+    // The column CHECK makes this unreachable from our own writes; the read
+    // path still degrades to planned rather than propagating a bad value.
     const slots: PlanSlotRow[] = [
       {
         id: "s1",
@@ -146,12 +145,12 @@ describe("assembleServerPlan", () => {
         id: "c1",
         slot_id: "s1",
         course_code: "cs115",
-        grade: "",
+        outcome: "87",
         ordinal: 0,
       },
     ];
     const result = assembleServerPlan(PLAN, slots, courses);
-    expect(result.slots[0].courses[0]).toEqual({ code: "cs115", grade: "" });
+    expect(result.slots[0].courses[0]).toEqual({ code: "cs115" });
   });
 
   it("returns slots with empty courses array when no courses match", () => {
@@ -286,8 +285,8 @@ describe("mapSharedPlanJson", () => {
         is_coop: false,
         ordinal: 0,
         courses: [
-          { code: "cs115", grade: "87", ordinal: 0 },
-          { code: "math115", grade: null, ordinal: 1 },
+          { code: "cs115", outcome: "credit", ordinal: 0 },
+          { code: "math115", outcome: null, ordinal: 1 },
         ],
       },
       {
@@ -325,7 +324,7 @@ describe("mapSharedPlanJson", () => {
         termId: 1239,
         position: "1A",
         isCoop: false,
-        courses: [{ code: "cs115", grade: "87" }, { code: "math115" }],
+        courses: [{ code: "cs115", outcome: "credit" }, { code: "math115" }],
       },
       {
         id: "s2",
@@ -337,19 +336,19 @@ describe("mapSharedPlanJson", () => {
     ]);
   });
 
-  it("omits the grade field on SlotCourse when null (matches read-path semantics)", () => {
+  it("omits the outcome field on SlotCourse when null (matches read-path semantics)", () => {
     const result = mapSharedPlanJson({
       ...RPC_JSON,
       slots: [
         {
           ...RPC_JSON.slots[0],
-          courses: [{ code: "cs115", grade: null, ordinal: 0 }],
+          courses: [{ code: "cs115", outcome: null, ordinal: 0 }],
         },
       ],
     });
     const course = result?.slots[0].courses[0];
     expect(course).toEqual({ code: "cs115" });
-    expect(course && "grade" in course).toBe(false);
+    expect(course && "outcome" in course).toBe(false);
   });
 
   it("trusts the RPC's slot/course ordering (no client-side resort)", () => {
