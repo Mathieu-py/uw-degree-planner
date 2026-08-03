@@ -126,7 +126,6 @@ begin
       'specializationIds', '{}'::jsonb,
       'stream', 'regular',
       'startTermId', null,
-      'programScrapeVersion', null,
       'slots', '[]'::jsonb
     ));
     raise exception 'RPC fail: save_plan_state should have denied cross-owner write';
@@ -146,7 +145,6 @@ begin
     'specializationIds', '{}'::jsonb,
     'stream', 'stream8',
     'startTermId', 1239,
-    'programScrapeVersion', null,
     'slots', jsonb_build_array(
       jsonb_build_object(
         'id', gen_random_uuid()::text,
@@ -207,7 +205,6 @@ begin
     'specializationIds', jsonb_build_object('A', 'spec-a', 'B', 'spec-b'),
     'stream', 'stream8',
     'startTermId', 1239,
-    'programScrapeVersion', null,
     'slots', '[]'::jsonb
   ));
 

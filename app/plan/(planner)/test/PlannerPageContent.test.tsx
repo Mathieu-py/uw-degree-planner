@@ -32,7 +32,6 @@ const SERVER_PLAN: ServerPlan = {
   acknowledgedRequirements: {},
   stream: "regular",
   startTermId: 1239,
-  programScrapeVersion: null,
   updatedAt: "2026-05-24T00:00:00.000Z",
   slots: [],
 };

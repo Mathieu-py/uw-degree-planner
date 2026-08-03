@@ -89,7 +89,6 @@ function serverPlan(slots: PlanSlot[]): ServerPlan {
     acknowledgedRequirements: {},
     stream: "regular",
     startTermId: FALL,
-    programScrapeVersion: null,
     slots,
     updatedAt: "2026-01-01T00:00:00.000Z",
   };

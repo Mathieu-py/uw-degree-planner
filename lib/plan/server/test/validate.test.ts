@@ -26,7 +26,6 @@ function snapshot(over: Partial<PlanSnapshot> = {}): PlanSnapshot {
     acknowledgedRequirements: {},
     stream: "stream8",
     startTermId: 1239,
-    programScrapeVersion: null,
     slots: [slot(UUID_A)],
     ...over,
   };
@@ -173,7 +172,6 @@ describe("snapshotError — structural validation", () => {
           specializationIds: { "h-software-engineering-beng": "ai" },
           stream: null,
           startTermId: null,
-          programScrapeVersion: null,
         }),
       ),
     ).toBeNull();

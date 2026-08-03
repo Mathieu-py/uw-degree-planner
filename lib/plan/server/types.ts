@@ -18,8 +18,7 @@ export interface PlanSummary {
 
 /**
  * The full plan from `loadServerPlan`. Like `LocalPlan` but server-owned:
- * carries `id`, `name`, and `programScrapeVersion` (Phase 2+ choice-group
- * remap warnings). No `schemaVersion`; `updatedAt` is server-managed.
+ * carries `id` and `name`. No `schemaVersion`; `updatedAt` is server-managed.
  */
 export interface ServerPlan {
   id: string;
@@ -30,7 +29,6 @@ export interface ServerPlan {
   acknowledgedRequirements: Record<string, string[]>;
   stream: Stream | null;
   startTermId: TermId | null;
-  programScrapeVersion: string | null;
   slots: PlanSlot[];
   updatedAt: string;
 }
@@ -46,6 +44,5 @@ export interface PlanSnapshot {
   acknowledgedRequirements: Record<string, string[]>;
   stream: Stream | null;
   startTermId: TermId | null;
-  programScrapeVersion: string | null;
   slots: PlanSlot[];
 }

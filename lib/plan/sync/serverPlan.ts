@@ -13,8 +13,8 @@ export type SaveStatus =
 
 /**
  * Project a `ServerPlan` into the `LocalPlan` shape the planner consumes. Drops
- * server identity (`id`, `name`, `programScrapeVersion`), stamps the schema
- * version, and defaults a null `stream` (legacy/empty plans) to "regular".
+ * server identity (`id`, `name`), stamps the schema version, and defaults a
+ * null `stream` (legacy/empty plans) to "regular".
  */
 export function serverPlanToLocal(plan: ServerPlan): LocalPlan {
   return {

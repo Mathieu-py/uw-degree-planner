@@ -18,7 +18,6 @@ const PLAN: PlanRow = {
   acknowledged_requirements: {},
   system_of_study: "stream8",
   start_term_id: 1239,
-  program_scrape_version: "2026-05-01",
   share_token: null,
   updated_at: "2026-05-24T12:00:00.000Z",
 };
@@ -178,11 +177,10 @@ describe("assembleServerPlan", () => {
     expect(result.slots[1].courses).toEqual([]);
   });
 
-  it("preserves plan metadata (id, name, programScrapeVersion, updatedAt)", () => {
+  it("preserves plan metadata (id, name, updatedAt)", () => {
     const result = assembleServerPlan(PLAN, [], []);
     expect(result.id).toBe("plan-1");
     expect(result.name).toBe("My plan");
-    expect(result.programScrapeVersion).toBe("2026-05-01");
     expect(result.updatedAt).toBe("2026-05-24T12:00:00.000Z");
   });
 });
@@ -194,7 +192,6 @@ describe("toSnapshot", () => {
       specializationIds: {},
       stream: "regular",
       startTermId: 1239,
-      programScrapeVersion: "2026-05-01",
       slots: [
         {
           id: "s1",
@@ -211,7 +208,6 @@ describe("toSnapshot", () => {
       acknowledgedRequirements: {},
       stream: "regular",
       startTermId: 1239,
-      programScrapeVersion: "2026-05-01",
       slots: [
         {
           id: "s1",
@@ -226,17 +222,6 @@ describe("toSnapshot", () => {
     expect("id" in snap).toBe(false);
     expect("name" in snap).toBe(false);
     expect("updatedAt" in snap).toBe(false);
-  });
-
-  it("defaults programScrapeVersion to null when absent on input", () => {
-    const snap = toSnapshot({
-      programIds: [],
-      specializationIds: {},
-      stream: "regular",
-      startTermId: null,
-      slots: [],
-    });
-    expect(snap.programScrapeVersion).toBeNull();
   });
 
   it("clamps an over-cap acknowledgement so one bad entry doesn't fail the whole save (#11)", () => {
@@ -275,7 +260,6 @@ describe("mapSharedPlanJson", () => {
     specialization_ids: { "h-software-engineering-beng": "ai" },
     system_of_study: "stream8",
     start_term_id: 1239,
-    program_scrape_version: "2026-05-01",
     updated_at: "2026-05-24T12:00:00.000Z",
     slots: [
       {
@@ -315,7 +299,6 @@ describe("mapSharedPlanJson", () => {
       specializationIds: { "h-software-engineering-beng": "ai" },
       stream: "stream8",
       startTermId: 1239,
-      programScrapeVersion: "2026-05-01",
       updatedAt: "2026-05-24T12:00:00.000Z",
     });
     expect(result?.slots).toEqual([

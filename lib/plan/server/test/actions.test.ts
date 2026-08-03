@@ -104,7 +104,6 @@ const SNAPSHOT: PlanSnapshot = {
   acknowledgedRequirements: {},
   stream: "regular",
   startTermId: 1239,
-  programScrapeVersion: null,
   slots: [
     {
       // Real slot ids are UUIDs (the server snapshot validation enforces it).
@@ -147,7 +146,6 @@ describe("listPlans", () => {
               specialization_ids: {},
               system_of_study: "regular",
               start_term_id: 1239,
-              program_scrape_version: null,
               share_token: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
@@ -327,7 +325,6 @@ describe("loadServerPlan", () => {
               specialization_ids: {},
               system_of_study: "regular",
               start_term_id: 1239,
-              program_scrape_version: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
             error: null,
@@ -394,7 +391,6 @@ describe("loadServerPlan", () => {
               specialization_ids: {},
               system_of_study: null,
               start_term_id: null,
-              program_scrape_version: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
             error: null,
@@ -419,7 +415,6 @@ describe("loadServerPlan", () => {
               specialization_ids: {},
               system_of_study: null,
               start_term_id: null,
-              program_scrape_version: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
             error: null,
@@ -459,7 +454,6 @@ describe("loadServerPlan", () => {
               specialization_ids: {},
               system_of_study: null,
               start_term_id: null,
-              program_scrape_version: null,
               updated_at: "2026-05-24T00:00:00.000Z",
             },
             error: null,
@@ -494,7 +488,6 @@ describe("duplicatePlan", () => {
               specialization_ids: { "h-cs": "ai" },
               system_of_study: "regular",
               start_term_id: 1239,
-              program_scrape_version: "2026-05-01",
               updated_at: "2026-05-24T00:00:00.000Z",
             },
             error: null,
@@ -549,8 +542,8 @@ describe("duplicatePlan", () => {
     const { client } = installSourcePlanThenInsert();
     const result = await duplicatePlan("src");
     expect(result).toEqual({ ok: true, data: { id: "new-plan" } });
-    // The seeded snapshot carries the source's slots/courses and preserves
-    // programScrapeVersion — that's the "faithful clone" invariant.
+    // The seeded snapshot carries the source's slots/courses — the "faithful
+    // clone" invariant.
     expect(client.rpc).toHaveBeenCalledWith("save_plan_state", {
       p_plan_id: "new-plan",
       p_snapshot: expect.objectContaining({
@@ -558,7 +551,6 @@ describe("duplicatePlan", () => {
         specializationIds: { "h-cs": "ai" },
         stream: "regular",
         startTermId: 1239,
-        programScrapeVersion: "2026-05-01",
         slots: [
           expect.objectContaining({
             position: "1A",
