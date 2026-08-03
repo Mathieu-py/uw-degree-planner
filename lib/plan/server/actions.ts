@@ -35,7 +35,7 @@ import type { PlanSnapshot, PlanSummary, ServerPlan } from "./types";
 import { MAX_PLAN_NAME_LEN, MAX_PROGRAM_IDS, snapshotError } from "./validate";
 
 const PLAN_COLUMNS =
-  "id, name, program_ids, specialization_ids, system_of_study, start_term_id, program_scrape_version, share_token, updated_at";
+  "id, name, program_ids, specialization_ids, system_of_study, start_term_id, share_token, updated_at";
 
 const SLOT_COLUMNS = "id, plan_id, term_id, position, is_coop, ordinal";
 

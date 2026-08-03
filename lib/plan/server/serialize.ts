@@ -64,7 +64,6 @@ export interface PlanRow {
   acknowledged_requirements: Record<string, string[]> | null;
   system_of_study: Stream | null;
   start_term_id: number | null;
-  program_scrape_version: string | null;
   share_token: string | null;
   updated_at: string;
 }
@@ -157,7 +156,6 @@ export function assembleServerPlan(
     ),
     stream: plan.system_of_study,
     startTermId: plan.start_term_id,
-    programScrapeVersion: plan.program_scrape_version,
     slots,
     updatedAt: plan.updated_at,
   };
@@ -203,7 +201,6 @@ export function mapSharedPlanJson(input: unknown): ServerPlan | null {
     acknowledgedRequirements: toStringArrayRecord(j.acknowledged_requirements),
     stream: (j.system_of_study ?? null) as Stream | null,
     startTermId: (j.start_term_id ?? null) as number | null,
-    programScrapeVersion: (j.program_scrape_version ?? null) as string | null,
     slots,
     updatedAt: String(j.updated_at),
   };
@@ -250,7 +247,6 @@ export function toSnapshot(plan: {
   acknowledgedRequirements?: Record<string, string[]>;
   stream: Stream | null;
   startTermId: number | null;
-  programScrapeVersion?: string | null;
   slots: PlanSlot[];
 }): PlanSnapshot {
   return {
@@ -262,7 +258,6 @@ export function toSnapshot(plan: {
     ),
     stream: plan.stream,
     startTermId: plan.startTermId,
-    programScrapeVersion: plan.programScrapeVersion ?? null,
     slots: plan.slots,
   };
 }

@@ -18,7 +18,6 @@ export const MAX_PLAN_NAME_LEN = 120;
 const MAX_SPECIALIZATIONS = 16;
 /** Slugs/ids (program id, specialization key + value). */
 export const MAX_ID_LEN = 128;
-const MAX_SCRAPE_VERSION_LEN = 64;
 const MAX_COURSE_CODE_LEN = 32;
 // Acknowledged-requirement caps live in ./serialize (single source of truth,
 // also applied by toSnapshot's clamp).
@@ -88,7 +87,6 @@ const PlanSnapshotSchema = z
       .default({}),
     stream: z.enum(STREAM_VALUES).nullable(),
     startTermId: z.number().int().nullable(),
-    programScrapeVersion: z.string().max(MAX_SCRAPE_VERSION_LEN).nullable(),
     slots: z.array(PlanSlotSchema).max(MAX_SLOTS),
   })
   .refine(

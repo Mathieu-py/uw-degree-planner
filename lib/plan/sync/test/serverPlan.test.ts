@@ -12,7 +12,6 @@ const SERVER_PLAN: ServerPlan = {
   acknowledgedRequirements: {},
   stream: "stream8",
   startTermId: 1239,
-  programScrapeVersion: "2026-05-01",
   updatedAt: "2026-05-24T12:00:00.000Z",
   slots: [
     {
@@ -26,7 +25,7 @@ const SERVER_PLAN: ServerPlan = {
 };
 
 describe("serverPlanToLocal", () => {
-  it("drops id, name, programScrapeVersion and stamps schemaVersion", () => {
+  it("drops id and name, and stamps schemaVersion", () => {
     const local = serverPlanToLocal(SERVER_PLAN);
     expect(local).toEqual({
       schemaVersion: PLAN_SCHEMA_VERSION,
@@ -40,7 +39,6 @@ describe("serverPlanToLocal", () => {
     });
     expect("id" in local).toBe(false);
     expect("name" in local).toBe(false);
-    expect("programScrapeVersion" in local).toBe(false);
   });
 
   it("defaults a null server stream to 'regular'", () => {

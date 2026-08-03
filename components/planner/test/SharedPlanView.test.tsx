@@ -76,7 +76,6 @@ function makePlan(overrides: Partial<ServerPlan> = {}): ServerPlan {
     acknowledgedRequirements: {},
     stream: "regular",
     startTermId: 1239,
-    programScrapeVersion: null,
     slots: [],
     updatedAt: "2026-05-24T00:00:00.000Z",
     ...overrides,
