@@ -1,6 +1,6 @@
 {
   "termId": 1269,
-  "fetchedAt": "2026-11-01T14:15:37.409Z",
+  "fetchedAt": "2026-11-08T14:19:32.900Z",
   "courseCount": 10737,
   "courses": [
     {
@@ -780,13 +780,13 @@
       },
       "sections": [
         {
-          "id": 2954,
-          "enrollment_total": 28,
+          "id": 2953,
+          "enrollment_total": 320,
           "enrollment_capacity": 9999
         },
         {
-          "id": 2953,
-          "enrollment_total": 319,
+          "id": 2954,
+          "enrollment_total": 28,
           "enrollment_capacity": 9999
         }
       ]
@@ -833,12 +833,12 @@
       "sections": [
         {
           "id": 5048,
-          "enrollment_total": 546,
+          "enrollment_total": 547,
           "enrollment_capacity": 9999
         },
         {
           "id": 5049,
-          "enrollment_total": 51,
+          "enrollment_total": 49,
           "enrollment_capacity": 9999
         }
       ]
@@ -858,13 +858,13 @@
       },
       "sections": [
         {
-          "id": 5685,
-          "enrollment_total": 140,
+          "id": 5686,
+          "enrollment_total": 17,
           "enrollment_capacity": 9999
         },
         {
-          "id": 5686,
-          "enrollment_total": 17,
+          "id": 5685,
+          "enrollment_total": 140,
           "enrollment_capacity": 9999
         }
       ]
@@ -890,7 +890,7 @@
         },
         {
           "id": 6368,
-          "enrollment_total": 282,
+          "enrollment_total": 283,
           "enrollment_capacity": 9999
         }
       ]
@@ -4851,7 +4851,7 @@
         },
         {
           "id": 3234,
-          "enrollment_total": 197,
+          "enrollment_total": 195,
           "enrollment_capacity": 200
         }
       ],
@@ -4933,6 +4933,26 @@
           "enrollment_capacity": 37
         },
         {
+          "id": 3961,
+          "enrollment_total": 354,
+          "enrollment_capacity": 481
+        },
+        {
+          "id": 3959,
+          "enrollment_total": 34,
+          "enrollment_capacity": 37
+        },
+        {
+          "id": 3565,
+          "enrollment_total": 37,
+          "enrollment_capacity": 37
+        },
+        {
+          "id": 8336,
+          "enrollment_total": 29,
+          "enrollment_capacity": 37
+        },
+        {
           "id": 8407,
           "enrollment_total": 22,
           "enrollment_capacity": 37
@@ -4940,6 +4960,26 @@
         {
           "id": 8408,
           "enrollment_total": 22,
+          "enrollment_capacity": 37
+        },
+        {
+          "id": 8406,
+          "enrollment_total": 27,
+          "enrollment_capacity": 37
+        },
+        {
+          "id": 8337,
+          "enrollment_total": 33,
+          "enrollment_capacity": 37
+        },
+        {
+          "id": 8335,
+          "enrollment_total": 24,
+          "enrollment_capacity": 37
+        },
+        {
+          "id": 8334,
+          "enrollment_total": 26,
           "enrollment_capacity": 37
         },
         {
@@ -4953,49 +4993,9 @@
           "enrollment_capacity": 37
         },
         {
-          "id": 8337,
-          "enrollment_total": 33,
-          "enrollment_capacity": 37
-        },
-        {
-          "id": 8336,
-          "enrollment_total": 30,
-          "enrollment_capacity": 37
-        },
-        {
-          "id": 8335,
-          "enrollment_total": 24,
-          "enrollment_capacity": 37
-        },
-        {
-          "id": 8406,
-          "enrollment_total": 27,
-          "enrollment_capacity": 37
-        },
-        {
-          "id": 8334,
-          "enrollment_total": 26,
-          "enrollment_capacity": 37
-        },
-        {
           "id": 3566,
           "enrollment_total": 34,
           "enrollment_capacity": 37
-        },
-        {
-          "id": 3565,
-          "enrollment_total": 37,
-          "enrollment_capacity": 37
-        },
-        {
-          "id": 3959,
-          "enrollment_total": 35,
-          "enrollment_capacity": 37
-        },
-        {
-          "id": 3961,
-          "enrollment_total": 356,
-          "enrollment_capacity": 481
         }
       ],
       "units": 0.5,
@@ -5030,7 +5030,7 @@
       "sections": [
         {
           "id": 3569,
-          "enrollment_total": 539,
+          "enrollment_total": 538,
           "enrollment_capacity": 592
         }
       ],
@@ -5334,12 +5334,12 @@
       "sections": [
         {
           "id": 3670,
-          "enrollment_total": 237,
+          "enrollment_total": 232,
           "enrollment_capacity": 307
         },
         {
           "id": 3828,
-          "enrollment_total": 294,
+          "enrollment_total": 293,
           "enrollment_capacity": 308
         }
       ],
@@ -5512,19 +5512,9 @@
           "enrollment_capacity": 44
         },
         {
-          "id": 3640,
-          "enrollment_total": 43,
+          "id": 3637,
+          "enrollment_total": 42,
           "enrollment_capacity": 44
-        },
-        {
-          "id": 8343,
-          "enrollment_total": 32,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3644,
-          "enrollment_total": 45,
-          "enrollment_capacity": 46
         },
         {
           "id": 3641,
@@ -5538,8 +5528,23 @@
         },
         {
           "id": 3642,
-          "enrollment_total": 47,
+          "enrollment_total": 48,
           "enrollment_capacity": 46
+        },
+        {
+          "id": 3644,
+          "enrollment_total": 44,
+          "enrollment_capacity": 46
+        },
+        {
+          "id": 8343,
+          "enrollment_total": 32,
+          "enrollment_capacity": 44
+        },
+        {
+          "id": 3640,
+          "enrollment_total": 43,
+          "enrollment_capacity": 44
         },
         {
           "id": 3639,
@@ -5549,11 +5554,6 @@
         {
           "id": 3638,
           "enrollment_total": 43,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3637,
-          "enrollment_total": 42,
           "enrollment_capacity": 44
         }
       ],
@@ -5625,6 +5625,16 @@
           "enrollment_capacity": 44
         },
         {
+          "id": 3646,
+          "enrollment_total": 44,
+          "enrollment_capacity": 44
+        },
+        {
+          "id": 3647,
+          "enrollment_total": 44,
+          "enrollment_capacity": 44
+        },
+        {
           "id": 8345,
           "enrollment_total": 44,
           "enrollment_capacity": 44
@@ -5645,28 +5655,18 @@
           "enrollment_capacity": 44
         },
         {
-          "id": 3783,
-          "enrollment_total": 43,
-          "enrollment_capacity": 44
-        },
-        {
           "id": 3789,
           "enrollment_total": 22,
           "enrollment_capacity": 44
         },
         {
-          "id": 3648,
+          "id": 3783,
           "enrollment_total": 43,
           "enrollment_capacity": 44
         },
         {
-          "id": 3647,
-          "enrollment_total": 44,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3646,
-          "enrollment_total": 44,
+          "id": 3648,
+          "enrollment_total": 43,
           "enrollment_capacity": 44
         }
       ],
@@ -5719,6 +5719,16 @@
           "enrollment_capacity": 44
         },
         {
+          "id": 3650,
+          "enrollment_total": 43,
+          "enrollment_capacity": 44
+        },
+        {
+          "id": 3784,
+          "enrollment_total": 44,
+          "enrollment_capacity": 44
+        },
+        {
           "id": 3786,
           "enrollment_total": 44,
           "enrollment_capacity": 44
@@ -5726,11 +5736,6 @@
         {
           "id": 8347,
           "enrollment_total": 45,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3787,
-          "enrollment_total": 32,
           "enrollment_capacity": 44
         },
         {
@@ -5744,17 +5749,12 @@
           "enrollment_capacity": 44
         },
         {
+          "id": 3787,
+          "enrollment_total": 32,
+          "enrollment_capacity": 44
+        },
+        {
           "id": 3785,
-          "enrollment_total": 43,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3784,
-          "enrollment_total": 44,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3650,
           "enrollment_total": 43,
           "enrollment_capacity": 44
         }
@@ -5829,6 +5829,21 @@
           "enrollment_capacity": 44
         },
         {
+          "id": 3683,
+          "enrollment_total": 43,
+          "enrollment_capacity": 43
+        },
+        {
+          "id": 3684,
+          "enrollment_total": 43,
+          "enrollment_capacity": 43
+        },
+        {
+          "id": 3685,
+          "enrollment_total": 45,
+          "enrollment_capacity": 44
+        },
+        {
           "id": 3793,
           "enrollment_total": 44,
           "enrollment_capacity": 44
@@ -5859,29 +5874,14 @@
           "enrollment_capacity": 43
         },
         {
-          "id": 3795,
-          "enrollment_total": 20,
-          "enrollment_capacity": 21
-        },
-        {
           "id": 3796,
           "enrollment_total": 38,
           "enrollment_capacity": 38
         },
         {
-          "id": 3685,
-          "enrollment_total": 45,
-          "enrollment_capacity": 44
-        },
-        {
-          "id": 3684,
-          "enrollment_total": 43,
-          "enrollment_capacity": 43
-        },
-        {
-          "id": 3683,
-          "enrollment_total": 43,
-          "enrollment_capacity": 43
+          "id": 3795,
+          "enrollment_total": 20,
+          "enrollment_capacity": 21
         }
       ],
       "units": 0.25,
@@ -6223,12 +6223,22 @@
           "enrollment_capacity": 65
         },
         {
-          "id": 8351,
+          "id": 3314,
+          "enrollment_total": 64,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 3964,
           "enrollment_total": 65,
           "enrollment_capacity": 65
         },
         {
           "id": 3967,
+          "enrollment_total": 65,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 8351,
           "enrollment_total": 65,
           "enrollment_capacity": 65
         },
@@ -6239,16 +6249,6 @@
         },
         {
           "id": 3965,
-          "enrollment_total": 64,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 3964,
-          "enrollment_total": 65,
-          "enrollment_capacity": 65
-        },
-        {
-          "id": 3314,
           "enrollment_total": 64,
           "enrollment_capacity": 65
         }
@@ -6519,14 +6519,14 @@
           "enrollment_capacity": 147
         },
         {
-          "id": 8047,
-          "enrollment_total": 156,
-          "enrollment_capacity": 146
-        },
-        {
           "id": 8046,
           "enrollment_total": 156,
           "enrollment_capacity": 147
+        },
+        {
+          "id": 8047,
+          "enrollment_total": 156,
+          "enrollment_capacity": 146
         }
       ],
       "units": 0.5,
@@ -6679,13 +6679,8 @@
           "enrollment_capacity": 57
         },
         {
-          "id": 8352,
-          "enrollment_total": 50,
-          "enrollment_capacity": 57
-        },
-        {
-          "id": 3653,
-          "enrollment_total": 57,
+          "id": 3651,
+          "enrollment_total": 56,
           "enrollment_capacity": 57
         },
         {
@@ -6694,8 +6689,13 @@
           "enrollment_capacity": 57
         },
         {
-          "id": 3651,
-          "enrollment_total": 56,
+          "id": 3653,
+          "enrollment_total": 57,
+          "enrollment_capacity": 57
+        },
+        {
+          "id": 8352,
+          "enrollment_total": 50,
           "enrollment_capacity": 57
         }
       ],
@@ -7224,12 +7224,12 @@
           "enrollment_capacity": 76
         },
         {
-          "id": 4319,
+          "id": 4318,
           "enrollment_total": 76,
           "enrollment_capacity": 76
         },
         {
-          "id": 4318,
+          "id": 4319,
           "enrollment_total": 76,
           "enrollment_capacity": 76
         }
@@ -7278,8 +7278,8 @@
           "enrollment_capacity": 63
         },
         {
-          "id": 3798,
-          "enrollment_total": 60,
+          "id": 3326,
+          "enrollment_total": 55,
           "enrollment_capacity": 63
         },
         {
@@ -7288,8 +7288,8 @@
           "enrollment_capacity": 63
         },
         {
-          "id": 3326,
-          "enrollment_total": 55,
+          "id": 3798,
+          "enrollment_total": 60,
           "enrollment_capacity": 63
         }
       ],
@@ -7599,13 +7599,8 @@
           "enrollment_capacity": 45
         },
         {
-          "id": 8354,
-          "enrollment_total": 48,
-          "enrollment_capacity": 45
-        },
-        {
-          "id": 3331,
-          "enrollment_total": 57,
+          "id": 3329,
+          "enrollment_total": 60,
           "enrollment_capacity": 60
         },
         {
@@ -7614,8 +7609,13 @@
           "enrollment_capacity": 60
         },
         {
-          "id": 3329,
-          "enrollment_total": 60,
+          "id": 8354,
+          "enrollment_total": 48,
+          "enrollment_capacity": 45
+        },
+        {
+          "id": 3331,
+          "enrollment_total": 57,
           "enrollment_capacity": 60
         }
       ],
@@ -7734,6 +7734,11 @@
           "enrollment_capacity": 67
         },
         {
+          "id": 3687,
+          "enrollment_total": 66,
+          "enrollment_capacity": 67
+        },
+        {
           "id": 4330,
           "enrollment_total": 67,
           "enrollment_capacity": 67
@@ -7742,11 +7747,6 @@
           "id": 3688,
           "enrollment_total": 55,
           "enrollment_capacity": 66
-        },
-        {
-          "id": 3687,
-          "enrollment_total": 66,
-          "enrollment_capacity": 67
         }
       ],
       "units": 0.5,
@@ -7937,13 +7937,18 @@
           "enrollment_capacity": 70
         },
         {
+          "id": 8376,
+          "enrollment_total": 68,
+          "enrollment_capacity": 70
+        },
+        {
           "id": 8380,
           "enrollment_total": 58,
           "enrollment_capacity": 70
         },
         {
           "id": 8379,
-          "enrollment_total": 64,
+          "enrollment_total": 63,
           "enrollment_capacity": 70
         },
         {
@@ -7954,11 +7959,6 @@
         {
           "id": 8377,
           "enrollment_total": 53,
-          "enrollment_capacity": 70
-        },
-        {
-          "id": 8376,
-          "enrollment_total": 68,
           "enrollment_capacity": 70
         }
       ],
@@ -7985,13 +7985,18 @@
           "enrollment_capacity": 70
         },
         {
+          "id": 8383,
+          "enrollment_total": 63,
+          "enrollment_capacity": 70
+        },
+        {
           "id": 8387,
           "enrollment_total": 58,
           "enrollment_capacity": 70
         },
         {
           "id": 8386,
-          "enrollment_total": 64,
+          "enrollment_total": 63,
           "enrollment_capacity": 70
         },
         {
@@ -8002,11 +8007,6 @@
         {
           "id": 8384,
           "enrollment_total": 52,
-          "enrollment_capacity": 70
-        },
-        {
-          "id": 8383,
-          "enrollment_total": 63,
           "enrollment_capacity": 70
         }
       ],
@@ -8537,6 +8537,11 @@
           "enrollment_capacity": 36
         },
         {
+          "id": 3387,
+          "enrollment_total": 58,
+          "enrollment_capacity": 58
+        },
+        {
           "id": 8356,
           "enrollment_total": 35,
           "enrollment_capacity": 36
@@ -8545,11 +8550,6 @@
           "id": 3536,
           "enrollment_total": 39,
           "enrollment_capacity": 40
-        },
-        {
-          "id": 3387,
-          "enrollment_total": 58,
-          "enrollment_capacity": 58
         }
       ],
       "units": 0.5,
@@ -9107,7 +9107,33 @@
         "liked": 0.4166666666666667,
         "filled_count": 12
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3422,
+          "enrollment_total": 63,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 3423,
+          "enrollment_total": 26,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 3424,
+          "enrollment_total": 65,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 3486,
+          "enrollment_total": 65,
+          "enrollment_capacity": 65
+        },
+        {
+          "id": 3425,
+          "enrollment_total": 56,
+          "enrollment_capacity": 65
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -9467,7 +9493,7 @@
           "enrollment_capacity": 50
         },
         {
-          "id": 8358,
+          "id": 3803,
           "enrollment_total": 50,
           "enrollment_capacity": 50
         },
@@ -9477,7 +9503,7 @@
           "enrollment_capacity": 50
         },
         {
-          "id": 3803,
+          "id": 8358,
           "enrollment_total": 50,
           "enrollment_capacity": 50
         }
@@ -9546,13 +9572,8 @@
           "enrollment_capacity": 60
         },
         {
-          "id": 3456,
-          "enrollment_total": 49,
-          "enrollment_capacity": 60
-        },
-        {
-          "id": 3455,
-          "enrollment_total": 48,
+          "id": 3453,
+          "enrollment_total": 60,
           "enrollment_capacity": 60
         },
         {
@@ -9561,8 +9582,13 @@
           "enrollment_capacity": 60
         },
         {
-          "id": 3453,
-          "enrollment_total": 60,
+          "id": 3456,
+          "enrollment_total": 49,
+          "enrollment_capacity": 60
+        },
+        {
+          "id": 3455,
+          "enrollment_total": 48,
           "enrollment_capacity": 60
         }
       ],
@@ -9746,13 +9772,8 @@
           "enrollment_capacity": 60
         },
         {
-          "id": 3973,
+          "id": 3970,
           "enrollment_total": 60,
-          "enrollment_capacity": 60
-        },
-        {
-          "id": 3972,
-          "enrollment_total": 36,
           "enrollment_capacity": 60
         },
         {
@@ -9761,8 +9782,13 @@
           "enrollment_capacity": 60
         },
         {
-          "id": 3970,
+          "id": 3973,
           "enrollment_total": 60,
+          "enrollment_capacity": 60
+        },
+        {
+          "id": 3972,
+          "enrollment_total": 36,
           "enrollment_capacity": 60
         }
       ],
@@ -10186,14 +10212,14 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 6432,
-          "enrollment_total": 89,
-          "enrollment_capacity": 100
-        },
-        {
           "id": 6277,
           "enrollment_total": 111,
           "enrollment_capacity": 112
+        },
+        {
+          "id": 6432,
+          "enrollment_total": 89,
+          "enrollment_capacity": 100
         }
       ],
       "units": 0.5,
@@ -13190,9 +13216,9 @@
           "enrollment_capacity": 3
         },
         {
-          "id": 9069,
-          "enrollment_total": 1,
-          "enrollment_capacity": 5
+          "id": 8989,
+          "enrollment_total": 2,
+          "enrollment_capacity": 1
         },
         {
           "id": 9109,
@@ -13205,9 +13231,9 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 8989,
-          "enrollment_total": 2,
-          "enrollment_capacity": 1
+          "id": 9069,
+          "enrollment_total": 1,
+          "enrollment_capacity": 5
         }
       ]
     },
@@ -13247,7 +13273,7 @@
         },
         {
           "id": 3767,
-          "enrollment_total": 279,
+          "enrollment_total": 276,
           "enrollment_capacity": 460
         }
       ],
@@ -14108,7 +14134,7 @@
       "sections": [
         {
           "id": 8288,
-          "enrollment_total": 19,
+          "enrollment_total": 18,
           "enrollment_capacity": 40
         }
       ],
@@ -15305,12 +15331,12 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 3633,
+          "id": 4033,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
-          "id": 4033,
+          "id": 3633,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
@@ -15351,17 +15377,17 @@
       },
       "sections": [
         {
+          "id": 3559,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 3635,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
           "id": 3634,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 3559,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         }
@@ -16060,7 +16086,7 @@
         },
         {
           "id": 3284,
-          "enrollment_total": 87,
+          "enrollment_total": 86,
           "enrollment_capacity": 250
         }
       ],
@@ -16157,13 +16183,13 @@
           "enrollment_capacity": 45
         },
         {
-          "id": 3625,
-          "enrollment_total": 32,
+          "id": 3591,
+          "enrollment_total": 45,
           "enrollment_capacity": 45
         },
         {
-          "id": 3591,
-          "enrollment_total": 45,
+          "id": 3625,
+          "enrollment_total": 32,
           "enrollment_capacity": 45
         }
       ],
@@ -16290,13 +16316,13 @@
           "enrollment_capacity": 60
         },
         {
-          "id": 4045,
-          "enrollment_total": 31,
+          "id": 3520,
+          "enrollment_total": 57,
           "enrollment_capacity": 60
         },
         {
-          "id": 3520,
-          "enrollment_total": 57,
+          "id": 4045,
+          "enrollment_total": 31,
           "enrollment_capacity": 60
         }
       ],
@@ -16407,13 +16433,13 @@
           "enrollment_capacity": 40
         },
         {
-          "id": 3627,
-          "enrollment_total": 28,
+          "id": 4332,
+          "enrollment_total": 39,
           "enrollment_capacity": 40
         },
         {
-          "id": 4332,
-          "enrollment_total": 39,
+          "id": 3627,
+          "enrollment_total": 28,
           "enrollment_capacity": 40
         }
       ],
@@ -16465,12 +16491,12 @@
           "enrollment_capacity": 50
         },
         {
-          "id": 3630,
+          "id": 3631,
           "enrollment_total": 50,
           "enrollment_capacity": 50
         },
         {
-          "id": 3631,
+          "id": 3630,
           "enrollment_total": 50,
           "enrollment_capacity": 50
         }
@@ -17780,8 +17806,8 @@
           "enrollment_capacity": 15
         },
         {
-          "id": 4976,
-          "enrollment_total": 10,
+          "id": 4975,
+          "enrollment_total": 13,
           "enrollment_capacity": 15
         },
         {
@@ -17790,8 +17816,8 @@
           "enrollment_capacity": 51
         },
         {
-          "id": 4975,
-          "enrollment_total": 13,
+          "id": 4976,
+          "enrollment_total": 10,
           "enrollment_capacity": 15
         }
       ],
@@ -18994,8 +19020,8 @@
           "enrollment_capacity": 15
         },
         {
-          "id": 4858,
-          "enrollment_total": 13,
+          "id": 4857,
+          "enrollment_total": 12,
           "enrollment_capacity": 15
         },
         {
@@ -19004,8 +19030,8 @@
           "enrollment_capacity": 15
         },
         {
-          "id": 4857,
-          "enrollment_total": 12,
+          "id": 4858,
+          "enrollment_total": 13,
           "enrollment_capacity": 15
         }
       ]
@@ -19588,13 +19614,8 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 4167,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4178,
-          "enrollment_total": 24,
+          "id": 4156,
+          "enrollment_total": 25,
           "enrollment_capacity": 25
         },
         {
@@ -19603,68 +19624,13 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 4177,
-          "enrollment_total": 22,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4162,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4160,
-          "enrollment_total": 22,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4176,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4158,
-          "enrollment_total": 21,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4173,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4179,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 4157,
           "enrollment_total": 25,
           "enrollment_capacity": 25
         },
         {
-          "id": 4164,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 4172,
           "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4163,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4159,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4165,
-          "enrollment_total": 20,
           "enrollment_capacity": 25
         },
         {
@@ -19688,6 +19654,56 @@
           "enrollment_capacity": 25
         },
         {
+          "id": 4167,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4178,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4177,
+          "enrollment_total": 22,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4162,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4176,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4173,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4179,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4164,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4163,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4165,
+          "enrollment_total": 20,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 4168,
           "enrollment_total": 23,
           "enrollment_capacity": 25
@@ -19703,8 +19719,18 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 4156,
-          "enrollment_total": 25,
+          "id": 4160,
+          "enrollment_total": 22,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4159,
+          "enrollment_total": 21,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4158,
+          "enrollment_total": 21,
           "enrollment_capacity": 25
         }
       ],
@@ -20315,7 +20341,7 @@
       "sections": [
         {
           "id": 7614,
-          "enrollment_total": 245,
+          "enrollment_total": 244,
           "enrollment_capacity": 290
         }
       ],
@@ -20607,7 +20633,7 @@
       "sections": [
         {
           "id": 7652,
-          "enrollment_total": 202,
+          "enrollment_total": 201,
           "enrollment_capacity": 200
         }
       ],
@@ -21630,7 +21656,7 @@
         },
         {
           "id": 6928,
-          "enrollment_total": 19,
+          "enrollment_total": 18,
           "enrollment_capacity": 35
         }
       ],
@@ -21658,7 +21684,7 @@
         },
         {
           "id": 6910,
-          "enrollment_total": 19,
+          "enrollment_total": 18,
           "enrollment_capacity": 35
         }
       ],
@@ -21686,7 +21712,7 @@
         },
         {
           "id": 6911,
-          "enrollment_total": 19,
+          "enrollment_total": 18,
           "enrollment_capacity": 35
         }
       ],
@@ -22512,7 +22538,7 @@
       "sections": [
         {
           "id": 4727,
-          "enrollment_total": 27,
+          "enrollment_total": 28,
           "enrollment_capacity": 70
         },
         {
@@ -22538,7 +22564,7 @@
       "sections": [
         {
           "id": 4692,
-          "enrollment_total": 27,
+          "enrollment_total": 28,
           "enrollment_capacity": 70
         },
         {
@@ -22564,7 +22590,7 @@
       "sections": [
         {
           "id": 4693,
-          "enrollment_total": 27,
+          "enrollment_total": 28,
           "enrollment_capacity": 70
         },
         {
@@ -22650,7 +22676,7 @@
       "sections": [
         {
           "id": 4696,
-          "enrollment_total": 27,
+          "enrollment_total": 28,
           "enrollment_capacity": 70
         },
         {
@@ -22931,7 +22957,7 @@
       "sections": [
         {
           "id": 7046,
-          "enrollment_total": 314,
+          "enrollment_total": 312,
           "enrollment_capacity": 320
         }
       ],
@@ -23017,19 +23043,19 @@
           "enrollment_capacity": 446
         },
         {
+          "id": 7104,
+          "enrollment_total": 443,
+          "enrollment_capacity": 446
+        },
+        {
           "id": 7325,
-          "enrollment_total": 324,
+          "enrollment_total": 323,
           "enrollment_capacity": 340
         },
         {
           "id": 7374,
           "enrollment_total": 334,
           "enrollment_capacity": 340
-        },
-        {
-          "id": 7104,
-          "enrollment_total": 445,
-          "enrollment_capacity": 446
         }
       ],
       "units": 0.5,
@@ -23055,6 +23081,11 @@
           "enrollment_capacity": 32
         },
         {
+          "id": 7066,
+          "enrollment_total": 32,
+          "enrollment_capacity": 32
+        },
+        {
           "id": 7073,
           "enrollment_total": 32,
           "enrollment_capacity": 32
@@ -23066,11 +23097,6 @@
         },
         {
           "id": 7067,
-          "enrollment_total": 32,
-          "enrollment_capacity": 32
-        },
-        {
-          "id": 7082,
           "enrollment_total": 32,
           "enrollment_capacity": 32
         },
@@ -23125,11 +23151,6 @@
           "enrollment_capacity": 32
         },
         {
-          "id": 7314,
-          "enrollment_total": 32,
-          "enrollment_capacity": 32
-        },
-        {
           "id": 7312,
           "enrollment_total": 32,
           "enrollment_capacity": 32
@@ -23155,12 +23176,32 @@
           "enrollment_capacity": 32
         },
         {
+          "id": 7071,
+          "enrollment_total": 25,
+          "enrollment_capacity": 24
+        },
+        {
+          "id": 7079,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 7315,
+          "enrollment_total": 19,
+          "enrollment_capacity": 19
+        },
+        {
           "id": 7088,
           "enrollment_total": 31,
           "enrollment_capacity": 32
         },
         {
           "id": 7077,
+          "enrollment_total": 31,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7082,
           "enrollment_total": 31,
           "enrollment_capacity": 32
         },
@@ -23175,29 +23216,14 @@
           "enrollment_capacity": 32
         },
         {
-          "id": 7084,
+          "id": 7076,
           "enrollment_total": 31,
           "enrollment_capacity": 32
         },
         {
-          "id": 7076,
-          "enrollment_total": 30,
+          "id": 7314,
+          "enrollment_total": 31,
           "enrollment_capacity": 32
-        },
-        {
-          "id": 7315,
-          "enrollment_total": 19,
-          "enrollment_capacity": 19
-        },
-        {
-          "id": 7071,
-          "enrollment_total": 25,
-          "enrollment_capacity": 24
-        },
-        {
-          "id": 7079,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
         },
         {
           "id": 7087,
@@ -23205,8 +23231,8 @@
           "enrollment_capacity": 24
         },
         {
-          "id": 7066,
-          "enrollment_total": 32,
+          "id": 7084,
+          "enrollment_total": 30,
           "enrollment_capacity": 32
         }
       ],
@@ -23620,13 +23646,33 @@
           "enrollment_capacity": 32
         },
         {
+          "id": 7092,
+          "enrollment_total": 32,
+          "enrollment_capacity": 32
+        },
+        {
           "id": 7140,
           "enrollment_total": 32,
           "enrollment_capacity": 32
         },
         {
-          "id": 7094,
-          "enrollment_total": 29,
+          "id": 7100,
+          "enrollment_total": 30,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 7098,
+          "enrollment_total": 31,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7102,
+          "enrollment_total": 31,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7112,
+          "enrollment_total": 31,
           "enrollment_capacity": 32
         },
         {
@@ -23640,23 +23686,13 @@
           "enrollment_capacity": 32
         },
         {
-          "id": 7097,
-          "enrollment_total": 30,
-          "enrollment_capacity": 32
+          "id": 7099,
+          "enrollment_total": 29,
+          "enrollment_capacity": 30
         },
         {
           "id": 7103,
           "enrollment_total": 26,
-          "enrollment_capacity": 32
-        },
-        {
-          "id": 7098,
-          "enrollment_total": 31,
-          "enrollment_capacity": 32
-        },
-        {
-          "id": 7096,
-          "enrollment_total": 30,
           "enrollment_capacity": 32
         },
         {
@@ -23665,39 +23701,9 @@
           "enrollment_capacity": 32
         },
         {
-          "id": 7102,
-          "enrollment_total": 31,
-          "enrollment_capacity": 32
-        },
-        {
           "id": 7141,
           "enrollment_total": 30,
           "enrollment_capacity": 32
-        },
-        {
-          "id": 7093,
-          "enrollment_total": 27,
-          "enrollment_capacity": 32
-        },
-        {
-          "id": 7112,
-          "enrollment_total": 31,
-          "enrollment_capacity": 32
-        },
-        {
-          "id": 7095,
-          "enrollment_total": 28,
-          "enrollment_capacity": 32
-        },
-        {
-          "id": 7099,
-          "enrollment_total": 29,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 7100,
-          "enrollment_total": 30,
-          "enrollment_capacity": 30
         },
         {
           "id": 7250,
@@ -23710,8 +23716,28 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 7092,
-          "enrollment_total": 32,
+          "id": 7097,
+          "enrollment_total": 30,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7096,
+          "enrollment_total": 29,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7095,
+          "enrollment_total": 28,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7094,
+          "enrollment_total": 29,
+          "enrollment_capacity": 32
+        },
+        {
+          "id": 7093,
+          "enrollment_total": 27,
           "enrollment_capacity": 32
         }
       ],
@@ -28733,17 +28759,17 @@
           "enrollment_capacity": 5
         },
         {
+          "id": 7114,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 7187,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
         {
           "id": 7186,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 7114,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
@@ -28784,12 +28810,12 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 7148,
+          "id": 7144,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
-          "id": 7144,
+          "id": 7148,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         }
@@ -29774,7 +29800,7 @@
       "sections": [
         {
           "id": 4798,
-          "enrollment_total": 121,
+          "enrollment_total": 119,
           "enrollment_capacity": 120
         }
       ],
@@ -29874,7 +29900,7 @@
       "sections": [
         {
           "id": 8152,
-          "enrollment_total": 122,
+          "enrollment_total": 120,
           "enrollment_capacity": 134
         }
       ],
@@ -29940,7 +29966,7 @@
       "sections": [
         {
           "id": 4803,
-          "enrollment_total": 121,
+          "enrollment_total": 119,
           "enrollment_capacity": 120
         }
       ],
@@ -30087,7 +30113,7 @@
       "sections": [
         {
           "id": 8153,
-          "enrollment_total": 122,
+          "enrollment_total": 120,
           "enrollment_capacity": 132
         }
       ],
@@ -30123,7 +30149,7 @@
       "sections": [
         {
           "id": 4847,
-          "enrollment_total": 92,
+          "enrollment_total": 91,
           "enrollment_capacity": 96
         }
       ],
@@ -30369,7 +30395,7 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 5034,
+          "id": 4851,
           "enrollment_total": 22,
           "enrollment_capacity": 25
         },
@@ -30379,7 +30405,7 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 4851,
+          "id": 5034,
           "enrollment_total": 22,
           "enrollment_capacity": 25
         }
@@ -30564,7 +30590,28 @@
         "liked": 0.3888888888888889,
         "filled_count": 18
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4902,
+          "enrollment_total": 20,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 5207,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 8207,
+          "enrollment_total": 22,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 5208,
+          "enrollment_total": 22,
+          "enrollment_capacity": 25
+        }
+      ],
       "units": 0.25,
       "antireqCodes": [],
       "prereqAst": {
@@ -31041,17 +31088,17 @@
           "enrollment_capacity": 25
         },
         {
+          "id": 4966,
+          "enrollment_total": 18,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 5127,
           "enrollment_total": 26,
           "enrollment_capacity": 25
         },
         {
           "id": 5393,
-          "enrollment_total": 18,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 4966,
           "enrollment_total": 18,
           "enrollment_capacity": 25
         }
@@ -31960,7 +32007,13 @@
         "liked": 0.6666666666666666,
         "filled_count": 3
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5349,
+          "enrollment_total": 6,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "geron245",
@@ -32829,11 +32882,6 @@
       },
       "sections": [
         {
-          "id": 6360,
-          "enrollment_total": 177,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 6060,
           "enrollment_total": 5,
           "enrollment_capacity": 20
@@ -32842,6 +32890,11 @@
           "id": 6583,
           "enrollment_total": 10,
           "enrollment_capacity": 20
+        },
+        {
+          "id": 6360,
+          "enrollment_total": 177,
+          "enrollment_capacity": 1000
         },
         {
           "id": 9119,
@@ -32902,6 +32955,11 @@
           "enrollment_capacity": 1000
         },
         {
+          "id": 6639,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1000
+        },
+        {
           "id": 6145,
           "enrollment_total": 42,
           "enrollment_capacity": 1000
@@ -32914,11 +32972,6 @@
         {
           "id": 6217,
           "enrollment_total": 42,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6639,
-          "enrollment_total": 1,
           "enrollment_capacity": 1000
         }
       ],
@@ -33193,24 +33246,24 @@
           "enrollment_capacity": 1000
         },
         {
-          "id": 6742,
-          "enrollment_total": 28,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 6743,
           "enrollment_total": 29,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6741,
-          "enrollment_total": 27,
           "enrollment_capacity": 1000
         },
         {
           "id": 6247,
           "enrollment_total": 2,
           "enrollment_capacity": 1020
+        },
+        {
+          "id": 6742,
+          "enrollment_total": 28,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6741,
+          "enrollment_total": 27,
+          "enrollment_capacity": 1000
         }
       ],
       "units": 0.5,
@@ -33598,11 +33651,6 @@
       },
       "sections": [
         {
-          "id": 6088,
-          "enrollment_total": 27,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 8921,
           "enrollment_total": 31,
           "enrollment_capacity": 1000
@@ -33610,6 +33658,11 @@
         {
           "id": 6090,
           "enrollment_total": 29,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6088,
+          "enrollment_total": 27,
           "enrollment_capacity": 1000
         },
         {
@@ -33692,13 +33745,13 @@
       },
       "sections": [
         {
-          "id": 6245,
-          "enrollment_total": 1,
+          "id": 6101,
+          "enrollment_total": 2,
           "enrollment_capacity": 1000
         },
         {
-          "id": 6101,
-          "enrollment_total": 2,
+          "id": 6245,
+          "enrollment_total": 1,
           "enrollment_capacity": 1000
         },
         {
@@ -33915,6 +33968,11 @@
           "enrollment_capacity": 1005
         },
         {
+          "id": 6117,
+          "enrollment_total": 3,
+          "enrollment_capacity": 1000
+        },
+        {
           "id": 6220,
           "enrollment_total": 2,
           "enrollment_capacity": 1000
@@ -33922,11 +33980,6 @@
         {
           "id": 6119,
           "enrollment_total": 2,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6117,
-          "enrollment_total": 3,
           "enrollment_capacity": 1000
         },
         {
@@ -33951,13 +34004,13 @@
       },
       "sections": [
         {
-          "id": 6281,
-          "enrollment_total": 29,
+          "id": 8922,
+          "enrollment_total": 31,
           "enrollment_capacity": 1000
         },
         {
-          "id": 8922,
-          "enrollment_total": 31,
+          "id": 6281,
+          "enrollment_total": 29,
           "enrollment_capacity": 1000
         },
         {
@@ -34380,6 +34433,16 @@
       },
       "sections": [
         {
+          "id": 6334,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
+          "id": 6337,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1000
+        },
+        {
           "id": 6336,
           "enrollment_total": 0,
           "enrollment_capacity": 1000
@@ -34390,17 +34453,7 @@
           "enrollment_capacity": 1000
         },
         {
-          "id": 6337,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 6335,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1000
-        },
-        {
-          "id": 6334,
           "enrollment_total": 0,
           "enrollment_capacity": 1000
         }
@@ -35643,13 +35696,13 @@
           "enrollment_capacity": 1000
         },
         {
-          "id": 6820,
-          "enrollment_total": 6,
+          "id": 6064,
+          "enrollment_total": 3,
           "enrollment_capacity": 1000
         },
         {
-          "id": 6064,
-          "enrollment_total": 3,
+          "id": 6820,
+          "enrollment_total": 6,
           "enrollment_capacity": 1000
         }
       ]
@@ -36375,14 +36428,14 @@
           "enrollment_capacity": 1000
         },
         {
-          "id": 8961,
-          "enrollment_total": 6,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 6586,
           "enrollment_total": 5,
           "enrollment_capacity": 1005
+        },
+        {
+          "id": 8961,
+          "enrollment_total": 6,
+          "enrollment_capacity": 1000
         }
       ],
       "units": 0.5,
@@ -37083,7 +37136,7 @@
       "sections": [
         {
           "id": 7540,
-          "enrollment_total": 51,
+          "enrollment_total": 50,
           "enrollment_capacity": 75
         }
       ],
@@ -37235,7 +37288,7 @@
       "sections": [
         {
           "id": 7673,
-          "enrollment_total": 51,
+          "enrollment_total": 47,
           "enrollment_capacity": 60
         }
       ],
@@ -37346,12 +37399,12 @@
       "sections": [
         {
           "id": 4528,
-          "enrollment_total": 114,
+          "enrollment_total": 113,
           "enrollment_capacity": 120
         },
         {
           "id": 8825,
-          "enrollment_total": 118,
+          "enrollment_total": 117,
           "enrollment_capacity": 120
         }
       ],
@@ -37417,8 +37470,13 @@
       "sections": [
         {
           "id": 4532,
-          "enrollment_total": 112,
+          "enrollment_total": 111,
           "enrollment_capacity": 120
+        },
+        {
+          "id": 4537,
+          "enrollment_total": 129,
+          "enrollment_capacity": 150
         },
         {
           "id": 4542,
@@ -37436,39 +37494,34 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 5356,
-          "enrollment_total": 126,
-          "enrollment_capacity": 145
-        },
-        {
-          "id": 8827,
-          "enrollment_total": 115,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 4641,
-          "enrollment_total": 112,
-          "enrollment_capacity": 120
-        },
-        {
           "id": 4577,
-          "enrollment_total": 128,
+          "enrollment_total": 127,
           "enrollment_capacity": 120
         },
         {
           "id": 4762,
-          "enrollment_total": 108,
+          "enrollment_total": 107,
           "enrollment_capacity": 100
         },
         {
           "id": 4552,
-          "enrollment_total": 128,
+          "enrollment_total": 124,
           "enrollment_capacity": 120
         },
         {
-          "id": 4537,
-          "enrollment_total": 130,
-          "enrollment_capacity": 150
+          "id": 5356,
+          "enrollment_total": 124,
+          "enrollment_capacity": 145
+        },
+        {
+          "id": 8827,
+          "enrollment_total": 114,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 4641,
+          "enrollment_total": 111,
+          "enrollment_capacity": 120
         }
       ],
       "units": 0.5,
@@ -37490,12 +37543,12 @@
       "sections": [
         {
           "id": 4980,
-          "enrollment_total": 114,
+          "enrollment_total": 113,
           "enrollment_capacity": 120
         },
         {
           "id": 8831,
-          "enrollment_total": 119,
+          "enrollment_total": 118,
           "enrollment_capacity": 120
         }
       ],
@@ -37584,13 +37637,13 @@
       },
       "sections": [
         {
-          "id": 8834,
-          "enrollment_total": 116,
+          "id": 4983,
+          "enrollment_total": 111,
           "enrollment_capacity": 120
         },
         {
-          "id": 4983,
-          "enrollment_total": 112,
+          "id": 8834,
+          "enrollment_total": 115,
           "enrollment_capacity": 120
         }
       ],
@@ -38538,7 +38591,13 @@
         "liked": 0.6,
         "filled_count": 15
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4887,
+          "enrollment_total": 70,
+          "enrollment_capacity": 75
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -40293,14 +40352,14 @@
           "enrollment_capacity": 3
         },
         {
-          "id": 9051,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 8970,
           "enrollment_total": 2,
           "enrollment_capacity": 2
+        },
+        {
+          "id": 9051,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
         }
       ]
     },
@@ -40446,7 +40505,12 @@
       "sections": [
         {
           "id": 6961,
-          "enrollment_total": 430,
+          "enrollment_total": 428,
+          "enrollment_capacity": 446
+        },
+        {
+          "id": 7327,
+          "enrollment_total": 336,
           "enrollment_capacity": 446
         },
         {
@@ -40456,12 +40520,7 @@
         },
         {
           "id": 7328,
-          "enrollment_total": 440,
-          "enrollment_capacity": 446
-        },
-        {
-          "id": 7327,
-          "enrollment_total": 337,
+          "enrollment_total": 439,
           "enrollment_capacity": 446
         }
       ],
@@ -40486,41 +40545,16 @@
       "sections": [
         {
           "id": 6962,
-          "enrollment_total": 111,
+          "enrollment_total": 109,
           "enrollment_capacity": 120
         },
         {
-          "id": 7340,
+          "id": 7334,
           "enrollment_total": 105,
           "enrollment_capacity": 120
         },
         {
-          "id": 7338,
-          "enrollment_total": 116,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 8949,
-          "enrollment_total": 110,
-          "enrollment_capacity": 120
-        },
-        {
           "id": 7343,
-          "enrollment_total": 113,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 7337,
-          "enrollment_total": 116,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 7342,
-          "enrollment_total": 117,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 7341,
           "enrollment_total": 113,
           "enrollment_capacity": 120
         },
@@ -40530,18 +40564,43 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 7336,
+          "id": 7341,
           "enrollment_total": 113,
           "enrollment_capacity": 120
         },
         {
-          "id": 7335,
+          "id": 7342,
           "enrollment_total": 117,
           "enrollment_capacity": 120
         },
         {
-          "id": 7334,
+          "id": 7340,
           "enrollment_total": 105,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 8949,
+          "enrollment_total": 110,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 7338,
+          "enrollment_total": 116,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 7337,
+          "enrollment_total": 116,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 7336,
+          "enrollment_total": 112,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 7335,
+          "enrollment_total": 116,
           "enrollment_capacity": 120
         }
       ],
@@ -40585,7 +40644,7 @@
       "sections": [
         {
           "id": 7297,
-          "enrollment_total": 185,
+          "enrollment_total": 183,
           "enrollment_capacity": 240
         },
         {
@@ -40628,12 +40687,12 @@
       "sections": [
         {
           "id": 7299,
-          "enrollment_total": 91,
+          "enrollment_total": 90,
           "enrollment_capacity": 98
         },
         {
           "id": 7300,
-          "enrollment_total": 94,
+          "enrollment_total": 93,
           "enrollment_capacity": 98
         }
       ],
@@ -41234,7 +41293,7 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 7912,
+          "id": 7118,
           "enrollment_total": 32,
           "enrollment_capacity": 30
         },
@@ -41249,7 +41308,7 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 7118,
+          "id": 7912,
           "enrollment_total": 32,
           "enrollment_capacity": 30
         }
@@ -41652,6 +41711,11 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 6986,
+          "enrollment_total": 21,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 7276,
           "enrollment_total": 22,
           "enrollment_capacity": 20
@@ -41659,11 +41723,6 @@
         {
           "id": 7202,
           "enrollment_total": 15,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 6986,
-          "enrollment_total": 21,
           "enrollment_capacity": 20
         }
       ],
@@ -42123,13 +42182,18 @@
           "enrollment_capacity": 42
         },
         {
-          "id": 7351,
-          "enrollment_total": 41,
+          "id": 7345,
+          "enrollment_total": 42,
           "enrollment_capacity": 42
         },
         {
-          "id": 7353,
-          "enrollment_total": 38,
+          "id": 7349,
+          "enrollment_total": 42,
+          "enrollment_capacity": 42
+        },
+        {
+          "id": 7350,
+          "enrollment_total": 42,
           "enrollment_capacity": 42
         },
         {
@@ -42143,23 +42207,23 @@
           "enrollment_capacity": 42
         },
         {
-          "id": 7350,
-          "enrollment_total": 42,
-          "enrollment_capacity": 42
-        },
-        {
-          "id": 7348,
-          "enrollment_total": 41,
-          "enrollment_capacity": 42
-        },
-        {
           "id": 7352,
           "enrollment_total": 41,
           "enrollment_capacity": 42
         },
         {
-          "id": 7349,
-          "enrollment_total": 42,
+          "id": 7353,
+          "enrollment_total": 38,
+          "enrollment_capacity": 42
+        },
+        {
+          "id": 7351,
+          "enrollment_total": 41,
+          "enrollment_capacity": 42
+        },
+        {
+          "id": 7348,
+          "enrollment_total": 41,
           "enrollment_capacity": 42
         },
         {
@@ -42170,11 +42234,6 @@
         {
           "id": 7346,
           "enrollment_total": 35,
-          "enrollment_capacity": 42
-        },
-        {
-          "id": 7345,
-          "enrollment_total": 42,
           "enrollment_capacity": 42
         },
         {
@@ -43476,6 +43535,11 @@
           "enrollment_capacity": 70
         },
         {
+          "id": 7252,
+          "enrollment_total": 13,
+          "enrollment_capacity": 70
+        },
+        {
           "id": 7400,
           "enrollment_total": 9,
           "enrollment_capacity": 40
@@ -43484,11 +43548,6 @@
           "id": 7254,
           "enrollment_total": 20,
           "enrollment_capacity": 40
-        },
-        {
-          "id": 7252,
-          "enrollment_total": 13,
-          "enrollment_capacity": 70
         }
       ],
       "units": 0.5,
@@ -45419,7 +45478,7 @@
       "sections": [
         {
           "id": 4835,
-          "enrollment_total": 130,
+          "enrollment_total": 129,
           "enrollment_capacity": 150
         }
       ],
@@ -45455,7 +45514,7 @@
       "sections": [
         {
           "id": 4838,
-          "enrollment_total": 130,
+          "enrollment_total": 129,
           "enrollment_capacity": 150
         },
         {
@@ -49279,7 +49338,7 @@
       "sections": [
         {
           "id": 3622,
-          "enrollment_total": 639,
+          "enrollment_total": 638,
           "enrollment_capacity": 650
         }
       ],
@@ -51529,14 +51588,14 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 6605,
-          "enrollment_total": 88,
-          "enrollment_capacity": 150
-        },
-        {
           "id": 6501,
           "enrollment_total": 108,
           "enrollment_capacity": 120
+        },
+        {
+          "id": 6605,
+          "enrollment_total": 88,
+          "enrollment_capacity": 150
         }
       ],
       "units": 0.5,
@@ -54255,7 +54314,7 @@
       "sections": [
         {
           "id": 6421,
-          "enrollment_total": 202,
+          "enrollment_total": 200,
           "enrollment_capacity": 235
         },
         {
@@ -54451,7 +54510,13 @@
         "liked": 0.5,
         "filled_count": 4
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 6229,
+          "enrollment_total": 37,
+          "enrollment_capacity": 42
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "afm276",
@@ -54667,6 +54732,11 @@
           "enrollment_capacity": 28
         },
         {
+          "id": 3868,
+          "enrollment_total": 27,
+          "enrollment_capacity": 28
+        },
+        {
           "id": 4366,
           "enrollment_total": 28,
           "enrollment_capacity": 28
@@ -54677,13 +54747,13 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 3874,
+          "id": 3870,
           "enrollment_total": 28,
           "enrollment_capacity": 28
         },
         {
-          "id": 3873,
-          "enrollment_total": 18,
+          "id": 3874,
+          "enrollment_total": 28,
           "enrollment_capacity": 28
         },
         {
@@ -54692,18 +54762,8 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 3872,
-          "enrollment_total": 27,
-          "enrollment_capacity": 28
-        },
-        {
-          "id": 3878,
-          "enrollment_total": 27,
-          "enrollment_capacity": 28
-        },
-        {
-          "id": 4027,
-          "enrollment_total": 27,
+          "id": 3869,
+          "enrollment_total": 28,
           "enrollment_capacity": 28
         },
         {
@@ -54717,13 +54777,28 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 4362,
+          "id": 3875,
+          "enrollment_total": 28,
+          "enrollment_capacity": 28
+        },
+        {
+          "id": 3873,
+          "enrollment_total": 18,
+          "enrollment_capacity": 28
+        },
+        {
+          "id": 3878,
           "enrollment_total": 27,
           "enrollment_capacity": 28
         },
         {
-          "id": 3875,
-          "enrollment_total": 28,
+          "id": 4027,
+          "enrollment_total": 27,
+          "enrollment_capacity": 28
+        },
+        {
+          "id": 4362,
+          "enrollment_total": 27,
           "enrollment_capacity": 28
         },
         {
@@ -54732,17 +54807,7 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 3870,
-          "enrollment_total": 28,
-          "enrollment_capacity": 28
-        },
-        {
-          "id": 3869,
-          "enrollment_total": 28,
-          "enrollment_capacity": 28
-        },
-        {
-          "id": 3868,
+          "id": 3872,
           "enrollment_total": 27,
           "enrollment_capacity": 28
         }
@@ -54930,14 +54995,14 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 3884,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 4371,
           "enrollment_total": 20,
           "enrollment_capacity": 24
+        },
+        {
+          "id": 3884,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
         }
       ],
       "units": 0.5,
@@ -54987,29 +55052,29 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 3984,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 3986,
           "enrollment_total": 25,
           "enrollment_capacity": 25
         },
         {
-          "id": 3989,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 4273,
-          "enrollment_total": 22,
+          "enrollment_total": 20,
           "enrollment_capacity": 24
         },
         {
           "id": 3985,
-          "enrollment_total": 20,
+          "enrollment_total": 19,
           "enrollment_capacity": 24
+        },
+        {
+          "id": 3989,
+          "enrollment_total": 21,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 3984,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
         }
       ],
       "units": 0.5,
@@ -55060,7 +55125,7 @@
         },
         {
           "id": 3894,
-          "enrollment_total": 25,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         },
         {
@@ -55085,7 +55150,7 @@
         },
         {
           "id": 3892,
-          "enrollment_total": 24,
+          "enrollment_total": 21,
           "enrollment_capacity": 25
         },
         {
@@ -55304,43 +55369,18 @@
           "enrollment_capacity": 30
         },
         {
+          "id": 3899,
+          "enrollment_total": 22,
+          "enrollment_capacity": 30
+        },
+        {
           "id": 3908,
           "enrollment_total": 30,
           "enrollment_capacity": 30
         },
         {
-          "id": 3905,
-          "enrollment_total": 29,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 3909,
-          "enrollment_total": 29,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 8958,
-          "enrollment_total": 29,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 3904,
-          "enrollment_total": 28,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 3907,
-          "enrollment_total": 24,
-          "enrollment_capacity": 30
-        },
-        {
           "id": 3906,
           "enrollment_total": 30,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 3902,
-          "enrollment_total": 27,
           "enrollment_capacity": 30
         },
         {
@@ -55354,8 +55394,38 @@
           "enrollment_capacity": 30
         },
         {
+          "id": 3909,
+          "enrollment_total": 29,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 8958,
+          "enrollment_total": 29,
+          "enrollment_capacity": 30
+        },
+        {
           "id": 3911,
           "enrollment_total": 29,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 3907,
+          "enrollment_total": 24,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 3905,
+          "enrollment_total": 28,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 3904,
+          "enrollment_total": 28,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 3902,
+          "enrollment_total": 27,
           "enrollment_capacity": 30
         },
         {
@@ -55366,11 +55436,6 @@
         {
           "id": 3900,
           "enrollment_total": 29,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 3899,
-          "enrollment_total": 22,
           "enrollment_capacity": 30
         }
       ],
@@ -55418,6 +55483,11 @@
           "enrollment_capacity": 26
         },
         {
+          "id": 3917,
+          "enrollment_total": 26,
+          "enrollment_capacity": 26
+        },
+        {
           "id": 8862,
           "enrollment_total": 24,
           "enrollment_capacity": 26
@@ -55425,11 +55495,6 @@
         {
           "id": 3918,
           "enrollment_total": 25,
-          "enrollment_capacity": 26
-        },
-        {
-          "id": 3917,
-          "enrollment_total": 26,
           "enrollment_capacity": 26
         }
       ],
@@ -57349,7 +57414,7 @@
       "sections": [
         {
           "id": 6365,
-          "enrollment_total": 52,
+          "enrollment_total": 51,
           "enrollment_capacity": 90
         },
         {
@@ -57479,13 +57544,13 @@
           "enrollment_capacity": 100
         },
         {
-          "id": 6701,
-          "enrollment_total": 78,
+          "id": 6424,
+          "enrollment_total": 80,
           "enrollment_capacity": 100
         },
         {
-          "id": 6424,
-          "enrollment_total": 80,
+          "id": 6701,
+          "enrollment_total": 77,
           "enrollment_capacity": 100
         }
       ],
@@ -57526,12 +57591,12 @@
       "sections": [
         {
           "id": 6151,
-          "enrollment_total": 86,
+          "enrollment_total": 84,
           "enrollment_capacity": 92
         },
         {
-          "id": 6519,
-          "enrollment_total": 120,
+          "id": 6152,
+          "enrollment_total": 121,
           "enrollment_capacity": 120
         },
         {
@@ -57540,18 +57605,18 @@
           "enrollment_capacity": 92
         },
         {
-          "id": 6520,
-          "enrollment_total": 91,
-          "enrollment_capacity": 90
-        },
-        {
           "id": 6522,
           "enrollment_total": 104,
           "enrollment_capacity": 104
         },
         {
-          "id": 6152,
-          "enrollment_total": 121,
+          "id": 6520,
+          "enrollment_total": 89,
+          "enrollment_capacity": 90
+        },
+        {
+          "id": 6519,
+          "enrollment_total": 119,
           "enrollment_capacity": 120
         }
       ],
@@ -57699,22 +57764,22 @@
       "sections": [
         {
           "id": 6112,
-          "enrollment_total": 67,
+          "enrollment_total": 63,
+          "enrollment_capacity": 90
+        },
+        {
+          "id": 6130,
+          "enrollment_total": 89,
           "enrollment_capacity": 90
         },
         {
           "id": 6131,
-          "enrollment_total": 86,
+          "enrollment_total": 83,
           "enrollment_capacity": 90
         },
         {
           "id": 6113,
           "enrollment_total": 82,
-          "enrollment_capacity": 90
-        },
-        {
-          "id": 6105,
-          "enrollment_total": 89,
           "enrollment_capacity": 90
         },
         {
@@ -57724,12 +57789,7 @@
         },
         {
           "id": 6137,
-          "enrollment_total": 78,
-          "enrollment_capacity": 90
-        },
-        {
-          "id": 6104,
-          "enrollment_total": 77,
+          "enrollment_total": 71,
           "enrollment_capacity": 90
         },
         {
@@ -57739,7 +57799,7 @@
         },
         {
           "id": 8906,
-          "enrollment_total": 83,
+          "enrollment_total": 82,
           "enrollment_capacity": 90
         },
         {
@@ -57748,8 +57808,13 @@
           "enrollment_capacity": 90
         },
         {
-          "id": 6130,
+          "id": 6105,
           "enrollment_total": 89,
+          "enrollment_capacity": 90
+        },
+        {
+          "id": 6104,
+          "enrollment_total": 77,
           "enrollment_capacity": 90
         }
       ],
@@ -57848,13 +57913,13 @@
           "enrollment_capacity": 65
         },
         {
-          "id": 7877,
-          "enrollment_total": 18,
+          "id": 6554,
+          "enrollment_total": 34,
           "enrollment_capacity": 65
         },
         {
-          "id": 6554,
-          "enrollment_total": 34,
+          "id": 7877,
+          "enrollment_total": 18,
           "enrollment_capacity": 65
         }
       ],
@@ -57911,7 +57976,7 @@
       "sections": [
         {
           "id": 6156,
-          "enrollment_total": 131,
+          "enrollment_total": 129,
           "enrollment_capacity": 145
         }
       ],
@@ -57964,7 +58029,7 @@
         },
         {
           "id": 6346,
-          "enrollment_total": 67,
+          "enrollment_total": 66,
           "enrollment_capacity": 100
         }
       ],
@@ -58264,7 +58329,7 @@
       "sections": [
         {
           "id": 5996,
-          "enrollment_total": 321,
+          "enrollment_total": 320,
           "enrollment_capacity": 360
         }
       ],
@@ -58533,14 +58598,14 @@
           "enrollment_capacity": 90
         },
         {
-          "id": 7887,
-          "enrollment_total": 55,
-          "enrollment_capacity": 72
-        },
-        {
           "id": 6238,
           "enrollment_total": 67,
           "enrollment_capacity": 90
+        },
+        {
+          "id": 7887,
+          "enrollment_total": 55,
+          "enrollment_capacity": 72
         }
       ],
       "units": 0.5,
@@ -58698,8 +58763,8 @@
           "enrollment_capacity": 90
         },
         {
-          "id": 6190,
-          "enrollment_total": 86,
+          "id": 6159,
+          "enrollment_total": 76,
           "enrollment_capacity": 90
         },
         {
@@ -58708,8 +58773,8 @@
           "enrollment_capacity": 90
         },
         {
-          "id": 6159,
-          "enrollment_total": 76,
+          "id": 6190,
+          "enrollment_total": 86,
           "enrollment_capacity": 90
         }
       ],
@@ -58830,8 +58895,8 @@
           "enrollment_capacity": 90
         },
         {
-          "id": 6536,
-          "enrollment_total": 76,
+          "id": 6169,
+          "enrollment_total": 86,
           "enrollment_capacity": 90
         },
         {
@@ -58840,8 +58905,8 @@
           "enrollment_capacity": 90
         },
         {
-          "id": 6169,
-          "enrollment_total": 86,
+          "id": 6536,
+          "enrollment_total": 76,
           "enrollment_capacity": 90
         }
       ],
@@ -59163,7 +59228,7 @@
       "sections": [
         {
           "id": 6001,
-          "enrollment_total": 188,
+          "enrollment_total": 187,
           "enrollment_capacity": 280
         }
       ],
@@ -59493,13 +59558,13 @@
           "enrollment_capacity": 100
         },
         {
-          "id": 6547,
-          "enrollment_total": 86,
+          "id": 6546,
+          "enrollment_total": 99,
           "enrollment_capacity": 100
         },
         {
-          "id": 6546,
-          "enrollment_total": 99,
+          "id": 6547,
+          "enrollment_total": 86,
           "enrollment_capacity": 100
         }
       ],
@@ -59807,13 +59872,13 @@
           "enrollment_capacity": 70
         },
         {
-          "id": 8811,
-          "enrollment_total": 67,
+          "id": 6192,
+          "enrollment_total": 69,
           "enrollment_capacity": 70
         },
         {
-          "id": 6192,
-          "enrollment_total": 69,
+          "id": 8811,
+          "enrollment_total": 67,
           "enrollment_capacity": 70
         }
       ],
@@ -61729,7 +61794,7 @@
         },
         {
           "id": 6764,
-          "enrollment_total": 57,
+          "enrollment_total": 56,
           "enrollment_capacity": 60
         }
       ],
@@ -62049,7 +62114,7 @@
         },
         {
           "id": 6264,
-          "enrollment_total": 65,
+          "enrollment_total": 64,
           "enrollment_capacity": 70
         }
       ],
@@ -62726,7 +62791,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6567,
+          "enrollment_total": 8,
+          "enrollment_capacity": 8
+        }
+      ]
     },
     {
       "id": 1487,
@@ -63992,13 +64063,13 @@
       },
       "sections": [
         {
-          "id": 8928,
-          "enrollment_total": 25,
+          "id": 8927,
+          "enrollment_total": 7,
           "enrollment_capacity": 30
         },
         {
-          "id": 8927,
-          "enrollment_total": 7,
+          "id": 8928,
+          "enrollment_total": 25,
           "enrollment_capacity": 30
         }
       ]
@@ -64217,9 +64288,9 @@
           "enrollment_capacity": 36
         },
         {
-          "id": 8936,
-          "enrollment_total": 26,
-          "enrollment_capacity": 35
+          "id": 8935,
+          "enrollment_total": 19,
+          "enrollment_capacity": 30
         },
         {
           "id": 8937,
@@ -64227,9 +64298,9 @@
           "enrollment_capacity": 24
         },
         {
-          "id": 8935,
-          "enrollment_total": 19,
-          "enrollment_capacity": 30
+          "id": 8936,
+          "enrollment_total": 26,
+          "enrollment_capacity": 35
         }
       ]
     },
@@ -65393,7 +65464,7 @@
       "sections": [
         {
           "id": 7924,
-          "enrollment_total": 34,
+          "enrollment_total": 33,
           "enrollment_capacity": 100
         }
       ],
@@ -67983,7 +68054,7 @@
       "sections": [
         {
           "id": 7379,
-          "enrollment_total": 70,
+          "enrollment_total": 69,
           "enrollment_capacity": 73
         },
         {
@@ -68019,13 +68090,18 @@
           "enrollment_capacity": 40
         },
         {
-          "id": 7173,
-          "enrollment_total": 39,
+          "id": 6973,
+          "enrollment_total": 40,
           "enrollment_capacity": 40
         },
         {
           "id": 7258,
           "enrollment_total": 36,
+          "enrollment_capacity": 40
+        },
+        {
+          "id": 7173,
+          "enrollment_total": 39,
           "enrollment_capacity": 40
         },
         {
@@ -68035,12 +68111,7 @@
         },
         {
           "id": 6974,
-          "enrollment_total": 35,
-          "enrollment_capacity": 40
-        },
-        {
-          "id": 6973,
-          "enrollment_total": 40,
+          "enrollment_total": 34,
           "enrollment_capacity": 40
         }
       ],
@@ -68067,7 +68138,7 @@
       "sections": [
         {
           "id": 7407,
-          "enrollment_total": 383,
+          "enrollment_total": 382,
           "enrollment_capacity": 400
         }
       ],
@@ -68118,7 +68189,7 @@
         },
         {
           "id": 7278,
-          "enrollment_total": 52,
+          "enrollment_total": 50,
           "enrollment_capacity": 53
         }
       ],
@@ -68268,8 +68339,8 @@
           "enrollment_capacity": 24
         },
         {
-          "id": 7264,
-          "enrollment_total": 24,
+          "id": 7262,
+          "enrollment_total": 23,
           "enrollment_capacity": 24
         },
         {
@@ -68278,8 +68349,8 @@
           "enrollment_capacity": 24
         },
         {
-          "id": 7262,
-          "enrollment_total": 23,
+          "id": 7264,
+          "enrollment_total": 24,
           "enrollment_capacity": 24
         }
       ],
@@ -71834,18 +71905,18 @@
       "sections": [
         {
           "id": 4730,
-          "enrollment_total": 144,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5052,
           "enrollment_total": 142,
           "enrollment_capacity": 140
         },
         {
           "id": 4731,
-          "enrollment_total": 147,
+          "enrollment_total": 144,
           "enrollment_capacity": 145
+        },
+        {
+          "id": 5052,
+          "enrollment_total": 140,
+          "enrollment_capacity": 140
         }
       ],
       "units": 0.5,
@@ -72089,17 +72160,17 @@
       "sections": [
         {
           "id": 4580,
-          "enrollment_total": 144,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 4582,
           "enrollment_total": 142,
           "enrollment_capacity": 140
         },
         {
           "id": 4581,
-          "enrollment_total": 143,
+          "enrollment_total": 140,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 4582,
+          "enrollment_total": 140,
           "enrollment_capacity": 140
         }
       ],
@@ -72155,17 +72226,17 @@
       "sections": [
         {
           "id": 4897,
-          "enrollment_total": 142,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 4899,
-          "enrollment_total": 137,
+          "enrollment_total": 140,
           "enrollment_capacity": 140
         },
         {
           "id": 4898,
-          "enrollment_total": 142,
+          "enrollment_total": 139,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 4899,
+          "enrollment_total": 135,
           "enrollment_capacity": 140
         }
       ],
@@ -72233,17 +72304,17 @@
       "sections": [
         {
           "id": 5065,
-          "enrollment_total": 143,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5067,
-          "enrollment_total": 139,
+          "enrollment_total": 141,
           "enrollment_capacity": 140
         },
         {
           "id": 5066,
-          "enrollment_total": 141,
+          "enrollment_total": 138,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 5067,
+          "enrollment_total": 137,
           "enrollment_capacity": 140
         }
       ],
@@ -73368,24 +73439,9 @@
           "enrollment_capacity": 40
         },
         {
-          "id": 5019,
-          "enrollment_total": 33,
+          "id": 5018,
+          "enrollment_total": 28,
           "enrollment_capacity": 40
-        },
-        {
-          "id": 5020,
-          "enrollment_total": 23,
-          "enrollment_capacity": 30
-        },
-        {
-          "id": 5254,
-          "enrollment_total": 33,
-          "enrollment_capacity": 38
-        },
-        {
-          "id": 5395,
-          "enrollment_total": 37,
-          "enrollment_capacity": 42
         },
         {
           "id": 8148,
@@ -73393,13 +73449,28 @@
           "enrollment_capacity": 26
         },
         {
+          "id": 5395,
+          "enrollment_total": 37,
+          "enrollment_capacity": 42
+        },
+        {
+          "id": 5254,
+          "enrollment_total": 33,
+          "enrollment_capacity": 38
+        },
+        {
           "id": 5021,
           "enrollment_total": 39,
           "enrollment_capacity": 42
         },
         {
-          "id": 5018,
-          "enrollment_total": 28,
+          "id": 5020,
+          "enrollment_total": 23,
+          "enrollment_capacity": 30
+        },
+        {
+          "id": 5019,
+          "enrollment_total": 33,
           "enrollment_capacity": 40
         }
       ],
@@ -73639,13 +73710,13 @@
           "enrollment_capacity": 134
         },
         {
-          "id": 5075,
-          "enrollment_total": 20,
+          "id": 5074,
+          "enrollment_total": 12,
           "enrollment_capacity": 134
         },
         {
-          "id": 5074,
-          "enrollment_total": 12,
+          "id": 5075,
+          "enrollment_total": 20,
           "enrollment_capacity": 134
         }
       ],
@@ -74378,13 +74449,13 @@
           "enrollment_capacity": 144
         },
         {
-          "id": 8149,
-          "enrollment_total": 142,
+          "id": 5043,
+          "enrollment_total": 137,
           "enrollment_capacity": 144
         },
         {
-          "id": 5043,
-          "enrollment_total": 137,
+          "id": 8149,
+          "enrollment_total": 142,
           "enrollment_capacity": 144
         }
       ],
@@ -77590,7 +77661,13 @@
         "liked": 0.6666666666666666,
         "filled_count": 3
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5234,
+          "enrollment_total": 4,
+          "enrollment_capacity": 10
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -77767,7 +77844,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 5433,
+          "enrollment_total": 10,
+          "enrollment_capacity": 20
+        }
+      ]
     },
     {
       "id": 2024,
@@ -79782,7 +79865,12 @@
       "sections": [
         {
           "id": 3165,
-          "enrollment_total": 357,
+          "enrollment_total": 355,
+          "enrollment_capacity": 387
+        },
+        {
+          "id": 3166,
+          "enrollment_total": 363,
           "enrollment_capacity": 387
         },
         {
@@ -79799,11 +79887,6 @@
           "id": 3164,
           "enrollment_total": 246,
           "enrollment_capacity": 250
-        },
-        {
-          "id": 3166,
-          "enrollment_total": 363,
-          "enrollment_capacity": 387
         }
       ],
       "units": 0.5,
@@ -79833,13 +79916,13 @@
           "enrollment_capacity": 250
         },
         {
-          "id": 3167,
-          "enrollment_total": 245,
+          "id": 4288,
+          "enrollment_total": 206,
           "enrollment_capacity": 250
         },
         {
-          "id": 4288,
-          "enrollment_total": 206,
+          "id": 3167,
+          "enrollment_total": 244,
           "enrollment_capacity": 250
         }
       ],
@@ -81334,12 +81417,12 @@
       },
       "sections": [
         {
-          "id": 3829,
+          "id": 3595,
           "enrollment_total": 0,
           "enrollment_capacity": 1000
         },
         {
-          "id": 3595,
+          "id": 3829,
           "enrollment_total": 0,
           "enrollment_capacity": 1000
         }
@@ -86006,13 +86089,13 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 7708,
-          "enrollment_total": 20,
+          "id": 7707,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         },
         {
-          "id": 7707,
-          "enrollment_total": 24,
+          "id": 7708,
+          "enrollment_total": 20,
           "enrollment_capacity": 25
         }
       ],
@@ -86345,17 +86428,17 @@
       "sections": [
         {
           "id": 7970,
-          "enrollment_total": 13,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 7972,
-          "enrollment_total": 15,
+          "enrollment_total": 12,
           "enrollment_capacity": 20
         },
         {
           "id": 7971,
           "enrollment_total": 16,
+          "enrollment_capacity": 20
+        },
+        {
+          "id": 7972,
+          "enrollment_total": 15,
           "enrollment_capacity": 20
         }
       ],
@@ -86380,7 +86463,7 @@
       "sections": [
         {
           "id": 5799,
-          "enrollment_total": 49,
+          "enrollment_total": 48,
           "enrollment_capacity": 70
         }
       ],
@@ -87075,7 +87158,13 @@
         "liked": 1,
         "filled_count": 3
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5800,
+          "enrollment_total": 46,
+          "enrollment_capacity": 80
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -87924,13 +88013,13 @@
           "enrollment_capacity": 40
         },
         {
-          "id": 3522,
-          "enrollment_total": 40,
+          "id": 3287,
+          "enrollment_total": 38,
           "enrollment_capacity": 40
         },
         {
-          "id": 3287,
-          "enrollment_total": 38,
+          "id": 3522,
+          "enrollment_total": 40,
           "enrollment_capacity": 40
         }
       ],
@@ -88116,13 +88205,28 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 3397,
-          "enrollment_total": 19,
+          "id": 3392,
+          "enrollment_total": 20,
           "enrollment_capacity": 25
         },
         {
           "id": 3534,
           "enrollment_total": 15,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 3393,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 3399,
+          "enrollment_total": 24,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 3397,
+          "enrollment_total": 19,
           "enrollment_capacity": 25
         },
         {
@@ -88136,24 +88240,9 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 3399,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 3393,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 3600,
           "enrollment_total": 137,
           "enrollment_capacity": 150
-        },
-        {
-          "id": 3392,
-          "enrollment_total": 20,
-          "enrollment_capacity": 25
         }
       ],
       "units": 0.5,
@@ -88194,8 +88283,8 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 8710,
-          "enrollment_total": 21,
+          "id": 4101,
+          "enrollment_total": 23,
           "enrollment_capacity": 25
         },
         {
@@ -88204,18 +88293,28 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 8897,
-          "enrollment_total": 22,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 8007,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 8896,
           "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 8005,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 8711,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 8710,
+          "enrollment_total": 21,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 8897,
+          "enrollment_total": 22,
           "enrollment_capacity": 25
         },
         {
@@ -88239,22 +88338,7 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 8005,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 8711,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
           "id": 8895,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 8004,
           "enrollment_total": 24,
           "enrollment_capacity": 25
         },
@@ -88269,13 +88353,18 @@
           "enrollment_capacity": 25
         },
         {
+          "id": 8007,
+          "enrollment_total": 22,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 8006,
-          "enrollment_total": 24,
+          "enrollment_total": 23,
           "enrollment_capacity": 24
         },
         {
-          "id": 4101,
-          "enrollment_total": 25,
+          "id": 8004,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         }
       ],
@@ -89706,7 +89795,18 @@
         "liked": 0.625,
         "filled_count": 16
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3690,
+          "enrollment_total": 17,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 4234,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -90855,12 +90955,12 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 4242,
+          "id": 3383,
           "enrollment_total": 23,
           "enrollment_capacity": 25
         },
         {
-          "id": 3383,
+          "id": 4242,
           "enrollment_total": 23,
           "enrollment_capacity": 25
         }
@@ -91287,12 +91387,12 @@
       },
       "sections": [
         {
-          "id": 3577,
+          "id": 3172,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
-          "id": 3172,
+          "id": 3577,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         }
@@ -91484,17 +91584,17 @@
           "enrollment_capacity": 25
         },
         {
+          "id": 3508,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 3550,
           "enrollment_total": 23,
           "enrollment_capacity": 25
         },
         {
           "id": 3531,
-          "enrollment_total": 23,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 3508,
           "enrollment_total": 23,
           "enrollment_capacity": 25
         }
@@ -92736,7 +92836,18 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3578,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 3190,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -92755,12 +92866,12 @@
       },
       "sections": [
         {
-          "id": 3502,
+          "id": 3191,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
-          "id": 3191,
+          "id": 3502,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         }
@@ -93909,7 +94020,13 @@
         "liked": 1,
         "filled_count": 6
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4917,
+          "enrollment_total": 66,
+          "enrollment_capacity": 70
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -95154,7 +95271,7 @@
       "sections": [
         {
           "id": 5647,
-          "enrollment_total": 106,
+          "enrollment_total": 105,
           "enrollment_capacity": 125
         }
       ],
@@ -95204,7 +95321,7 @@
       "sections": [
         {
           "id": 5804,
-          "enrollment_total": 303,
+          "enrollment_total": 302,
           "enrollment_capacity": 320
         }
       ],
@@ -95249,12 +95366,12 @@
       "sections": [
         {
           "id": 5601,
-          "enrollment_total": 262,
+          "enrollment_total": 261,
           "enrollment_capacity": 300
         },
         {
           "id": 5823,
-          "enrollment_total": 226,
+          "enrollment_total": 224,
           "enrollment_capacity": 300
         }
       ],
@@ -97098,13 +97215,8 @@
           "enrollment_capacity": 100
         },
         {
-          "id": 7994,
-          "enrollment_total": 24,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 7995,
-          "enrollment_total": 18,
+          "id": 7993,
+          "enrollment_total": 12,
           "enrollment_capacity": 25
         },
         {
@@ -97113,8 +97225,13 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 7993,
-          "enrollment_total": 12,
+          "id": 7995,
+          "enrollment_total": 18,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 7994,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         }
       ],
@@ -97674,7 +97791,7 @@
       "sections": [
         {
           "id": 8947,
-          "enrollment_total": 8,
+          "enrollment_total": 7,
           "enrollment_capacity": 10
         }
       ],
@@ -98827,12 +98944,12 @@
       },
       "sections": [
         {
-          "id": 9111,
+          "id": 9076,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
         {
-          "id": 9076,
+          "id": 9111,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
@@ -99640,12 +99757,12 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 8894,
+          "id": 3303,
           "enrollment_total": 26,
           "enrollment_capacity": 25
         },
         {
-          "id": 3303,
+          "id": 8894,
           "enrollment_total": 26,
           "enrollment_capacity": 25
         }
@@ -99783,7 +99900,18 @@
         "liked": 0.8064516129032258,
         "filled_count": 31
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 3273,
+          "enrollment_total": 23,
+          "enrollment_capacity": 25
+        },
+        {
+          "id": 3274,
+          "enrollment_total": 18,
+          "enrollment_capacity": 25
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -103541,12 +103669,12 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 9041,
+          "id": 9040,
           "enrollment_total": 2,
           "enrollment_capacity": 2
         },
         {
-          "id": 9040,
+          "id": 9041,
           "enrollment_total": 2,
           "enrollment_capacity": 2
         }
@@ -103770,14 +103898,14 @@
           "enrollment_capacity": 40
         },
         {
-          "id": 3192,
-          "enrollment_total": 41,
-          "enrollment_capacity": 60
-        },
-        {
           "id": 3188,
           "enrollment_total": 18,
           "enrollment_capacity": 40
+        },
+        {
+          "id": 3192,
+          "enrollment_total": 41,
+          "enrollment_capacity": 60
         }
       ],
       "units": 0.5,
@@ -107197,8 +107325,8 @@
           "enrollment_capacity": 45
         },
         {
-          "id": 7951,
-          "enrollment_total": 45,
+          "id": 7949,
+          "enrollment_total": 34,
           "enrollment_capacity": 45
         },
         {
@@ -107207,8 +107335,8 @@
           "enrollment_capacity": 45
         },
         {
-          "id": 7949,
-          "enrollment_total": 34,
+          "id": 7951,
+          "enrollment_total": 45,
           "enrollment_capacity": 45
         }
       ],
@@ -107539,7 +107667,7 @@
       "sections": [
         {
           "id": 7779,
-          "enrollment_total": 272,
+          "enrollment_total": 271,
           "enrollment_capacity": 308
         }
       ],
@@ -107624,7 +107752,7 @@
       "sections": [
         {
           "id": 7816,
-          "enrollment_total": 99,
+          "enrollment_total": 98,
           "enrollment_capacity": 112
         }
       ],
@@ -107671,7 +107799,7 @@
       "sections": [
         {
           "id": 7790,
-          "enrollment_total": 83,
+          "enrollment_total": 82,
           "enrollment_capacity": 130
         }
       ],
@@ -108412,37 +108540,42 @@
       "sections": [
         {
           "id": 4671,
-          "enrollment_total": 114,
+          "enrollment_total": 113,
           "enrollment_capacity": 120
         },
         {
-          "id": 4674,
-          "enrollment_total": 144,
+          "id": 4673,
+          "enrollment_total": 142,
           "enrollment_capacity": 140
         },
         {
-          "id": 5357,
-          "enrollment_total": 106,
-          "enrollment_capacity": 110
+          "id": 4674,
+          "enrollment_total": 141,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 4675,
+          "enrollment_total": 140,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 4773,
+          "enrollment_total": 129,
+          "enrollment_capacity": 120
         },
         {
           "id": 5446,
-          "enrollment_total": 122,
+          "enrollment_total": 120,
           "enrollment_capacity": 110
         },
         {
-          "id": 4672,
-          "enrollment_total": 131,
-          "enrollment_capacity": 150
-        },
-        {
           "id": 4784,
-          "enrollment_total": 122,
+          "enrollment_total": 121,
           "enrollment_capacity": 120
         },
         {
           "id": 4678,
-          "enrollment_total": 131,
+          "enrollment_total": 127,
           "enrollment_capacity": 120
         },
         {
@@ -108451,23 +108584,33 @@
           "enrollment_capacity": 120
         },
         {
+          "id": 4808,
+          "enrollment_total": 108,
+          "enrollment_capacity": 105
+        },
+        {
+          "id": 4677,
+          "enrollment_total": 110,
+          "enrollment_capacity": 100
+        },
+        {
+          "id": 5357,
+          "enrollment_total": 106,
+          "enrollment_capacity": 110
+        },
+        {
+          "id": 4672,
+          "enrollment_total": 130,
+          "enrollment_capacity": 150
+        },
+        {
           "id": 5461,
-          "enrollment_total": 131,
+          "enrollment_total": 129,
           "enrollment_capacity": 145
         },
         {
-          "id": 4675,
-          "enrollment_total": 142,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 4773,
-          "enrollment_total": 130,
-          "enrollment_capacity": 120
-        },
-        {
           "id": 8842,
-          "enrollment_total": 118,
+          "enrollment_total": 117,
           "enrollment_capacity": 120
         },
         {
@@ -108479,21 +108622,6 @@
           "id": 4807,
           "enrollment_total": 98,
           "enrollment_capacity": 110
-        },
-        {
-          "id": 4808,
-          "enrollment_total": 108,
-          "enrollment_capacity": 105
-        },
-        {
-          "id": 4677,
-          "enrollment_total": 111,
-          "enrollment_capacity": 100
-        },
-        {
-          "id": 4673,
-          "enrollment_total": 144,
-          "enrollment_capacity": 140
         }
       ],
       "units": 0,
@@ -111242,7 +111370,7 @@
       "sections": [
         {
           "id": 5743,
-          "enrollment_total": 346,
+          "enrollment_total": 344,
           "enrollment_capacity": 500
         }
       ],
@@ -111297,7 +111425,7 @@
       "sections": [
         {
           "id": 5689,
-          "enrollment_total": 547,
+          "enrollment_total": 546,
           "enrollment_capacity": 550
         }
       ],
@@ -112038,7 +112166,7 @@
       "sections": [
         {
           "id": 5615,
-          "enrollment_total": 86,
+          "enrollment_total": 84,
           "enrollment_capacity": 87
         }
       ],
@@ -115787,14 +115915,14 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 3607,
-          "enrollment_total": 45,
-          "enrollment_capacity": 47
-        },
-        {
           "id": 4308,
           "enrollment_total": 20,
           "enrollment_capacity": 30
+        },
+        {
+          "id": 3607,
+          "enrollment_total": 45,
+          "enrollment_capacity": 47
         }
       ],
       "units": 0.5
@@ -117786,7 +117914,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 3410,
+          "enrollment_total": 0,
+          "enrollment_capacity": 8
+        }
+      ]
     },
     {
       "id": 3384,
@@ -118742,7 +118876,7 @@
       "sections": [
         {
           "id": 4001,
-          "enrollment_total": 7,
+          "enrollment_total": 6,
           "enrollment_capacity": 7
         }
       ]
@@ -120261,7 +120395,7 @@
       "sections": [
         {
           "id": 5910,
-          "enrollment_total": 10,
+          "enrollment_total": 12,
           "enrollment_capacity": 30
         }
       ]
@@ -121356,7 +121490,7 @@
       "sections": [
         {
           "id": 4222,
-          "enrollment_total": 2,
+          "enrollment_total": 1,
           "enrollment_capacity": 2
         }
       ],
@@ -121484,7 +121618,7 @@
       "sections": [
         {
           "id": 2980,
-          "enrollment_total": 360,
+          "enrollment_total": 361,
           "enrollment_capacity": 404
         },
         {
@@ -123440,7 +123574,7 @@
       "sections": [
         {
           "id": 4056,
-          "enrollment_total": 74,
+          "enrollment_total": 73,
           "enrollment_capacity": 75
         }
       ],
@@ -124881,7 +125015,7 @@
       "sections": [
         {
           "id": 8085,
-          "enrollment_total": 26,
+          "enrollment_total": 25,
           "enrollment_capacity": 35
         }
       ],
@@ -126237,17 +126371,7 @@
           "enrollment_capacity": 15
         },
         {
-          "id": 3539,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 3851,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 3850,
+          "id": 3479,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         },
@@ -126267,6 +126391,11 @@
           "enrollment_capacity": 5
         },
         {
+          "id": 3539,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
           "id": 3852,
           "enrollment_total": 0,
           "enrollment_capacity": 5
@@ -126277,17 +126406,22 @@
           "enrollment_capacity": 5
         },
         {
+          "id": 3851,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
+          "id": 3850,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
           "id": 3853,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         },
         {
           "id": 3538,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 3479,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         }
@@ -126313,12 +126447,12 @@
           "enrollment_capacity": 16
         },
         {
-          "id": 3860,
+          "id": 3858,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         },
         {
-          "id": 3862,
+          "id": 3860,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         },
@@ -126333,17 +126467,17 @@
           "enrollment_capacity": 5
         },
         {
+          "id": 3862,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
           "id": 3863,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         },
         {
           "id": 3859,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 3858,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         }
@@ -126907,6 +127041,11 @@
       },
       "sections": [
         {
+          "id": 3318,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
           "id": 3373,
           "enrollment_total": 0,
           "enrollment_capacity": 5
@@ -126978,11 +127117,6 @@
         },
         {
           "id": 3372,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 3318,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         }
@@ -127088,18 +127222,18 @@
       "sections": [
         {
           "id": 2727,
-          "enrollment_total": 379,
+          "enrollment_total": 380,
           "enrollment_capacity": 406
-        },
-        {
-          "id": 2835,
-          "enrollment_total": 248,
-          "enrollment_capacity": 250
         },
         {
           "id": 7865,
           "enrollment_total": 127,
           "enrollment_capacity": 150
+        },
+        {
+          "id": 2835,
+          "enrollment_total": 248,
+          "enrollment_capacity": 250
         }
       ],
       "units": 0.5,
@@ -129866,7 +130000,13 @@
         "liked": 1,
         "filled_count": 3
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 2972,
+          "enrollment_total": 8,
+          "enrollment_capacity": 10
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -130385,6 +130525,26 @@
           "enrollment_capacity": 1
         },
         {
+          "id": 8791,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 8792,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 8793,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 8984,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 9090,
           "enrollment_total": 1,
           "enrollment_capacity": 1
@@ -130400,32 +130560,12 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 8793,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 8792,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 8984,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 9092,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
         {
           "id": 9085,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 8791,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         }
@@ -131198,14 +131338,14 @@
       },
       "sections": [
         {
-          "id": 7847,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 3011,
           "enrollment_total": 0,
           "enrollment_capacity": 5
+        },
+        {
+          "id": 7847,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
         }
       ]
     },
@@ -131515,11 +131655,6 @@
       },
       "sections": [
         {
-          "id": 2957,
-          "enrollment_total": 17,
-          "enrollment_capacity": 50
-        },
-        {
           "id": 2959,
           "enrollment_total": 4,
           "enrollment_capacity": 50
@@ -131527,6 +131662,11 @@
         {
           "id": 2958,
           "enrollment_total": 7,
+          "enrollment_capacity": 50
+        },
+        {
+          "id": 2957,
+          "enrollment_total": 17,
           "enrollment_capacity": 50
         }
       ]
@@ -131721,7 +131861,7 @@
       "sections": [
         {
           "id": 3123,
-          "enrollment_total": 38,
+          "enrollment_total": 39,
           "enrollment_capacity": 50
         }
       ]
@@ -138782,13 +138922,13 @@
           "enrollment_capacity": 40
         },
         {
-          "id": 6941,
-          "enrollment_total": 39,
+          "id": 6879,
+          "enrollment_total": 40,
           "enrollment_capacity": 40
         },
         {
-          "id": 6879,
-          "enrollment_total": 40,
+          "id": 6941,
+          "enrollment_total": 39,
           "enrollment_capacity": 40
         }
       ],
@@ -139941,6 +140081,11 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 2889,
+          "enrollment_total": 21,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 2900,
           "enrollment_total": 20,
           "enrollment_capacity": 20
@@ -139981,12 +140126,12 @@
           "enrollment_capacity": 20
         },
         {
-          "id": 2894,
-          "enrollment_total": 19,
+          "id": 2893,
+          "enrollment_total": 21,
           "enrollment_capacity": 20
         },
         {
-          "id": 2893,
+          "id": 2895,
           "enrollment_total": 21,
           "enrollment_capacity": 20
         },
@@ -140001,13 +140146,8 @@
           "enrollment_capacity": 20
         },
         {
-          "id": 2895,
-          "enrollment_total": 21,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 2889,
-          "enrollment_total": 21,
+          "id": 2894,
+          "enrollment_total": 19,
           "enrollment_capacity": 20
         }
       ],
@@ -140162,6 +140302,11 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 2933,
+          "enrollment_total": 21,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 3018,
           "enrollment_total": 20,
           "enrollment_capacity": 20
@@ -140187,22 +140332,17 @@
           "enrollment_capacity": 20
         },
         {
-          "id": 3016,
-          "enrollment_total": 22,
-          "enrollment_capacity": 20
-        },
-        {
           "id": 2934,
           "enrollment_total": 21,
           "enrollment_capacity": 20
         },
         {
-          "id": 3017,
-          "enrollment_total": 19,
+          "id": 2935,
+          "enrollment_total": 22,
           "enrollment_capacity": 20
         },
         {
-          "id": 2935,
+          "id": 3016,
           "enrollment_total": 22,
           "enrollment_capacity": 20
         },
@@ -140212,8 +140352,8 @@
           "enrollment_capacity": 20
         },
         {
-          "id": 2933,
-          "enrollment_total": 21,
+          "id": 3017,
+          "enrollment_total": 19,
           "enrollment_capacity": 20
         },
         {
@@ -140474,6 +140614,11 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 2909,
+          "enrollment_total": 20,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 2915,
           "enrollment_total": 20,
           "enrollment_capacity": 20
@@ -140509,13 +140654,13 @@
           "enrollment_capacity": 20
         },
         {
-          "id": 2914,
-          "enrollment_total": 18,
+          "id": 2916,
+          "enrollment_total": 19,
           "enrollment_capacity": 20
         },
         {
-          "id": 2916,
-          "enrollment_total": 19,
+          "id": 2914,
+          "enrollment_total": 18,
           "enrollment_capacity": 20
         },
         {
@@ -140526,11 +140671,6 @@
         {
           "id": 2910,
           "enrollment_total": 19,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 2909,
-          "enrollment_total": 20,
           "enrollment_capacity": 20
         },
         {
@@ -140946,6 +141086,11 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 2920,
+          "enrollment_total": 20,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 2925,
           "enrollment_total": 20,
           "enrollment_capacity": 20
@@ -140976,13 +141121,13 @@
           "enrollment_capacity": 20
         },
         {
-          "id": 2923,
-          "enrollment_total": 16,
+          "id": 3025,
+          "enrollment_total": 17,
           "enrollment_capacity": 20
         },
         {
-          "id": 3025,
-          "enrollment_total": 17,
+          "id": 3023,
+          "enrollment_total": 18,
           "enrollment_capacity": 20
         },
         {
@@ -140996,18 +141141,13 @@
           "enrollment_capacity": 20
         },
         {
+          "id": 2923,
+          "enrollment_total": 16,
+          "enrollment_capacity": 20
+        },
+        {
           "id": 2922,
           "enrollment_total": 17,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 3023,
-          "enrollment_total": 18,
-          "enrollment_capacity": 20
-        },
-        {
-          "id": 2920,
-          "enrollment_total": 20,
           "enrollment_capacity": 20
         }
       ],
@@ -142760,8 +142900,8 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2737,
-          "enrollment_total": 1,
+          "id": 2733,
+          "enrollment_total": 6,
           "enrollment_capacity": 10
         },
         {
@@ -142770,8 +142910,8 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2735,
-          "enrollment_total": 3,
+          "id": 2737,
+          "enrollment_total": 1,
           "enrollment_capacity": 10
         },
         {
@@ -142780,8 +142920,8 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2733,
-          "enrollment_total": 6,
+          "id": 2735,
+          "enrollment_total": 3,
           "enrollment_capacity": 10
         },
         {
@@ -142826,18 +142966,13 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2751,
-          "enrollment_total": 1,
-          "enrollment_capacity": 10
-        },
-        {
           "id": 2753,
           "enrollment_total": 1,
           "enrollment_capacity": 10
         },
         {
-          "id": 2750,
-          "enrollment_total": 0,
+          "id": 2751,
+          "enrollment_total": 1,
           "enrollment_capacity": 10
         },
         {
@@ -142847,6 +142982,11 @@
         },
         {
           "id": 2754,
+          "enrollment_total": 0,
+          "enrollment_capacity": 10
+        },
+        {
+          "id": 2750,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         },
@@ -142898,12 +143038,7 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2766,
-          "enrollment_total": 0,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 2768,
+          "id": 2764,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         },
@@ -142923,12 +143058,17 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2765,
+          "id": 2766,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         },
         {
-          "id": 2764,
+          "id": 2768,
+          "enrollment_total": 0,
+          "enrollment_capacity": 10
+        },
+        {
+          "id": 2765,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         }
@@ -143208,8 +143348,8 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 2843,
-          "enrollment_total": 29,
+          "id": 2842,
+          "enrollment_total": 28,
           "enrollment_capacity": 30
         },
         {
@@ -143218,8 +143358,8 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 2842,
-          "enrollment_total": 28,
+          "id": 2843,
+          "enrollment_total": 29,
           "enrollment_capacity": 30
         }
       ],
@@ -143315,6 +143455,16 @@
           "enrollment_capacity": 5
         },
         {
+          "id": 2780,
+          "enrollment_total": 2,
+          "enrollment_capacity": 5
+        },
+        {
+          "id": 2786,
+          "enrollment_total": 7,
+          "enrollment_capacity": 5
+        },
+        {
           "id": 2785,
           "enrollment_total": 1,
           "enrollment_capacity": 5
@@ -143325,27 +143475,17 @@
           "enrollment_capacity": 5
         },
         {
-          "id": 2786,
-          "enrollment_total": 7,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 2780,
-          "enrollment_total": 2,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 2783,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
           "id": 2782,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         },
         {
           "id": 2784,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
+          "id": 2783,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         }
@@ -144272,12 +144412,17 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 9061,
+          "id": 9035,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
         {
           "id": 9056,
+          "enrollment_total": 1,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 9061,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
@@ -144300,11 +144445,6 @@
           "id": 9099,
           "enrollment_total": 2,
           "enrollment_capacity": 2
-        },
-        {
-          "id": 9035,
-          "enrollment_total": 1,
-          "enrollment_capacity": 1
         }
       ]
     },
@@ -146163,17 +146303,17 @@
       "sections": [
         {
           "id": 3242,
-          "enrollment_total": 138,
-          "enrollment_capacity": 200
-        },
-        {
-          "id": 3605,
-          "enrollment_total": 133,
+          "enrollment_total": 137,
           "enrollment_capacity": 200
         },
         {
           "id": 3380,
           "enrollment_total": 136,
+          "enrollment_capacity": 200
+        },
+        {
+          "id": 3605,
+          "enrollment_total": 133,
           "enrollment_capacity": 200
         }
       ],
@@ -146285,7 +146425,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8062,
+          "enrollment_total": 14,
+          "enrollment_capacity": 20
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -146382,8 +146528,13 @@
       "sections": [
         {
           "id": 3299,
-          "enrollment_total": 43,
+          "enrollment_total": 23,
           "enrollment_capacity": 60
+        },
+        {
+          "id": 9124,
+          "enrollment_total": 20,
+          "enrollment_capacity": 43
         },
         {
           "id": 7991,
@@ -146688,7 +146839,7 @@
       "sections": [
         {
           "id": 3419,
-          "enrollment_total": 44,
+          "enrollment_total": 43,
           "enrollment_capacity": 45
         }
       ],
@@ -147492,7 +147643,7 @@
       "sections": [
         {
           "id": 3434,
-          "enrollment_total": 36,
+          "enrollment_total": 35,
           "enrollment_capacity": 63
         }
       ],
@@ -148941,7 +149092,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7982,
+          "enrollment_total": 5,
+          "enrollment_capacity": 5
+        }
+      ],
       "units": 0.5,
       "crossListed": [
         "commst430"
@@ -148997,12 +149154,12 @@
       },
       "sections": [
         {
-          "id": 4124,
+          "id": 3407,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
-          "id": 3407,
+          "id": 4124,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         }
@@ -149635,47 +149792,27 @@
       "sections": [
         {
           "id": 5967,
-          "enrollment_total": 114,
+          "enrollment_total": 113,
           "enrollment_capacity": 120
         },
         {
-          "id": 8165,
-          "enrollment_total": 122,
-          "enrollment_capacity": 134
-        },
-        {
-          "id": 8836,
-          "enrollment_total": 115,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 5970,
+          "id": 5968,
           "enrollment_total": 142,
           "enrollment_capacity": 140
         },
         {
-          "id": 8162,
-          "enrollment_total": 107,
-          "enrollment_capacity": 110
+          "id": 5970,
+          "enrollment_total": 140,
+          "enrollment_capacity": 140
         },
         {
           "id": 6305,
-          "enrollment_total": 109,
+          "enrollment_total": 108,
           "enrollment_capacity": 100
         },
         {
-          "id": 6306,
-          "enrollment_total": 131,
-          "enrollment_capacity": 145
-        },
-        {
           "id": 5972,
-          "enrollment_total": 130,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 6252,
-          "enrollment_total": 118,
+          "enrollment_total": 129,
           "enrollment_capacity": 120
         },
         {
@@ -149684,18 +149821,38 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 5969,
-          "enrollment_total": 142,
-          "enrollment_capacity": 140
-        },
-        {
           "id": 5971,
-          "enrollment_total": 127,
+          "enrollment_total": 123,
           "enrollment_capacity": 120
         },
         {
-          "id": 5968,
-          "enrollment_total": 144,
+          "id": 8165,
+          "enrollment_total": 120,
+          "enrollment_capacity": 134
+        },
+        {
+          "id": 8836,
+          "enrollment_total": 114,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 8162,
+          "enrollment_total": 107,
+          "enrollment_capacity": 110
+        },
+        {
+          "id": 6306,
+          "enrollment_total": 129,
+          "enrollment_capacity": 145
+        },
+        {
+          "id": 6252,
+          "enrollment_total": 117,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 5969,
+          "enrollment_total": 139,
           "enrollment_capacity": 140
         }
       ],
@@ -149746,8 +149903,13 @@
       "sections": [
         {
           "id": 6068,
-          "enrollment_total": 112,
+          "enrollment_total": 111,
           "enrollment_capacity": 120
+        },
+        {
+          "id": 6069,
+          "enrollment_total": 130,
+          "enrollment_capacity": 150
         },
         {
           "id": 6071,
@@ -149755,28 +149917,18 @@
           "enrollment_capacity": 105
         },
         {
-          "id": 6070,
-          "enrollment_total": 123,
-          "enrollment_capacity": 145
-        },
-        {
           "id": 6324,
-          "enrollment_total": 110,
+          "enrollment_total": 109,
           "enrollment_capacity": 100
         },
         {
-          "id": 8839,
-          "enrollment_total": 119,
-          "enrollment_capacity": 120
-        },
-        {
           "id": 6072,
-          "enrollment_total": 129,
+          "enrollment_total": 125,
           "enrollment_capacity": 120
         },
         {
           "id": 6073,
-          "enrollment_total": 127,
+          "enrollment_total": 126,
           "enrollment_capacity": 120
         },
         {
@@ -149785,14 +149937,19 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 6135,
-          "enrollment_total": 113,
+          "id": 8839,
+          "enrollment_total": 118,
           "enrollment_capacity": 120
         },
         {
-          "id": 6069,
-          "enrollment_total": 131,
-          "enrollment_capacity": 150
+          "id": 6135,
+          "enrollment_total": 112,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 6070,
+          "enrollment_total": 123,
+          "enrollment_capacity": 145
         }
       ],
       "units": 0.5,
@@ -149833,8 +149990,18 @@
       "sections": [
         {
           "id": 5978,
-          "enrollment_total": 140,
+          "enrollment_total": 138,
           "enrollment_capacity": 140
+        },
+        {
+          "id": 5979,
+          "enrollment_total": 134,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 8181,
+          "enrollment_total": 122,
+          "enrollment_capacity": 134
         },
         {
           "id": 8180,
@@ -149843,13 +150010,8 @@
         },
         {
           "id": 6106,
-          "enrollment_total": 126,
-          "enrollment_capacity": 145
-        },
-        {
-          "id": 8181,
           "enrollment_total": 124,
-          "enrollment_capacity": 134
+          "enrollment_capacity": 145
         },
         {
           "id": 6096,
@@ -149858,12 +150020,7 @@
         },
         {
           "id": 5980,
-          "enrollment_total": 137,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5979,
-          "enrollment_total": 137,
+          "enrollment_total": 135,
           "enrollment_capacity": 140
         }
       ],
@@ -150088,38 +150245,8 @@
           "enrollment_capacity": 120
         },
         {
-          "id": 6091,
-          "enrollment_total": 72,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 6092,
-          "enrollment_total": 116,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 5983,
-          "enrollment_total": 106,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 6065,
-          "enrollment_total": 63,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 5984,
-          "enrollment_total": 57,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 5985,
-          "enrollment_total": 98,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 6802,
-          "enrollment_total": 118,
+          "id": 5982,
+          "enrollment_total": 119,
           "enrollment_capacity": 120
         },
         {
@@ -150128,18 +150255,48 @@
           "enrollment_capacity": 120
         },
         {
+          "id": 6802,
+          "enrollment_total": 117,
+          "enrollment_capacity": 120
+        },
+        {
           "id": 7998,
           "enrollment_total": 119,
           "enrollment_capacity": 120
         },
         {
-          "id": 6367,
-          "enrollment_total": 62,
+          "id": 6092,
+          "enrollment_total": 116,
           "enrollment_capacity": 120
         },
         {
-          "id": 5982,
-          "enrollment_total": 119,
+          "id": 6091,
+          "enrollment_total": 70,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 6065,
+          "enrollment_total": 61,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 5985,
+          "enrollment_total": 98,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 5984,
+          "enrollment_total": 56,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 5983,
+          "enrollment_total": 105,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 6367,
+          "enrollment_total": 62,
           "enrollment_capacity": 120
         }
       ],
@@ -150255,7 +150412,12 @@
       "sections": [
         {
           "id": 5986,
-          "enrollment_total": 89,
+          "enrollment_total": 86,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 6254,
+          "enrollment_total": 105,
           "enrollment_capacity": 120
         },
         {
@@ -150265,12 +150427,7 @@
         },
         {
           "id": 8053,
-          "enrollment_total": 91,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 6270,
-          "enrollment_total": 91,
+          "enrollment_total": 94,
           "enrollment_capacity": 120
         },
         {
@@ -150285,22 +150442,17 @@
         },
         {
           "id": 6478,
-          "enrollment_total": 103,
-          "enrollment_capacity": 120
-        },
-        {
-          "id": 6266,
-          "enrollment_total": 103,
+          "enrollment_total": 101,
           "enrollment_capacity": 120
         },
         {
           "id": 6271,
-          "enrollment_total": 87,
+          "enrollment_total": 86,
           "enrollment_capacity": 120
         },
         {
           "id": 6268,
-          "enrollment_total": 72,
+          "enrollment_total": 68,
           "enrollment_capacity": 120
         },
         {
@@ -150320,17 +150472,22 @@
         },
         {
           "id": 6275,
-          "enrollment_total": 90,
+          "enrollment_total": 89,
           "enrollment_capacity": 120
         },
         {
           "id": 6272,
-          "enrollment_total": 99,
+          "enrollment_total": 98,
           "enrollment_capacity": 120
         },
         {
-          "id": 6254,
-          "enrollment_total": 109,
+          "id": 6270,
+          "enrollment_total": 92,
+          "enrollment_capacity": 120
+        },
+        {
+          "id": 6266,
+          "enrollment_total": 103,
           "enrollment_capacity": 120
         }
       ],
@@ -150441,43 +150598,28 @@
           "enrollment_capacity": 140
         },
         {
+          "id": 5988,
+          "enrollment_total": 127,
+          "enrollment_capacity": 140
+        },
+        {
           "id": 6409,
-          "enrollment_total": 124,
+          "enrollment_total": 120,
           "enrollment_capacity": 140
         },
         {
           "id": 6626,
-          "enrollment_total": 56,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5989,
-          "enrollment_total": 124,
+          "enrollment_total": 55,
           "enrollment_capacity": 140
         },
         {
           "id": 6408,
-          "enrollment_total": 121,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5992,
-          "enrollment_total": 123,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5993,
-          "enrollment_total": 123,
-          "enrollment_capacity": 140
-        },
-        {
-          "id": 5990,
-          "enrollment_total": 110,
+          "enrollment_total": 119,
           "enrollment_capacity": 140
         },
         {
           "id": 6407,
-          "enrollment_total": 109,
+          "enrollment_total": 112,
           "enrollment_capacity": 140
         },
         {
@@ -150486,13 +150628,28 @@
           "enrollment_capacity": 140
         },
         {
-          "id": 5991,
-          "enrollment_total": 98,
+          "id": 5993,
+          "enrollment_total": 123,
           "enrollment_capacity": 140
         },
         {
-          "id": 5988,
-          "enrollment_total": 127,
+          "id": 5992,
+          "enrollment_total": 122,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 5991,
+          "enrollment_total": 94,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 5990,
+          "enrollment_total": 107,
+          "enrollment_capacity": 140
+        },
+        {
+          "id": 5989,
+          "enrollment_total": 123,
           "enrollment_capacity": 140
         }
       ],
@@ -150587,12 +150744,12 @@
       "sections": [
         {
           "id": 5937,
-          "enrollment_total": 75,
+          "enrollment_total": 74,
           "enrollment_capacity": 100
         },
         {
           "id": 6301,
-          "enrollment_total": 70,
+          "enrollment_total": 58,
           "enrollment_capacity": 100
         }
       ],
@@ -150663,7 +150820,18 @@
         "liked": 0.9291666666666667,
         "filled_count": 240
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5938,
+          "enrollment_total": 53,
+          "enrollment_capacity": 100
+        },
+        {
+          "id": 6302,
+          "enrollment_total": 54,
+          "enrollment_capacity": 100
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "math116",
@@ -151345,9 +151513,14 @@
           "enrollment_capacity": 122
         },
         {
-          "id": 6592,
-          "enrollment_total": 117,
-          "enrollment_capacity": 150
+          "id": 5944,
+          "enrollment_total": 120,
+          "enrollment_capacity": 125
+        },
+        {
+          "id": 6033,
+          "enrollment_total": 122,
+          "enrollment_capacity": 122
         },
         {
           "id": 5945,
@@ -151355,14 +151528,9 @@
           "enrollment_capacity": 121
         },
         {
-          "id": 6033,
-          "enrollment_total": 121,
-          "enrollment_capacity": 122
-        },
-        {
-          "id": 5944,
-          "enrollment_total": 120,
-          "enrollment_capacity": 125
+          "id": 6592,
+          "enrollment_total": 117,
+          "enrollment_capacity": 150
         }
       ],
       "units": 0.5,
@@ -151471,14 +151639,9 @@
           "enrollment_capacity": 122
         },
         {
-          "id": 6419,
-          "enrollment_total": 109,
-          "enrollment_capacity": 150
-        },
-        {
-          "id": 6093,
-          "enrollment_total": 123,
-          "enrollment_capacity": 125
+          "id": 5947,
+          "enrollment_total": 122,
+          "enrollment_capacity": 122
         },
         {
           "id": 6100,
@@ -151486,9 +151649,14 @@
           "enrollment_capacity": 122
         },
         {
-          "id": 5947,
-          "enrollment_total": 122,
-          "enrollment_capacity": 122
+          "id": 6093,
+          "enrollment_total": 123,
+          "enrollment_capacity": 125
+        },
+        {
+          "id": 6419,
+          "enrollment_total": 109,
+          "enrollment_capacity": 150
         }
       ],
       "units": 0.5,
@@ -151581,18 +151749,18 @@
           "enrollment_capacity": 115
         },
         {
-          "id": 6443,
-          "enrollment_total": 46,
+          "id": 5949,
+          "enrollment_total": 102,
           "enrollment_capacity": 115
         },
         {
           "id": 6444,
-          "enrollment_total": 62,
+          "enrollment_total": 63,
           "enrollment_capacity": 115
         },
         {
-          "id": 5949,
-          "enrollment_total": 101,
+          "id": 6443,
+          "enrollment_total": 46,
           "enrollment_capacity": 115
         }
       ],
@@ -151689,7 +151857,7 @@
       "sections": [
         {
           "id": 6010,
-          "enrollment_total": 26,
+          "enrollment_total": 25,
           "enrollment_capacity": 60
         }
       ],
@@ -151775,7 +151943,7 @@
       "sections": [
         {
           "id": 6012,
-          "enrollment_total": 65,
+          "enrollment_total": 63,
           "enrollment_capacity": 70
         }
       ],
@@ -152472,12 +152640,12 @@
       "sections": [
         {
           "id": 4585,
-          "enrollment_total": 130,
+          "enrollment_total": 126,
           "enrollment_capacity": 120
         },
         {
           "id": 4586,
-          "enrollment_total": 130,
+          "enrollment_total": 129,
           "enrollment_capacity": 120
         }
       ],
@@ -153026,7 +153194,13 @@
         "liked": 0.7678571428571429,
         "filled_count": 56
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4604,
+          "enrollment_total": 85,
+          "enrollment_capacity": 98
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -153356,7 +153530,7 @@
       "sections": [
         {
           "id": 4512,
-          "enrollment_total": 84,
+          "enrollment_total": 85,
           "enrollment_capacity": 97
         }
       ],
@@ -153914,7 +154088,7 @@
       "sections": [
         {
           "id": 4612,
-          "enrollment_total": 110,
+          "enrollment_total": 111,
           "enrollment_capacity": 115
         }
       ],
@@ -157953,7 +158127,7 @@
       "sections": [
         {
           "id": 7245,
-          "enrollment_total": 100,
+          "enrollment_total": 99,
           "enrollment_capacity": 120
         }
       ],
@@ -157980,7 +158154,7 @@
       "sections": [
         {
           "id": 7178,
-          "enrollment_total": 45,
+          "enrollment_total": 44,
           "enrollment_capacity": 70
         }
       ],
@@ -160063,7 +160237,7 @@
       "sections": [
         {
           "id": 5309,
-          "enrollment_total": 108,
+          "enrollment_total": 107,
           "enrollment_capacity": 100
         }
       ],
@@ -160129,7 +160303,7 @@
       "sections": [
         {
           "id": 5380,
-          "enrollment_total": 111,
+          "enrollment_total": 110,
           "enrollment_capacity": 100
         }
       ],
@@ -160535,14 +160709,14 @@
           "enrollment_capacity": 105
         },
         {
-          "id": 5289,
-          "enrollment_total": 106,
-          "enrollment_capacity": 134
-        },
-        {
           "id": 5288,
           "enrollment_total": 87,
           "enrollment_capacity": 110
+        },
+        {
+          "id": 5289,
+          "enrollment_total": 106,
+          "enrollment_capacity": 134
         }
       ],
       "units": 0.5,
@@ -163760,7 +163934,7 @@
       "sections": [
         {
           "id": 4637,
-          "enrollment_total": 119,
+          "enrollment_total": 118,
           "enrollment_capacity": 120
         },
         {
@@ -163933,7 +164107,7 @@
       "sections": [
         {
           "id": 5113,
-          "enrollment_total": 122,
+          "enrollment_total": 121,
           "enrollment_capacity": 120
         },
         {
@@ -165071,7 +165245,7 @@
       "sections": [
         {
           "id": 4706,
-          "enrollment_total": 243,
+          "enrollment_total": 244,
           "enrollment_capacity": 250
         }
       ],
@@ -165283,8 +165457,8 @@
           "enrollment_capacity": 65
         },
         {
-          "id": 5256,
-          "enrollment_total": 61,
+          "id": 5255,
+          "enrollment_total": 60,
           "enrollment_capacity": 65
         },
         {
@@ -165293,8 +165467,8 @@
           "enrollment_capacity": 65
         },
         {
-          "id": 5255,
-          "enrollment_total": 60,
+          "id": 5256,
+          "enrollment_total": 61,
           "enrollment_capacity": 65
         }
       ],
@@ -165965,18 +166139,18 @@
       "sections": [
         {
           "id": 6420,
-          "enrollment_total": 1324,
+          "enrollment_total": 1303,
           "enrollment_capacity": 1850
         },
         {
-          "id": 6451,
-          "enrollment_total": 1166,
-          "enrollment_capacity": 1300
+          "id": 6450,
+          "enrollment_total": 2010,
+          "enrollment_capacity": 2142
         },
         {
-          "id": 6450,
-          "enrollment_total": 2031,
-          "enrollment_capacity": 2142
+          "id": 6451,
+          "enrollment_total": 1156,
+          "enrollment_capacity": 1300
         }
       ],
       "units": 0,
@@ -165998,7 +166172,7 @@
       "sections": [
         {
           "id": 4440,
-          "enrollment_total": 41,
+          "enrollment_total": 40,
           "enrollment_capacity": 120
         }
       ],
@@ -166099,7 +166273,7 @@
       "sections": [
         {
           "id": 4451,
-          "enrollment_total": 61,
+          "enrollment_total": 60,
           "enrollment_capacity": 500
         }
       ],
@@ -166192,7 +166366,7 @@
       "sections": [
         {
           "id": 4441,
-          "enrollment_total": 181,
+          "enrollment_total": 180,
           "enrollment_capacity": 250
         }
       ],
@@ -169246,7 +169420,7 @@
       "sections": [
         {
           "id": 4886,
-          "enrollment_total": 82,
+          "enrollment_total": 81,
           "enrollment_capacity": 123
         }
       ],
@@ -169303,7 +169477,7 @@
       "sections": [
         {
           "id": 5186,
-          "enrollment_total": 82,
+          "enrollment_total": 81,
           "enrollment_capacity": 123
         }
       ],
@@ -169377,13 +169551,13 @@
           "enrollment_capacity": 41
         },
         {
-          "id": 4705,
-          "enrollment_total": 28,
+          "id": 4704,
+          "enrollment_total": 27,
           "enrollment_capacity": 41
         },
         {
-          "id": 4704,
-          "enrollment_total": 27,
+          "id": 4705,
+          "enrollment_total": 28,
           "enrollment_capacity": 41
         }
       ],
@@ -169423,7 +169597,7 @@
       "sections": [
         {
           "id": 5023,
-          "enrollment_total": 82,
+          "enrollment_total": 81,
           "enrollment_capacity": 123
         }
       ],
@@ -169585,7 +169759,7 @@
       "sections": [
         {
           "id": 4715,
-          "enrollment_total": 85,
+          "enrollment_total": 84,
           "enrollment_capacity": 123
         }
       ],
@@ -169883,13 +170057,13 @@
           "enrollment_capacity": 41
         },
         {
-          "id": 4751,
-          "enrollment_total": 33,
+          "id": 4750,
+          "enrollment_total": 31,
           "enrollment_capacity": 41
         },
         {
-          "id": 4750,
-          "enrollment_total": 31,
+          "id": 4751,
+          "enrollment_total": 33,
           "enrollment_capacity": 41
         }
       ],
@@ -170390,7 +170564,13 @@
         "liked": 1,
         "filled_count": 10
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 5123,
+          "enrollment_total": 42,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "chem233",
@@ -170711,17 +170891,12 @@
           "enrollment_capacity": 12
         },
         {
+          "id": 4863,
+          "enrollment_total": 10,
+          "enrollment_capacity": 12
+        },
+        {
           "id": 4864,
-          "enrollment_total": 12,
-          "enrollment_capacity": 12
-        },
-        {
-          "id": 4865,
-          "enrollment_total": 11,
-          "enrollment_capacity": 12
-        },
-        {
-          "id": 4866,
           "enrollment_total": 12,
           "enrollment_capacity": 12
         },
@@ -170731,8 +170906,13 @@
           "enrollment_capacity": 12
         },
         {
-          "id": 4863,
-          "enrollment_total": 10,
+          "id": 4866,
+          "enrollment_total": 12,
+          "enrollment_capacity": 12
+        },
+        {
+          "id": 4865,
+          "enrollment_total": 11,
           "enrollment_capacity": 12
         }
       ],
@@ -170772,17 +170952,12 @@
           "enrollment_capacity": 12
         },
         {
-          "id": 4870,
+          "id": 4869,
           "enrollment_total": 12,
           "enrollment_capacity": 12
         },
         {
-          "id": 4871,
-          "enrollment_total": 10,
-          "enrollment_capacity": 12
-        },
-        {
-          "id": 4872,
+          "id": 4870,
           "enrollment_total": 12,
           "enrollment_capacity": 12
         },
@@ -170792,8 +170967,13 @@
           "enrollment_capacity": 12
         },
         {
-          "id": 4869,
+          "id": 4872,
           "enrollment_total": 12,
+          "enrollment_capacity": 12
+        },
+        {
+          "id": 4871,
+          "enrollment_total": 10,
           "enrollment_capacity": 12
         }
       ],
@@ -170833,8 +171013,8 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 4876,
-          "enrollment_total": 9,
+          "id": 4875,
+          "enrollment_total": 7,
           "enrollment_capacity": 10
         },
         {
@@ -170843,17 +171023,17 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 4875,
-          "enrollment_total": 7,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4878,
-          "enrollment_total": 0,
+          "id": 4876,
+          "enrollment_total": 9,
           "enrollment_capacity": 10
         },
         {
           "id": 4879,
+          "enrollment_total": 0,
+          "enrollment_capacity": 10
+        },
+        {
+          "id": 4878,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         }
@@ -170894,17 +171074,17 @@
           "enrollment_capacity": 10
         },
         {
+          "id": 4881,
+          "enrollment_total": 10,
+          "enrollment_capacity": 10
+        },
+        {
           "id": 4882,
           "enrollment_total": 10,
           "enrollment_capacity": 10
         },
         {
           "id": 4883,
-          "enrollment_total": 10,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 4881,
           "enrollment_total": 10,
           "enrollment_capacity": 10
         },
@@ -172222,13 +172402,13 @@
           "enrollment_capacity": 35
         },
         {
-          "id": 7431,
-          "enrollment_total": 30,
+          "id": 7430,
+          "enrollment_total": 29,
           "enrollment_capacity": 35
         },
         {
-          "id": 7430,
-          "enrollment_total": 29,
+          "id": 7431,
+          "enrollment_total": 30,
           "enrollment_capacity": 35
         }
       ],
@@ -172799,12 +172979,12 @@
           "enrollment_capacity": 35
         },
         {
-          "id": 7433,
+          "id": 7432,
           "enrollment_total": 30,
           "enrollment_capacity": 35
         },
         {
-          "id": 7432,
+          "id": 7433,
           "enrollment_total": 30,
           "enrollment_capacity": 35
         }
@@ -173634,13 +173814,13 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 7275,
-          "enrollment_total": 31,
+          "id": 7163,
+          "enrollment_total": 32,
           "enrollment_capacity": 30
         },
         {
-          "id": 7163,
-          "enrollment_total": 32,
+          "id": 7275,
+          "enrollment_total": 31,
           "enrollment_capacity": 30
         }
       ],
@@ -175516,7 +175696,13 @@
         "liked": 0.875,
         "filled_count": 8
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 4469,
+          "enrollment_total": 35,
+          "enrollment_capacity": 40
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [
         "pacs301"
@@ -176125,12 +176311,12 @@
       },
       "sections": [
         {
-          "id": 4464,
+          "id": 4463,
           "enrollment_total": 0,
           "enrollment_capacity": 3
         },
         {
-          "id": 4463,
+          "id": 4464,
           "enrollment_total": 0,
           "enrollment_capacity": 3
         }
@@ -176972,7 +177158,7 @@
         },
         {
           "id": 7631,
-          "enrollment_total": 1896,
+          "enrollment_total": 1893,
           "enrollment_capacity": 3500
         }
       ],
@@ -176993,14 +177179,14 @@
       },
       "sections": [
         {
-          "id": 7641,
-          "enrollment_total": 122,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 7642,
           "enrollment_total": 7,
           "enrollment_capacity": 200
+        },
+        {
+          "id": 7641,
+          "enrollment_total": 122,
+          "enrollment_capacity": 1000
         },
         {
           "id": 7640,
@@ -177103,14 +177289,14 @@
       },
       "sections": [
         {
-          "id": 7645,
-          "enrollment_total": 32,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 7646,
           "enrollment_total": 21,
           "enrollment_capacity": 200
+        },
+        {
+          "id": 7645,
+          "enrollment_total": 32,
+          "enrollment_capacity": 1000
         },
         {
           "id": 7644,
@@ -177149,14 +177335,14 @@
       },
       "sections": [
         {
-          "id": 7682,
-          "enrollment_total": 16,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 7683,
           "enrollment_total": 1,
           "enrollment_capacity": 200
+        },
+        {
+          "id": 7682,
+          "enrollment_total": 16,
+          "enrollment_capacity": 1000
         },
         {
           "id": 7681,
@@ -177195,14 +177381,14 @@
       },
       "sections": [
         {
-          "id": 7723,
-          "enrollment_total": 9,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 7724,
           "enrollment_total": 13,
           "enrollment_capacity": 200
+        },
+        {
+          "id": 7723,
+          "enrollment_total": 9,
+          "enrollment_capacity": 1000
         },
         {
           "id": 7722,
@@ -177448,18 +177634,18 @@
       },
       "sections": [
         {
-          "id": 7629,
-          "enrollment_total": 34,
-          "enrollment_capacity": 1000
-        },
-        {
           "id": 7637,
           "enrollment_total": 16,
           "enrollment_capacity": 200
         },
         {
+          "id": 7629,
+          "enrollment_total": 34,
+          "enrollment_capacity": 1000
+        },
+        {
           "id": 7625,
-          "enrollment_total": 487,
+          "enrollment_total": 486,
           "enrollment_capacity": 2000
         }
       ],
@@ -178732,6 +178918,11 @@
       },
       "sections": [
         {
+          "id": 7388,
+          "enrollment_total": 41,
+          "enrollment_capacity": 42
+        },
+        {
           "id": 7211,
           "enrollment_total": 42,
           "enrollment_capacity": 42
@@ -178739,11 +178930,6 @@
         {
           "id": 7210,
           "enrollment_total": 40,
-          "enrollment_capacity": 42
-        },
-        {
-          "id": 7388,
-          "enrollment_total": 41,
           "enrollment_capacity": 42
         }
       ],
@@ -179847,7 +180033,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7411,
+          "enrollment_total": 38,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.25,
       "antireqCodes": [],
       "prereqAst": {
@@ -181716,7 +181908,7 @@
       "sections": [
         {
           "id": 3761,
-          "enrollment_total": 87,
+          "enrollment_total": 86,
           "enrollment_capacity": 90
         },
         {
@@ -183141,7 +183333,7 @@
       "sections": [
         {
           "id": 8017,
-          "enrollment_total": 27,
+          "enrollment_total": 26,
           "enrollment_capacity": 75
         }
       ],
@@ -184876,14 +185068,14 @@
       },
       "sections": [
         {
-          "id": 4116,
-          "enrollment_total": 0,
-          "enrollment_capacity": 3
-        },
-        {
           "id": 3504,
           "enrollment_total": 0,
           "enrollment_capacity": 1
+        },
+        {
+          "id": 4116,
+          "enrollment_total": 0,
+          "enrollment_capacity": 3
         }
       ],
       "units": 0.5,
@@ -185160,6 +185352,11 @@
       },
       "sections": [
         {
+          "id": 3204,
+          "enrollment_total": 0,
+          "enrollment_capacity": 5
+        },
+        {
           "id": 3210,
           "enrollment_total": 0,
           "enrollment_capacity": 5
@@ -185236,11 +185433,6 @@
         },
         {
           "id": 3205,
-          "enrollment_total": 0,
-          "enrollment_capacity": 5
-        },
-        {
-          "id": 3204,
           "enrollment_total": 0,
           "enrollment_capacity": 5
         }
@@ -185838,7 +186030,7 @@
       "sections": [
         {
           "id": 7246,
-          "enrollment_total": 343,
+          "enrollment_total": 339,
           "enrollment_capacity": 1000
         }
       ],
@@ -185890,7 +186082,7 @@
       "sections": [
         {
           "id": 6999,
-          "enrollment_total": 181,
+          "enrollment_total": 180,
           "enrollment_capacity": 250
         },
         {
@@ -185925,6 +186117,11 @@
           "enrollment_capacity": 72
         },
         {
+          "id": 7002,
+          "enrollment_total": 65,
+          "enrollment_capacity": 72
+        },
+        {
           "id": 7005,
           "enrollment_total": 51,
           "enrollment_capacity": 72
@@ -185937,11 +186134,6 @@
         {
           "id": 7003,
           "enrollment_total": 43,
-          "enrollment_capacity": 72
-        },
-        {
-          "id": 7002,
-          "enrollment_total": 65,
           "enrollment_capacity": 72
         },
         {
@@ -186033,12 +186225,12 @@
       "sections": [
         {
           "id": 7009,
-          "enrollment_total": 127,
+          "enrollment_total": 123,
           "enrollment_capacity": 120
         },
         {
           "id": 7010,
-          "enrollment_total": 130,
+          "enrollment_total": 129,
           "enrollment_capacity": 120
         }
       ],
@@ -186086,18 +186278,18 @@
       "sections": [
         {
           "id": 7014,
-          "enrollment_total": 168,
+          "enrollment_total": 165,
           "enrollment_capacity": 220
+        },
+        {
+          "id": 7015,
+          "enrollment_total": 166,
+          "enrollment_capacity": 200
         },
         {
           "id": 8099,
           "enrollment_total": 119,
           "enrollment_capacity": 160
-        },
-        {
-          "id": 7015,
-          "enrollment_total": 167,
-          "enrollment_capacity": 200
         }
       ],
       "units": 0.5,
@@ -186160,7 +186352,12 @@
       "sections": [
         {
           "id": 7016,
-          "enrollment_total": 51,
+          "enrollment_total": 49,
+          "enrollment_capacity": 75
+        },
+        {
+          "id": 7017,
+          "enrollment_total": 31,
           "enrollment_capacity": 75
         },
         {
@@ -186176,11 +186373,6 @@
         {
           "id": 7018,
           "enrollment_total": 57,
-          "enrollment_capacity": 75
-        },
-        {
-          "id": 7017,
-          "enrollment_total": 33,
           "enrollment_capacity": 75
         }
       ],
@@ -187301,14 +187493,14 @@
           "enrollment_capacity": 150
         },
         {
-          "id": 7318,
-          "enrollment_total": 114,
-          "enrollment_capacity": 150
-        },
-        {
           "id": 7427,
           "enrollment_total": 200,
           "enrollment_capacity": 300
+        },
+        {
+          "id": 7318,
+          "enrollment_total": 114,
+          "enrollment_capacity": 150
         }
       ],
       "units": 0.5,
@@ -187509,6 +187701,11 @@
           "enrollment_capacity": 36
         },
         {
+          "id": 7479,
+          "enrollment_total": 34,
+          "enrollment_capacity": 36
+        },
+        {
           "id": 7482,
           "enrollment_total": 11,
           "enrollment_capacity": 36
@@ -187521,11 +187718,6 @@
         {
           "id": 7480,
           "enrollment_total": 16,
-          "enrollment_capacity": 36
-        },
-        {
-          "id": 7479,
-          "enrollment_total": 34,
           "enrollment_capacity": 36
         }
       ],
@@ -188787,7 +188979,7 @@
       "sections": [
         {
           "id": 7020,
-          "enrollment_total": 53,
+          "enrollment_total": 52,
           "enrollment_capacity": 80
         }
       ],
@@ -188892,7 +189084,7 @@
       "sections": [
         {
           "id": 7021,
-          "enrollment_total": 46,
+          "enrollment_total": 45,
           "enrollment_capacity": 80
         }
       ],
@@ -189997,7 +190189,13 @@
         "liked": 1,
         "filled_count": 4
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7271,
+          "enrollment_total": 38,
+          "enrollment_capacity": 54
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -194658,12 +194856,12 @@
           "enrollment_capacity": 5
         },
         {
-          "id": 9107,
+          "id": 9039,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
         {
-          "id": 9039,
+          "id": 9107,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         }
@@ -195324,7 +195522,7 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 9114,
+          "id": 9113,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
@@ -195334,7 +195532,7 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 9113,
+          "id": 9114,
           "enrollment_total": 1,
           "enrollment_capacity": 1
         },
@@ -196275,7 +196473,7 @@
       "sections": [
         {
           "id": 6344,
-          "enrollment_total": 77,
+          "enrollment_total": 76,
           "enrollment_capacity": 96
         }
       ],
@@ -197044,7 +197242,7 @@
       "sections": [
         {
           "id": 6615,
-          "enrollment_total": 30,
+          "enrollment_total": 29,
           "enrollment_capacity": 81
         }
       ],
@@ -200841,6 +201039,11 @@
       },
       "sections": [
         {
+          "id": 3751,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 4386,
           "enrollment_total": 0,
           "enrollment_capacity": 1
@@ -200852,11 +201055,6 @@
         },
         {
           "id": 3856,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1
-        },
-        {
-          "id": 3751,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         }
@@ -205701,7 +205899,7 @@
       "sections": [
         {
           "id": 8303,
-          "enrollment_total": 128,
+          "enrollment_total": 127,
           "enrollment_capacity": 135
         }
       ],
@@ -206539,17 +206737,17 @@
           "enrollment_capacity": 25
         },
         {
+          "id": 3493,
+          "enrollment_total": 25,
+          "enrollment_capacity": 25
+        },
+        {
           "id": 3523,
           "enrollment_total": 25,
           "enrollment_capacity": 25
         },
         {
           "id": 4006,
-          "enrollment_total": 25,
-          "enrollment_capacity": 25
-        },
-        {
-          "id": 3493,
           "enrollment_total": 25,
           "enrollment_capacity": 25
         }
@@ -208663,13 +208861,13 @@
           "enrollment_capacity": 25
         },
         {
-          "id": 4115,
-          "enrollment_total": 24,
+          "id": 3978,
+          "enrollment_total": 25,
           "enrollment_capacity": 25
         },
         {
-          "id": 3978,
-          "enrollment_total": 25,
+          "id": 4115,
+          "enrollment_total": 24,
           "enrollment_capacity": 25
         }
       ],
@@ -210261,7 +210459,7 @@
           "enrollment_capacity": 7
         },
         {
-          "id": 3847,
+          "id": 3333,
           "enrollment_total": 4,
           "enrollment_capacity": 7
         },
@@ -210271,13 +210469,13 @@
           "enrollment_capacity": 7
         },
         {
-          "id": 3334,
-          "enrollment_total": 5,
+          "id": 3847,
+          "enrollment_total": 4,
           "enrollment_capacity": 7
         },
         {
-          "id": 3333,
-          "enrollment_total": 4,
+          "id": 3334,
+          "enrollment_total": 5,
           "enrollment_capacity": 7
         }
       ]
@@ -211265,6 +211463,11 @@
           "enrollment_capacity": 9
         },
         {
+          "id": 3337,
+          "enrollment_total": 5,
+          "enrollment_capacity": 9
+        },
+        {
           "id": 3339,
           "enrollment_total": 1,
           "enrollment_capacity": 9
@@ -211272,11 +211475,6 @@
         {
           "id": 3338,
           "enrollment_total": 6,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3337,
-          "enrollment_total": 5,
           "enrollment_capacity": 9
         }
       ]
@@ -211361,6 +211559,11 @@
           "enrollment_capacity": 9
         },
         {
+          "id": 3341,
+          "enrollment_total": 5,
+          "enrollment_capacity": 9
+        },
+        {
           "id": 3343,
           "enrollment_total": 1,
           "enrollment_capacity": 9
@@ -211368,11 +211571,6 @@
         {
           "id": 3342,
           "enrollment_total": 2,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3341,
-          "enrollment_total": 5,
           "enrollment_capacity": 9
         }
       ]
@@ -211442,6 +211640,11 @@
           "enrollment_capacity": 9
         },
         {
+          "id": 3345,
+          "enrollment_total": 4,
+          "enrollment_capacity": 9
+        },
+        {
           "id": 3347,
           "enrollment_total": 3,
           "enrollment_capacity": 9
@@ -211449,11 +211652,6 @@
         {
           "id": 3346,
           "enrollment_total": 2,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3345,
-          "enrollment_total": 5,
           "enrollment_capacity": 9
         }
       ]
@@ -212594,6 +212792,11 @@
           "enrollment_capacity": 9
         },
         {
+          "id": 3349,
+          "enrollment_total": 7,
+          "enrollment_capacity": 9
+        },
+        {
           "id": 3351,
           "enrollment_total": 1,
           "enrollment_capacity": 9
@@ -212601,11 +212804,6 @@
         {
           "id": 3350,
           "enrollment_total": 2,
-          "enrollment_capacity": 9
-        },
-        {
-          "id": 3349,
-          "enrollment_total": 7,
           "enrollment_capacity": 9
         }
       ]
@@ -213827,7 +214025,7 @@
           "enrollment_capacity": 7
         },
         {
-          "id": 3439,
+          "id": 3353,
           "enrollment_total": 4,
           "enrollment_capacity": 7
         },
@@ -213842,7 +214040,7 @@
           "enrollment_capacity": 7
         },
         {
-          "id": 3353,
+          "id": 3439,
           "enrollment_total": 4,
           "enrollment_capacity": 7
         }
@@ -214096,9 +214294,9 @@
           "enrollment_capacity": 15
         },
         {
-          "id": 8245,
-          "enrollment_total": 5,
-          "enrollment_capacity": 15
+          "id": 7900,
+          "enrollment_total": 7,
+          "enrollment_capacity": 10
         },
         {
           "id": 8845,
@@ -214106,9 +214304,9 @@
           "enrollment_capacity": 30
         },
         {
-          "id": 7900,
-          "enrollment_total": 7,
-          "enrollment_capacity": 10
+          "id": 8245,
+          "enrollment_total": 5,
+          "enrollment_capacity": 15
         }
       ]
     },
@@ -217280,7 +217478,7 @@
       "sections": [
         {
           "id": 2853,
-          "enrollment_total": 2,
+          "enrollment_total": 3,
           "enrollment_capacity": 20
         }
       ],
@@ -218563,6 +218761,11 @@
           "enrollment_capacity": 10
         },
         {
+          "id": 2797,
+          "enrollment_total": 0,
+          "enrollment_capacity": 10
+        },
+        {
           "id": 2799,
           "enrollment_total": 0,
           "enrollment_capacity": 10
@@ -218573,12 +218776,12 @@
           "enrollment_capacity": 10
         },
         {
-          "id": 2800,
+          "id": 2947,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         },
         {
-          "id": 2947,
+          "id": 2800,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         },
@@ -218594,11 +218797,6 @@
         },
         {
           "id": 2798,
-          "enrollment_total": 0,
-          "enrollment_capacity": 10
-        },
-        {
-          "id": 2797,
           "enrollment_total": 0,
           "enrollment_capacity": 10
         }
@@ -224270,7 +224468,7 @@
       "sections": [
         {
           "id": 7825,
-          "enrollment_total": 109,
+          "enrollment_total": 107,
           "enrollment_capacity": 115
         }
       ],
@@ -224418,7 +224616,7 @@
       "sections": [
         {
           "id": 7357,
-          "enrollment_total": 289,
+          "enrollment_total": 287,
           "enrollment_capacity": 400
         }
       ],
@@ -225187,7 +225385,7 @@
       "sections": [
         {
           "id": 8091,
-          "enrollment_total": 38,
+          "enrollment_total": 37,
           "enrollment_capacity": 40
         }
       ],
@@ -226345,7 +226543,7 @@
       "sections": [
         {
           "id": 7577,
-          "enrollment_total": 130,
+          "enrollment_total": 128,
           "enrollment_capacity": 145
         }
       ],
@@ -226644,7 +226842,7 @@
       "sections": [
         {
           "id": 7609,
-          "enrollment_total": 92,
+          "enrollment_total": 91,
           "enrollment_capacity": 135
         }
       ],
@@ -227108,7 +227306,7 @@
       "sections": [
         {
           "id": 6186,
-          "enrollment_total": 485,
+          "enrollment_total": 479,
           "enrollment_capacity": 509
         }
       ]
@@ -227150,7 +227348,7 @@
       "sections": [
         {
           "id": 6188,
-          "enrollment_total": 221,
+          "enrollment_total": 209,
           "enrollment_capacity": 324
         }
       ]
@@ -227171,7 +227369,7 @@
       "sections": [
         {
           "id": 6189,
-          "enrollment_total": 235,
+          "enrollment_total": 234,
           "enrollment_capacity": 248
         }
       ]
@@ -227213,7 +227411,7 @@
       "sections": [
         {
           "id": 6231,
-          "enrollment_total": 33,
+          "enrollment_total": 32,
           "enrollment_capacity": 36
         }
       ]
@@ -230594,7 +230792,13 @@
         "liked": 0.42857142857142855,
         "filled_count": 7
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8185,
+          "enrollment_total": 34,
+          "enrollment_capacity": 90
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -233874,6 +234078,11 @@
       },
       "sections": [
         {
+          "id": 3731,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
           "id": 4026,
           "enrollment_total": 0,
           "enrollment_capacity": 1
@@ -233887,11 +234096,6 @@
           "id": 3855,
           "enrollment_total": 0,
           "enrollment_capacity": 4
-        },
-        {
-          "id": 3731,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1
         }
       ],
       "units": 0.5,
@@ -234925,14 +235129,14 @@
           "enrollment_capacity": 50
         },
         {
-          "id": 6868,
-          "enrollment_total": 78,
-          "enrollment_capacity": 80
-        },
-        {
           "id": 6880,
           "enrollment_total": 32,
           "enrollment_capacity": 50
+        },
+        {
+          "id": 6868,
+          "enrollment_total": 78,
+          "enrollment_capacity": 80
         }
       ],
       "units": 0.5,
@@ -237960,7 +238164,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 7535,
+          "enrollment_total": 24,
+          "enrollment_capacity": 75
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -240336,18 +240546,13 @@
       "sections": [
         {
           "id": 6016,
-          "enrollment_total": 222,
+          "enrollment_total": 221,
           "enrollment_capacity": 250
         },
         {
-          "id": 6372,
-          "enrollment_total": 95,
-          "enrollment_capacity": 150
-        },
-        {
-          "id": 6534,
-          "enrollment_total": 199,
-          "enrollment_capacity": 200
+          "id": 6533,
+          "enrollment_total": 188,
+          "enrollment_capacity": 250
         },
         {
           "id": 6535,
@@ -240355,9 +240560,14 @@
           "enrollment_capacity": 200
         },
         {
-          "id": 6533,
-          "enrollment_total": 188,
-          "enrollment_capacity": 250
+          "id": 6534,
+          "enrollment_total": 199,
+          "enrollment_capacity": 200
+        },
+        {
+          "id": 6372,
+          "enrollment_total": 95,
+          "enrollment_capacity": 150
         }
       ],
       "units": 0.5,
@@ -240455,8 +240665,8 @@
           "enrollment_capacity": 150
         },
         {
-          "id": 6375,
-          "enrollment_total": 93,
+          "id": 6539,
+          "enrollment_total": 74,
           "enrollment_capacity": 150
         },
         {
@@ -240465,8 +240675,8 @@
           "enrollment_capacity": 150
         },
         {
-          "id": 6539,
-          "enrollment_total": 74,
+          "id": 6375,
+          "enrollment_total": 93,
           "enrollment_capacity": 150
         }
       ],
@@ -242033,7 +242243,7 @@
       "sections": [
         {
           "id": 6027,
-          "enrollment_total": 53,
+          "enrollment_total": 52,
           "enrollment_capacity": 120
         }
       ],
@@ -242993,7 +243203,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": []
+      "sections": [
+        {
+          "id": 6293,
+          "enrollment_total": 14,
+          "enrollment_capacity": 25
+        }
+      ]
     },
     {
       "id": 7185,
@@ -243693,11 +243909,6 @@
       },
       "sections": [
         {
-          "id": 2951,
-          "enrollment_total": 52,
-          "enrollment_capacity": 52
-        },
-        {
           "id": 2961,
           "enrollment_total": 51,
           "enrollment_capacity": 51
@@ -243706,6 +243917,11 @@
           "id": 2952,
           "enrollment_total": 50,
           "enrollment_capacity": 50
+        },
+        {
+          "id": 2951,
+          "enrollment_total": 52,
+          "enrollment_capacity": 52
         }
       ]
     },
@@ -243724,11 +243940,6 @@
       },
       "sections": [
         {
-          "id": 2973,
-          "enrollment_total": 38,
-          "enrollment_capacity": 38
-        },
-        {
           "id": 2975,
           "enrollment_total": 37,
           "enrollment_capacity": 37
@@ -243742,6 +243953,11 @@
           "id": 2974,
           "enrollment_total": 37,
           "enrollment_capacity": 37
+        },
+        {
+          "id": 2973,
+          "enrollment_total": 38,
+          "enrollment_capacity": 38
         }
       ]
     },
@@ -243760,13 +243976,13 @@
       },
       "sections": [
         {
-          "id": 3043,
-          "enrollment_total": 35,
+          "id": 3073,
+          "enrollment_total": 33,
           "enrollment_capacity": 34
         },
         {
-          "id": 3073,
-          "enrollment_total": 33,
+          "id": 3043,
+          "enrollment_total": 35,
           "enrollment_capacity": 34
         }
       ]
@@ -243861,14 +244077,14 @@
       },
       "sections": [
         {
-          "id": 2977,
-          "enrollment_total": 37,
-          "enrollment_capacity": 37
-        },
-        {
           "id": 2978,
           "enrollment_total": 38,
           "enrollment_capacity": 38
+        },
+        {
+          "id": 2977,
+          "enrollment_total": 37,
+          "enrollment_capacity": 37
         }
       ]
     },
@@ -244053,7 +244269,13 @@
         "liked": null,
         "filled_count": 0
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8003,
+          "enrollment_total": 10,
+          "enrollment_capacity": 50
+        }
+      ],
       "units": 0.5,
       "antireqCodes": []
     },
@@ -244596,13 +244818,13 @@
           "enrollment_capacity": 35
         },
         {
-          "id": 6930,
-          "enrollment_total": 11,
+          "id": 6913,
+          "enrollment_total": 30,
           "enrollment_capacity": 35
         },
         {
-          "id": 6913,
-          "enrollment_total": 30,
+          "id": 6930,
+          "enrollment_total": 11,
           "enrollment_capacity": 35
         }
       ],
@@ -244842,14 +245064,14 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 6897,
-          "enrollment_total": 4,
-          "enrollment_capacity": 20
-        },
-        {
           "id": 6877,
           "enrollment_total": 30,
           "enrollment_capacity": 30
+        },
+        {
+          "id": 6897,
+          "enrollment_total": 4,
+          "enrollment_capacity": 20
         }
       ],
       "units": 1,
@@ -246380,7 +246602,7 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 4775,
+          "id": 4774,
           "enrollment_total": 26,
           "enrollment_capacity": 28
         },
@@ -246390,7 +246612,7 @@
           "enrollment_capacity": 28
         },
         {
-          "id": 4774,
+          "id": 4775,
           "enrollment_total": 26,
           "enrollment_capacity": 28
         }
@@ -248324,7 +248546,13 @@
         "liked": 1,
         "filled_count": 8
       },
-      "sections": [],
+      "sections": [
+        {
+          "id": 8216,
+          "enrollment_total": 41,
+          "enrollment_capacity": 45
+        }
+      ],
       "units": 0.5,
       "antireqCodes": [],
       "prereqAst": {
@@ -251263,14 +251491,14 @@
           "enrollment_capacity": 18
         },
         {
-          "id": 8915,
-          "enrollment_total": 11,
-          "enrollment_capacity": 15
-        },
-        {
           "id": 8411,
           "enrollment_total": 3,
           "enrollment_capacity": 4
+        },
+        {
+          "id": 8915,
+          "enrollment_total": 11,
+          "enrollment_capacity": 15
         }
       ],
       "units": 0.5,
@@ -252157,17 +252385,17 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 7553,
-          "enrollment_total": 0,
-          "enrollment_capacity": 1
-        },
-        {
           "id": 7556,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
           "id": 7555,
+          "enrollment_total": 0,
+          "enrollment_capacity": 1
+        },
+        {
+          "id": 7553,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
@@ -252208,12 +252436,12 @@
           "enrollment_capacity": 1
         },
         {
-          "id": 7564,
+          "id": 7563,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
         {
-          "id": 7563,
+          "id": 7564,
           "enrollment_total": 0,
           "enrollment_capacity": 1
         },
@@ -252749,7 +252977,7 @@
       "sections": [
         {
           "id": 8861,
-          "enrollment_total": 2,
+          "enrollment_total": 3,
           "enrollment_capacity": 25
         }
       ]
@@ -254235,7 +254463,7 @@
       "sections": [
         {
           "id": 7675,
-          "enrollment_total": 367,
+          "enrollment_total": 350,
           "enrollment_capacity": 1000
         },
         {
@@ -254731,14 +254959,14 @@
           "enrollment_capacity": 110
         },
         {
-          "id": 7581,
-          "enrollment_total": 0,
-          "enrollment_capacity": 200
-        },
-        {
           "id": 7578,
           "enrollment_total": 0,
           "enrollment_capacity": 10
+        },
+        {
+          "id": 7581,
+          "enrollment_total": 0,
+          "enrollment_capacity": 200
         }
       ],
       "units": 0.13,
